@@ -1,0 +1,108 @@
+feature: 2026-07-10-evidence-output-guardrails
+created: '2026-07-10'
+steps:
+- id: S1
+  action: 实现完整 LocateStatus transition evaluator
+  exit_signal: 每个 predicate row、hit-unverified fallback 分支、abort source 与复合优先级均有命名 case，缺 case 时 completeness test 失败
+  verification: npm test -- --group locate-status --case transition-matrix-completeness --case hit-unverified-fallback-complete --case hit-unverified-fallback-unavailable --case caller-abort-empty --case caller-abort-with-evidence --case internal-deadline-below-max --case internal-deadline-at-max
+  artifacts: [LocateStatusEvaluator, transition matrix, completeness report]
+  status: pending
+- id: S2
+  action: 实现 limit selection、coverage 与 nextAction contract
+  exit_signal: 六类 limits 的 0/边界/截断/empty/evidence/stable-order 行为全部可判定
+  verification: npm run test:golden -- --group result-limits --case partial-empty-limit --case partial-with-evidence
+  artifacts: [ResultBudgetSelector, limit matrix, Golden logs]
+  status: pending
+- id: S3
+  action: 实现 evidence/error/log redaction 与 forbidden scan
+  exit_signal: 四类 reason 的 metadata/ID/order 稳定且 raw values 不出现在任何 public/diagnostic surface
+  verification: npm run test:golden -- --case secret-redaction --case redaction-metadata && npm run test:mcp -- --case redaction-output-parity
+  artifacts: [EvidenceRedactor, DiagnosticScrubber, forbidden scan report]
+  status: pending
+- id: S4
+  action: 实现四类 RepoNavToolError 四表面 parity
+  exit_signal: code/recoverable/action/message/isError/structured/text 逐 error code 一致且无敏感信息
+  verification: npm run test:mcp -- --case invalid-input --case invalid-repo --case path-outside-root --case internal-error-parity
+  artifacts: [error contract matrix, application/MCP transcripts]
+  status: pending
+checks:
+- id: C1
+  item: predicate-keyed matrix 覆盖 tool errors、ok、no_result、hit-unverified两分支、backend_unavailable、partial、caller abort、internal deadline
+  source: design 1 status matrix
+  status: pending
+- id: C2
+  item: tool error > timeout > backend-unavailable special > partial gap > ok/no_result 优先级固定
+  source: design 1
+  status: pending
+- id: C3
+  item: no_result 仅在 required attempts 完成且无 limit/verified evidence 时产生
+  source: design 1/3.1
+  status: pending
+- id: C4
+  item: maxFiles/maxConfirmed/maxCandidates/file/excerpt/timeout 逐类映射 reason/status/action
+  source: design 1 limit table
+  status: pending
+- id: C5
+  item: RETRY 只用于未达 schema max 的 caller-adjustable limit
+  source: design 1 limit table
+  status: pending
+- id: C6
+  item: result selection 与 ID/order 不依赖 backend/filesystem arrival order
+  source: design 1/2.2
+  status: pending
+- id: C7
+  item: reader cap 只产生 limit/exclusion；仅完整 cap 内 excerpt 的 2KiB display token 可产生 oversized redaction
+  source: design 1 redaction table
+  status: pending
+- id: C8
+  item: 四类 RedactionReasonCode matcher/metadata/public action 正确；redaction 在 ID 后且 raw hash 不输出
+  source: design 1/3.1
+  status: pending
+- id: C9
+  item: raw sensitive values 不出现在 service/MCP/text/error/stdout/stderr
+  source: design 1/3.1
+  status: pending
+- id: C10
+  item: 四个 tool error 的 recoverable/action/message/isError/parity exact contract
+  source: design 1 error table
+  status: pending
+- id: C11
+  item: 不扩展 recall/candidate/tool/persistence，不把 no_result 说成不存在
+  source: design 1/3.2
+  status: pending
+- id: C12
+  item: transition/limit/redaction/error matrices 与 transcripts/scan report 可盘点
+  source: design 3.4
+  status: pending
+dod:
+  commands:
+  - id: CMD-BUILD
+    command: npm run build
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-TYPECHECK
+    command: npm run typecheck
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-STATUS
+    command: npm test -- --group locate-status --case transition-matrix-completeness --case hit-unverified-fallback-complete --case hit-unverified-fallback-unavailable --case caller-abort-empty --case caller-abort-with-evidence --case internal-deadline-below-max --case internal-deadline-at-max
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-LIMITS
+    command: npm run test:golden -- --group result-limits --case partial-empty-limit --case partial-with-evidence
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-REDACTION
+    command: npm run test:golden -- --case secret-redaction --case redaction-metadata && npm run test:mcp -- --case redaction-output-parity
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-ERRORS
+    command: npm run test:mcp -- --case invalid-input --case invalid-repo --case path-outside-root --case internal-error-parity
+    core: true
+    failure_handling: fix-or-block
+  evidence_required: [command_output, diff_summary, artifact_inventory, transition_matrix, forbidden_scan_report]
+  cleanliness:
+    debug_output: forbidden
+    temporary_todo_fixme: forbidden
+    commented_out_code: forbidden
+    unused_imports: forbidden

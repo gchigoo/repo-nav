@@ -1,0 +1,94 @@
+---
+doc_type: feature-design-review
+feature: 2026-07-10-mvp-golden-regression-suite
+status: passed
+reviewed: 2026-07-10
+round: 3
+---
+
+# mvp-golden-regression-suite feature design ????
+
+## 1. Scope And Inputs
+
+- Design: `.codestable/features/2026-07-10-mvp-golden-regression-suite/mvp-golden-regression-suite-design.md`
+- Checklist: `.codestable/features/2026-07-10-mvp-golden-regression-suite/mvp-golden-regression-suite-checklist.yaml`
+- Intent / brainstorm: none
+- Roadmap: `.codestable/roadmap/repo-nav-mvp/repo-nav-mvp-roadmap.md`
+- Related docs: `.codestable/requirements/source-of-truth-evidence.md`?roadmap items?`.codestable/attention.md`
+- Code facts checked: baseline commit `04b04f7a1314f322e82157363ced505e2199cfc8`????? no-code baseline
+
+### Independent Review
+
+- Status: completed
+- Detection: native-agent
+- Provider / agent: `/root/design_review_release_edges`
+- Raw output: ???? reviewer ????????? Round 3 ? blocking / important finding
+- Merge policy: ? agent ???????? design/checklist??? YAML/cross-doc ??????? reviewer ??
+- Gate effect: none
+
+## 2. Design Summary
+
+- Goal: ?? shared evaluator?? schema/field fixture completeness??? lifecycle ? synthetic performance baseline?
+- Key contracts: manifest semantic assertions + companion full projection?service/MCP shared evaluator?two-layer completeness?committed baseline?
+- Steps: 6 ???? pending???? yes/no exit signal ???????
+- Checks: 12 ??????? design ???roadmap contract ? artifact
+- Baseline / validation: no-code Git baseline?build/typecheck ? feature-specific unit/Golden/MCP/docs ????? DoD
+
+## 3. Findings
+
+### resolved
+
+- runner/evaluator ???normalization?fixture families?performance contract?NextAction/provenance completeness ? baseline retention ?????
+
+### blocking
+
+- none
+
+### important
+
+- none
+
+### nit
+
+- none
+
+### suggestion
+
+- ?????? table-driven contract ? artifact inventory?????????? interface?status/reason ????????? design review?
+
+### learning
+
+- Roadmap ???????? feature ?????? seam?typed error?ordering ? failure-mode????????????
+
+### praise
+
+- ?? public fields mutation test ? enum owner coverage???????????
+
+## 4. User Review Focus
+
+- ??????????? synthetic corpus ??? 1000 files/50 modules/10 mappings/200 decoys?timing ?????correctness ????
+- implement ???????manifest semantic assertions + companion full projection?service/MCP shared evaluator?two-layer completeness?committed baseline?
+- code review / QA / acceptance ??????????????????????negative fixtures ? required artifacts
+
+## 5. Evidence Confidence Ledger
+
+| Check | Verdict | Evidence Class | Basis | Follow-up |
+|---|---|---|---|---|
+| Acceptance Coverage Matrix | pass | E+C | ???????? step???? evidence type | implementation ???? |
+| DoD Contract | pass | E | Design / Implementation / Review / QA / Acceptance?commands?artifacts ?? | none |
+| Steps and checks traceability | pass | E | steps/checks ?? pending ????? | none |
+| Roadmap contract compliance | pass | E+C | ??? roadmap 4.x hard contracts | none |
+| Module interface design | pass | E+C | depth?seam?ordering?error mode ? dependency strategy ??? | code review ???? |
+| Validation and artifacts | pass | E | ??? artifacts ????YAML/cross-doc ??? | QA ???? |
+
+Summary: E=6?C=3?H=0?H-only core checks=none?
+
+## 6. Residual Risk
+
+- companion snapshot ? committed performance baseline ????? code review?????????????? golden?
+- ???????????? review???? implementation?code review?QA ? acceptance ????????
+
+## 7. Verdict
+
+- Status: passed
+- Next: ?????? review?owner ??????? design ? `draft` ?? `approved`

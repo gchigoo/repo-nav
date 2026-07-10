@@ -658,64 +658,64 @@ discovery:v1\0{POSIX-normalized-relative-file}\0{start}\0{end}\0{sha256(unredact
 1. **`repository-evidence-foundation`** — 建立 NestJS 11 standalone、严格 TypeScript 工程、版本化 schema、输入归一化、DI tokens、fixture manifest 和统一验证脚本。
    - 所属模块：Evidence Engine、Repository Backends、Verification Kit
    - 依赖：无
-   - 状态：planned
-   - 对应 feature：未启动
+   - 状态：in-progress
+   - 对应 feature：`2026-07-10-repository-evidence-foundation`
    - 备注：创建 AppModule/provider skeleton 与 build/typecheck/unit/golden/MCP test 入口；用 schema tests 锁定 literal string、byte budgets、reason codes、ID canonicalization 和排序常量，不引入 LLM 或 HTTP adapter。
 
 2. **`repository-access-process-safety`** — 实现 root realpath、symlink escape 防线、RepositoryReader、安全 argv process runner、AbortSignal 终止和 stderr/stdout 隔离。
    - 所属模块：Repository Backends
    - 依赖：`repository-evidence-foundation`
-   - 状态：planned
-   - 对应 feature：未启动
+   - 状态：in-progress
+   - 对应 feature：`2026-07-10-repository-access-process-safety`
    - 备注：任何真实仓库检索前必须先经过本条；用越界路径、symlink、特殊字符 argv、max file/excerpt、超时、无迟到 evidence 和 child/file cleanup cases 验收。
 
 3. **`text-source-evidence-engine`** — 实现 literal ripgrep backend、当前文件核验、discovery merge 与 classification truth table 的 direct-mapping confirmed 基线。
    - 所属模块：Evidence Engine、Repository Backends
    - 依赖：`repository-access-process-safety`
-   - 状态：planned
-   - 对应 feature：未启动
+   - 状态：in-progress
+   - 对应 feature：`2026-07-10-text-source-evidence-engine`
    - 备注：必须同时通过 alias mapping positive 与 DTO/definition/test/doc false-confirmation cases；尚不做 sibling candidate 扩展或 MCP transport。
 
 4. **`mcp-locate-surface`** — 通过 Nest standalone + stdio MCP 暴露 `repo_nav_locate`，提供 Zod schema、structuredContent/text parity、typed isError 和生命周期清理。
    - 所属模块：MCP Surface
    - 依赖：`text-source-evidence-engine`
-   - 状态：planned
-   - 对应 feature：未启动
+   - 状态：in-progress
+   - 对应 feature：`2026-07-10-mcp-locate-surface`
    - 备注：以 MCP TypeScript SDK v1.29.0 稳定 API 为规划基线；feature-design 重新核验、lockfile 固定实际稳定版本，禁止静默切换 alpha。
 
 5. **`candidate-evidence-policy`** — 实现 sibling/alias 局部扩展、confirmed/candidate 互斥分类、promotion requirements 和稳定停止策略。
    - 所属模块：Evidence Engine、Verification Kit
    - 依赖：`mcp-locate-surface`
-   - 状态：planned
-   - 对应 feature：未启动
+   - 状态：in-progress
+   - 对应 feature：`2026-07-10-candidate-evidence-policy`
    - 备注：本条是受控 fixture 的最小闭环，不是可发布里程碑；必须经 MCP 返回 direct mapping confirmed、sibling candidate，并拒绝相似但无关 decoy。
 
 6. **`codegraph-fallback-orchestration`** — 接入 CodeGraph probe/query JSON adapter，并实现 missing/no-result/failure 时可观察的 ripgrep fallback 与 index health。
    - 所属模块：Repository Backends、Evidence Engine
    - 依赖：`text-source-evidence-engine`
-   - 状态：planned
-   - 对应 feature：未启动
+   - 状态：in-progress
+   - 对应 feature：`2026-07-10-codegraph-fallback-orchestration`
    - 备注：与 MCP/candidate 分支可并行；当前环境 CodeGraph 1.1.6 提供结构化命令，但实现以 runtime probe 和 adapter compatibility tests 为准。
 
 7. **`evidence-output-guardrails`** — 汇合 candidate 与 CodeGraph 分支，实现完整状态转换、全局结果预算、敏感 excerpt redaction、coverage/nextActions 和错误输出 parity。
    - 所属模块：Evidence Engine、MCP Surface
    - 依赖：`candidate-evidence-policy`、`codegraph-fallback-orchestration`
-   - 状态：planned
-   - 对应 feature：未启动
+   - 状态：in-progress
+   - 对应 feature：`2026-07-10-evidence-output-guardrails`
    - 备注：聚焦 EvidencePack 输出治理；filesystem/process 安全已由 F2 提供。通过 partial/timeout-with-evidence、backend-unavailable、invalid/internal errors 和 redaction cases 验收。
 
 8. **`mvp-golden-regression-suite`** — 建立完整 positive/negative/failure/lifecycle fixture family、稳定 snapshot evaluator 和受控大型合成仓库性能基线。
    - 所属模块：Verification Kit
    - 依赖：`evidence-output-guardrails`
-   - 状态：planned
-   - 对应 feature：未启动
+   - 状态：in-progress
+   - 对应 feature：`2026-07-10-mvp-golden-regression-suite`
    - 备注：覆盖 mapping、DTO/test/docs decoy、layer/path decoy、CodeGraph missing/no-result/failed、stdio shutdown、redaction、limits 和 false-confirmation。
 
 9. **`debug-cli-mcp-guide`** — 增加最小 debug CLI、backend probe、fixture 回放、MCP 安装示例和 MVP API/验收指南。
    - 所属模块：Verification Kit、MCP Surface
    - 依赖：`mvp-golden-regression-suite`
-   - 状态：planned
-   - 对应 feature：未启动
+   - 状态：in-progress
+   - 对应 feature：`2026-07-10-debug-cli-mcp-guide`
    - 备注：CLI 只复用 application contract，不新增独立业务语义；文档明确最小闭环与可发布 MVP 的区别。
 
 **最小闭环**：第 5 条 `candidate-evidence-policy` 完成后，外部 Agent 能通过 stdio MCP 在受控合成 fixture 上获得当前事实、独立候选及覆盖状态。只有完成 F7/F8 的全状态 guardrails 与回归套件后，才可视为可发布 MVP 候选。
@@ -813,6 +813,6 @@ F2 起每条 feature acceptance 必须至少运行 typecheck 与相关 unit/inte
 - CodeGraph `explore/node` 的人类可读输出可用于开发诊断，但不能成为 production parser 的硬依赖；若未来出现官方稳定结构化 explore API，再通过 roadmap update 评估。
 - MCP Surface 采用 stdio 是当前本地 Agent 场景的计划选择；HTTP/远程部署需要新的安全模型和独立 roadmap。
 - MVP 使用 NestJS standalone application context 但不启动 HTTP server，因此不需要 Express/Fastify adapter；若后续 roadmap 增加 HTTP transport，必须使用 Fastify 并重新设计认证、限流和远程路径安全。
-- Zod 是 MCP tool input/output schema 与运行时校验的直接依赖，且与当前 MCP TypeScript SDK 的稳定 `registerTool` 表面对齐；本地 stdio 工具不存在 HTTP DTO，因而本阶段不额外引入 class-validator 维护第二套 schema。
+- Zod 是 MCP tool input/output schema 与运行时校验的单一来源。feature design 核验发现 SDK v1.29.0 `registerTool` 会在 handler 前拒绝 schema-invalid arguments，无法满足本 roadmap 的 typed structured error parity；因此已批准 F4 使用稳定 low-level Server tools capability/list/call handlers，并由 RepoNav 手工 parse/self-validate。仍不引入 HTTP DTO 或 class-validator 维护第二套 schema。
 - 当前 no-code 状态下没有现状 architecture 可回填。MVP 实现并验收后，再由 acceptance 把真实模块结构写入 `.codestable/architecture/`。
-- 当前目录尚未初始化 Git；若 owner 在 roadmap 通过后仍未建立默认分支和基线 commit，`cs-roadmap-impl-goal` 与 feature worktree 流程应停止，而不是绕过分支保护。
+- Git 已初始化为 `main`，goal package baseline_ref 为 `04b04f7a1314f322e82157363ced505e2199cfc8`；若该 ref 无法解析、planning dirty set 混入 unrelated files 或无法建立干净 implementation 边界，goal 会话必须停止修复，不能绕过分支保护。

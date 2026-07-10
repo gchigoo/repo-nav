@@ -1,75 +1,75 @@
 roadmap: repo-nav-mvp
 created: 2026-07-10
-
 items:
-  - slug: repository-evidence-foundation
-    description: 建立 NestJS 11 standalone、严格 TypeScript 工程、版本化证据 schema、输入归一化、DI tokens、合成 fixture manifest 与验证脚本
-    depends_on: []
-    status: planned
-    feature: null
-    minimal_loop: false
-    notes: 不引入 LLM 或 HTTP adapter，先锁定 literal 输入、byte budgets、reason codes、ID 和排序契约
-
-  - slug: repository-access-process-safety
-    description: 实现 root realpath、symlink escape 防线、RepositoryReader、安全 argv process runner、AbortSignal 终止及 stdio 隔离
-    depends_on: [repository-evidence-foundation]
-    status: planned
-    feature: null
-    minimal_loop: false
-    notes: 任何真实仓库检索前都必须先经过本条，并证明 max file excerpt 与 timeout 后无迟到 evidence
-
-  - slug: text-source-evidence-engine
-    description: 实现 literal ripgrep、当前文件核验、discovery merge 和 direct-mapping confirmed 的 classification truth table 基线
-    depends_on: [repository-access-process-safety]
-    status: planned
-    feature: null
-    minimal_loop: false
-    notes: 同时覆盖 mapping positive 与 DTO definition test docs false-confirmation cases
-
-  - slug: mcp-locate-surface
-    description: 通过 Nest standalone 和 stdio MCP 暴露带 Zod schema、structuredContent text parity、typed isError 与生命周期清理的 repo_nav_locate
-    depends_on: [text-source-evidence-engine]
-    status: planned
-    feature: null
-    minimal_loop: false
-    notes: MCP SDK v1.29.0 稳定 API 为规划基线，实现时重新核验并由 lockfile 固定稳定版本
-
-  - slug: candidate-evidence-policy
-    description: 实现 sibling alias 候选扩展、confirmed candidate 互斥分类、promotion requirements 与稳定停止策略
-    depends_on: [mcp-locate-surface]
-    status: planned
-    feature: null
-    minimal_loop: true
-    notes: 只代表受控 fixture 最小闭环，不是可发布里程碑
-
-  - slug: codegraph-fallback-orchestration
-    description: 接入 CodeGraph 结构化 probe query，并在缺失、失败或无结果时执行可观察的 ripgrep fallback
-    depends_on: [text-source-evidence-engine]
-    status: planned
-    feature: null
-    minimal_loop: false
-    notes: 与 MCP candidate 分支并行，不解析 codegraph explore 人类文本作为 production 契约
-
-  - slug: evidence-output-guardrails
-    description: 汇合 candidate 与 CodeGraph 分支，实现完整状态转换、结果预算、敏感 excerpt redaction、coverage nextActions 和错误输出 parity
-    depends_on: [candidate-evidence-policy, codegraph-fallback-orchestration]
-    status: planned
-    feature: null
-    minimal_loop: false
-    notes: filesystem process 安全已由 repository-access-process-safety 提供，本条只治理 EvidencePack 输出
-
-  - slug: mvp-golden-regression-suite
-    description: 建立完整 positive negative failure lifecycle fixture family、稳定 snapshot evaluator 与受控大型合成仓库性能基线
-    depends_on: [evidence-output-guardrails]
-    status: planned
-    feature: null
-    minimal_loop: false
-    notes: 覆盖 decoy、backend failure、状态转换、redaction、limits、shutdown 和 false-confirmation
-
-  - slug: debug-cli-mcp-guide
-    description: 增加最小 debug CLI、backend probe、fixture 回放、MCP 安装示例和 MVP API 验收指南
-    depends_on: [mvp-golden-regression-suite]
-    status: planned
-    feature: null
-    minimal_loop: false
-    notes: CLI 复用 application contract，不新增独立业务语义
+- slug: repository-evidence-foundation
+  description: 建立 NestJS 11 standalone、严格 TypeScript 工程、版本化证据 schema、输入归一化、DI tokens、合成 fixture manifest 与验证脚本
+  depends_on: []
+  status: in-progress
+  feature: 2026-07-10-repository-evidence-foundation
+  minimal_loop: false
+  notes: 不引入 LLM 或 HTTP adapter，先锁定 literal 输入、byte budgets、reason codes、ID 和排序契约
+- slug: repository-access-process-safety
+  description: 实现 root realpath、symlink escape 防线、RepositoryReader、安全 argv process runner、AbortSignal 终止及 stdio 隔离
+  depends_on:
+  - repository-evidence-foundation
+  status: in-progress
+  feature: 2026-07-10-repository-access-process-safety
+  minimal_loop: false
+  notes: 任何真实仓库检索前都必须先经过本条，并证明 max file excerpt 与 timeout 后无迟到 evidence
+- slug: text-source-evidence-engine
+  description: 实现 literal ripgrep、当前文件核验、discovery merge 和 direct-mapping confirmed 的 classification truth table 基线
+  depends_on:
+  - repository-access-process-safety
+  status: in-progress
+  feature: 2026-07-10-text-source-evidence-engine
+  minimal_loop: false
+  notes: 同时覆盖 mapping positive 与 DTO definition test docs false-confirmation cases
+- slug: mcp-locate-surface
+  description: 通过 Nest standalone 和 stdio MCP 暴露带 Zod schema、structuredContent text parity、typed isError 与生命周期清理的 repo_nav_locate
+  depends_on:
+  - text-source-evidence-engine
+  status: in-progress
+  feature: 2026-07-10-mcp-locate-surface
+  minimal_loop: false
+  notes: MCP SDK v1.29.0 稳定 API 为规划基线，实现时重新核验并由 lockfile 固定稳定版本
+- slug: candidate-evidence-policy
+  description: 实现 sibling alias 候选扩展、confirmed candidate 互斥分类、promotion requirements 与稳定停止策略
+  depends_on:
+  - mcp-locate-surface
+  status: in-progress
+  feature: 2026-07-10-candidate-evidence-policy
+  minimal_loop: true
+  notes: 只代表受控 fixture 最小闭环，不是可发布里程碑
+- slug: codegraph-fallback-orchestration
+  description: 接入 CodeGraph 结构化 probe query，并在缺失、失败或无结果时执行可观察的 ripgrep fallback
+  depends_on:
+  - text-source-evidence-engine
+  status: in-progress
+  feature: 2026-07-10-codegraph-fallback-orchestration
+  minimal_loop: false
+  notes: 与 MCP candidate 分支并行，不解析 codegraph explore 人类文本作为 production 契约
+- slug: evidence-output-guardrails
+  description: 汇合 candidate 与 CodeGraph 分支，实现完整状态转换、结果预算、敏感 excerpt redaction、coverage nextActions 和错误输出 parity
+  depends_on:
+  - candidate-evidence-policy
+  - codegraph-fallback-orchestration
+  status: in-progress
+  feature: 2026-07-10-evidence-output-guardrails
+  minimal_loop: false
+  notes: filesystem process 安全已由 repository-access-process-safety 提供，本条只治理 EvidencePack 输出
+- slug: mvp-golden-regression-suite
+  description: 建立完整 positive negative failure lifecycle fixture family、稳定 snapshot evaluator 与受控大型合成仓库性能基线
+  depends_on:
+  - evidence-output-guardrails
+  status: in-progress
+  feature: 2026-07-10-mvp-golden-regression-suite
+  minimal_loop: false
+  notes: 覆盖 decoy、backend failure、状态转换、redaction、limits、shutdown 和 false-confirmation
+- slug: debug-cli-mcp-guide
+  description: 增加最小 debug CLI、backend probe、fixture 回放、MCP 安装示例和 MVP API 验收指南
+  depends_on:
+  - mvp-golden-regression-suite
+  status: in-progress
+  feature: 2026-07-10-debug-cli-mcp-guide
+  minimal_loop: false
+  notes: CLI 复用 application contract，不新增独立业务语义

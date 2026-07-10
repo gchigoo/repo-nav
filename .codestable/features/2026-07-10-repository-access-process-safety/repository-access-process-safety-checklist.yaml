@@ -1,0 +1,104 @@
+feature: 2026-07-10-repository-access-process-safety
+created: '2026-07-10'
+steps:
+- id: S1
+  action: 实现 root/path/file-type 防线
+  exit_signal: invalid repo、绝对或 .. path、symlink/reparse escape 与非 regular file 均返回唯一 typed code
+  verification: npm test -- --group repository-safety --case windows-reparse-policy
+  artifacts: [NodeRepositoryReader, filesystem fixture report]
+  status: pending
+- id: S2
+  action: 实现 reader limits 与 typed failures
+  exit_signal: file limit 独立映射 MAX_FILE_BYTES_REACHED，excerpt bytes/lines 两种触发均映射 MAX_EXCERPT_BYTES_REACHED；其余 typed failures 可区分且 handles 全关闭
+  verification: npm test -- --group reader-limits --group reader-failures
+  artifacts: [RepositoryAccessError contract, reader limit logs]
+  status: pending
+- id: S3
+  action: 实现 SafeProcessRunner contract 与 output isolation
+  exit_signal: argv/env/exit/spawn/output caps 可判别且 child stdout 不污染父 stdout
+  verification: npm test -- --group process-contract --group process-output-isolation
+  artifacts: [SafeProcessRunner, helper process fixtures]
+  status: pending
+- id: S4
+  action: 实现 abort/timeout/process-tree 与 reader late-result cleanup
+  exit_signal: direct child/descendant、timer/listener/stream/handle 全清理且 promise 只 settle 一次
+  verification: npm test -- --group process-cleanup --case reader-abort-no-late-completion
+  artifacts: [cleanup test logs, process inventory]
+  status: pending
+checks:
+- id: C1
+  item: RepositoryReader 签名保持 roadmap 4.3，失败使用 RepositoryAccessError 封闭 code
+  source: design 2.1
+  status: pending
+- id: C2
+  item: reader code 到 tool error/exclusion/limit/timeout 的唯一所有者已按表实现
+  source: design 2.1
+  status: pending
+- id: C3
+  item: 每次 read 前 target realpath 位于 root，open 后 fstat 为 regular file
+  source: design 1/2.2
+  status: pending
+- id: C4
+  item: 绝对 path、..、symlink、Windows reparse、目录和特殊文件正反 cases
+  source: design 3.1
+  status: pending
+- id: C5
+  item: SafeProcessRunner request/result discriminated union 完整
+  source: design 2.1
+  status: pending
+- id: C6
+  item: runner timeout/output/grace/argv/env 使用固定 finite-safe-integer 与 UTF-8 byte budgets，无效 request 不 spawn
+  source: design 1/2.1
+  status: pending
+- id: C7
+  item: invalid-request/spawn/non-zero/abort/timeout/stdout-limit/stderr-limit 可区分；前两种固定 null exit/signal 与空 outputs
+  source: design 2.1/3.1
+  status: pending
+- id: C8
+  item: shell=false、受控 env、argv 保边界且 child output 不 inherit 父 stdout
+  source: design 1/2.2/3.1
+  status: pending
+- id: C9
+  item: abort/timeout/cap overflow 清理 direct child 和 descendant
+  source: design 1/2.2/3.1
+  status: pending
+- id: C10
+  item: reader/process 均无迟到 completion、双 settle 或资源泄漏
+  source: design 2.2/3.1
+  status: pending
+- id: C11
+  item: safety module 不包含检索、classification、status 或 redaction
+  source: design 1/3.2
+  status: pending
+- id: C12
+  item: maxExcerptLines 精确折叠为 MAX_EXCERPT_BYTES_REACHED，SafeProcessRunner 使用 module 内部 class token，command/artifacts 可复核
+  source: design 2.1/2.3/3.4
+  status: pending
+dod:
+  commands:
+  - id: CMD-BUILD
+    command: npm run build
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-TYPECHECK
+    command: npm run typecheck
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-READER
+    command: npm test -- --group repository-safety --group reader-limits --group reader-failures
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-PROCESS
+    command: npm test -- --group process-contract --group process-output-isolation
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-CLEANUP
+    command: npm test -- --group process-cleanup --case reader-abort-no-late-completion
+    core: true
+    failure_handling: fix-or-block
+  evidence_required: [command_output, diff_summary, artifact_inventory, cleanup_evidence]
+  cleanliness:
+    debug_output: forbidden
+    temporary_todo_fixme: forbidden
+    commented_out_code: forbidden
+    unused_imports: forbidden

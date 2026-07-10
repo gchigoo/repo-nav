@@ -1,0 +1,94 @@
+---
+doc_type: feature-design-review
+feature: 2026-07-10-codegraph-fallback-orchestration
+status: passed
+reviewed: 2026-07-10
+round: 5
+---
+
+# codegraph-fallback-orchestration feature design ????
+
+## 1. Scope And Inputs
+
+- Design: `.codestable/features/2026-07-10-codegraph-fallback-orchestration/codegraph-fallback-orchestration-design.md`
+- Checklist: `.codestable/features/2026-07-10-codegraph-fallback-orchestration/codegraph-fallback-orchestration-checklist.yaml`
+- Intent / brainstorm: none
+- Roadmap: `.codestable/roadmap/repo-nav-mvp/repo-nav-mvp-roadmap.md`
+- Related docs: `.codestable/requirements/source-of-truth-evidence.md`?roadmap items?`.codestable/attention.md`
+- Code facts checked: baseline commit `04b04f7a1314f322e82157363ced505e2199cfc8`????? no-code baseline
+
+### Independent Review
+
+- Status: completed
+- Detection: native-agent
+- Provider / agent: `/root/design_review_core_surfaces`
+- Raw output: ???? reviewer ????????? Round 5 ? blocking / important finding
+- Merge policy: ? agent ???????? design/checklist??? YAML/cross-doc ??????? reviewer ??
+- Gate effect: none
+
+## 2. Design Summary
+
+- Goal: ?? CodeGraph JSON probe/query ? conservative completeness gate???????? ripgrep fallback?
+- Key contracts: Unicode query eligibility?1.1.6 freshness mapping?primary/secondary provenance?global abort vs local timeout?temp indexed smoke?
+- Steps: 4 ???? pending???? yes/no exit signal ???????
+- Checks: 12 ??????? design ???roadmap contract ? artifact
+- Baseline / validation: no-code Git baseline?build/typecheck ? feature-specific unit/Golden/MCP/docs ????? DoD
+
+## 3. Findings
+
+### resolved
+
+- probe/query/fallback?multi-input plan?real success JSON?freshness?secondary truth table?skip/unverified/abort cases ? daemon cleanup ?????
+
+### blocking
+
+- none
+
+### important
+
+- none
+
+### nit
+
+- none
+
+### suggestion
+
+- ?????? table-driven contract ? artifact inventory?????????? interface?status/reason ????????? design review?
+
+### learning
+
+- Roadmap ???????? feature ?????? seam?typed error?ordering ? failure-mode????????????
+
+### praise
+
+- ??? symbol hit ? literal completeness???????? unavailable backend?
+
+## 4. User Review Focus
+
+- ?????????????? explicit-symbol complete gate ?????? ripgrep????????? temp synthetic index?
+- implement ???????Unicode query eligibility?1.1.6 freshness mapping?primary/secondary provenance?global abort vs local timeout?temp indexed smoke?
+- code review / QA / acceptance ??????????????????????negative fixtures ? required artifacts
+
+## 5. Evidence Confidence Ledger
+
+| Check | Verdict | Evidence Class | Basis | Follow-up |
+|---|---|---|---|---|
+| Acceptance Coverage Matrix | pass | E+C | ???????? step???? evidence type | implementation ???? |
+| DoD Contract | pass | E | Design / Implementation / Review / QA / Acceptance?commands?artifacts ?? | none |
+| Steps and checks traceability | pass | E | steps/checks ?? pending ????? | none |
+| Roadmap contract compliance | pass | E+C | ??? roadmap 4.x hard contracts | none |
+| Module interface design | pass | E+C | depth?seam?ordering?error mode ? dependency strategy ??? | code review ???? |
+| Validation and artifacts | pass | E | ??? artifacts ????YAML/cross-doc ??? | QA ???? |
+
+Summary: E=6?C=4?H=0?H-only core checks=none?
+
+## 6. Residual Risk
+
+- CodeGraph JSON/version ??? temp index cleanup ??? binary QA??? fallback ??????
+- ???????????? review???? implementation?code review?QA ? acceptance ????????
+
+## 7. Verdict
+
+- Status: passed
+- Next: ?????? review?owner ??????? design ? `draft` ?? `approved`

@@ -1,0 +1,124 @@
+feature: 2026-07-10-mvp-golden-regression-suite
+created: '2026-07-10'
+steps:
+- id: S1
+  action: 去重并完成 shared GoldenCaseEvaluator
+  exit_signal: service/MCP 共用 manifest+companion full-projection evaluator，nextAction/promotion/provenance mutations、normalization allowlist 与既有 assertions 全通过
+  verification: npm run test:golden -- --case manifest-evaluator --case evaluator-negative-self-test
+  artifacts: [GoldenCaseEvaluator, companion snapshots, normalization allowlist, mutation self-test logs]
+  status: pending
+- id: S2
+  action: 完成 classification/candidate fixture family
+  exit_signal: class/reason/promotion 每个负责 code 均有 positive 与 false-positive guard
+  verification: npm run test:golden -- --group classification --group candidate
+  artifacts: [classification/candidate manifests, family report]
+  status: pending
+- id: S3
+  action: 完成 backend/security/final-status fixture family
+  exit_signal: backend/limit/exclusion/redaction/error/status codes 与 transition rows 全部覆盖
+  verification: npm run test:golden -- --group backend-transitions --group security --group final-status
+  artifacts: [transition/security manifests, family report]
+  status: pending
+- id: S4
+  action: 完成 protocol 与独立 lifecycle family
+  exit_signal: schema/parity/errors 与 frames/exit/context/child cleanup 使用正确 runner 并全部通过
+  verification: npm run test:mcp -- --group protocol --group lifecycle
+  artifacts: [protocol manifests, lifecycle report]
+  status: pending
+- id: S5
+  action: 生成 enum/fixture completeness 并运行 full suites
+  exit_signal: schema code 无漏项且 test:golden/test:mcp --all 全绿
+  verification: npm run test:golden -- --case fixture-completeness && npm run test:golden -- --all && npm run test:mcp -- --all
+  artifacts: [completeness report, full suite logs]
+  status: pending
+- id: S6
+  action: 建立 large-synthetic correctness/performance baseline
+  exit_signal: 固定 corpus 5 次 stable projection 一致并生成 schema-valid environment-aware report
+  verification: npm run test:golden -- --case large-synthetic-repository --report-performance
+  artifacts: [generator config/hash, performance JSON, cleanup evidence]
+  status: pending
+checks:
+- id: C1
+  item: success/error 由同一 GoldenCaseEvaluator 判别，service/MCP runner 只产生 observation
+  source: design 0/1/2.1
+  status: pending
+- id: C2
+  item: McpLifecycleCase 使用独立 runner/evaluator
+  source: design 0/1/3.1
+  status: pending
+- id: C3
+  item: success/error/lifecycle comparison contract、companion full projection 与 normalization allowlist 精确
+  source: design 1 evaluator table
+  status: pending
+- id: C4
+  item: evaluator mutations 对 wrong order/forbidden/coverage/exclusion/nextAction/promotion/provenance/parity 失败
+  source: design 1/3.1
+  status: pending
+- id: C5
+  item: fixture-family matrix 每行映射 manifest/case/runner/positive-negative assertion
+  source: design 1 family matrix
+  status: pending
+- id: C6
+  item: input/output/class/reason/discovery/promotion/operation/backend/limit/exclusion/redaction/nextAction/error enums 均有 owner case
+  source: design 1 completeness ownership
+  status: pending
+- id: C7
+  item: lifecycle 观察 context hook、child cleanup、frames、exit 与 maxShutdownMs
+  source: design 1/3.1
+  status: pending
+- id: C8
+  item: synthetic generator 固定 1000 files/50 modules/10 mappings/200 decoys/seed
+  source: design 1 performance contract
+  status: pending
+- id: C9
+  item: runtime performance report 含 config/hash/environment/5 runs/result/limits/cleanup，committed baseline 只经 review 更新
+  source: design 1 performance contract
+  status: pending
+- id: C10
+  item: correctness blocking，timing trend non-blocking且无单次硬阈值
+  source: design 1/3.1
+  status: pending
+- id: C11
+  item: fixtures 不含真实业务源码/网络/工作 repo index mutation
+  source: design 1/3.2
+  status: pending
+- id: C12
+  item: completeness/family/lifecycle/performance/full-suite artifacts 可盘点
+  source: design 3.4
+  status: pending
+dod:
+  commands:
+  - id: CMD-BUILD
+    command: npm run build
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-TYPECHECK
+    command: npm run typecheck
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-EVALUATOR
+    command: npm run test:golden -- --case manifest-evaluator --case evaluator-negative-self-test
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-FAMILIES
+    command: npm run test:golden -- --group classification --group candidate --group backend-transitions --group security --group final-status
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-MCP
+    command: npm run test:mcp -- --group protocol --group lifecycle
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-ALL
+    command: npm run test:golden -- --case fixture-completeness && npm run test:golden -- --all && npm run test:mcp -- --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-PERF
+    command: npm run test:golden -- --case large-synthetic-repository --report-performance
+    core: true
+    failure_handling: fix-or-block
+  evidence_required: [command_output, diff_summary, artifact_inventory, completeness_report, companion_snapshots, performance_report, committed_baseline]
+  cleanliness:
+    debug_output: forbidden
+    temporary_todo_fixme: forbidden
+    commented_out_code: forbidden
+    unused_imports: forbidden

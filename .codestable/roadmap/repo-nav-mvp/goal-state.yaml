@@ -1,6 +1,6 @@
 roadmap: repo-nav-mvp
 status: ready-to-dispatch
-baseline_ref: 04b04f7a1314f322e82157363ced505e2199cfc8
+baseline_ref: a356b6117ed65c2959132f0d6b62485295d60ccb
 current_feature_index: 0
 features:
 - slug: repository-evidence-foundation

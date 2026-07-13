@@ -11,6 +11,7 @@ import {
 import {
   NormalizedLocateAnchorSchema,
   NormalizedSearchTermSchema,
+  RepoLayerSchema,
   type LocateRequest,
   type NormalizedSearchTerm,
 } from './request.js';
@@ -32,6 +33,7 @@ export const BackendSearchRequestSchema = z
     terms: z.array(NormalizedSearchTermSchema).readonly(),
     anchors: z.array(NormalizedLocateAnchorSchema).readonly(),
     negativeTerms: z.array(NormalizedSearchTermSchema).readonly(),
+    layers: z.array(RepoLayerSchema).readonly(),
     maxHits: z.int().positive(),
   })
   .readonly();
@@ -74,6 +76,7 @@ export const BackendSearchResultSchema = z
     health: BackendHealthSchema,
     hits: z.array(BackendHitSchema).readonly(),
     complete: z.boolean(),
+    canSkipFallbackIfVerified: z.boolean().optional(),
   })
   .readonly();
 export type BackendSearchResult = z.infer<typeof BackendSearchResultSchema>;

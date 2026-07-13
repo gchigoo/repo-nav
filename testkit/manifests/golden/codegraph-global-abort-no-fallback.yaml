@@ -1,0 +1,19 @@
+schemaVersion: '1.0'
+id: codegraph-global-abort-no-fallback
+kind: success
+fixtureRoot: testkit/fixtures/codegraph/repository
+request:
+  repoPath: testkit/fixtures/codegraph/repository
+  question: Abort the primary query.
+  terms: [targetField]
+  termCase: sensitive
+  limits:
+    maxCandidates: 0
+expected:
+  ok: true
+  status: timeout
+  confirmed: []
+  candidates: []
+  forbiddenEvidenceIds: []
+  requiredCoverageCodes: [BACKEND_ABORTED, TIMEOUT_REACHED]
+  minimumExclusionCounts: {}

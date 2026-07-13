@@ -1,0 +1,22 @@
+schemaVersion: '1.0'
+id: codegraph-secondary-provenance-table
+kind: success
+fixtureRoot: testkit/fixtures/codegraph/repository
+request:
+  repoPath: testkit/fixtures/codegraph/repository
+  question: Preserve secondary-only provenance.
+  terms: [opaqueSearchTerm]
+  termCase: sensitive
+  layers: [server]
+expected:
+  ok: true
+  status: ok
+  confirmed: []
+  candidates:
+    - file: server/secondary.ts
+      contains: opaqueSecondary
+      role: related
+      reasonCodes: [SECONDARY_BACKEND_HIT]
+  forbiddenEvidenceIds: []
+  requiredCoverageCodes: []
+  minimumExclusionCounts: {}

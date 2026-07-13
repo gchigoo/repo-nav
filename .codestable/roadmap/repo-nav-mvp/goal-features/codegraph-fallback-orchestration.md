@@ -3,7 +3,7 @@ doc_type: roadmap-goal-feature
 roadmap: repo-nav-mvp
 feature: 2026-07-10-codegraph-fallback-orchestration
 roadmap_item: codegraph-fallback-orchestration
-status: pending
+status: accepted
 ---
 
 # codegraph-fallback-orchestration Goal 执行规格

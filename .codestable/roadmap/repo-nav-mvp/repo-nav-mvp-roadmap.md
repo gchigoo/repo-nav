@@ -693,7 +693,7 @@ discovery:v1\0{POSIX-normalized-relative-file}\0{start}\0{end}\0{sha256(unredact
 6. **`codegraph-fallback-orchestration`** — 接入 CodeGraph probe/query JSON adapter，并实现 missing/no-result/failure 时可观察的 ripgrep fallback 与 index health。
    - 所属模块：Repository Backends、Evidence Engine
    - 依赖：`text-source-evidence-engine`
-   - 状态：in-progress
+   - 状态：done
    - 对应 feature：`2026-07-10-codegraph-fallback-orchestration`
    - 备注：与 MCP/candidate 分支可并行；当前环境 CodeGraph 1.1.6 提供结构化命令，但实现以 runtime probe 和 adapter compatibility tests 为准。
 

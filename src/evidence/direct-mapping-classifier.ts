@@ -11,11 +11,13 @@ import {
   type RepoLayer,
 } from '../contracts/index.js';
 import type { DiscoveryRecord } from './discovery-record.js';
+import { secondaryBackendCandidateReasons } from './candidate-policy.js';
 
 export interface ClassificationContext {
   readonly anchors: readonly NormalizedLocateAnchor[];
   readonly layers: readonly RepoLayer[];
   readonly negativeTerms: readonly NormalizedSearchTerm[];
+  readonly primaryAttempted?: boolean;
 }
 
 export interface ClassificationResult {
@@ -627,6 +629,18 @@ function classifyRecord(
         'USER_SEMANTIC_CONFIRMATION',
         'DIRECT_REFERENCE_REQUIRED',
       ],
+    };
+  }
+  const secondaryReasons = secondaryBackendCandidateReasons(
+    record.discoveredBy,
+    context.primaryAttempted === true,
+  );
+  if (secondaryReasons.length > 0) {
+    return {
+      evidenceClass: 'candidate',
+      role: 'related',
+      reasonCodes: secondaryReasons,
+      promotionRequirements: ['DIRECT_REFERENCE_REQUIRED'],
     };
   }
   return undefined;

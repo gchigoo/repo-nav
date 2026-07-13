@@ -1,0 +1,30 @@
+[
+  {
+    "node": {
+      "id": "function:fixture",
+      "kind": "function",
+      "name": "AlphaMapping",
+      "qualifiedName": "AlphaMapping",
+      "filePath": "src/alpha.ts",
+      "language": "typescript",
+      "startLine": 2,
+      "endLine": 4,
+      "signature": "(sourceId: string): string",
+      "futureField": true
+    },
+    "score": 90.0,
+    "futureResultField": "allowed"
+  },
+  {
+    "node": {
+      "id": "function:decoy",
+      "kind": "function",
+      "name": "AlphaMappingHelper",
+      "qualifiedName": "AlphaMappingHelper",
+      "filePath": "src/helper.ts",
+      "startLine": 8,
+      "endLine": 10
+    },
+    "score": 80.0
+  }
+]

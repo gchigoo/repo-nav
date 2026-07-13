@@ -1,0 +1,19 @@
+schemaVersion: '1.0'
+id: backend-unavailable
+kind: success
+fixtureRoot: testkit/fixtures/codegraph/repository
+request:
+  repoPath: testkit/fixtures/codegraph/repository
+  question: Where is the source field mapped?
+  terms: [targetField, row.source_field]
+  termCase: sensitive
+  limits:
+    maxCandidates: 0
+expected:
+  ok: true
+  status: backend_unavailable
+  confirmed: []
+  candidates: []
+  forbiddenEvidenceIds: []
+  requiredCoverageCodes: [CODEGRAPH_UNAVAILABLE, RIPGREP_UNAVAILABLE]
+  minimumExclusionCounts: {}

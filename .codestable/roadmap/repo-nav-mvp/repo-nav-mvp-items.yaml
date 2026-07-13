@@ -44,7 +44,7 @@ items:
   description: 接入 CodeGraph 结构化 probe query，并在缺失、失败或无结果时执行可观察的 ripgrep fallback
   depends_on:
   - text-source-evidence-engine
-  status: in-progress
+  status: done
   feature: 2026-07-10-codegraph-fallback-orchestration
   minimal_loop: false
   notes: 与 MCP candidate 分支并行，不解析 codegraph explore 人类文本作为 production 契约

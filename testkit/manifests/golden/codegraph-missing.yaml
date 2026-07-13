@@ -1,0 +1,23 @@
+schemaVersion: '1.0'
+id: codegraph-missing
+kind: success
+fixtureRoot: testkit/fixtures/codegraph/repository
+request:
+  repoPath: testkit/fixtures/codegraph/repository
+  question: Where is the source field mapped?
+  terms: [targetField, row.source_field]
+  termCase: sensitive
+  limits:
+    maxCandidates: 0
+expected:
+  ok: true
+  status: ok
+  confirmed:
+    - file: server/mapping.ts
+      contains: 'targetField = row.source_field'
+      role: value-mapping
+      reasonCodes: [DIRECT_ALIAS_MAPPING, EXACT_TERM_MATCH]
+  candidates: []
+  forbiddenEvidenceIds: []
+  requiredCoverageCodes: [CODEGRAPH_INDEX_MISSING]
+  minimumExclusionCounts: {}

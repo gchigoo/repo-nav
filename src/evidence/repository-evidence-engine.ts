@@ -12,6 +12,7 @@ import {
   resolveLocateLimits,
   type BackendAttempt,
   type BackendHealth,
+  type BackendSearchResult,
   type ExclusionReasonCode,
   type LimitReasonCode,
   type LocateExecutionContext,
@@ -24,6 +25,7 @@ import {
   type RepositoryEvidenceService,
   type RepositoryReader,
   type RepositorySearchBackend,
+  type SearchBackendId,
 } from '../contracts/index.js';
 import {
   REPOSITORY_READER,
@@ -108,6 +110,7 @@ function uniqueSchemaOrder<T extends string>(
 }
 
 function attemptFor(
+  backend: SearchBackendId,
   health: BackendHealth,
   hitCount: number,
 ): BackendAttempt {
@@ -118,11 +121,47 @@ function attemptFor(
         ? 'unavailable'
         : 'failed';
   return Object.freeze({
-    backend: 'ripgrep',
+    backend,
     status,
     hitCount,
     ...(health.reasonCode === undefined ? {} : { reasonCode: health.reasonCode }),
   });
+}
+
+function indexStateFor(
+  health: BackendHealth | undefined,
+): 'available' | 'missing' | 'unavailable' | 'error' | 'unknown' {
+  return health?.state ?? 'unknown';
+}
+
+function indexFreshnessFor(
+  health: BackendHealth | undefined,
+): 'not-applicable' | 'unknown' | 'possibly-stale' {
+  if (health === undefined || health.state === 'missing' || health.state === 'unavailable') {
+    return 'not-applicable';
+  }
+  return health.possibleStaleIndex === true ? 'possibly-stale' : 'unknown';
+}
+
+function selectBackendHits(
+  results: readonly BackendSearchResult[],
+  maxFiles: number,
+): {
+  readonly hits: readonly BackendSearchResult['hits'][number][];
+  readonly filesTruncated: boolean;
+} {
+  const hits: BackendSearchResult['hits'][number][] = [];
+  const files = new Set<string>();
+  let filesTruncated = false;
+  for (const hit of results.flatMap((result) => result.hits).sort(compareBackendHit)) {
+    if (!files.has(hit.file) && files.size >= maxFiles) {
+      filesTruncated = true;
+      continue;
+    }
+    files.add(hit.file);
+    hits.push(hit);
+  }
+  return Object.freeze({ hits: Object.freeze(hits), filesTruncated });
 }
 
 function toolError(error: unknown): LocateResult {
@@ -209,38 +248,120 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
         );
       }
 
+      const codegraph = this.backends.find(
+        (backend) => backend.id === 'codegraph',
+      );
       const ripgrep = this.backends.find((backend) => backend.id === 'ripgrep');
-      if (ripgrep === undefined) {
+      if (codegraph === undefined && ripgrep === undefined) {
         return this.backendUnavailableResult(repositoryRoot, normalizedTerms);
       }
+
       const maximumHits =
         limits.maxFiles * Math.max(1, limits.maxConfirmed + limits.maxCandidates);
-      const backendResult = await ripgrep.search(
-        {
-          repositoryRoot,
-          terms: normalizedTerms,
-          anchors,
-          negativeTerms,
-          maxHits: maximumHits,
-        },
-        controller.signal,
-      );
+      const backendRequest = Object.freeze({
+        repositoryRoot,
+        terms: normalizedTerms,
+        anchors,
+        negativeTerms,
+        layers: request.layers ?? [],
+        maxHits: maximumHits,
+      });
+      let codegraphResult: BackendSearchResult | undefined;
+      let ripgrepResult: BackendSearchResult | undefined;
+      let skipFallback = false;
+      let fallbackChecked = false;
 
-      const selectedHits = [] as typeof backendResult.hits[number][];
-      const selectedFiles = new Set<string>();
-      let filesTruncated = false;
-      for (const hit of [...backendResult.hits].sort(compareBackendHit)) {
-        if (!selectedFiles.has(hit.file) && selectedFiles.size >= limits.maxFiles) {
-          filesTruncated = true;
-          continue;
+      if (codegraph !== undefined) {
+        codegraphResult = await codegraph.search(
+          backendRequest,
+          controller.signal,
+        );
+        if (controller.signal.aborted) {
+          return this.timeoutResult(
+            repositoryRoot,
+            normalizedTerms,
+            context.signal.aborted,
+            limits.timeoutMs,
+            [attemptFor('codegraph', codegraphResult.health, codegraphResult.hits.length)],
+            codegraphResult.health,
+          );
         }
-        selectedFiles.add(hit.file);
-        selectedHits.push(hit);
+        if (
+          codegraphResult.health.state === 'available' &&
+          codegraphResult.complete &&
+          codegraphResult.canSkipFallbackIfVerified === true &&
+          codegraphResult.hits.length > 0
+        ) {
+          const primarySelection = selectBackendHits(
+            [codegraphResult],
+            limits.maxFiles,
+          );
+          const primaryMerged = await verifyAndMergeBackendHits({
+            repositoryRoot,
+            hits: primarySelection.hits,
+            terms: termsForVerification,
+            reader: this.reader,
+            limits: {
+              maxFileBytes: DEFAULT_MAX_FILE_BYTES,
+              maxExcerptBytes: CLASSIFICATION_MAX_BYTES,
+              maxExcerptLines: CLASSIFICATION_MAX_LINES,
+            },
+            maxMatchesPerHit: Math.max(
+              1,
+              limits.maxConfirmed + limits.maxCandidates,
+            ),
+            signal: controller.signal,
+          });
+          const primaryClassified = classifyDiscoveryRecords(
+            primaryMerged.records,
+            {
+              anchors,
+              layers: request.layers ?? [],
+              negativeTerms,
+              primaryAttempted: true,
+            },
+          );
+          skipFallback =
+            !primarySelection.filesTruncated &&
+            !primaryMerged.aborted &&
+            primaryMerged.unverifiedLocations === 0 &&
+            primaryMerged.failures.length === 0 &&
+            primaryClassified.confirmed.some(
+              (evidence) =>
+                evidence.reasonCodes.includes('EXACT_SYMBOL_ANCHOR') &&
+                (evidence.role === 'definition' ||
+                  evidence.role === 'execution-site'),
+            );
+        }
+        if (controller.signal.aborted) {
+          return this.timeoutResult(
+            repositoryRoot,
+            normalizedTerms,
+            context.signal.aborted,
+            limits.timeoutMs,
+            [attemptFor('codegraph', codegraphResult.health, codegraphResult.hits.length)],
+            codegraphResult.health,
+          );
+        }
       }
+
+      if (!skipFallback && ripgrep !== undefined) {
+        fallbackChecked = codegraphResult !== undefined;
+        ripgrepResult = await ripgrep.search(
+          backendRequest,
+          controller.signal,
+        );
+      }
+
+      const backendResults = [codegraphResult, ripgrepResult].filter(
+        (result): result is BackendSearchResult => result !== undefined,
+      );
+      const selected = selectBackendHits(backendResults, limits.maxFiles);
+      const filesTruncated = selected.filesTruncated;
 
       const merged = await verifyAndMergeBackendHits({
         repositoryRoot,
-        hits: selectedHits,
+        hits: selected.hits,
         terms: termsForVerification,
         reader: this.reader,
         limits: {
@@ -264,6 +385,7 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
           anchors,
           layers: request.layers ?? [],
           negativeTerms,
+          primaryAttempted: codegraphResult !== undefined,
         },
         initialExclusions,
       );
@@ -351,10 +473,17 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
         classified.candidates.length > limits.maxCandidates ||
         candidatePolicy.truncated;
 
+      const strategyComplete = skipFallback
+        ? codegraphResult?.health.state === 'available' &&
+          codegraphResult.complete
+        : ripgrepResult?.health.state === 'available' && ripgrepResult.complete;
+      const finalBackendResult = ripgrepResult ?? codegraphResult;
       const limitReasons: LimitReasonCode[] = [];
       if (
         filesTruncated ||
-        (backendResult.health.state === 'available' && !backendResult.complete)
+        (strategyComplete !== true &&
+          finalBackendResult?.health.state === 'available' &&
+          finalBackendResult.complete === false)
       ) {
         limitReasons.push('MAX_FILES_REACHED');
       }
@@ -382,14 +511,19 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
         internalDeadlineReached ||
         merged.aborted ||
         context.signal.aborted ||
-        backendResult.health.reasonCode === 'BACKEND_ABORTED'
+        (ripgrepResult?.health.reasonCode === 'BACKEND_ABORTED' &&
+          strategyComplete !== true)
       ) {
         limitReasons.push('TIMEOUT_REACHED');
       }
       const limitsReached = uniqueSchemaOrder(limitReasons, LIMIT_REASON_CODES);
+      const finalHealth = finalBackendResult?.health ?? {
+        state: 'unavailable' as const,
+        reasonCode: 'RIPGREP_UNAVAILABLE' as const,
+      };
       const status = this.statusFor(
-        backendResult.health,
-        backendResult.complete,
+        finalHealth,
+        strategyComplete === true,
         confirmed.length + candidates.length,
         limitsReached,
         context.signal.aborted,
@@ -398,13 +532,34 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
         status,
         candidates.length > 0,
         filesTruncated ||
-          (backendResult.health.state === 'available' &&
-            !backendResult.complete) ||
+          (strategyComplete !== true &&
+            finalBackendResult?.health.state === 'available') ||
           confirmedTruncated ||
           candidatesTruncated,
         context.signal.aborted,
         limits.timeoutMs,
+        codegraphResult?.health.state === 'missing',
       );
+      const attempts = Object.freeze([
+        ...(codegraphResult === undefined
+          ? []
+          : [
+              attemptFor(
+                'codegraph',
+                codegraphResult.health,
+                codegraphResult.hits.length,
+              ),
+            ]),
+        ...(ripgrepResult === undefined
+          ? []
+          : [
+              attemptFor(
+                'ripgrep',
+                ripgrepResult.health,
+                ripgrepResult.hits.length,
+              ),
+            ]),
+      ]);
 
       return {
         ok: true,
@@ -416,10 +571,10 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
           confirmed,
           candidates,
           coverage: {
-            backends: [attemptFor(backendResult.health, backendResult.hits.length)],
-            fallbackChecked: false,
-            indexState: 'unknown',
-            indexFreshness: 'not-applicable',
+            backends: attempts,
+            fallbackChecked,
+            indexState: indexStateFor(codegraphResult?.health),
+            indexFreshness: indexFreshnessFor(codegraphResult?.health),
             limitsReached,
             exclusionSummary: classified.exclusionSummary,
           },
@@ -474,6 +629,7 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
     retryableLimitReached: boolean,
     callerAborted: boolean,
     timeoutMs: number,
+    initializeCodeGraph = false,
   ): readonly NextActionCode[] {
     const actions: NextActionCode[] = [];
     if (status === 'no_result') {
@@ -481,6 +637,12 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
     }
     if (hasCandidates) {
       actions.push('CONFIRM_CANDIDATE');
+    }
+    if (
+      initializeCodeGraph &&
+      (status === 'no_result' || status === 'backend_unavailable')
+    ) {
+      actions.push('INITIALIZE_CODEGRAPH');
     }
     if (
       (status === 'partial' && retryableLimitReached) ||
@@ -496,6 +658,15 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
     normalizedTerms: ReturnType<typeof normalizeSearchTerms>,
     callerAborted: boolean,
     timeoutMs: number,
+    attempts: readonly BackendAttempt[] = [
+      {
+        backend: 'ripgrep',
+        status: 'skipped',
+        reasonCode: 'BACKEND_ABORTED',
+        hitCount: 0,
+      },
+    ],
+    codeGraphHealth?: BackendHealth,
   ): LocateResult {
     return {
       ok: true,
@@ -507,17 +678,10 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
         confirmed: [],
         candidates: [],
         coverage: {
-          backends: [
-            {
-              backend: 'ripgrep',
-              status: 'skipped',
-              reasonCode: 'BACKEND_ABORTED',
-              hitCount: 0,
-            },
-          ],
+          backends: attempts,
           fallbackChecked: false,
-          indexState: 'unknown',
-          indexFreshness: 'not-applicable',
+          indexState: indexStateFor(codeGraphHealth),
+          indexFreshness: indexFreshnessFor(codeGraphHealth),
           limitsReached: ['TIMEOUT_REACHED'],
           exclusionSummary: {},
         },

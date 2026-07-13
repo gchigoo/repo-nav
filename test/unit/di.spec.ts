@@ -16,6 +16,7 @@ import {
 } from '../../src/contracts/index.js';
 import { RepositoryEvidenceEngine } from '../../src/evidence/repository-evidence-engine.js';
 import { NodeMcpStdioHost } from '../../src/mcp/mcp-stdio-host.js';
+import { CodeGraphBackend } from '../../src/repository/codegraph-backend.js';
 import { RipgrepBackend } from '../../src/repository/ripgrep-backend.js';
 import {
   MCP_STDIO_HOST,
@@ -112,9 +113,13 @@ describe.runIf(isSelected(identity))('NestJS standalone DI assembly', () => {
         REPOSITORY_EVIDENCE_SERVICE,
       );
 
-      expect(backends).toHaveLength(1);
-      expect(backends[0]).toBeInstanceOf(RipgrepBackend);
-      expect(backends.map((backend) => backend.id)).toEqual(['ripgrep']);
+      expect(backends).toHaveLength(2);
+      expect(backends[0]).toBeInstanceOf(CodeGraphBackend);
+      expect(backends[1]).toBeInstanceOf(RipgrepBackend);
+      expect(backends.map((backend) => backend.id)).toEqual([
+        'codegraph',
+        'ripgrep',
+      ]);
       expect(Object.isFrozen(backends)).toBe(true);
       await expect(
         reader.resolveRoot(request.repoPath, new AbortController().signal),

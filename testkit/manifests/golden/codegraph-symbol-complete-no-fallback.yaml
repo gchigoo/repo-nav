@@ -1,0 +1,26 @@
+schemaVersion: '1.0'
+id: codegraph-symbol-complete-no-fallback
+kind: success
+fixtureRoot: testkit/fixtures/codegraph/repository
+request:
+  repoPath: testkit/fixtures/codegraph/repository
+  question: Locate the exact symbol definition.
+  terms: [AlphaMapping]
+  termCase: sensitive
+  anchors:
+    - kind: symbol
+      value: AlphaMapping
+  limits:
+    maxCandidates: 0
+expected:
+  ok: true
+  status: ok
+  confirmed:
+    - file: server/definition.ts
+      contains: AlphaMapping
+      role: execution-site
+      reasonCodes: [EXACT_SYMBOL_ANCHOR]
+  candidates: []
+  forbiddenEvidenceIds: []
+  requiredCoverageCodes: []
+  minimumExclusionCounts: {}

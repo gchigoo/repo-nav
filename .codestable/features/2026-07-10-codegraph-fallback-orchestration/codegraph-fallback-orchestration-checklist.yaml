@@ -6,74 +6,74 @@ steps:
   exit_signal: available/missing/unavailable/error/stale/malformed/additional-field cases 映射唯一且 fail closed
   verification: npm test -- --group codegraph-probe --group codegraph-parser
   artifacts: [CodeGraphBackend, versioned JSON fixtures, health mapping report]
-  status: pending
+  status: done
 - id: S2
   action: 实现多输入 query planner 与 completeness contract
   exit_signal: Unicode identifier grammar、stable entries/argv/case/unsupported dimensions/maxHits/remaining=0/dedup/complete 全部可判定
   verification: npm test -- --group codegraph-query-plan
   artifacts: [CodeGraphQueryPlan, argv snapshots]
-  status: pending
+  status: done
 - id: S3
   action: 实现 Evidence Engine fallback orchestration
   exit_signal: truth table 的 global-abort/no-fallback、local-timeout/fallback、attempt/hit-unverified/skip/provenance三格/final status 路径经 Golden cases 通过
   verification: npm run test:golden -- --case codegraph-missing --case codegraph-no-result --case codegraph-failed --case codegraph-incomplete --case codegraph-global-abort-no-fallback --case codegraph-local-timeout-fallback --case codegraph-hit-unverified --case codegraph-symbol-complete-no-fallback --case codegraph-secondary-provenance-table --case backend-unavailable
   artifacts: [fallback policy, transition fixtures, coverage snapshots]
-  status: pending
+  status: done
 - id: S4
   action: 验证真实 indexed temp-repo CodeGraph success path
   exit_signal: 锁定版本的 probe/query JSON 可解析，temp index/child/daemon 全清理且工作 repo 未被初始化
   verification: npm test -- --group codegraph-live-smoke --case indexed-temp-repo
   artifacts: [live smoke record, version/capability log, cleanup evidence]
-  status: pending
+  status: done
 checks:
 - id: C1
   item: CodeGraph provider 始终位于 backend collection 首位，binary missing 不静默移除
   source: design 1/2.3
-  status: pending
+  status: passed
 - id: C2
   item: status/query 全部穿过 F2 SafeProcessRunner 与同一 AbortSignal/caps
   source: design 1/2.2
-  status: pending
+  status: passed
 - id: C3
   item: probe/query observations 与 1.1.6 pendingChanges/worktreeMismatch/reindex freshness 按 truth table 唯一映射
   source: design 1 truth table
-  status: pending
+  status: passed
 - id: C4
   item: Unicode identifier grammar 决定 eligible term；每项生成单 search argv，共享 total maxHits且remaining=0不 spawn
   source: design 1 query plan
-  status: pending
+  status: passed
 - id: C5
   item: unsupported dimensions/case-insensitive/limit 明确使 strategy incomplete
   source: design 1 query plan
-  status: pending
+  status: passed
 - id: C6
   item: 只有保守 explicit-symbol gate 可跳过 ripgrep
   source: design 1/3.1
-  status: pending
+  status: passed
 - id: C7
   item: non-global process failure/local timeout/incomplete/unverified 在预算内 fallback；caller/global abort 不启动 ripgrep
   source: design 1 truth table
-  status: pending
+  status: passed
 - id: C8
   item: primary-only无secondary reason、secondary-only可生成、merged只合并provenance，均不生成第二个 public evidence
   source: design 1/2.2
-  status: pending
+  status: passed
 - id: C9
   item: parser additional fields 宽容，required fields missing/wrong type fail closed
   source: design 2.1
-  status: pending
+  status: passed
 - id: C10
   item: temp synthetic repo 覆盖成功 query JSON，结束后无 child/daemon/index 残留且工作 repo 无 mutation
   source: design 2.4/3.1
-  status: pending
+  status: passed
 - id: C11
   item: 不解析 explore/node/stderr text，不实现 callers/impact
   source: design 1/3.2
-  status: pending
+  status: passed
 - id: C12
   item: query/transition/version/smoke/cleanup artifacts 可盘点
   source: design 3.4
-  status: pending
+  status: passed
 dod:
   commands:
   - id: CMD-BUILD

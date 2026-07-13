@@ -1,0 +1,19 @@
+# F6 implementation scope approved by the feature design.
+src/contracts
+src/evidence
+src/repository
+src/index.ts
+test/unit
+test/golden
+test/mcp
+testkit/contracts
+testkit/fixtures/codegraph
+testkit/fixtures/mcp
+testkit/manifests/golden
+testkit/runners
+.codestable/roadmap/repo-nav-mvp/goal-state.yaml
+.codestable/roadmap/repo-nav-mvp/goal-features/codegraph-fallback-orchestration.md
+.codestable/roadmap/repo-nav-mvp/repo-nav-mvp-items.yaml
+.codestable/roadmap/repo-nav-mvp/repo-nav-mvp-roadmap.md
+.codestable/architecture/ARCHITECTURE.md
+.codestable/architecture/system-repo-nav-foundation.md

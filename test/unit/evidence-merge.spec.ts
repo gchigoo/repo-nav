@@ -41,6 +41,10 @@ class FakeReader implements RepositoryReader {
     return this.rangeLocation;
   }
 
+  public async readWindow(): Promise<EvidenceLocation> {
+    return this.rangeLocation;
+  }
+
   public async findMatches(): Promise<readonly EvidenceLocation[]> {
     return this.foundLocations;
   }

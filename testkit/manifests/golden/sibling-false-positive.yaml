@@ -1,0 +1,25 @@
+schemaVersion: '1.0'
+id: sibling-false-positive
+kind: success
+fixtureRoot: testkit/fixtures/candidate-policy
+request:
+  repoPath: testkit/fixtures/candidate-policy
+  question: Exclude similar text outside the entity container.
+  terms: [hcpId, row.hcp_id]
+  termCase: sensitive
+  layers: [server]
+expected:
+  ok: true
+  status: ok
+  confirmed:
+    - file: server/mapping.fixture
+      contains: 'hcpId: row.hcp_id'
+      role: value-mapping
+  candidates:
+    - file: server/mapping.fixture
+      contains: hcpName
+      role: related
+  forbiddenEvidenceIds:
+    - evidence:v1:dc7e46a20ef89e12a87008a440bab96154f961cda087c622bed853b670005291
+  requiredCoverageCodes: []
+  minimumExclusionCounts: {}

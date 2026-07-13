@@ -23,6 +23,12 @@ export const RUNNER_SELECTIONS: Readonly<
       'evidence-merge',
       'direct-mapping-classifier',
       'evidence-id-order',
+      'candidate-truth-table',
+      'candidate-discovery',
+      'candidate-context',
+      'candidate-classification',
+      'candidate-budget',
+      'candidate-permutation',
     ]),
     cases: new Set([
       'runner-smoke',
@@ -39,6 +45,12 @@ export const RUNNER_SELECTIONS: Readonly<
       'evidence-merge',
       'direct-mapping-classifier',
       'evidence-id-order',
+      'secondary-backend-provenance-table',
+      'candidate-discovery',
+      'candidate-context',
+      'discovery-key-mutual-exclusion',
+      'candidate-budget',
+      'candidate-permutation',
     ]),
   }),
   golden: Object.freeze({
@@ -46,6 +58,7 @@ export const RUNNER_SELECTIONS: Readonly<
       'runner-smoke',
       'text-engine-classifier',
       'text-evidence-engine',
+      'candidate-policy',
     ]),
     cases: new Set([
       'runner-smoke',
@@ -59,6 +72,9 @@ export const RUNNER_SELECTIONS: Readonly<
       'ripgrep-failed',
       'ripgrep-incomplete',
       'ripgrep-timeout',
+      'sibling-candidate',
+      'alias-candidate',
+      'sibling-false-positive',
     ]),
   }),
   mcp: Object.freeze({
@@ -79,6 +95,7 @@ export const RUNNER_SELECTIONS: Readonly<
       'request-cancellation-cleanup',
       'stdio-clean-output',
       'stdio-graceful-shutdown',
+      'candidate-minimal-loop',
     ]),
   }),
 });

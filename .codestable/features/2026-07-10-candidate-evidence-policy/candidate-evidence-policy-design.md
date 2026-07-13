@@ -128,7 +128,8 @@ interface CandidatePolicyResult {
 - policy 不接 backend/process/filesystem；contexts 由 engine 从 F3 已核验 window 构造，不能扩到 12 行/4 KiB 之外，也不能替换 seed location/discovery key。
 - 新 sibling/alias candidate 必须在 context 内定位自己的精确 line range/excerpt slice，继承 filesystem verification provenance 后计算独立 discovery key；不得复用 seed key 或改变 seed confirmed ID。
 - context-derived candidate 的 public provenance 固定为 `discoveredBy=['filesystem']`、`verifiedBy='filesystem'`、`operations=['FILESYSTEM_FIND_MATCHES']`；seed backend sources 只保留在内部 `seedDiscoveryKey` relation，不得复制到新 candidate。非 derived 的 F3/F6 records 保留各自真实 provenance。
-- `seedDiscoveryKey` 必须引用 input records 中唯一现存 key；同 key contexts 不得有冲突或重叠 line range。referential-integrity failure 是 internal invariant error，不静默选择其一。
+- engine 可为 CandidatePolicy 另行读取一个以 `focusLines` 为中心、最多 12 行/4 KiB 的 filesystem-verified window；该 window 必须与 seed 同 file、完整包含 focus range 且 focus slice 与 `focusExcerpt` 规范化后相等。它不替换 DiscoveryRecord/public confirmed location 或 discovery key，因此扩展前后 seed ID 不变。
+- `seedDiscoveryKey` 必须引用 input records 中唯一现存 key；同 key contexts 不得有冲突或重叠 line range。context 允许比 record location 向前/后扩展，但不得替换或遗漏已核验 focus slice；referential-integrity failure 是 internal invariant error，不静默选择其一。
 - `truncated=true` 的唯一含义是至少一个 eligible candidate 因 `maxCandidates` 未输出；engine 据此记录 `MAX_CANDIDATES_REACHED`。
 - 公共 output 仍服从 roadmap 4.6/4.7；policy 返回无 `id` 的 internal drafts，不计算 public ID、不改变 confirmed；engine 在 policy 后统一按 draft discovery key/class/role 生成 public ID。
 

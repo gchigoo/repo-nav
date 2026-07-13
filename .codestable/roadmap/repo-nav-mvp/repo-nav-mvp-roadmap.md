@@ -686,7 +686,7 @@ discovery:v1\0{POSIX-normalized-relative-file}\0{start}\0{end}\0{sha256(unredact
 5. **`candidate-evidence-policy`** — 实现 sibling/alias 局部扩展、confirmed/candidate 互斥分类、promotion requirements 和稳定停止策略。
    - 所属模块：Evidence Engine、Verification Kit
    - 依赖：`mcp-locate-surface`
-   - 状态：in-progress
+   - 状态：done
    - 对应 feature：`2026-07-10-candidate-evidence-policy`
    - 备注：本条是受控 fixture 的最小闭环，不是可发布里程碑；必须经 MCP 返回 direct mapping confirmed、sibling candidate，并拒绝相似但无关 decoy。
 

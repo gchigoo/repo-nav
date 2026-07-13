@@ -6,6 +6,12 @@ import {
   type LocateStatus,
   type RepositoryEvidenceService,
 } from '../../../src/contracts/index.js';
+import { RepositoryEvidenceEngine } from '../../../src/evidence/repository-evidence-engine.js';
+import { NodeRepositoryReader } from '../../../src/repository/node-repository-reader.js';
+import {
+  CandidateFixtureBackend,
+  candidateFixtureRoot,
+} from '../candidate-policy/candidate-fixture-backend.js';
 
 const FIXTURE_EVIDENCE_ID = `evidence:v1:${'0'.repeat(64)}`;
 
@@ -117,6 +123,22 @@ export class FixtureEvidenceService implements RepositoryEvidenceService {
     request: LocateRequest,
     context: LocateExecutionContext,
   ): Promise<LocateResult> {
+    if (request.question === 'candidate-minimal-loop') {
+      const engine = new RepositoryEvidenceEngine(
+        [new CandidateFixtureBackend()],
+        new NodeRepositoryReader(),
+      );
+      return await engine.locate(
+        {
+          ...request,
+          repoPath: candidateFixtureRoot,
+          terms: ['hcpId', 'row.hcp_id'],
+          termCase: 'sensitive',
+          layers: ['server'],
+        },
+        context,
+      );
+    }
     if (request.question === 'throw:INTERNAL_ERROR') {
       throw new Error(
         'Unsafe internal failure C:\\private\\repo\\secret.ts\n    at fixture (raw stderr)',

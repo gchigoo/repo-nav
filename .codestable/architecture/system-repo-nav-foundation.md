@@ -1,11 +1,11 @@
 ---
 doc_type: architecture
 slug: repo-nav-foundation
-scope: RepoNav 当前已落地的公共契约、repository 安全 seams、literal ripgrep evidence engine、stdio MCP surface 与本地验证基础设施
-summary: Zod schema v1 定义数据契约，安全 reader/process adapters 承担仓库边界，RepositoryEvidenceEngine 形成 EvidencePack，MCP host 通过 stdio 暴露 repo_nav_locate
+scope: RepoNav 当前已落地的公共契约、repository 安全 seams、literal ripgrep evidence engine、有界 candidate policy、stdio MCP surface 与本地验证基础设施
+summary: Zod schema v1 定义数据契约，安全 reader/process adapters 承担仓库边界，RepositoryEvidenceEngine 形成 confirmed 与受控 candidate EvidencePack，MCP host 通过 stdio 暴露 repo_nav_locate
 status: current
 last_reviewed: 2026-07-13
-tags: [repo-nav, foundation, evidence, repository-safety, ripgrep, mcp, stdio]
+tags: [repo-nav, foundation, evidence, candidate-policy, repository-safety, ripgrep, mcp, stdio]
 depends_on: []
 implements: [source-of-truth-evidence]
 ---
@@ -18,6 +18,8 @@ implements: [source-of-truth-evidence]
 - **Discovery hit**：`RipgrepBackend` 产生的未核验 file/symbol/line/reason fact；它不能直接成为 public evidence。
 - **DiscoveryRecord**：命中经 `RepositoryReader` 对当前文件核验后，按 location/excerpt key 合并 provenance、reason、operation、terms 与全部 canonical symbols 的内部记录。
 - **Direct mapping recognizer**：在 12 行、4 KiB logical window 内识别封闭 assignment/object/SQL alias/symbol definition 形式的保守 classifier；无法证明时只输出 candidate/excluded。
+- **CandidatePolicy**：Evidence Engine 内部的候选分类与有界选择阶段；只消费已核验 DiscoveryRecord/context，按封闭 truth table 生成无 public ID 的 draft，再由 engine 统一物化。
+- **Candidate window**：`RepositoryReader.readWindow` 围绕 seed focus 读取的同文件、最多 12 行/4 KiB verified context；它只用于局部 alias/entity/scope 召回，不替换 confirmed location、discovery key 或 ID。
 - **Verification Kit**：`testkit/` 下的 manifests、fixtures 与 unit/Golden/MCP runners；它不是 production module。
 - **RepositoryReader**：production filesystem seam；只接受 realpath 后的 repository root 与 normalized root-relative POSIX file path，返回 typed failures。
 - **SafeProcessRunner**：production child-process seam；只接受 executable/argv/cwd/explicit env 与固定 budgets，强制 `shell:false`、stdio capture 和有界 tree cleanup。
@@ -27,7 +29,7 @@ implements: [source-of-truth-evidence]
 
 ## 1. 定位与受众
 
-这份地图描述 F4 后已可执行的 RepoNav foundation：结构化 locate request 可以通过 literal ripgrep、安全文件核验、discovery merge 和保守 classification 形成 ripgrep-only `LocateResult`，并由本地 stdio MCP 的 `repo_nav_locate` 工具调用。当前已有 production MCP host、typed tool errors、output parity、request cancellation 与进程级 shutdown；仍没有 CodeGraph backend、sibling expansion 或完整输出 redaction。
+这份地图描述 F5 后已可执行的 RepoNav foundation：结构化 locate request 可以通过 literal ripgrep、安全文件核验、discovery merge、保守 direct classification 与有界 candidate expansion 形成 ripgrep-only `LocateResult`，并由本地 stdio MCP 的 `repo_nav_locate` 工具调用。当前已有 production MCP host、typed tool errors、output parity、request cancellation、进程级 shutdown，以及受控 fixture 上 confirmed + sibling/alias candidate 的最小闭环；仍没有 CodeGraph backend 或完整输出 redaction。
 
 ## 2. 结构与交互
 
@@ -50,6 +52,7 @@ flowchart LR
   Engine --> Reader
   Engine --> Merge["verifyAndMergeBackendHits"]
   Engine --> Classifier["classifyDiscoveryRecords"]
+  Engine --> Candidate["applyCandidatePolicy"]
   Engine --> Contracts["src/contracts"]
   Tests["test + testkit"] --> Engine
   Tests --> Ripgrep
@@ -66,7 +69,8 @@ flowchart LR
 - `RipgrepBackend` 按 term/anchor case metadata 组成 fixed-string search seeds，通过 `SafeProcessRunner` 执行 `rg --fixed-strings --json`；每个 actual submatch symbol 形成独立、稳定排序的 discovery fact。
 - `verifyAndMergeBackendHits` 重新读取当前文件，构造不超过 12 行/4 KiB 的 logical window，核对当前命中后按 discovery key 合并全部 provenance/reasons/operations/terms/canonical symbols；fatal path error 继续上抛。
 - `classifyDiscoveryRecords` 先处理 negative/layer exclusions，再以轻量 lexical masking 区分 code、comments、strings、regex 与 SQL quoted/comment regions；同一 merged record 只分类一次。
-- `RepositoryEvidenceEngine` 固定执行 normalize → backend search → current-file verification → merge → classify → primary role → full SHA-256 ID → stable sort，并组装 status、coverage、limits、exclusion summary 与 next actions。
+- `applyCandidatePolicy` 在 direct classification 后读取 engine 验证的 candidate windows，以同 statement/container 的 alias neighbor、同 entity sibling 与同 brace scope 的 segment similarity 发现局部线索；六类 reason/role/promotion 与 selection priority 由单一常量表定义。
+- `RepositoryEvidenceEngine` 固定执行 normalize → backend search → current-file verification → merge → classify once → candidate-window verification → bounded candidate policy → public ID → stable sort，并组装 status、coverage、limits、exclusion summary 与 next actions。
 - `NodeRepositoryReader` 与 `NodeSafeProcessRunner` 继续承担 canonical containment、bounded read、controlled env/stdout/stderr 和有界 child-tree cleanup。
 - `McpModule` 注入 `REPOSITORY_EVIDENCE_SERVICE`，以 low-level SDK list/call handlers 暴露单一只读工具；unknown tool 和 protocol-invalid envelope 留在 SDK JSON-RPC error boundary。
 - `LocateRequestSchema` 手工解析 envelope-valid arguments；serializer 把 success、recoverable status 与四类 typed application error 映射为自校验、无 stack/path/raw stderr 的 parity output。
@@ -78,6 +82,9 @@ flowchart LR
 - `LocateRequestSchema` 负责 strict input、NFKC/UTF-8 budgets、per-term case 与 file/symbol anchors；engine 解析默认 limits，并把 term 与 anchor metadata 传给 backend/verification/classifier。
 - Ripgrep discovery facts 经当前文件核验后才成为 `DiscoveryRecord`；相同 key 的重复/permuted hits 先合并，classification、primary role、public ID 与排序均在 merge 后执行。
 - Direct mapping confirmed 仅覆盖同一 executable statement 的 `target = source`、可执行 object literal 的 `target: source`、受支持 SQL query call/`.sql` alias，以及 exact anchored implementation/definition；其余 exact term/symbol reference降为 candidate。
+- F3 existing candidates 与 F5 derived candidates 共用 schema v1 reason/promotion ordered sets；derived candidate 的 provenance 固定为 filesystem/find-matches，不复制 seed backend sources。
+- candidate policy 只从已核验 seed/window 出发，要求同 file、focus slice 一致、delimiters balanced 与 innermost owner 相同；新 location 生成独立 discovery key，confirmed 与 candidate key 在 engine 挂载点互斥。
+- candidate selection 使用 `maxCandidates` 容量的稳定优先队列；existing exact/symbol candidate 优先，随后是 alias/entity/scope/secondary，并在保留 key 上做受控 reason 合并。eligible item 被截断时记录 `MAX_CANDIDATES_REACHED`，不改变 confirmed。
 - test/docs path 即使语法形似 mapping 也最多 candidate；caller layer 排除、negative term、duplicate、unverified content 进入 typed exclusion summary。
 - ripgrep-only status 为 `ok | no_result | backend_unavailable | partial | timeout`；coverage 只记录真实 ripgrep attempt，`fallbackChecked=false`、`indexState=unknown`、`indexFreshness=not-applicable`。
 - next actions 区分固定 recognizer window 与 caller 可调 budgets：固定 12 行/4 KiB 不建议加大 request limit；文件数、单文件 excerpt、backend incomplete 或内部 deadline 才按契约给 retry/action。
@@ -93,6 +100,9 @@ flowchart LR
 - Ripgrep 使用 literal fixed-string argv 与 per-seed case mode，不经 shell；JSON parser只读取结构化 match/submatch字段。
 - Direct mapping truth table是封闭支持集，轻量 recognizer不宣称 AST/framework 等价；未知语法保持 candidate/excluded。
 - 同一 location 的多个 canonical symbols 是独立发现事实，merge 后全部保留；classifier按可证明 role priority选择 primary，而不是在 backend 或预算阶段丢失事实。
+- Candidate public ID 只在 derived location/discovery key 确定后由 engine 生成；policy draft 不持有 public ID，也不能复用或改变 seed ID。
+- 文本 scope/entity/type 识别采取 fail-closed：unbalanced/nested owner 不一致、type position、SQL string/comment 或窗口外结构只会少召回，不允许扩大为模糊 candidate。
+- `SECONDARY_BACKEND_HIT` 当前只定义严格的 secondary-only + primary-attempted truth table；真实 secondary backend 生成 ownership 尚未接入。
 - Repository file访问必须经过 canonical containment + post-open regular-file核验；local stable filesystem 是当前支持模型，Node/Windows reparse TOCTOU 是已知边界。
 - Merge/classify/ID顺序、封闭 recognizer边界与 CLI统一 SafeProcessRunner具备 ADR/constraint候选价值；本文件只记录已落地现状，不代写 ADR。
 - MCP 采用 low-level list/call handlers，而不是会抢先做输入校验的高层 helper；因此 envelope-valid arguments 始终由共享 Zod schema parse，typed application error 与 SDK protocol error 不串线。
@@ -105,9 +115,11 @@ flowchart LR
 - `src/repository/ripgrep-backend.ts:RipgrepBackend` — literal JSON ripgrep adapter 与 actual submatch facts。
 - `src/evidence/discovery-record.ts:verifyAndMergeBackendHits` — current-file verification、bounded logical window 与 deterministic merge。
 - `src/evidence/direct-mapping-classifier.ts:classifyDiscoveryRecords` — layer/exclusion resolver 与 direct-mapping truth table。
+- `src/evidence/candidate-policy.ts:CANDIDATE_REASON_POLICY/applyCandidatePolicy` — candidate truth table、verified-context lexical predicates、promotion merge 与有界稳定选择。
+- `src/evidence/repository-evidence-engine.ts:RepositoryEvidenceEngine` — candidate-window verification、confirmed/candidate 互斥、draft 物化与 candidate limit 编排。
 - `src/evidence/evidence.module.ts:EvidenceModule` — reader/engine token assembly。
 - `src/repository/repository-backends.module.ts:RepositoryBackendsModule` — runner/ripgrep/frozen backend collection assembly。
-- `src/repository/node-repository-reader.ts:NodeRepositoryReader` — canonical/bounded filesystem adapter。
+- `src/repository/node-repository-reader.ts:NodeRepositoryReader` — canonical/bounded filesystem adapter，以及居中/clamp、12 行/4 KiB 的 `readWindow`。
 - `src/repository/node-safe-process-runner.ts:NodeSafeProcessRunner` — controlled child-process/tree cleanup adapter。
 - `src/mcp/repo-nav-mcp-server.ts:createRepoNavMcpServer` — tools capability、单工具 registry、unknown guard 与 low-level call handler。
 - `src/mcp/locate-tool-schema.ts` / `locate-tool-output.ts` — JSON Schema 2020-12 public surface 与共享 parity serializer。
@@ -115,14 +127,18 @@ flowchart LR
 - `src/mcp/mcp-shutdown-coordinator.ts:McpShutdownCoordinator` — host/application best-effort shutdown owner。
 - `src/main.ts` — compiled stdio process entry 与 early lifecycle handler installation。
 - `test/unit/ripgrep-backend.spec.ts` / `evidence-merge.spec.ts` / `direct-mapping-classifier.spec.ts` — adapter、merge、truth-table证据。
+- `test/unit/candidate-policy.spec.ts` / `repository-reader.spec.ts` — candidate predicates/budget/permutation、真实 rg 扩窗、confirmed identity 与 reader bounds/error semantics。
+- `test/golden/candidate-policy.spec.ts` / `test/mcp/candidate-minimal-loop.spec.ts` — confirmed + alias/sibling candidate + decoy exclusion 的 Golden/stdio MCP 最小闭环。
 - `test/golden/text-evidence-engine.spec.ts` / `text-engine-classifier.spec.ts` — 真实 rg chain、status、边界、多 symbol与 false-confirmation证据。
 - `test/mcp/tool-surface.spec.ts` / `tool-output-parity.spec.ts` / `tool-error-parity.spec.ts` — 真实 SDK surface、strict schema 与 success/error parity。
 - `test/mcp/request-cancellation.spec.ts` / `lifecycle-contract.spec.ts` — pre/late cancellation、compiled bin、EOF/signal、transport failure 与 cleanup fault matrix。
 
 ## 6. 已知约束 / 边界情况
 
-- 当前没有 CodeGraph backend、sibling/alias-neighbor expansion、数字 confidence 或完整 F7 sensitive excerpt redaction。
+- 当前没有 CodeGraph backend、数字 confidence 或完整 F7 sensitive excerpt redaction；`SECONDARY_BACKEND_HIT` 的真实生产来源等待 F6。
 - Direct mapping recognizer不是通用 parser；dynamic/computed/cross-window/生成式语法保持 candidate，不扩大 confirmed。
+- Candidate recognizer同样不是 AST：angle/type、SQL quoted region 与 12 行/4 KiB 边界采用保守 lexical fail-closed，复杂表达式或窗口外容器可能少召回。
+- focus 与 candidate window 是两次本地读取；focus slice 改变会阻断，但仅周边内容并发变化仍可能来自第二次快照。
 - `RipgrepBackend` 进程预算固定 10 秒，而 request timeout 上限为 30 秒；状态/abort已有自动化证据，超过 10 秒的真实慢仓库墙钟路径尚未实测。
 - Reparse swap TOCTOU无法由当前 Node API完全消除；只支持本机稳定 filesystem，不声称对抗恶意并发 mutation。
 - Windows `rg 15.1.0`、路径与 process-tree已有真实 QA；POSIX detached group/negative PID、其他 rg minor version尚未在本轮实机执行。
@@ -133,8 +149,9 @@ flowchart LR
 
 ## 7. 相关文档
 
-- Requirement: `../requirements/source-of-truth-evidence.md`（仍为 draft；F4 已提供本地 stdio MCP 用户入口，但 candidate/CodeGraph/完整 guardrails 与发布级回归尚未形成完整 MVP capability）。
+- Requirement: `../requirements/source-of-truth-evidence.md`（仍为 draft；F5 已形成受控 fixture 的 confirmed + candidate 最小闭环，但 CodeGraph/完整 guardrails 与发布级回归尚未形成完整 MVP capability）。
 - Roadmap: `../roadmap/repo-nav-mvp/repo-nav-mvp-roadmap.md`。
 - F1/F2: `../features/2026-07-10-repository-evidence-foundation/` / `../features/2026-07-10-repository-access-process-safety/`。
 - F3 design/acceptance: `../features/2026-07-10-text-source-evidence-engine/text-source-evidence-engine-design.md` / `text-source-evidence-engine-acceptance.md`。
 - F4 design/acceptance: `../features/2026-07-10-mcp-locate-surface/mcp-locate-surface-design.md` / `mcp-locate-surface-acceptance.md`。
+- F5 design/acceptance: `../features/2026-07-10-candidate-evidence-policy/candidate-evidence-policy-design.md` / `candidate-evidence-policy-acceptance.md`。

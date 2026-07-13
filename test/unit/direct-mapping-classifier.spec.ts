@@ -316,7 +316,11 @@ describe.runIf(isSelected(classifierIdentity))('direct mapping classifier', () =
       { ...emptyContext, layers: ['test'] },
     );
     expect(testResult.confirmed).toEqual([]);
-    expect(testResult.candidates[0]?.evidenceClass).toBe('candidate');
+    expect(testResult.candidates[0]).toMatchObject({
+      evidenceClass: 'candidate',
+      role: 'reference',
+      reasonCodes: ['EXACT_TERM_WITHOUT_DIRECT_MAPPING'],
+    });
   });
 });
 

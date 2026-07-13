@@ -1,0 +1,27 @@
+schemaVersion: '1.0'
+id: alias-candidate
+kind: success
+fixtureRoot: testkit/fixtures/candidate-policy
+request:
+  repoPath: testkit/fixtures/candidate-policy
+  question: Which verified alias is adjacent to the mapping seed?
+  terms: [hcpId, row.hcp_id]
+  termCase: sensitive
+  layers: [server]
+expected:
+  ok: true
+  status: ok
+  confirmed:
+    - file: server/mapping.fixture
+      contains: 'hcpId: row.hcp_id'
+      role: value-mapping
+      reasonCodes: [DIRECT_ALIAS_MAPPING, EXACT_TERM_MATCH]
+  candidates:
+    - file: server/mapping.fixture
+      contains: sourceAlias
+      role: related
+      reasonCodes: [ALIAS_SOURCE_NEIGHBOR]
+  forbiddenEvidenceIds:
+    - evidence:v1:dc7e46a20ef89e12a87008a440bab96154f961cda087c622bed853b670005291
+  requiredCoverageCodes: []
+  minimumExclusionCounts: {}

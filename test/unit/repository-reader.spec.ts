@@ -92,6 +92,71 @@ describe.runIf(isSelected(limitsIdentity))('repository reader limits', () => {
     );
   });
 
+  it('reads a centered bounded window and clamps it at repository file edges', async () => {
+    await withRepository(
+      { 'window.ts': Array.from({ length: 10 }, (_, index) => `line-${index + 1}`).join('\n') },
+      async (root, reader) => {
+        await expect(
+          reader.readWindow(
+            root,
+            'window.ts',
+            [7, 7],
+            defaultLimits,
+            new AbortController().signal,
+          ),
+        ).resolves.toEqual({
+          file: 'window.ts',
+          lines: [3, 10],
+          excerpt: Array.from({ length: 8 }, (_, index) => `line-${index + 3}`).join('\n'),
+        });
+        await expect(
+          reader.readWindow(
+            root,
+            'window.ts',
+            [1, 1],
+            { ...defaultLimits, maxExcerptLines: 3 },
+            new AbortController().signal,
+          ),
+        ).resolves.toMatchObject({ lines: [1, 3] });
+      },
+    );
+  });
+
+  it('shrinks a window by bytes without dropping the verified focus', async () => {
+    await withRepository(
+      { 'window.ts': `${'a'.repeat(40)}\nfocus\n${'b'.repeat(40)}` },
+      async (root, reader) => {
+        await expect(
+          reader.readWindow(
+            root,
+            'window.ts',
+            [2, 2],
+            {
+              ...defaultLimits,
+              maxExcerptBytes: 10,
+              maxExcerptLines: 3,
+            },
+            new AbortController().signal,
+          ),
+        ).resolves.toEqual({
+          file: 'window.ts',
+          lines: [2, 2],
+          excerpt: 'focus',
+        });
+        await expectCode(
+          reader.readWindow(
+            root,
+            'window.ts',
+            [1, 1],
+            { ...defaultLimits, maxExcerptBytes: 10 },
+            new AbortController().signal,
+          ),
+          'MAX_EXCERPT_BYTES_REACHED',
+        );
+      },
+    );
+  });
+
   it('distinguishes file, excerpt-byte, and excerpt-line limits', async () => {
     await withRepository(
       { 'large.txt': '0123456789', 'lines.txt': 'one\ntwo\nthree' },
@@ -193,6 +258,16 @@ describe.runIf(isSelected(failuresIdentity))('repository reader failures', () =>
       controller.abort();
       await expectCode(
         reader.readRange(
+          root,
+          'source.txt',
+          [1, 1],
+          defaultLimits,
+          controller.signal,
+        ),
+        'ABORTED',
+      );
+      await expectCode(
+        reader.readWindow(
           root,
           'source.txt',
           [1, 1],

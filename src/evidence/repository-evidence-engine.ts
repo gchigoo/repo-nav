@@ -1,6 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import {
+  comparePublicEvidence,
+  createDiscoveryKey,
   DEFAULT_MAX_FILE_BYTES,
   LIMIT_REASON_CODES,
   NEXT_ACTION_CODES,
@@ -27,12 +29,38 @@ import {
   REPOSITORY_READER,
   REPOSITORY_SEARCH_BACKENDS,
 } from '../runtime/tokens.js';
+import {
+  applyCandidatePolicy,
+  createVerifiedCandidateContext,
+  materializeCandidateDraft,
+} from './candidate-policy.js';
 import { classifyDiscoveryRecords } from './direct-mapping-classifier.js';
 import { verifyAndMergeBackendHits } from './discovery-record.js';
 
 const CLASSIFICATION_MAX_LINES = 12;
 const CLASSIFICATION_MAX_BYTES = 4 * 1024;
 const MAX_TIMEOUT_MS = 30_000;
+
+function compareText(left: string, right: string): number {
+  return left === right ? 0 : left < right ? -1 : 1;
+}
+
+function compareBackendHit(
+  left: Parameters<typeof verifyAndMergeBackendHits>[0]['hits'][number],
+  right: Parameters<typeof verifyAndMergeBackendHits>[0]['hits'][number],
+): number {
+  return (
+    compareText(left.file, right.file) ||
+    (left.lines?.[0] ?? Number.MAX_SAFE_INTEGER) -
+      (right.lines?.[0] ?? Number.MAX_SAFE_INTEGER) ||
+    (left.lines?.[1] ?? Number.MAX_SAFE_INTEGER) -
+      (right.lines?.[1] ?? Number.MAX_SAFE_INTEGER) ||
+    compareText(left.symbol ?? '', right.symbol ?? '') ||
+    compareText(left.matchedText ?? '', right.matchedText ?? '') ||
+    compareText(left.source, right.source) ||
+    compareText(left.reasonCodes.join('\u0000'), right.reasonCodes.join('\u0000'))
+  );
+}
 
 function verificationTerms(
   terms: readonly NormalizedSearchTerm[],
@@ -201,7 +229,7 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
       const selectedHits = [] as typeof backendResult.hits[number][];
       const selectedFiles = new Set<string>();
       let filesTruncated = false;
-      for (const hit of backendResult.hits) {
+      for (const hit of [...backendResult.hits].sort(compareBackendHit)) {
         if (!selectedFiles.has(hit.file) && selectedFiles.size >= limits.maxFiles) {
           filesTruncated = true;
           continue;
@@ -239,6 +267,89 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
         },
         initialExclusions,
       );
+      const confirmed = Object.freeze(
+        classified.confirmed.slice(0, limits.maxConfirmed),
+      );
+      const existingCandidates = classified.candidates.slice(
+        0,
+        limits.maxCandidates,
+      );
+      const retainedSeedKeys = new Set(
+        [...confirmed, ...existingCandidates].map((evidence) =>
+          createDiscoveryKey(evidence.location),
+        ),
+      );
+      let candidateContextFileLimit = false;
+      let candidateContextExcerptLimit = false;
+      const candidateContexts: ReturnType<
+        typeof createVerifiedCandidateContext
+      >[] = [];
+      for (const record of merged.records.filter((candidate) =>
+        retainedSeedKeys.has(candidate.discoveryKey),
+      )) {
+        try {
+          const window = await this.reader.readWindow(
+            repositoryRoot,
+            record.location.file,
+            record.focusLines,
+            {
+              maxFileBytes: DEFAULT_MAX_FILE_BYTES,
+              maxExcerptBytes: CLASSIFICATION_MAX_BYTES,
+              maxExcerptLines: CLASSIFICATION_MAX_LINES,
+            },
+            controller.signal,
+          );
+          candidateContexts.push(createVerifiedCandidateContext(record, window));
+        } catch (error: unknown) {
+          if (!(error instanceof RepositoryAccessError)) {
+            throw error;
+          }
+          if (error.code === 'ABORTED') {
+            break;
+          }
+          if (error.code === 'MAX_FILE_BYTES_REACHED') {
+            candidateContextFileLimit = true;
+            continue;
+          }
+          if (error.code === 'MAX_EXCERPT_BYTES_REACHED') {
+            candidateContextExcerptLimit = true;
+            continue;
+          }
+          throw error;
+        }
+      }
+      const candidatePolicy = applyCandidatePolicy({
+        records: merged.records,
+        contexts: candidateContexts,
+        maxCandidates: Math.max(
+          0,
+          limits.maxCandidates - existingCandidates.length,
+        ),
+        signal: controller.signal,
+      });
+      const candidates = Object.freeze(
+        [
+          ...existingCandidates,
+          ...candidatePolicy.candidates.map(materializeCandidateDraft),
+        ].sort(comparePublicEvidence),
+      );
+      const confirmedKeys = new Set(
+        confirmed.map((evidence) => createDiscoveryKey(evidence.location)),
+      );
+      if (
+        candidates.some((evidence) =>
+          confirmedKeys.has(createDiscoveryKey(evidence.location)),
+        )
+      ) {
+        throw new Error(
+          'Candidate policy violated discovery-key mutual exclusion.',
+        );
+      }
+      const confirmedTruncated =
+        classified.confirmed.length > limits.maxConfirmed;
+      const candidatesTruncated =
+        classified.candidates.length > limits.maxCandidates ||
+        candidatePolicy.truncated;
 
       const limitReasons: LimitReasonCode[] = [];
       if (
@@ -255,10 +366,16 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
           limitReasons.push('MAX_EXCERPT_BYTES_REACHED');
         }
       }
-      if (classified.confirmed.length > limits.maxConfirmed) {
+      if (candidateContextFileLimit) {
+        limitReasons.push('MAX_FILE_BYTES_REACHED');
+      }
+      if (candidateContextExcerptLimit) {
+        limitReasons.push('MAX_EXCERPT_BYTES_REACHED');
+      }
+      if (confirmedTruncated) {
         limitReasons.push('MAX_CONFIRMED_REACHED');
       }
-      if (classified.candidates.length > limits.maxCandidates) {
+      if (candidatesTruncated) {
         limitReasons.push('MAX_CANDIDATES_REACHED');
       }
       if (
@@ -270,12 +387,6 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
         limitReasons.push('TIMEOUT_REACHED');
       }
       const limitsReached = uniqueSchemaOrder(limitReasons, LIMIT_REASON_CODES);
-      const confirmed = Object.freeze(
-        classified.confirmed.slice(0, limits.maxConfirmed),
-      );
-      const candidates = Object.freeze(
-        classified.candidates.slice(0, limits.maxCandidates),
-      );
       const status = this.statusFor(
         backendResult.health,
         backendResult.complete,
@@ -289,8 +400,8 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
         filesTruncated ||
           (backendResult.health.state === 'available' &&
             !backendResult.complete) ||
-          classified.confirmed.length > limits.maxConfirmed ||
-          classified.candidates.length > limits.maxCandidates,
+          confirmedTruncated ||
+          candidatesTruncated,
         context.signal.aborted,
         limits.timeoutMs,
       );

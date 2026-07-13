@@ -36,7 +36,7 @@ items:
   description: 实现 sibling alias 候选扩展、confirmed candidate 互斥分类、promotion requirements 与稳定停止策略
   depends_on:
   - mcp-locate-surface
-  status: in-progress
+  status: done
   feature: 2026-07-10-candidate-evidence-policy
   minimal_loop: true
   notes: 只代表受控 fixture 最小闭环，不是可发布里程碑

@@ -103,6 +103,64 @@ export class NodeRepositoryReader implements RepositoryReader {
     };
   }
 
+  public async readWindow(
+    repositoryRoot: string,
+    relativeFile: string,
+    focusLines: readonly [number, number],
+    limits: RepositoryReadLimits,
+    signal: AbortSignal,
+  ): Promise<EvidenceLocation> {
+    const file = await this.readVerifiedText(
+      repositoryRoot,
+      relativeFile,
+      limits,
+      signal,
+    );
+    const [focusStart, focusEnd] = focusLines;
+    const focusLength = focusEnd - focusStart + 1;
+    if (
+      !Number.isSafeInteger(focusStart) ||
+      !Number.isSafeInteger(focusEnd) ||
+      focusStart < 1 ||
+      focusEnd < focusStart ||
+      focusEnd > file.lines.length ||
+      focusLength > limits.maxExcerptLines
+    ) {
+      throw new RepositoryAccessError('INVALID_LINE_RANGE', file.relativeFile);
+    }
+
+    const available = limits.maxExcerptLines - focusLength;
+    let start = Math.max(1, focusStart - Math.ceil(available / 2));
+    let end = Math.min(file.lines.length, start + limits.maxExcerptLines - 1);
+    start = Math.max(1, end - limits.maxExcerptLines + 1);
+
+    let excerpt = file.lines.slice(start - 1, end).join('\n');
+    while (
+      Buffer.byteLength(excerpt, 'utf8') > limits.maxExcerptBytes &&
+      (start < focusStart || end > focusEnd)
+    ) {
+      const before = focusStart - start;
+      const after = end - focusEnd;
+      if (before >= after && start < focusStart) {
+        start += 1;
+      } else if (end > focusEnd) {
+        end -= 1;
+      }
+      excerpt = file.lines.slice(start - 1, end).join('\n');
+    }
+
+    if (excerpt.length === 0) {
+      throw new RepositoryAccessError('INVALID_LINE_RANGE', file.relativeFile);
+    }
+    this.assertExcerptWithinLimit(excerpt, file.relativeFile, limits);
+    this.assertNotAborted(signal, file.relativeFile);
+    return {
+      file: file.relativeFile,
+      lines: [start, end],
+      excerpt,
+    };
+  }
+
   public async findMatches(
     repositoryRoot: string,
     relativeFile: string,

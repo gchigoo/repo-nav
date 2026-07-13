@@ -1,0 +1,9 @@
+export function mapCandidate(row: SourceRow) {
+  const sourceAlias = hcpId;
+  const unrelatedToken = row.other_value;
+  return {
+    hcpName: row.hcp_name,
+    hcpEmail: row.hcp_email,
+    hcpId: row.hcp_id,
+  };
+}

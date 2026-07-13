@@ -104,7 +104,7 @@ export function resolveRepositoryLayer(file: string): RepoLayer {
     : 'unknown';
 }
 
-function replaceNonCode(excerpt: string): string {
+export function maskNonCode(excerpt: string): string {
   let state:
     | 'code'
     | 'line-comment'
@@ -357,7 +357,7 @@ function containsSqlAlias(
   );
 }
 
-function maskSqlNonCode(sql: string): string {
+export function maskSqlNonCode(sql: string): string {
   let state:
     | 'code'
     | 'single'
@@ -463,7 +463,7 @@ function maskSqlNonCode(sql: string): string {
 }
 
 function sqlCallArguments(excerpt: string): readonly string[] {
-  const code = replaceNonCode(excerpt);
+  const code = maskNonCode(excerpt);
   const callPattern = /\b(?:query|select|addSelect)\s*\(/giu;
   const argumentsFound: string[] = [];
   for (const match of code.matchAll(callPattern)) {
@@ -563,8 +563,8 @@ function classifyRecord(
   context: ClassificationContext,
   forceCandidate: boolean,
 ): Classification | undefined {
-  const code = maskDeclarationDecoys(replaceNonCode(record.location.excerpt));
-  const focusCode = maskDeclarationDecoys(replaceNonCode(record.focusExcerpt));
+  const code = maskDeclarationDecoys(maskNonCode(record.location.excerpt));
+  const focusCode = maskDeclarationDecoys(maskNonCode(record.focusExcerpt));
   const directMapping =
     withinClassificationWindow(record.location.excerpt) &&
     (hasAssignmentMapping(focusCode, record.matchedTerms) ||
@@ -586,7 +586,7 @@ function classifyRecord(
     const definitions = anchoredSymbols
       .flatMap((symbol) => {
         const role = symbolDefinitionRole(
-          replaceNonCode(record.focusExcerpt),
+          maskNonCode(record.focusExcerpt),
           symbol,
         );
         return role === undefined ? [] : [{ symbol, role }];
@@ -621,7 +621,7 @@ function classifyRecord(
   if (record.matchedTerms.length > 0) {
     return {
       evidenceClass: 'candidate',
-      role: forceCandidate && directMapping ? 'value-mapping' : 'reference',
+      role: 'reference',
       reasonCodes: ['EXACT_TERM_WITHOUT_DIRECT_MAPPING'],
       promotionRequirements: [
         'USER_SEMANTIC_CONFIRMATION',

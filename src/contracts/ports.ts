@@ -107,6 +107,13 @@ export interface RepositoryReader {
     limits: RepositoryReadLimits,
     signal: AbortSignal,
   ): Promise<EvidenceLocation>;
+  readWindow(
+    repositoryRoot: string,
+    relativeFile: string,
+    focusLines: readonly [number, number],
+    limits: RepositoryReadLimits,
+    signal: AbortSignal,
+  ): Promise<EvidenceLocation>;
   findMatches(
     repositoryRoot: string,
     relativeFile: string,

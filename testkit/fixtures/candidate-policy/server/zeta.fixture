@@ -1,0 +1,1 @@
+export const zeta = { hcpId: row.hcp_id };

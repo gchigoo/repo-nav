@@ -69,6 +69,16 @@ class FakeReader implements RepositoryReader {
     throw new Error('Fixture readRange was not expected.');
   }
 
+  public readWindow(
+    _repositoryRoot: string,
+    _relativeFile: string,
+    _focusLines: readonly [number, number],
+    _limits: RepositoryReadLimits,
+    _signal: AbortSignal,
+  ): Promise<never> {
+    throw new Error('Fixture readWindow was not expected.');
+  }
+
   public async findMatches(): Promise<readonly never[]> {
     return [];
   }

@@ -10,4 +10,4 @@ last_reviewed: 2026-07-13
 
 ## 系统地图
 
-- [RepoNav foundation](system-repo-nav-foundation.md) — schema v1、filesystem/process 安全 seams、literal ripgrep evidence engine、stdio MCP surface 和 Verification Kit。
+- [RepoNav foundation](system-repo-nav-foundation.md) — schema v1、filesystem/process 安全 seams、literal ripgrep evidence engine、有界 candidate policy、stdio MCP surface 和 Verification Kit。

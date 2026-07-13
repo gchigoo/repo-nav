@@ -3,7 +3,7 @@ doc_type: roadmap-goal-feature
 roadmap: repo-nav-mvp
 feature: 2026-07-10-candidate-evidence-policy
 roadmap_item: candidate-evidence-policy
-status: pending
+status: accepted
 ---
 
 # candidate-evidence-policy Goal 执行规格

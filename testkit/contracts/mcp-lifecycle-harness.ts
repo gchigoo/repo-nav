@@ -148,7 +148,10 @@ function resolveProductionBin(): {
   );
   const packageBin = z
     .object({
-      bin: z.strictObject({ 'repo-nav-mcp': z.string().min(1) }),
+      bin: z.strictObject({
+        'repo-nav-mcp': z.string().min(1),
+        'repo-nav': z.string().min(1),
+      }),
     })
     .parse(packageJson).bin['repo-nav-mcp'];
   return { projectRoot, childPath: resolve(projectRoot, packageBin) };

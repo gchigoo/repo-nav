@@ -5,17 +5,20 @@
   "type": "module",
   "description": "Deterministic repository evidence service for local MCP clients.",
   "bin": {
-    "repo-nav-mcp": "dist/main.js"
+    "repo-nav-mcp": "dist/main.js",
+    "repo-nav": "dist/tools/cli/main.js"
   },
   "engines": {
     "node": ">=20.0.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && tsc -p tsconfig.cli.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsx testkit/runners/unit-runner.ts",
     "test:golden": "tsx testkit/runners/golden-runner.ts",
-    "test:mcp": "npm run build --silent && tsx testkit/runners/mcp-runner.ts"
+    "test:mcp": "npm run build --silent && tsx testkit/runners/mcp-runner.ts",
+    "test:docs": "npm run build --silent && tsx testkit/docs/docs-smoke-runner.ts",
+    "repo-nav": "node dist/tools/cli/main.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",

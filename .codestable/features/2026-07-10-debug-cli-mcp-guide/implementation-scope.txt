@@ -1,0 +1,20 @@
+# F9 implementation scope approved by the feature design.
+package.json
+tsconfig.json
+tsconfig.cli.json
+src/mcp/locate-tool-output.ts
+src/mcp/locate-tool-schema.ts
+.codestable/features/2026-07-10-mcp-locate-surface/mcp-locate-surface-tool-schema.json
+tools/cli
+test/unit/debug-cli-shell.spec.ts
+testkit/runners/run-vitest-surface.ts
+testkit/runners/runner-registry.ts
+testkit/contracts/mcp-lifecycle-harness.ts
+testkit/docs
+docs/getting-started-mcp.md
+docs/debug-cli.md
+docs/reference/repo-nav-locate.md
+docs/acceptance/mvp.md
+.codestable/roadmap/repo-nav-mvp
+.codestable/architecture
+.codestable/requirements/source-of-truth-evidence.md

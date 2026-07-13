@@ -1,11 +1,11 @@
 ---
 doc_type: architecture
 slug: repo-nav-foundation
-scope: RepoNav 当前已落地的公共契约、repository 安全 seams、CodeGraph-primary/ripgrep-fallback evidence engine、有界 candidate policy、状态/预算/redaction/error output guardrails、stdio MCP surface 与发布候选级 Verification Kit
-summary: Zod schema v1 定义数据契约，安全 reader/process adapters 承担仓库边界，RepositoryEvidenceEngine 编排 verified EvidencePack，stdio MCP 暴露 repo_nav_locate，shared Golden evaluator、完整 fixture ownership、真实 lifecycle probe 与 fixed synthetic baseline 锁定发布候选行为
+scope: RepoNav 当前已落地的公共契约、repository 安全 seams、CodeGraph-primary/ripgrep-fallback evidence engine、有界 candidate policy、状态/预算/redaction/error output guardrails、stdio MCP、debug CLI、executable docs 与发布候选级 Verification Kit
+summary: Zod schema v1 定义数据契约，安全 reader/process adapters 承担仓库边界，RepositoryEvidenceEngine 编排 verified EvidencePack，stdio MCP 暴露 repo_nav_locate，shallow debug CLI 复用 application/testkit seams，shared Golden、lifecycle、docs/schema drift 与 synthetic baseline 锁定发布候选行为
 status: current
 last_reviewed: 2026-07-13
-tags: [repo-nav, foundation, evidence, candidate-policy, output-guardrails, redaction, repository-safety, codegraph, ripgrep, fallback, mcp, stdio, golden, regression]
+tags: [repo-nav, foundation, evidence, candidate-policy, output-guardrails, redaction, repository-safety, codegraph, ripgrep, fallback, mcp, stdio, cli, docs, golden, regression]
 depends_on: []
 implements: [source-of-truth-evidence]
 ---
@@ -36,10 +36,12 @@ implements: [source-of-truth-evidence]
 - **LocateAbortCoordinator**：Evidence Engine 内 first-writer-wins 的 composed abort owner；锁定 caller 或 internal deadline 的首次来源，后到事件不能改写 status/next-action。
 - **Finalization policies**：`LocateStatusEvaluator`、`ResultBudgetSelector`、`NextActionPolicy` 与 `EvidenceRedactor` 组成的纯策略边界；只治理已核验结果，不改变 backend query 或 candidate recall。
 - **Safe public error policy**：按四个 tool error code 固定 message/recoverable/action 白名单；application、MCP structured/text 与 `isError` 共用。
+- **Debug CLI**：`tools/cli` 下的本地 shallow adapter；locate 复用 application/output policy，probe 只读 infrastructure health，golden 复用 Verification Kit，不拥有新的业务语义。
+- **Executable docs**：四份 public docs 中的登记 snippets 由 `test:docs` 解析并通过真实 MCP/CLI binaries 执行，同时对账 schema projection、artifact inventory 与 import graph。
 
 ## 1. 定位与受众
 
-这份地图描述 F8 后已可执行并具备发布候选回归门禁的 RepoNav foundation：结构化 locate request 优先经过 CodeGraph structured probe/query，并在 binary/index missing、no-result、failed、incomplete、unverified 或 unsupported intent 时显式执行 literal ripgrep fallback；所有命中经安全文件核验、discovery merge、保守 direct classification 与有界 candidate expansion，再由统一 finalization policies 裁决 status、budgets、coverage/nextActions、redaction 与 safe error，最后通过本地 stdio MCP 的 `repo_nav_locate` 输出。production backend/guardrails/MCP surface 之外，Verification Kit 现已用 shared evaluator、完整 enum/code ownership、真实 lifecycle cleanup probe、full suites 与 fixed synthetic baseline 锁定当前行为；debug CLI/operator guide 仍不属于当前现状。
+这份地图描述 F9 验收后的 RepoNav MVP：结构化 locate request 优先经过 CodeGraph structured probe/query，并在 binary/index missing、no-result、failed、incomplete、unverified 或 unsupported intent 时显式执行 literal ripgrep fallback；所有命中经安全文件核验、discovery merge、保守 direct classification 与有界 candidate expansion，再由统一 finalization policies 裁决 status、budgets、coverage/nextActions、redaction 与 safe error，最后通过本地 stdio MCP 的 `repo_nav_locate` 输出。production backend/guardrails/MCP surface 之外，shallow debug CLI 与 executable docs 现已落地；Verification Kit 用 shared evaluator、完整 enum/code ownership、真实 lifecycle/process-tree/docs smoke、schema drift、full suites 与 fixed synthetic baseline 锁定当前行为。
 
 ## 2. 结构与交互
 
@@ -48,6 +50,11 @@ flowchart LR
   App["AppModule / application context"] --> Evidence["EvidenceModule"]
   App --> Mcp["McpModule"]
   Entry["dist/main.js"] --> Host["McpStdioHost"]
+  CliEntry["dist/tools/cli/main.js"] --> Cli["debug locate / probe / golden"]
+  Cli --> Evidence
+  Cli --> Reader
+  Cli --> Backends
+  Cli --> Evaluator
   Entry --> Shutdown["McpShutdownCoordinator"]
   Host --> Transport["SDK StdioServerTransport"]
   Mcp --> Server["low-level MCP Server"]
@@ -86,6 +93,10 @@ flowchart LR
   Completeness["enum/code completeness probes"] --> Tests
   Lifecycle["Nest + host + process-tree lifecycle probe"] --> Host
   Synthetic["fixed 1000-file synthetic corpus"] --> Engine
+  Docs["four executable docs"] --> DocsSmoke["DocsSmokeRunner"]
+  DocsSmoke --> Entry
+  DocsSmoke --> CliEntry
+  DocsSmoke --> Contracts
 ```
 
 - `src/contracts/` 持有 schema v1、normalization、Evidence ID/排序，以及 repository/process/backend/evidence service 契约；production modules 只依赖 contracts/runtime。
@@ -103,6 +114,9 @@ flowchart LR
 - `McpStdioHost` 只合并 SDK request 与 host shutdown 为 caller abort，整轮 request deadline 唯一由 Evidence Engine 的 `LocateAbortCoordinator` 持有；`McpShutdownCoordinator` 在 EOF、平台 signal、transport/parser failure 或 bootstrap failure时按 host → Nest context 的顺序 best-effort 清理。
 - `DiagnosticScrubber` 只服务正式 stderr diagnostics；stdout 始终保留 MCP frames-only，public evidence redaction 与 diagnostic scrub 不共享模糊 replace 语义。
 - `src/main.ts` 在首次异步启动前安装 lifecycle handlers，支持 startup shutdown intent 排队；正常 EOF/受支持 signal exit 0，fatal transport/bootstrap failure exit 1。
+- `tools/cli` 先严格 parse usage，再按 command 创建 application context 或调用 Golden runner；locate 只解析 `REPOSITORY_EVIDENCE_SERVICE` 并经 MCP 共用的 output policy，probe 只解析 reader/ordered backends，所有 context path 在 `finally` close且 cleanup failure fail-closed。
+- `debug golden` 使用 F8 registry 与 shared Vitest JSON summary；CLI 与 docs timeout/abort 都经 `NodeSafeProcessRunner` 的 process-tree grace/hard-kill/close deadline，不复制 evaluator或 expectation semantics。
+- `testkit/docs` 以登记 block registry 启动真实 production MCP/CLI，核验 tools/list、success/recoverable/error parity、CLI exits/schemas、Zod/JSON Schema reference projection、artifact inventory与 import graph；runtime report写 gitignored `test-artifacts/docs/`。
 - `testkit/contracts/golden-evaluator.ts` 是 success/error expectation 的唯一实现；`golden-projection.ts` 只 normalize repository root，class/reason/ID/order/excerpt/promotion/provenance/coverage/actions 保持 exact。
 - `fixture-completeness.ts` 从 contract constants 对账 79 个 owner，并要求 owner 指向实际 snapshot observation、schema probe 或逐 reason-code mutation；23 个 success manifests 与 23 个 companion snapshots exact 配对。
 - `McpLifecycleCaseRunner` 对 production bin 只报告真实可观测状态；instrumented probe 导入 `AppModule`、真实 host 与 `NodeSafeProcessRunner`，通过 marker/PID 验证 context、direct/descendant cleanup，并统一清理 fault/timeout/nonzero 路径。
@@ -122,6 +136,7 @@ flowchart LR
 - next actions 区分 fixed safety caps 与 caller-adjustable budgets：只有 maxFiles/maxConfirmed/maxCandidates 真实截断且未达 schema max，或 engine internal deadline 且 timeoutMs<30000，才建议 `RETRY_WITH_HIGHER_LIMIT`；caller abort、backend 固定 timeout 与 12 行/4 KiB reader caps不建议提高 request limit。
 - confirmed/candidate 先按 canonical stable key 有界选择，再进行 excerpt redaction；secret assignment、credential/connection、email/phone 与 oversized token 产生封闭 redaction reason，无法安全切片的 template/malformed assignment整段 fail-closed。
 - 运行状态只存在于 Nest context、打开的 file handle、owned child tree、timers/listeners与内存对象；没有数据库、Redis、文件持久化或长期 session。
+- Debug CLI output 是单次进程内状态：stdout 一次写完整 formal JSON/help，stderr 只写固定安全 diagnostic；probe root 永远以 `<repository-root>` 暴露，Golden summary只含 counts、安全 test names与 reviewed artifact paths。
 - MCP public input/output schema 发布为 JSON Schema 2020-12 exact object surface；标准 schema 可表达的 tuple arity、closed items 与 unique arrays 均锁定，NFKC/UTF-8 byte budget/cross-field refine 由 `$comment`/description 声明并继续由 runtime Zod 执行。
 - `LocateToolOutput` 是 tool boundary 的唯一结构化状态；`isError=false` 对应成功及 recoverable engine status，`isError=true` 只对应 `INVALID_INPUT`、`INVALID_REPOSITORY`、`PATH_OUTSIDE_ROOT`、`INTERNAL_ERROR`。
 - 进程生命周期状态只存在于 host/coordinator 内存：connect promise、tracked calls、abort controller、shutdown promise和startup intent；close 幂等且同一 shutdown 返回同一 promise。
@@ -151,6 +166,8 @@ flowchart LR
 - Completeness 不能由 case/group 名称推断；新增 enum/code 必须有机器可验证 owner evidence，confirmed/candidate reason 还必须有逐 code false-positive mutation。
 - Lifecycle assertion 不用主进程 exit 推断 Nest/context/child 状态；未安装 probe 时返回 `null`，安装 probe 时 marker/PID 是唯一观察来源，所有异常路径执行末端 cleanup。
 - Synthetic correctness/config/corpus/projection/cleanup 是 blocking，elapsed/median/p95/RSS 只作 environment-aware trend；baseline 只能经 review 更新。
+- Debug CLI 是 surface non-parity：flags/display 不复制 MCP wire contract，但 locate application/output semantics 必须同源；probe 只是 infrastructure diagnostic，不能产生 EvidencePack/source-of-truth judgement或修改 index。
+- Public docs 的 machine-readable schema block 由真实 schemas/constants/examples投影 deep-exact；未知/重复/缺失 block、retired field、artifact/command inventory drift都由 `test:docs` 阻断。
 
 ## 5. 代码锚点
 
@@ -177,6 +194,10 @@ flowchart LR
 - `src/mcp/mcp-stdio-host.ts:McpStdioHost` — connect-once、tracked calls、merged cancellation 与幂等 close。
 - `src/mcp/mcp-shutdown-coordinator.ts:McpShutdownCoordinator` — host/application best-effort shutdown owner。
 - `src/main.ts` — compiled stdio process entry 与 early lifecycle handler installation。
+- `tools/cli/parser.ts` / `execute.ts` / `main.ts` — strict debug command input、seam dispatch、exit mapping、single-write output 与 context/signal lifecycle。
+- `testkit/runners/run-vitest-surface.ts` — unit/Golden/MCP selection registry executor与 process-tree-safe Golden JSON summary。
+- `testkit/docs/docs-smoke-runner.ts` / `schema-reference.ts` / `cli-open-stdin-child.ts` — executable docs registry、真实 binaries、schema/artifact/import drift与 open-stdin process-tree harness。
+- `docs/getting-started-mcp.md` / `debug-cli.md` / `reference/repo-nav-locate.md` / `acceptance/mvp.md` — 当前 public MCP/CLI/API/验收入口。
 - `test/unit/ripgrep-backend.spec.ts` / `evidence-merge.spec.ts` / `direct-mapping-classifier.spec.ts` — adapter、merge、truth-table证据。
 - `test/unit/candidate-policy.spec.ts` / `repository-reader.spec.ts` — candidate predicates/budget/permutation、真实 rg 扩窗、confirmed identity 与 reader bounds/error semantics。
 - `test/golden/candidate-policy.spec.ts` / `test/mcp/candidate-minimal-loop.spec.ts` — confirmed + alias/sibling candidate + decoy exclusion 的 Golden/stdio MCP 最小闭环。
@@ -211,6 +232,7 @@ flowchart LR
 - Windows 按 design 通过 stdin EOF 验证 graceful shutdown；真实 SIGINT/SIGTERM exit 0 由非 Windows CI 覆盖。
 - Golden full suite 的 `exclusion-summary` 不适用 forbidden-ID guard，因此有一个显式 conditional skip；不是环境缺口。
 - Synthetic timing 仅覆盖当前 Windows/Node/ripgrep 与受控 corpus，不能代表真实 monorepo；只用 correctness/hash/cleanup 阻塞。
+- Debug CLI 是 local diagnostic surface；没有 remote auth、HTTP listener、UI、index lifecycle或代码修改能力。Golden child预算固定 30 秒，超出时按 runner failure并清理 owned process tree。
 - Lifecycle PID marker 文件在外层进程极端异常时存在截断/PID reuse小窗口；正常、deliberate leak、timeout 与 nonzero 路径已有真实清理证据。
 
 ## 7. 相关文档
@@ -224,7 +246,10 @@ flowchart LR
 - F6 design/acceptance: `../features/2026-07-10-codegraph-fallback-orchestration/codegraph-fallback-orchestration-design.md` / `codegraph-fallback-orchestration-acceptance.md`。
 - F7 design/acceptance: `../features/2026-07-10-evidence-output-guardrails/evidence-output-guardrails-design.md` / `evidence-output-guardrails-acceptance.md`。
 - F8 design/acceptance: `../features/2026-07-10-mvp-golden-regression-suite/mvp-golden-regression-suite-design.md` / `mvp-golden-regression-suite-acceptance.md`。
+- F9 design/acceptance: `../features/2026-07-10-debug-cli-mcp-guide/debug-cli-mcp-guide-design.md` / `debug-cli-mcp-guide-acceptance.md`。
+- Public guides: `../../docs/getting-started-mcp.md` / `../../docs/debug-cli.md` / `../../docs/reference/repo-nav-locate.md` / `../../docs/acceptance/mvp.md`。
 
 ## 8. 变更日志
 
 - 2026-07-13：F8 acceptance 回填 shared Golden evaluator、machine-verified completeness、真实 lifecycle probe 与 fixed synthetic performance baseline 的当前结构。
+- 2026-07-13：F9 acceptance 回填 shallow debug CLI、process-tree-safe Golden adapter、executable MCP/CLI docs、schema/artifact/import drift gate与 MVP aggregate verification。

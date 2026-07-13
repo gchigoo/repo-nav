@@ -1,12 +1,12 @@
 ---
 doc_type: roadmap
 slug: repo-nav-mvp
-status: active
+status: done
 created: 2026-07-10
-last_reviewed: 2026-07-10
+last_reviewed: 2026-07-13
 tags: [repository-retrieval, mcp, evidence, mvp]
 related_requirements: [source-of-truth-evidence]
-related_architecture: []
+related_architecture: [repo-nav-foundation]
 ---
 
 # RepoNav source-of-truth 证据定位 MVP
@@ -15,7 +15,7 @@ related_architecture: []
 
 RepoNav 的第一阶段目标，是让 Codex、Claude Code、Cursor 等外部编码 Agent 面对大型仓库问题时，不再只返回一批“相关代码”，而能给出少量、可定位、可核验的当前代码事实，并把仍需用户判断的相关线索单独列为 candidate evidence。
 
-当前仓库还没有实现代码、包配置或测试基线，只有已确认的 requirement、brainstorm 决策和迁移后的旧立项材料。因此本 roadmap 同时承担最小工程基线、核心证据闭环、MCP 产品表面、外部检索后端接入及可重复评测五部分建设。
+本 roadmap 启动时仓库还没有实现代码、包配置或测试基线，只有已确认的 requirement、brainstorm 决策和迁移后的旧立项材料。因此本 roadmap 同时承担最小工程基线、核心证据闭环、MCP 产品表面、外部检索后端接入及可重复评测五部分建设；截至 2026-07-13，九项均已验收完成。
 
 MVP 遵循已经确认的产品边界：**LLM-native，但不是 LLM-powered**。RepoNav 不内置模型，不生成业务判断；宿主 Agent 负责把用户问题整理为结构化提示、解释证据并与用户完成最终裁决。
 
@@ -714,11 +714,11 @@ discovery:v1\0{POSIX-normalized-relative-file}\0{start}\0{end}\0{sha256(unredact
 9. **`debug-cli-mcp-guide`** — 增加最小 debug CLI、backend probe、fixture 回放、MCP 安装示例和 MVP API/验收指南。
    - 所属模块：Verification Kit、MCP Surface
    - 依赖：`mvp-golden-regression-suite`
-   - 状态：in-progress
+   - 状态：done
    - 对应 feature：`2026-07-10-debug-cli-mcp-guide`
    - 备注：CLI 只复用 application contract，不新增独立业务语义；文档明确最小闭环与可发布 MVP 的区别。
 
-**最小闭环**：第 5 条 `candidate-evidence-policy` 完成后，外部 Agent 能通过 stdio MCP 在受控合成 fixture 上获得当前事实、独立候选及覆盖状态。只有完成 F7/F8 的全状态 guardrails 与回归套件后，才可视为可发布 MVP 候选。
+**最小闭环**：第 5 条 `candidate-evidence-policy` 完成后，外部 Agent 能通过 stdio MCP 在受控合成 fixture 上获得当前事实、独立候选及覆盖状态，但它本身不可发布。F7/F8 提供全状态 guardrails 与发布候选级回归；F9 再以 debug CLI、executable docs、schema drift 和完整 aggregate 验收完成 MVP 收口。
 
 ### Goal Coverage Matrix
 

@@ -1,12 +1,12 @@
 {
   "gate_id": "dod-contract-gate",
-  "stage": "feature_design.before_approve",
+  "stage": "implementation.before_review",
   "status": "passed",
   "blocking": [],
   "warnings": [],
   "evidence": [
     {
-      "design": "D:\\Personal\\repo-nav\\.codestable\\features\\2026-07-10-debug-cli-mcp-guide\\debug-cli-mcp-guide-design.md",
+      "design": ".codestable\\features\\2026-07-10-debug-cli-mcp-guide\\debug-cli-mcp-guide-design.md",
       "checked_block": "DoD Contract",
       "structure_checks": {
         "validation command id": [

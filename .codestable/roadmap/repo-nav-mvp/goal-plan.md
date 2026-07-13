@@ -1,7 +1,7 @@
 ---
 doc_type: roadmap-goal-plan
 roadmap: repo-nav-mvp
-status: ready-to-dispatch
+status: completed
 created: 2026-07-10
 baseline_ref: a356b6117ed65c2959132f0d6b62485295d60ccb
 ---

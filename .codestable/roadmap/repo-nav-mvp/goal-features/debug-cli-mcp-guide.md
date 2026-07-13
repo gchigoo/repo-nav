@@ -3,7 +3,7 @@ doc_type: roadmap-goal-feature
 roadmap: repo-nav-mvp
 feature: 2026-07-10-debug-cli-mcp-guide
 roadmap_item: debug-cli-mcp-guide
-status: pending
+status: accepted
 ---
 
 # debug-cli-mcp-guide Goal 执行规格

@@ -69,7 +69,7 @@ items:
   description: 增加最小 debug CLI、backend probe、fixture 回放、MCP 安装示例和 MVP API 验收指南
   depends_on:
   - mvp-golden-regression-suite
-  status: in-progress
+  status: done
   feature: 2026-07-10-debug-cli-mcp-guide
   minimal_loop: false
   notes: CLI 复用 application contract，不新增独立业务语义

@@ -20,10 +20,14 @@ export function internalLocateError(): LocateResult {
   return createPublicErrorResult('INTERNAL_ERROR');
 }
 
-export function serializeLocateToolOutput(result: LocateResult): CallToolResult {
-  const output: LocateToolOutput = LocateToolOutputSchema.parse(
+export function createLocateToolOutput(result: LocateResult): LocateToolOutput {
+  return LocateToolOutputSchema.parse(
     redactLocateResult(applyPublicErrorPolicy(result)),
   );
+}
+
+export function serializeLocateToolOutput(result: LocateResult): CallToolResult {
+  const output = createLocateToolOutput(result);
   return {
     structuredContent: output as Readonly<Record<string, unknown>>,
     content: [{ type: 'text', text: JSON.stringify(output) }],

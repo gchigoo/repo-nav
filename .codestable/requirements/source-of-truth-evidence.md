@@ -2,9 +2,9 @@
 doc_type: requirement
 slug: source-of-truth-evidence
 pitch: 让编码助手从成堆相关代码中指出真正决定行为的位置，并把事实与待核查线索分开
-status: draft
-last_reviewed: 2026-07-10
-implemented_by: []
+status: implemented
+last_reviewed: 2026-07-13
+implemented_by: [repo-nav-mvp]
 tags: [repository-retrieval, agent-evidence]
 ---
 

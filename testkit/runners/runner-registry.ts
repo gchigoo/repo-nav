@@ -60,6 +60,11 @@ export const RUNNER_SELECTIONS: Readonly<
       'codegraph-live-smoke',
       'locate-status',
       'output-guardrails',
+      'debug-cli-shell',
+      'debug-cli-lifecycle',
+      'debug-cli-locate',
+      'debug-cli-probe',
+      'debug-cli-golden',
     ]),
     cases: new Set([
       'runner-smoke',
@@ -94,6 +99,11 @@ export const RUNNER_SELECTIONS: Readonly<
       'internal-deadline-below-max',
       'internal-deadline-at-max',
       'redaction-policy',
+      'debug-cli-shell',
+      'debug-cli-lifecycle',
+      'debug-cli-locate',
+      'debug-cli-probe',
+      'debug-cli-golden',
     ]),
   }),
   golden: Object.freeze({

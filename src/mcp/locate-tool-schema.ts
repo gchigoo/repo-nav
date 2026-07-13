@@ -127,7 +127,6 @@ function addOutputRepresentableConstraints(
       ...schema,
       minItems: arity,
       maxItems: arity,
-      items: false,
       $comment:
         'Runtime Zod validation additionally requires the first line number to be less than or equal to the second.',
     };

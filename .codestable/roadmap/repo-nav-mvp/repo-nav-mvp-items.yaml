@@ -20,7 +20,7 @@ items:
   description: 实现 literal ripgrep、当前文件核验、discovery merge 和 direct-mapping confirmed 的 classification truth table 基线
   depends_on:
   - repository-access-process-safety
-  status: in-progress
+  status: done
   feature: 2026-07-10-text-source-evidence-engine
   minimal_loop: false
   notes: 同时覆盖 mapping positive 与 DTO definition test docs false-confirmation cases

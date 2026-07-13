@@ -6,7 +6,7 @@ import {
   REPOSITORY_EVIDENCE_SERVICE,
   REPOSITORY_READER,
 } from '../runtime/tokens.js';
-import { UnconfiguredRepositoryEvidenceService } from './unconfigured-repository-evidence.service.js';
+import { RepositoryEvidenceEngine } from './repository-evidence-engine.js';
 
 @Module({
   imports: [RepositoryBackendsModule],
@@ -16,10 +16,10 @@ import { UnconfiguredRepositoryEvidenceService } from './unconfigured-repository
       provide: REPOSITORY_READER,
       useExisting: NodeRepositoryReader,
     },
-    UnconfiguredRepositoryEvidenceService,
+    RepositoryEvidenceEngine,
     {
       provide: REPOSITORY_EVIDENCE_SERVICE,
-      useExisting: UnconfiguredRepositoryEvidenceService,
+      useExisting: RepositoryEvidenceEngine,
     },
   ],
   exports: [REPOSITORY_EVIDENCE_SERVICE, REPOSITORY_READER],

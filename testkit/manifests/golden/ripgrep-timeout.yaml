@@ -1,0 +1,19 @@
+schemaVersion: '1.0'
+id: ripgrep-timeout
+kind: success
+fixtureRoot: testkit/fixtures/text-engine
+request:
+  repoPath: testkit/fixtures/text-engine
+  question: Where is the source field mapped?
+  terms: [targetField, row.source_field]
+  termCase: insensitive
+  limits:
+    timeoutMs: 10000
+expected:
+  ok: true
+  status: timeout
+  confirmed: []
+  candidates: []
+  forbiddenEvidenceIds: []
+  requiredCoverageCodes: [BACKEND_ABORTED, TIMEOUT_REACHED]
+  minimumExclusionCounts: {}

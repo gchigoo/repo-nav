@@ -6,74 +6,74 @@ steps:
   exit_signal: per-term case、fixed-string argv、JSON parser、no-result/unavailable/abort cases 全部可判定
   verification: npm test -- --group ripgrep-backend
   artifacts: [RipgrepBackend, versioned parser fixtures, adapter logs]
-  status: pending
+  status: done
 - id: S2
   action: 实现当前文件核验与 DiscoveryRecord merge
   exit_signal: 重复/permuted hits 只形成单一 record，discovery key/provenance 稳定且尚未产生 public class/ID
   verification: npm test -- --group evidence-merge
   artifacts: [DiscoveryRecord policy, permutation report]
-  status: pending
+  status: done
 - id: S3
   action: 实现封闭 direct-mapping classifier、layer resolver、public ID/order 与 exclusion accounting
   exit_signal: merged record 只分类一次，支持语法 confirmed，所有 path/decoy/unsupported form 不误确认且 ID/order/exclusion counts 稳定
   verification: npm test -- --group direct-mapping-classifier --group evidence-id-order && npm run test:golden -- --case source-field-mapping --case false-confirmation-decoys --case exclusion-summary
   artifacts: [classification truth table, layer resolver fixtures, Golden manifests, evaluator logs]
-  status: pending
+  status: done
 - id: S4
   action: 固化 ripgrep-only LocateResult baseline
   exit_signal: ok/no_result/backend_unavailable/partial/timeout 的 coverage 和 nextActions 逐字段符合设计状态表
   verification: npm run test:golden -- --case text-engine-baseline --case ripgrep-unavailable --case ripgrep-failed --case ripgrep-incomplete --case ripgrep-timeout
   artifacts: [status snapshots, fault fixture logs]
-  status: pending
+  status: done
 checks:
 - id: C1
   item: rg 使用 fixed-strings JSON、shell=false、per-term case groups
   source: design 1/3.1
-  status: pending
+  status: passed
 - id: C2
   item: backend 只产 discovery facts，current-file verification 后才可进入 record
   source: design 0/2.2
-  status: pending
+  status: passed
 - id: C3
   item: discovery key 与 merge→classify once→role→ID→sort 顺序符合 roadmap 4.7
   source: design 1/2.1
-  status: pending
+  status: passed
 - id: C4
   item: assignment/object/SQL/symbol supported predicates 与 12-line/4-KiB window 被锁定
   source: design 1 truth table
-  status: pending
+  status: passed
 - id: C5
   item: deterministic layer/path resolver 覆盖 POSIX/Windows、.spec/.test、__tests__/fixtures、docs extensions 和 unknown priority
   source: design 1/3.1
-  status: pending
+  status: passed
 - id: C6
   item: DTO/entity/test/docs/comment/unsupported syntax 不得 confirmed，source-field-mapping 断言 exact class/role/reasons/forbidden IDs
   source: design 3.1
-  status: pending
+  status: passed
 - id: C7
   item: exclusion-summary 断言 layer/negative/duplicate/unverified minimum counts
   source: design 1/3.1
-  status: pending
+  status: passed
 - id: C8
   item: ripgrep-only status/coverage/index/nextActions 按设计表逐字段断言
   source: design 2.1
-  status: pending
+  status: passed
 - id: C9
   item: F3 exact-term/symbol-reference candidate promotion requirements exact set/order 已锁定
   source: design 2.1
-  status: pending
+  status: passed
 - id: C10
   item: hit permutation 不改变 ID、classification、reason/provenance/order
   source: design 2.1/3.1
-  status: pending
+  status: passed
 - id: C11
   item: sibling/MCP/CodeGraph/numeric confidence 未进入本 feature
   source: design 1/3.2
-  status: pending
+  status: passed
 - id: C12
   item: adapter/engine/classifier artifacts 与真实 command logs 可盘点
   source: design 3.4
-  status: pending
+  status: passed
 dod:
   commands:
   - id: CMD-BUILD

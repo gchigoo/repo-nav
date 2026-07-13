@@ -14,7 +14,8 @@ import {
   type RepositoryReadLimits,
   type RepositorySearchBackend,
 } from '../../src/contracts/index.js';
-import { RepoNavBootstrapIncompleteError } from '../../src/runtime/repo-nav-bootstrap-incomplete.error.js';
+import { RepositoryEvidenceEngine } from '../../src/evidence/repository-evidence-engine.js';
+import { RipgrepBackend } from '../../src/repository/ripgrep-backend.js';
 import {
   MCP_STDIO_HOST,
   REPOSITORY_EVIDENCE_SERVICE,
@@ -89,7 +90,7 @@ class FakeService implements RepositoryEvidenceService {
 }
 
 describe.runIf(isSelected(identity))('NestJS standalone DI assembly', () => {
-  it('creates and closes a non-HTTP context with fail-closed defaults', async () => {
+  it('creates and closes a non-HTTP context with the ordered F3 backend engine', async () => {
     const application = await createRepoNavApplicationContext();
     try {
       const backends = application.get<readonly RepositorySearchBackend[]>(
@@ -100,14 +101,20 @@ describe.runIf(isSelected(identity))('NestJS standalone DI assembly', () => {
         REPOSITORY_EVIDENCE_SERVICE,
       );
 
-      expect(backends).toEqual([]);
+      expect(backends).toHaveLength(1);
+      expect(backends[0]).toBeInstanceOf(RipgrepBackend);
+      expect(backends.map((backend) => backend.id)).toEqual(['ripgrep']);
       expect(Object.isFrozen(backends)).toBe(true);
       await expect(
         reader.resolveRoot(request.repoPath, new AbortController().signal),
       ).rejects.toMatchObject({ code: 'INVALID_REPOSITORY' });
+      expect(service).toBeInstanceOf(RepositoryEvidenceEngine);
       await expect(
         service.locate(request, { signal: new AbortController().signal }),
-      ).rejects.toBeInstanceOf(RepoNavBootstrapIncompleteError);
+      ).resolves.toMatchObject({
+        ok: false,
+        error: { code: 'INVALID_REPOSITORY' },
+      });
       expect(() => application.get(MCP_STDIO_HOST)).toThrow();
     } finally {
       await application.close();

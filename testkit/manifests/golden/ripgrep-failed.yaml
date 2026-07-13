@@ -1,0 +1,17 @@
+schemaVersion: '1.0'
+id: ripgrep-failed
+kind: success
+fixtureRoot: testkit/fixtures/text-engine
+request:
+  repoPath: testkit/fixtures/text-engine
+  question: Where is the source field mapped?
+  terms: [targetField, row.source_field]
+  termCase: insensitive
+expected:
+  ok: true
+  status: backend_unavailable
+  confirmed: []
+  candidates: []
+  forbiddenEvidenceIds: []
+  requiredCoverageCodes: [BACKEND_PROCESS_FAILED]
+  minimumExclusionCounts: {}

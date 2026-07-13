@@ -1,0 +1,22 @@
+schemaVersion: '1.0'
+id: text-engine-baseline
+kind: success
+fixtureRoot: testkit/fixtures/text-engine
+request:
+  repoPath: testkit/fixtures/text-engine
+  question: Where is the source field mapped?
+  terms: [targetField, row.source_field]
+  termCase: insensitive
+  layers: [server]
+expected:
+  ok: true
+  status: ok
+  confirmed:
+    - file: server/mapping.fixture
+      contains: targetField = row.source_field
+      role: value-mapping
+      reasonCodes: [DIRECT_ALIAS_MAPPING, EXACT_TERM_MATCH]
+  candidates: []
+  forbiddenEvidenceIds: []
+  requiredCoverageCodes: []
+  minimumExclusionCounts: {}

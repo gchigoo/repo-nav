@@ -110,6 +110,13 @@ export const LocateLimitsSchema = z
   .readonly();
 export type LocateLimits = z.infer<typeof LocateLimitsSchema>;
 
+export interface ResolvedLocateLimits {
+  readonly maxFiles: number;
+  readonly maxConfirmed: number;
+  readonly maxCandidates: number;
+  readonly timeoutMs: number;
+}
+
 export const NormalizedSearchTermSchema = z
   .strictObject({
     value: z.string().min(1),
@@ -214,9 +221,7 @@ export function normalizeLocateAnchors(
   return Object.freeze(normalized);
 }
 
-export function resolveLocateLimits(limits?: LocateLimits): Readonly<
-  Required<LocateLimits>
-> {
+export function resolveLocateLimits(limits?: LocateLimits): ResolvedLocateLimits {
   return Object.freeze({
     maxFiles: limits?.maxFiles ?? DEFAULT_LOCATE_LIMITS.maxFiles,
     maxConfirmed: limits?.maxConfirmed ?? DEFAULT_LOCATE_LIMITS.maxConfirmed,

@@ -1,0 +1,22 @@
+schemaVersion: '1.0'
+id: ripgrep-incomplete
+kind: success
+fixtureRoot: testkit/fixtures/text-engine
+request:
+  repoPath: testkit/fixtures/text-engine
+  question: Where is the source field referenced?
+  terms: [targetField, row.source_field]
+  termCase: insensitive
+  layers: [server]
+expected:
+  ok: true
+  status: partial
+  confirmed: []
+  candidates:
+    - file: server/mapping.fixture
+      contains: consume(row.source_field)
+      role: reference
+      reasonCodes: [EXACT_TERM_WITHOUT_DIRECT_MAPPING]
+  forbiddenEvidenceIds: []
+  requiredCoverageCodes: [MAX_FILES_REACHED]
+  minimumExclusionCounts: {}

@@ -1,0 +1,4 @@
+{"type":"begin","data":{"path":{"text":"src/mapping.ts"}}}
+{"type":"match","data":{"path":{"text":"src/mapping.ts"},"lines":{"text":"const target = Source.Value;\n"},"line_number":7,"absolute_offset":10,"submatches":[{"match":{"text":"Source.Value"},"start":15,"end":27}]}}
+{"type":"end","data":{"path":{"text":"src/mapping.ts"},"binary_offset":null,"stats":{}}}
+{"type":"summary","data":{"elapsed_total":{"human":"0.001s","nanos":1000,"secs":0},"stats":{}}}

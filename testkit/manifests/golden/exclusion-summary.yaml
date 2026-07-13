@@ -1,0 +1,27 @@
+schemaVersion: '1.0'
+id: exclusion-summary
+kind: success
+fixtureRoot: testkit/fixtures/text-engine
+request:
+  repoPath: testkit/fixtures/text-engine
+  question: Show server mappings while excluding forbidden examples.
+  terms: [targetField, row.source_field]
+  termCase: insensitive
+  layers: [server]
+  negativeTerms: [forbidden]
+expected:
+  ok: true
+  status: ok
+  confirmed:
+    - file: server/mapping.fixture
+      contains: targetField = row.source_field
+      role: value-mapping
+      reasonCodes: [DIRECT_ALIAS_MAPPING, EXACT_TERM_MATCH]
+  candidates: []
+  forbiddenEvidenceIds: []
+  requiredCoverageCodes: []
+  minimumExclusionCounts:
+    NEGATIVE_TERM_MATCH: 1
+    OUTSIDE_LAYER_HINT: 2
+    DUPLICATE_LOCATION: 1
+    UNVERIFIED_FILE_CONTENT: 1

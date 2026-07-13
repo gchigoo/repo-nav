@@ -3,18 +3,20 @@ import { Module } from '@nestjs/common';
 import type { RepositorySearchBackend } from '../contracts/index.js';
 import { REPOSITORY_SEARCH_BACKENDS } from '../runtime/tokens.js';
 import { NodeSafeProcessRunner } from './node-safe-process-runner.js';
-
-export const EMPTY_REPOSITORY_SEARCH_BACKENDS: readonly RepositorySearchBackend[] =
-  Object.freeze([]);
+import { RipgrepBackend } from './ripgrep-backend.js';
 
 @Module({
   providers: [
     NodeSafeProcessRunner,
+    RipgrepBackend,
     {
       provide: REPOSITORY_SEARCH_BACKENDS,
-      useValue: EMPTY_REPOSITORY_SEARCH_BACKENDS,
+      inject: [RipgrepBackend],
+      useFactory: (
+        ripgrep: RipgrepBackend,
+      ): readonly RepositorySearchBackend[] => Object.freeze([ripgrep]),
     },
   ],
-  exports: [REPOSITORY_SEARCH_BACKENDS, NodeSafeProcessRunner],
+  exports: [REPOSITORY_SEARCH_BACKENDS, NodeSafeProcessRunner, RipgrepBackend],
 })
 export class RepositoryBackendsModule {}

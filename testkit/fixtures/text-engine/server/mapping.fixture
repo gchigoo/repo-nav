@@ -1,0 +1,2 @@
+targetField = row.source_field;
+consume(row.source_field);

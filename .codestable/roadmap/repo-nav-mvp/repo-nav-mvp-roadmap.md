@@ -672,7 +672,7 @@ discovery:v1\0{POSIX-normalized-relative-file}\0{start}\0{end}\0{sha256(unredact
 3. **`text-source-evidence-engine`** — 实现 literal ripgrep backend、当前文件核验、discovery merge 与 classification truth table 的 direct-mapping confirmed 基线。
    - 所属模块：Evidence Engine、Repository Backends
    - 依赖：`repository-access-process-safety`
-   - 状态：in-progress
+   - 状态：done
    - 对应 feature：`2026-07-10-text-source-evidence-engine`
    - 备注：必须同时通过 alias mapping positive 与 DTO/definition/test/doc false-confirmation cases；尚不做 sibling candidate 扩展或 MCP transport。
 

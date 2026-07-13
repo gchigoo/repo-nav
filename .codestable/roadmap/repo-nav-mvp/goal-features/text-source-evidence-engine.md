@@ -3,7 +3,7 @@ doc_type: roadmap-goal-feature
 roadmap: repo-nav-mvp
 feature: 2026-07-10-text-source-evidence-engine
 roadmap_item: text-source-evidence-engine
-status: pending
+status: accepted
 ---
 
 # text-source-evidence-engine Goal 执行规格

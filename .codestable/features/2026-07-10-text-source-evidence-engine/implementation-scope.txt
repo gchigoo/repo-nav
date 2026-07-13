@@ -1,0 +1,13 @@
+# F3 implementation scope approved by the feature design.
+src/contracts
+src/evidence
+src/repository
+src/runtime
+src/index.ts
+test/unit
+test/golden
+testkit/fixtures/ripgrep
+testkit/fixtures/text-engine
+testkit/manifests/golden
+testkit/runners
+.codestable/roadmap/repo-nav-mvp/goal-state.yaml

@@ -1,0 +1,7 @@
+targetField == row.source_field;
+type targetField = row.source_field;
+// targetField = row.source_field;
+const example = "targetField = row.source_field";
+interface Dto { targetField: row.source_field }
+@Field({ targetField: row.source_field })
+return { targetField };

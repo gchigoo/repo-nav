@@ -1,0 +1,64 @@
+{
+  "gate_id": "scope-gate",
+  "stage": "acceptance.before_done",
+  "status": "passed",
+  "blocking": [],
+  "warnings": [],
+  "evidence": [
+    {
+      "changed_files": [
+        ".codestable/architecture/ARCHITECTURE.md",
+        ".codestable/architecture/system-repo-nav-foundation.md",
+        ".codestable/features/2026-07-10-repository-access-process-safety/repository-access-process-safety-checklist.yaml",
+        ".codestable/roadmap/repo-nav-mvp/goal-features/repository-access-process-safety.md",
+        ".codestable/roadmap/repo-nav-mvp/goal-state.yaml",
+        ".codestable/roadmap/repo-nav-mvp/repo-nav-mvp-items.yaml",
+        ".codestable/roadmap/repo-nav-mvp/repo-nav-mvp-roadmap.md",
+        "src/contracts/index.ts",
+        "src/evidence/evidence.module.ts",
+        "src/evidence/unconfigured-repository-reader.ts",
+        "src/index.ts",
+        "src/repository/repository-backends.module.ts",
+        "test/unit/di.spec.ts",
+        "testkit/runners/runner-registry.ts",
+        ".codestable/features/2026-07-10-repository-access-process-safety/implementation-scope.txt",
+        ".codestable/features/2026-07-10-repository-access-process-safety/repository-access-process-safety-acceptance.md",
+        ".codestable/features/2026-07-10-repository-access-process-safety/repository-access-process-safety-evidence-pack.md",
+        ".codestable/features/2026-07-10-repository-access-process-safety/repository-access-process-safety-implementation.md",
+        ".codestable/features/2026-07-10-repository-access-process-safety/repository-access-process-safety-qa.md",
+        ".codestable/features/2026-07-10-repository-access-process-safety/repository-access-process-safety-review-fix-round-1.md",
+        ".codestable/features/2026-07-10-repository-access-process-safety/repository-access-process-safety-review.md",
+        "src/contracts/repository-access.ts",
+        "src/contracts/safe-process.ts",
+        "src/repository/node-repository-reader.ts",
+        "src/repository/node-safe-process-runner.ts",
+        "test/unit/process-cleanup.spec.ts",
+        "test/unit/repository-reader.spec.ts",
+        "test/unit/repository-safety.spec.ts",
+        "test/unit/safe-process-runner.spec.ts",
+        "testkit/fixtures/process/process-helper.ts"
+      ],
+      "ignored_machine_artifacts": [
+        ".codestable/features/2026-07-10-repository-access-process-safety/repository-access-process-safety-dod-results.json",
+        ".codestable/features/2026-07-10-repository-access-process-safety/repository-access-process-safety-evidence-pack-results.json",
+        ".codestable/features/2026-07-10-repository-access-process-safety/repository-access-process-safety-gate-results.json"
+      ],
+      "allowed_prefixes": [
+        ".codestable/features/2026-07-10-repository-access-process-safety",
+        "src/contracts",
+        "src/evidence",
+        "src/repository",
+        "src/index.ts",
+        "test/unit",
+        "testkit/fixtures/process",
+        "testkit/runners",
+        ".codestable/roadmap/repo-nav-mvp/goal-state.yaml",
+        ".codestable/architecture",
+        ".codestable/roadmap/repo-nav-mvp/repo-nav-mvp-items.yaml",
+        ".codestable/roadmap/repo-nav-mvp/repo-nav-mvp-roadmap.md",
+        ".codestable/roadmap/repo-nav-mvp/goal-features/repository-access-process-safety.md"
+      ]
+    }
+  ],
+  "providers": {}
+}

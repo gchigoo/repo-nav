@@ -10,4 +10,4 @@ last_reviewed: 2026-07-13
 
 ## 系统地图
 
-- [RepoNav foundation](system-repo-nav-foundation.md) — schema v1、standalone DI 骨架和 Verification Kit。
+- [RepoNav foundation](system-repo-nav-foundation.md) — schema v1、standalone DI、filesystem/process 安全 seams 和 Verification Kit。

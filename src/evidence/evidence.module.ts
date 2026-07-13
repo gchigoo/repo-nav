@@ -1,20 +1,20 @@
 import { Module } from '@nestjs/common';
 
+import { NodeRepositoryReader } from '../repository/node-repository-reader.js';
 import { RepositoryBackendsModule } from '../repository/repository-backends.module.js';
 import {
   REPOSITORY_EVIDENCE_SERVICE,
   REPOSITORY_READER,
 } from '../runtime/tokens.js';
 import { UnconfiguredRepositoryEvidenceService } from './unconfigured-repository-evidence.service.js';
-import { UnconfiguredRepositoryReader } from './unconfigured-repository-reader.js';
 
 @Module({
   imports: [RepositoryBackendsModule],
   providers: [
-    UnconfiguredRepositoryReader,
+    NodeRepositoryReader,
     {
       provide: REPOSITORY_READER,
-      useExisting: UnconfiguredRepositoryReader,
+      useExisting: NodeRepositoryReader,
     },
     UnconfiguredRepositoryEvidenceService,
     {

@@ -12,7 +12,7 @@ items:
   description: 实现 root realpath、symlink escape 防线、RepositoryReader、安全 argv process runner、AbortSignal 终止及 stdio 隔离
   depends_on:
   - repository-evidence-foundation
-  status: in-progress
+  status: done
   feature: 2026-07-10-repository-access-process-safety
   minimal_loop: false
   notes: 任何真实仓库检索前都必须先经过本条，并证明 max file excerpt 与 timeout 后无迟到 evidence

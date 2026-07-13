@@ -3,7 +3,7 @@ doc_type: roadmap-goal-feature
 roadmap: repo-nav-mvp
 feature: 2026-07-10-repository-access-process-safety
 roadmap_item: repository-access-process-safety
-status: pending
+status: accepted
 ---
 
 # repository-access-process-safety Goal 执行规格

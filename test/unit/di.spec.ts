@@ -104,7 +104,7 @@ describe.runIf(isSelected(identity))('NestJS standalone DI assembly', () => {
       expect(Object.isFrozen(backends)).toBe(true);
       await expect(
         reader.resolveRoot(request.repoPath, new AbortController().signal),
-      ).rejects.toBeInstanceOf(RepoNavBootstrapIncompleteError);
+      ).rejects.toMatchObject({ code: 'INVALID_REPOSITORY' });
       await expect(
         service.locate(request, { signal: new AbortController().signal }),
       ).rejects.toBeInstanceOf(RepoNavBootstrapIncompleteError);

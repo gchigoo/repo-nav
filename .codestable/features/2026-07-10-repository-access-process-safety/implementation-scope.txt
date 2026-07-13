@@ -1,0 +1,13 @@
+# F2 implementation scope approved by the feature design.
+src/contracts
+src/evidence
+src/repository
+src/index.ts
+test/unit
+testkit/fixtures/process
+testkit/runners
+.codestable/roadmap/repo-nav-mvp/goal-state.yaml
+.codestable/architecture
+.codestable/roadmap/repo-nav-mvp/repo-nav-mvp-items.yaml
+.codestable/roadmap/repo-nav-mvp/repo-nav-mvp-roadmap.md
+.codestable/roadmap/repo-nav-mvp/goal-features/repository-access-process-safety.md

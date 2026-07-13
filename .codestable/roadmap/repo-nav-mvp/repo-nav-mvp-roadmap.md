@@ -665,7 +665,7 @@ discovery:v1\0{POSIX-normalized-relative-file}\0{start}\0{end}\0{sha256(unredact
 2. **`repository-access-process-safety`** — 实现 root realpath、symlink escape 防线、RepositoryReader、安全 argv process runner、AbortSignal 终止和 stderr/stdout 隔离。
    - 所属模块：Repository Backends
    - 依赖：`repository-evidence-foundation`
-   - 状态：in-progress
+   - 状态：done
    - 对应 feature：`2026-07-10-repository-access-process-safety`
    - 备注：任何真实仓库检索前必须先经过本条；用越界路径、symlink、特殊字符 argv、max file/excerpt、超时、无迟到 evidence 和 child/file cleanup cases 验收。
 
@@ -725,7 +725,7 @@ discovery:v1\0{POSIX-normalized-relative-file}\0{start}\0{end}\0{sha256(unredact
 | Goal / completion signal | Covered by item(s) | Verification entry | Evidence type | Core? |
 |---|---|---|---|---|
 | literal 输入归一化、mixed smart/sensitive/insensitive、byte budgets、DI tokens、ID 与排序常量被锁定 | `repository-evidence-foundation` | `npm test -- --group contract --case term-case-parity` | schema/unit assertions | yes |
-| root 越界、symlink escape、特殊 argv、超时、无迟到 evidence 和 child/file cleanup 在任何真实检索前被阻断 | `repository-access-process-safety` | `npm test -- --group repository-safety --group process-safety --case reader-timeout-no-late-evidence` | filesystem + process integration tests | yes |
+| root 越界、symlink escape、特殊 argv、超时、无迟到 evidence 和 child/file cleanup 在任何真实检索前被阻断 | `repository-access-process-safety` | `npm test -- --group repository-safety --group reader-limits --group reader-failures && npm test -- --group process-contract --group process-output-isolation && npm test -- --group process-cleanup --case reader-abort-no-late-completion` | filesystem + process integration tests | yes |
 | direct mapping 被 confirmed，而同名 DTO/definition/test/doc 只进入 candidate/excluded，并记录 typed exclusion counts | `text-source-evidence-engine` | `npm run test:golden -- --case source-field-mapping --case false-confirmation-decoys --case exclusion-summary` | positive + negative golden assertions | yes |
 | MCP 返回精确 confirmed evidence，structuredContent/text 等价、stdout 干净并可 graceful shutdown | `mcp-locate-surface` | `npm run test:mcp -- --case source-field-mapping --case output-parity --case stdio-clean-output --case stdio-graceful-shutdown` | stdio protocol integration tests | yes |
 | 相似 sibling 进入 candidates 且无关 sibling 不被提升 | `candidate-evidence-policy` | `npm run test:golden -- --case sibling-candidate --case sibling-false-positive` | golden classification assertions | yes |

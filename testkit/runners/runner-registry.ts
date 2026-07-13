@@ -9,12 +9,28 @@ export const RUNNER_SELECTIONS: Readonly<
   Record<RunnerSurface, RunnerSelectionRegistry>
 > = Object.freeze({
   unit: Object.freeze({
-    groups: new Set(['runner-smoke', 'contract', 'di']),
+    groups: new Set([
+      'runner-smoke',
+      'contract',
+      'di',
+      'repository-safety',
+      'reader-limits',
+      'reader-failures',
+      'process-contract',
+      'process-output-isolation',
+      'process-cleanup',
+    ]),
     cases: new Set([
       'runner-smoke',
       'term-case-parity',
       'scope-gate-runtime',
       'di-assembly',
+      'windows-reparse-policy',
+      'reader-limits',
+      'reader-failures',
+      'process-contract',
+      'process-output-isolation',
+      'reader-abort-no-late-completion',
     ]),
   }),
   golden: Object.freeze({

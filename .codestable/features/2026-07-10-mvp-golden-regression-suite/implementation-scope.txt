@@ -1,0 +1,23 @@
+# F8 implementation scope approved by the feature design.
+test/golden
+test/mcp
+test/unit
+testkit/contracts
+testkit/expected
+testkit/fixtures
+testkit/manifests
+testkit/performance
+testkit/runners
+testkit/testing
+testkit/baselines
+test-artifacts/performance
+test-artifacts/completeness
+test-artifacts/lifecycle
+test-artifacts/families
+package.json
+.gitignore
+.codestable/roadmap/repo-nav-mvp/goal-state.yaml
+.codestable/roadmap/repo-nav-mvp/goal-features/mvp-golden-regression-suite.md
+.codestable/roadmap/repo-nav-mvp/repo-nav-mvp-items.yaml
+.codestable/roadmap/repo-nav-mvp/repo-nav-mvp-roadmap.md
+.codestable/architecture

@@ -1,0 +1,59 @@
+{
+  "ok": true,
+  "evidence": {
+    "schemaVersion": "1.0",
+    "status": "ok",
+    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "normalizedTerms": [
+      {
+        "value": "AlphaMapping",
+        "caseSensitive": true
+      }
+    ],
+    "confirmed": [
+      {
+        "evidenceClass": "confirmed",
+        "id": "evidence:v1:81af7f88eea0c10fb9b8f4c500378558c585cea3dd77e94ba0157c2ade14822b",
+        "role": "execution-site",
+        "location": {
+          "file": "server/definition.ts",
+          "symbol": "AlphaMapping",
+          "lines": [
+            1,
+            1
+          ],
+          "excerpt": "export function AlphaMapping(): string { return 'alpha'; }"
+        },
+        "provenance": {
+          "discoveredBy": [
+            "codegraph"
+          ],
+          "verifiedBy": "filesystem",
+          "operations": [
+            "CODEGRAPH_QUERY",
+            "FILESYSTEM_READ_RANGE"
+          ]
+        },
+        "reasonCodes": [
+          "EXACT_SYMBOL_ANCHOR"
+        ]
+      }
+    ],
+    "candidates": [],
+    "coverage": {
+      "backends": [
+        {
+          "backend": "codegraph",
+          "status": "used",
+          "hitCount": 1
+        }
+      ],
+      "fallbackChecked": false,
+      "indexState": "available",
+      "indexFreshness": "unknown",
+      "limitsReached": [],
+      "exclusionSummary": {}
+    },
+    "nextActions": []
+  }
+}

@@ -8,6 +8,8 @@ import {
 export interface ParsedLocateToolResult {
   readonly output: LocateResult;
   readonly isError: boolean;
+  readonly structuredContent: LocateResult;
+  readonly textContent: string;
 }
 
 export function parseLocateToolResultParity(result: unknown): ParsedLocateToolResult {
@@ -39,5 +41,10 @@ export function parseLocateToolResultParity(result: unknown): ParsedLocateToolRe
   if (!('isError' in result) || typeof result.isError !== 'boolean') {
     throw new Error('MCP tool result did not declare isError.');
   }
-  return { output: structured, isError: result.isError };
+  return {
+    output: structured,
+    isError: result.isError,
+    structuredContent: structured,
+    textContent: first.text,
+  };
 }

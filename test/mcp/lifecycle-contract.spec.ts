@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -13,10 +13,13 @@ import {
 } from '../../src/index.js';
 import {
   McpLifecycleCaseSchema,
+  McpLifecycleCaseRunner,
+  evaluateMcpLifecycleCase,
   parseMcpStdoutFrames,
   runMcpLifecycleCase,
   runMcpTransportErrorCase,
   type McpLifecycleCase,
+  type McpLifecycleProbeAudit,
 } from '../../testkit/contracts/index.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
@@ -34,6 +37,70 @@ function loadLifecycleCase(name: string): McpLifecycleCase {
     readFileSync(resolve(manifestDirectory, name), 'utf8'),
   );
   return McpLifecycleCaseSchema.parse(input);
+}
+
+function writeLifecycleReport(
+  caseId: string,
+  observation: {
+    readonly exitCode: number;
+    readonly stdoutFrames: readonly Readonly<Record<string, unknown>>[];
+    readonly elapsedMs: number;
+    readonly contextClosed: boolean | null;
+    readonly childrenCleaned: boolean | null;
+  },
+): void {
+  const outputDirectory = resolve(
+    import.meta.dirname,
+    '..',
+    '..',
+    'test-artifacts',
+    'lifecycle',
+  );
+  mkdirSync(outputDirectory, { recursive: true });
+  writeFileSync(
+    resolve(outputDirectory, `${caseId}.json`),
+    `${JSON.stringify(
+      {
+        schemaVersion: '1.0',
+        caseId,
+        exitCode: observation.exitCode,
+        frameCount: observation.stdoutFrames.length,
+        elapsedMs: observation.elapsedMs,
+        contextClosed: observation.contextClosed,
+        childrenCleaned: observation.childrenCleaned,
+      },
+      null,
+      2,
+    )}\n`,
+    'utf8',
+  );
+}
+
+function processIsAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function expectProbeAuditCleaned(
+  audit: McpLifecycleProbeAudit | undefined,
+): void {
+  expect(audit).toBeDefined();
+  if (audit === undefined) {
+    throw new Error('Lifecycle probe audit was not observed.');
+  }
+  expect(audit.directPid).not.toBeNull();
+  expect(audit.descendantPid).not.toBeNull();
+  expect(existsSync(audit.directory)).toBe(false);
+  if (audit.directPid !== null) {
+    expect(processIsAlive(audit.directPid)).toBe(false);
+  }
+  if (audit.descendantPid !== null) {
+    expect(processIsAlive(audit.descendantPid)).toBe(false);
+  }
 }
 
 const identity = {
@@ -56,10 +123,10 @@ describe.runIf(isSelected(identity))('MCP lifecycle contract', () => {
 });
 
 describe.runIf(
-  isSelected({ group: 'mcp-surface', caseId: 'stdio-clean-output' }),
+  isSelected({ group: 'lifecycle', caseId: 'stdio-clean-output' }),
 )('MCP production stdout', () => {
   it('accepts only real MCP frames on stdout and propagates clean exit', async () => {
-    const observation = await runMcpLifecycleCase(
+    const observation = await new McpLifecycleCaseRunner().run(
       loadLifecycleCase('stdio-clean-output.yaml'),
     );
 
@@ -84,11 +151,14 @@ describe.runIf(
       },
     });
     expect(observation.stderr).toBe('');
+    expect(observation.contextClosed).toBeNull();
+    expect(observation.childrenCleaned).toBeNull();
+    writeLifecycleReport('stdio-clean-output', observation);
   });
 });
 
 describe.runIf(
-  isSelected({ group: 'mcp-surface', caseId: 'stdio-graceful-shutdown' }),
+  isSelected({ group: 'lifecycle', caseId: 'stdio-graceful-shutdown' }),
 )('MCP production shutdown', () => {
   it('treats an SDK transport parse failure as fatal without stdout pollution', async () => {
     const observation = await runMcpTransportErrorCase(5_000);
@@ -285,6 +355,7 @@ describe.runIf(
     expect(observation.elapsedMs).toBeLessThan(
       lifecycleCase.expected.maxShutdownMs,
     );
+    writeLifecycleReport('graceful-shutdown', observation);
   });
 
   it('fails rather than hiding an exceeded lifecycle budget', async () => {
@@ -296,4 +367,98 @@ describe.runIf(
       }),
     ).rejects.toThrow(/exceeded/iu);
   });
+
+  it('rejects unclosed context and tracked-child observations', () => {
+    const lifecycleCase = loadLifecycleCase('shutdown-cleanup-probe.yaml');
+    expect(
+      evaluateMcpLifecycleCase(lifecycleCase, {
+        exitCode: 0,
+        stdoutFrames: [{ jsonrpc: '2.0', id: 1, result: {} }],
+        stderr: '',
+        elapsedMs: 1,
+        contextClosed: false,
+        childrenCleaned: false,
+      }).map(({ path }) => path),
+    ).toEqual(['contextClosed', 'childrenCleaned']);
+  });
+});
+
+describe.runIf(
+  isSelected({ group: 'lifecycle', caseId: 'shutdown-cleanup-probe' }),
+)('MCP instrumented shutdown cleanup', () => {
+  const lifecycleCase = loadLifecycleCase('shutdown-cleanup-probe.yaml');
+
+  it(
+    'observes the real Nest context hook and direct/descendant process cleanup',
+    async () => {
+      const observation = await new McpLifecycleCaseRunner().run(lifecycleCase);
+
+      expect(observation.exitCode).toBe(0);
+      expect(observation.contextClosed).toBe(true);
+      expect(observation.childrenCleaned).toBe(true);
+      writeLifecycleReport('shutdown-cleanup-probe', observation);
+    },
+    10_000,
+  );
+
+  it(
+    'fails when the real context close marker is deliberately skipped',
+    async () => {
+      await expect(
+        new McpLifecycleCaseRunner({ probeFault: 'skip-context-close' }).run(
+          lifecycleCase,
+        ),
+      ).rejects.toThrow(/contextClosed/iu);
+    },
+    10_000,
+  );
+
+  it(
+    'fails when an actual descendant tree is deliberately left running',
+    async () => {
+      await expect(
+        new McpLifecycleCaseRunner({ probeFault: 'leave-child-running' }).run(
+          lifecycleCase,
+        ),
+      ).rejects.toThrow(/childrenCleaned/iu);
+    },
+    10_000,
+  );
+
+  it(
+    'cleans both child PIDs and the probe directory after a forced timeout',
+    async () => {
+      let audit: McpLifecycleProbeAudit | undefined;
+      await expect(
+        new McpLifecycleCaseRunner({
+          probeFault: 'force-timeout',
+          onProbeAudit: (value) => {
+            audit = value;
+          },
+        }).run({
+          ...lifecycleCase,
+          expected: { ...lifecycleCase.expected, maxShutdownMs: 2_500 },
+        }),
+      ).rejects.toThrow(/exceeded/iu);
+      expectProbeAuditCleaned(audit);
+    },
+    10_000,
+  );
+
+  it(
+    'cleans both child PIDs and the probe directory after a nonzero exit',
+    async () => {
+      let audit: McpLifecycleProbeAudit | undefined;
+      await expect(
+        new McpLifecycleCaseRunner({
+          probeFault: 'force-nonzero-exit',
+          onProbeAudit: (value) => {
+            audit = value;
+          },
+        }).run(lifecycleCase),
+      ).rejects.toThrow(/exit code 7/iu);
+      expectProbeAuditCleaned(audit);
+    },
+    10_000,
+  );
 });

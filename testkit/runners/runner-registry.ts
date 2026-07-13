@@ -5,6 +5,31 @@ export interface RunnerSelectionRegistry {
   readonly cases: ReadonlySet<string>;
 }
 
+export const RUNNER_GROUP_ALIASES: Readonly<
+  Record<RunnerSurface, Readonly<Record<string, readonly string[]>>>
+> = Object.freeze({
+  unit: Object.freeze({}),
+  golden: Object.freeze({
+    classification: Object.freeze([
+      'classification',
+      'text-engine-classifier',
+      'text-evidence-engine',
+    ]),
+    candidate: Object.freeze(['candidate', 'candidate-policy']),
+    'backend-transitions': Object.freeze([
+      'backend-transitions',
+      'codegraph-fallback',
+      'text-evidence-engine',
+    ]),
+    security: Object.freeze(['security', 'output-redaction']),
+    'final-status': Object.freeze(['final-status', 'result-limits']),
+  }),
+  mcp: Object.freeze({
+    protocol: Object.freeze(['mcp-surface']),
+    lifecycle: Object.freeze(['lifecycle']),
+  }),
+});
+
 export const RUNNER_SELECTIONS: Readonly<
   Record<RunnerSurface, RunnerSelectionRegistry>
 > = Object.freeze({
@@ -80,6 +105,13 @@ export const RUNNER_SELECTIONS: Readonly<
       'codegraph-fallback',
       'result-limits',
       'output-redaction',
+      'classification',
+      'candidate',
+      'backend-transitions',
+      'security',
+      'final-status',
+      'verification-contract',
+      'performance',
     ]),
     cases: new Set([
       'runner-smoke',
@@ -110,10 +142,20 @@ export const RUNNER_SELECTIONS: Readonly<
       'partial-with-evidence',
       'secret-redaction',
       'redaction-metadata',
+      'manifest-evaluator',
+      'evaluator-negative-self-test',
+      'fixture-completeness',
+      'large-synthetic-repository',
+      'classification-syntax-family',
+      'candidate-family-contract',
+      'backend-transition-family',
+      'security-family-contract',
+      'final-status-family-contract',
+      'contract-code-probes',
     ]),
   }),
   mcp: Object.freeze({
-    groups: new Set(['runner-smoke', 'mcp-surface']),
+    groups: new Set(['runner-smoke', 'mcp-surface', 'protocol', 'lifecycle']),
     cases: new Set([
       'runner-smoke',
       'lifecycle-manifest-schema',
@@ -130,8 +172,10 @@ export const RUNNER_SELECTIONS: Readonly<
       'request-cancellation-cleanup',
       'stdio-clean-output',
       'stdio-graceful-shutdown',
+      'shutdown-cleanup-probe',
       'candidate-minimal-loop',
       'redaction-output-parity',
+      'mcp-golden-adapter',
     ]),
   }),
 });

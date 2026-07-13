@@ -1,7 +1,7 @@
 roadmap: repo-nav-mvp
 status: ready-to-dispatch
 baseline_ref: a356b6117ed65c2959132f0d6b62485295d60ccb
-current_feature_index: 7
+current_feature_index: 8
 features:
 - slug: repository-evidence-foundation
   roadmap_item: repository-evidence-foundation
@@ -74,7 +74,7 @@ features:
   review: .codestable/features/2026-07-10-mvp-golden-regression-suite/mvp-golden-regression-suite-review.md
   qa: .codestable/features/2026-07-10-mvp-golden-regression-suite/mvp-golden-regression-suite-qa.md
   acceptance: .codestable/features/2026-07-10-mvp-golden-regression-suite/mvp-golden-regression-suite-acceptance.md
-  status: pending
+  status: accepted
 - slug: debug-cli-mcp-guide
   roadmap_item: debug-cli-mcp-guide
   feature_dir: .codestable/features/2026-07-10-debug-cli-mcp-guide

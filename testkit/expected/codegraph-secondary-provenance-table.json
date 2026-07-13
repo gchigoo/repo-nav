@@ -1,0 +1,71 @@
+{
+  "ok": true,
+  "evidence": {
+    "schemaVersion": "1.0",
+    "status": "ok",
+    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "normalizedTerms": [
+      {
+        "value": "opaqueSearchTerm",
+        "caseSensitive": true
+      }
+    ],
+    "confirmed": [],
+    "candidates": [
+      {
+        "evidenceClass": "candidate",
+        "id": "evidence:v1:f5d3c005b84c7be06b4690201b238b508f4356602ac52d6413016103a974c029",
+        "role": "related",
+        "location": {
+          "file": "server/secondary.ts",
+          "lines": [
+            1,
+            1
+          ],
+          "excerpt": "export const opaqueSecondary = 2;"
+        },
+        "provenance": {
+          "discoveredBy": [
+            "ripgrep"
+          ],
+          "verifiedBy": "filesystem",
+          "operations": [
+            "RIPGREP_SEARCH",
+            "FILESYSTEM_READ_RANGE"
+          ]
+        },
+        "reasonCodes": [
+          "SECONDARY_BACKEND_HIT"
+        ],
+        "promotionRequirements": [
+          "DIRECT_REFERENCE_REQUIRED"
+        ]
+      }
+    ],
+    "coverage": {
+      "backends": [
+        {
+          "backend": "codegraph",
+          "status": "used",
+          "hitCount": 2
+        },
+        {
+          "backend": "ripgrep",
+          "status": "used",
+          "hitCount": 2
+        }
+      ],
+      "fallbackChecked": true,
+      "indexState": "available",
+      "indexFreshness": "unknown",
+      "limitsReached": [],
+      "exclusionSummary": {
+        "DUPLICATE_LOCATION": 1,
+        "UNVERIFIED_FILE_CONTENT": 2
+      }
+    },
+    "nextActions": [
+      "CONFIRM_CANDIDATE"
+    ]
+  }
+}

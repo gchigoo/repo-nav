@@ -1,0 +1,36 @@
+{
+  "ok": true,
+  "evidence": {
+    "schemaVersion": "1.0",
+    "status": "backend_unavailable",
+    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "normalizedTerms": [
+      {
+        "value": "targetField",
+        "caseSensitive": false
+      },
+      {
+        "value": "row.source_field",
+        "caseSensitive": false
+      }
+    ],
+    "confirmed": [],
+    "candidates": [],
+    "coverage": {
+      "backends": [
+        {
+          "backend": "ripgrep",
+          "status": "failed",
+          "reasonCode": "BACKEND_PROCESS_FAILED",
+          "hitCount": 0
+        }
+      ],
+      "fallbackChecked": false,
+      "indexState": "unknown",
+      "indexFreshness": "not-applicable",
+      "limitsReached": [],
+      "exclusionSummary": {}
+    },
+    "nextActions": []
+  }
+}

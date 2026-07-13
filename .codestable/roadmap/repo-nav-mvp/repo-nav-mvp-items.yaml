@@ -61,7 +61,7 @@ items:
   description: 建立完整 positive negative failure lifecycle fixture family、稳定 snapshot evaluator 与受控大型合成仓库性能基线
   depends_on:
   - evidence-output-guardrails
-  status: in-progress
+  status: done
   feature: 2026-07-10-mvp-golden-regression-suite
   minimal_loop: false
   notes: 覆盖 decoy、backend failure、状态转换、redaction、limits、shutdown 和 false-confirmation

@@ -11,6 +11,11 @@ import {
   type GoldenCase,
   type GoldenObservation,
 } from './golden-case.js';
+import {
+  compareGoldenProjection,
+  createMissingGoldenProjection,
+  loadExpectedGoldenProjection,
+} from './golden-projection.js';
 
 type EvaluatedEvidence = ConfirmedEvidence | CandidateEvidence;
 
@@ -66,16 +71,54 @@ function evaluateExpectations(
   evidence: readonly EvaluatedEvidence[],
   expectations: readonly EvidenceExpectation[],
 ): GoldenEvaluationIssue[] {
-  return expectations.flatMap((expectation, index) =>
-    evidence.some((item) => evidenceMatches(item, expectation))
+  const issues: GoldenEvaluationIssue[] = [];
+  if (evidence.length !== expectations.length) {
+    issues.push({
+      path: `${path}.length`,
+      message: `Evidence count differs: expected ${expectations.length}, received ${evidence.length}.`,
+    });
+  }
+  for (const [index, expectation] of expectations.entries()) {
+    const item = evidence[index];
+    if (item === undefined || !evidenceMatches(item, expectation)) {
+      issues.push({
+        path: `${path}[${index}]`,
+        message: `Evidence order/content differs for ${expectation.file}.`,
+      });
+    }
+  }
+  return issues;
+}
+
+function evaluateCompanionProjection(
+  caseId: string,
+  observation: GoldenObservation,
+  priorIssues: readonly GoldenEvaluationIssue[],
+): GoldenEvaluationIssue[] {
+  if (priorIssues.length === 0) {
+    createMissingGoldenProjection(caseId, observation.result);
+  }
+  try {
+    const comparison = compareGoldenProjection(
+      loadExpectedGoldenProjection(caseId),
+      observation.result,
+    );
+    return comparison.matches
       ? []
       : [
           {
-            path: `${path}[${index}]`,
-            message: `No evidence matched ${expectation.file} containing ${expectation.contains}.`,
+            path: comparison.firstDifferencePath ?? 'result',
+            message: 'Full stable projection differs from the companion snapshot.',
           },
-        ],
-  );
+        ];
+  } catch (error: unknown) {
+    return [
+      {
+        path: 'companionSnapshot',
+        message: error instanceof Error ? error.message : String(error),
+      },
+    ];
+  }
 }
 
 function evaluateSuccess(
@@ -149,6 +192,8 @@ function evaluateSuccess(
       });
     }
   }
+
+  issues.push(...evaluateCompanionProjection(goldenCase.id, observation, issues));
 
   return issues;
 }

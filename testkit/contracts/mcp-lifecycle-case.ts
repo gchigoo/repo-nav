@@ -6,7 +6,11 @@ export const McpLifecycleCaseSchema = z
   .strictObject({
     schemaVersion: z.literal(EVIDENCE_SCHEMA_VERSION),
     id: z.string().min(1),
-    scenario: z.enum(['stdio-clean-output', 'graceful-shutdown']),
+    scenario: z.enum([
+      'stdio-clean-output',
+      'graceful-shutdown',
+      'shutdown-cleanup-probe',
+    ]),
     expected: z
       .strictObject({
         stdoutMode: z.literal('mcp-frames-only'),

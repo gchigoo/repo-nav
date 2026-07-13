@@ -1,0 +1,29 @@
+schemaVersion: '1.0'
+id: large-synthetic-repository-v1
+generator:
+  seed: 20260710
+  sourceFiles: 1000
+  modules: 50
+  directMappings: 10
+  namedDecoys: 200
+  fileSizeDistribution:
+    small: 500
+    medium: 350
+    large: 150
+request:
+  repoPath: '<SYNTHETIC_ROOT>'
+  question: Locate all deterministic synthetic source mappings.
+  terms: [syntheticTarget, row.synthetic_source]
+  termCase: sensitive
+  limits:
+    maxFiles: 20
+    maxConfirmed: 20
+    maxCandidates: 20
+    timeoutMs: 30000
+expected:
+  status: partial
+  confirmedCount: 10
+  candidateCount: 10
+  limitsReached: [MAX_FILES_REACHED]
+warmupRuns: 1
+measuredRuns: 5

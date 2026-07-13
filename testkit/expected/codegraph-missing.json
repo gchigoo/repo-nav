@@ -1,0 +1,69 @@
+{
+  "ok": true,
+  "evidence": {
+    "schemaVersion": "1.0",
+    "status": "ok",
+    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "normalizedTerms": [
+      {
+        "value": "targetField",
+        "caseSensitive": true
+      },
+      {
+        "value": "row.source_field",
+        "caseSensitive": true
+      }
+    ],
+    "confirmed": [
+      {
+        "evidenceClass": "confirmed",
+        "id": "evidence:v1:8f906341a202cb2348faa31a69c4740a8b01d2964d0b77bd720f4d6ba3ea2ce3",
+        "role": "value-mapping",
+        "location": {
+          "file": "server/mapping.ts",
+          "lines": [
+            1,
+            2
+          ],
+          "excerpt": "declare const row: { readonly source_field: string };\nexport const targetField = row.source_field;"
+        },
+        "provenance": {
+          "discoveredBy": [
+            "ripgrep"
+          ],
+          "verifiedBy": "filesystem",
+          "operations": [
+            "RIPGREP_SEARCH",
+            "FILESYSTEM_READ_RANGE"
+          ]
+        },
+        "reasonCodes": [
+          "DIRECT_ALIAS_MAPPING",
+          "EXACT_TERM_MATCH"
+        ]
+      }
+    ],
+    "candidates": [],
+    "coverage": {
+      "backends": [
+        {
+          "backend": "codegraph",
+          "status": "unavailable",
+          "reasonCode": "CODEGRAPH_INDEX_MISSING",
+          "hitCount": 0
+        },
+        {
+          "backend": "ripgrep",
+          "status": "used",
+          "hitCount": 1
+        }
+      ],
+      "fallbackChecked": true,
+      "indexState": "missing",
+      "indexFreshness": "not-applicable",
+      "limitsReached": [],
+      "exclusionSummary": {}
+    },
+    "nextActions": []
+  }
+}

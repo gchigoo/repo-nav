@@ -3,7 +3,7 @@ doc_type: roadmap-goal-feature
 roadmap: repo-nav-mvp
 feature: 2026-07-10-mvp-golden-regression-suite
 roadmap_item: mvp-golden-regression-suite
-status: pending
+status: accepted
 ---
 
 # mvp-golden-regression-suite Goal 执行规格

@@ -1,0 +1,58 @@
+{
+  "ok": true,
+  "evidence": {
+    "schemaVersion": "1.0",
+    "status": "ok",
+    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "normalizedTerms": [
+      {
+        "value": "hcp_id",
+        "caseSensitive": false
+      },
+      {
+        "value": "hcpId",
+        "caseSensitive": true
+      }
+    ],
+    "confirmed": [
+      {
+        "evidenceClass": "confirmed",
+        "id": "evidence:v1:0000000000000000000000000000000000000000000000000000000000000000",
+        "role": "value-mapping",
+        "location": {
+          "file": "server/mapping.ts",
+          "symbol": "hcpId",
+          "lines": [
+            1,
+            1
+          ],
+          "excerpt": "hcpId = hcp_id;"
+        },
+        "provenance": {
+          "discoveredBy": [
+            "ripgrep"
+          ],
+          "verifiedBy": "filesystem",
+          "operations": [
+            "RIPGREP_SEARCH",
+            "FILESYSTEM_READ_RANGE"
+          ]
+        },
+        "reasonCodes": [
+          "DIRECT_ALIAS_MAPPING",
+          "EXACT_TERM_MATCH"
+        ]
+      }
+    ],
+    "candidates": [],
+    "coverage": {
+      "backends": [],
+      "fallbackChecked": false,
+      "indexState": "unknown",
+      "indexFreshness": "not-applicable",
+      "limitsReached": [],
+      "exclusionSummary": {}
+    },
+    "nextActions": []
+  }
+}

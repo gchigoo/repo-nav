@@ -1,0 +1,42 @@
+{
+  "ok": true,
+  "evidence": {
+    "schemaVersion": "1.0",
+    "status": "backend_unavailable",
+    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "normalizedTerms": [
+      {
+        "value": "targetField",
+        "caseSensitive": true
+      },
+      {
+        "value": "row.source_field",
+        "caseSensitive": true
+      }
+    ],
+    "confirmed": [],
+    "candidates": [],
+    "coverage": {
+      "backends": [
+        {
+          "backend": "codegraph",
+          "status": "unavailable",
+          "reasonCode": "CODEGRAPH_UNAVAILABLE",
+          "hitCount": 0
+        },
+        {
+          "backend": "ripgrep",
+          "status": "unavailable",
+          "reasonCode": "RIPGREP_UNAVAILABLE",
+          "hitCount": 0
+        }
+      ],
+      "fallbackChecked": true,
+      "indexState": "unavailable",
+      "indexFreshness": "not-applicable",
+      "limitsReached": [],
+      "exclusionSummary": {}
+    },
+    "nextActions": []
+  }
+}

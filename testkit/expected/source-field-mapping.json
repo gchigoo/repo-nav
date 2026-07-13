@@ -1,0 +1,96 @@
+{
+  "ok": true,
+  "evidence": {
+    "schemaVersion": "1.0",
+    "status": "ok",
+    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "normalizedTerms": [
+      {
+        "value": "targetField",
+        "caseSensitive": false
+      },
+      {
+        "value": "row.source_field",
+        "caseSensitive": false
+      }
+    ],
+    "confirmed": [
+      {
+        "evidenceClass": "confirmed",
+        "id": "evidence:v1:77dfe5388b635d56923956308f7bb6d1bbfea09f87e7cfb6b2100a9bd77e4892",
+        "role": "value-mapping",
+        "location": {
+          "file": "server/mapping.fixture",
+          "lines": [
+            1,
+            1
+          ],
+          "excerpt": "targetField = row.source_field;"
+        },
+        "provenance": {
+          "discoveredBy": [
+            "ripgrep"
+          ],
+          "verifiedBy": "filesystem",
+          "operations": [
+            "RIPGREP_SEARCH",
+            "FILESYSTEM_READ_RANGE"
+          ]
+        },
+        "reasonCodes": [
+          "DIRECT_ALIAS_MAPPING",
+          "EXACT_TERM_MATCH"
+        ]
+      }
+    ],
+    "candidates": [
+      {
+        "evidenceClass": "candidate",
+        "id": "evidence:v1:1e17327ca7531837b55a37d47cfbc51790097c96079bc3d6027dc42dd5a233e5",
+        "role": "reference",
+        "location": {
+          "file": "server/mapping.fixture",
+          "lines": [
+            2,
+            2
+          ],
+          "excerpt": "consume(row.source_field);"
+        },
+        "provenance": {
+          "discoveredBy": [
+            "ripgrep"
+          ],
+          "verifiedBy": "filesystem",
+          "operations": [
+            "RIPGREP_SEARCH",
+            "FILESYSTEM_READ_RANGE"
+          ]
+        },
+        "reasonCodes": [
+          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
+        ],
+        "promotionRequirements": [
+          "USER_SEMANTIC_CONFIRMATION",
+          "DIRECT_REFERENCE_REQUIRED"
+        ]
+      }
+    ],
+    "coverage": {
+      "backends": [
+        {
+          "backend": "ripgrep",
+          "status": "used",
+          "hitCount": 2
+        }
+      ],
+      "fallbackChecked": false,
+      "indexState": "unknown",
+      "indexFreshness": "not-applicable",
+      "limitsReached": [],
+      "exclusionSummary": {}
+    },
+    "nextActions": [
+      "CONFIRM_CANDIDATE"
+    ]
+  }
+}

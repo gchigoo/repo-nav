@@ -17,8 +17,25 @@ expected:
       role: value-mapping
   candidates:
     - file: server/mapping.fixture
+      contains: sourceAlias
+      role: related
+      reasonCodes: [ALIAS_SOURCE_NEIGHBOR]
+    - file: server/mapping.fixture
+      contains: hcp_name
+      role: related
+      reasonCodes: [SAME_SCOPE_SIMILAR_IDENTIFIER]
+    - file: server/mapping.fixture
       contains: hcpName
       role: related
+      reasonCodes: [SAME_SCOPE_SIMILAR_IDENTIFIER, SAME_ENTITY_SIBLING]
+    - file: server/mapping.fixture
+      contains: hcpEmail
+      role: related
+      reasonCodes: [SAME_SCOPE_SIMILAR_IDENTIFIER, SAME_ENTITY_SIBLING]
+    - file: server/mapping.fixture
+      contains: hcp_email
+      role: related
+      reasonCodes: [SAME_SCOPE_SIMILAR_IDENTIFIER]
   forbiddenEvidenceIds:
     - evidence:v1:dc7e46a20ef89e12a87008a440bab96154f961cda087c622bed853b670005291
   requiredCoverageCodes: []

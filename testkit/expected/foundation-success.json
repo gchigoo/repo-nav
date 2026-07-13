@@ -1,0 +1,62 @@
+{
+  "ok": true,
+  "evidence": {
+    "schemaVersion": "1.0",
+    "status": "ok",
+    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "normalizedTerms": [
+      {
+        "value": "hcp_id",
+        "caseSensitive": false
+      }
+    ],
+    "confirmed": [
+      {
+        "evidenceClass": "confirmed",
+        "id": "evidence:v1:4a81263fd1339bdd04d87f69680e8b8a39e06826885abff3467c2f7fd0d5e7d5",
+        "role": "value-mapping",
+        "location": {
+          "file": "mapping.ts",
+          "lines": [
+            4,
+            4
+          ],
+          "excerpt": "  return { hcpCode: row.hcp_id };"
+        },
+        "provenance": {
+          "discoveredBy": [
+            "ripgrep"
+          ],
+          "verifiedBy": "filesystem",
+          "operations": [
+            "RIPGREP_SEARCH",
+            "FILESYSTEM_READ_RANGE"
+          ]
+        },
+        "reasonCodes": [
+          "DIRECT_ALIAS_MAPPING",
+          "EXACT_TERM_MATCH"
+        ]
+      }
+    ],
+    "candidates": [],
+    "coverage": {
+      "backends": [
+        {
+          "backend": "codegraph",
+          "status": "unavailable",
+          "reasonCode": "CODEGRAPH_INDEX_MISSING",
+          "hitCount": 0
+        }
+      ],
+      "fallbackChecked": true,
+      "indexState": "missing",
+      "indexFreshness": "unknown",
+      "limitsReached": [],
+      "exclusionSummary": {
+        "UNVERIFIED_FILE_CONTENT": 1
+      }
+    },
+    "nextActions": []
+  }
+}

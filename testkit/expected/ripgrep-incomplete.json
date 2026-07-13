@@ -1,0 +1,68 @@
+{
+  "ok": true,
+  "evidence": {
+    "schemaVersion": "1.0",
+    "status": "partial",
+    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "normalizedTerms": [
+      {
+        "value": "targetField",
+        "caseSensitive": false
+      },
+      {
+        "value": "row.source_field",
+        "caseSensitive": false
+      }
+    ],
+    "confirmed": [],
+    "candidates": [
+      {
+        "evidenceClass": "candidate",
+        "id": "evidence:v1:33f8adf836a7af480d617f8a1157c4dbf55965d11f38379c5e99cf807bfd10f6",
+        "role": "reference",
+        "location": {
+          "file": "server/mapping.fixture",
+          "lines": [
+            1,
+            2
+          ],
+          "excerpt": "targetField = row.source_field;\nconsume(row.source_field);"
+        },
+        "provenance": {
+          "discoveredBy": [
+            "ripgrep"
+          ],
+          "verifiedBy": "filesystem",
+          "operations": [
+            "RIPGREP_SEARCH",
+            "FILESYSTEM_READ_RANGE"
+          ]
+        },
+        "reasonCodes": [
+          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
+        ],
+        "promotionRequirements": [
+          "USER_SEMANTIC_CONFIRMATION",
+          "DIRECT_REFERENCE_REQUIRED"
+        ]
+      }
+    ],
+    "coverage": {
+      "backends": [
+        {
+          "backend": "ripgrep",
+          "status": "used",
+          "hitCount": 1
+        }
+      ],
+      "fallbackChecked": false,
+      "indexState": "unknown",
+      "indexFreshness": "not-applicable",
+      "limitsReached": [],
+      "exclusionSummary": {}
+    },
+    "nextActions": [
+      "CONFIRM_CANDIDATE"
+    ]
+  }
+}

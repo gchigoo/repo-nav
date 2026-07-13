@@ -1,0 +1,7 @@
+schemaVersion: '1.0'
+id: shutdown-cleanup-probe
+scenario: shutdown-cleanup-probe
+expected:
+  stdoutMode: mcp-frames-only
+  exitCode: 0
+  maxShutdownMs: 5000

@@ -17,7 +17,27 @@ expected:
       role: reference
       reasonCodes: [EXACT_TERM_WITHOUT_DIRECT_MAPPING]
     - file: server/decoys.fixture
+      contains: type targetField
+      role: reference
+      reasonCodes: [EXACT_TERM_WITHOUT_DIRECT_MAPPING]
+    - file: server/decoys.fixture
+      contains: '// targetField'
+      role: reference
+      reasonCodes: [EXACT_TERM_WITHOUT_DIRECT_MAPPING]
+    - file: server/decoys.fixture
+      contains: const example
+      role: reference
+      reasonCodes: [EXACT_TERM_WITHOUT_DIRECT_MAPPING]
+    - file: server/decoys.fixture
       contains: interface Dto
+      role: reference
+      reasonCodes: [EXACT_TERM_WITHOUT_DIRECT_MAPPING]
+    - file: server/decoys.fixture
+      contains: '@Field'
+      role: reference
+      reasonCodes: [EXACT_TERM_WITHOUT_DIRECT_MAPPING]
+    - file: server/decoys.fixture
+      contains: return { targetField }
       role: reference
       reasonCodes: [EXACT_TERM_WITHOUT_DIRECT_MAPPING]
   forbiddenEvidenceIds:

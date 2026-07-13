@@ -1,0 +1,20 @@
+schemaVersion: '1.0'
+id: mcp-source-field-mapping
+kind: success
+fixtureRoot: D:/fixture/repository
+request:
+  repoPath: D:/fixture/repository
+  question: source-field-mapping
+  terms: [hcp_id, hcpId]
+expected:
+  ok: true
+  status: ok
+  confirmed:
+    - file: server/mapping.ts
+      contains: hcpId = hcp_id
+      role: value-mapping
+      reasonCodes: [DIRECT_ALIAS_MAPPING, EXACT_TERM_MATCH]
+  candidates: []
+  forbiddenEvidenceIds: []
+  requiredCoverageCodes: []
+  minimumExclusionCounts: {}

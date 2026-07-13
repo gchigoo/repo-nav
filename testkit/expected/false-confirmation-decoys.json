@@ -1,0 +1,250 @@
+{
+  "ok": true,
+  "evidence": {
+    "schemaVersion": "1.0",
+    "status": "ok",
+    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "normalizedTerms": [
+      {
+        "value": "targetField",
+        "caseSensitive": false
+      },
+      {
+        "value": "row.source_field",
+        "caseSensitive": false
+      }
+    ],
+    "confirmed": [],
+    "candidates": [
+      {
+        "evidenceClass": "candidate",
+        "id": "evidence:v1:d6d58a843dbffef7267f77ed64431f78fcdc02c5762f3eab789e36443adac77a",
+        "role": "reference",
+        "location": {
+          "file": "server/decoys.fixture",
+          "lines": [
+            1,
+            1
+          ],
+          "excerpt": "targetField == row.source_field;"
+        },
+        "provenance": {
+          "discoveredBy": [
+            "ripgrep"
+          ],
+          "verifiedBy": "filesystem",
+          "operations": [
+            "RIPGREP_SEARCH",
+            "FILESYSTEM_READ_RANGE"
+          ]
+        },
+        "reasonCodes": [
+          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
+        ],
+        "promotionRequirements": [
+          "USER_SEMANTIC_CONFIRMATION",
+          "DIRECT_REFERENCE_REQUIRED"
+        ]
+      },
+      {
+        "evidenceClass": "candidate",
+        "id": "evidence:v1:118e82a812552b1cdf9bac0fbf6a239237a44149707ee52bd14814e6b2d8751e",
+        "role": "reference",
+        "location": {
+          "file": "server/decoys.fixture",
+          "lines": [
+            2,
+            2
+          ],
+          "excerpt": "type targetField = row.source_field;"
+        },
+        "provenance": {
+          "discoveredBy": [
+            "ripgrep"
+          ],
+          "verifiedBy": "filesystem",
+          "operations": [
+            "RIPGREP_SEARCH",
+            "FILESYSTEM_READ_RANGE"
+          ]
+        },
+        "reasonCodes": [
+          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
+        ],
+        "promotionRequirements": [
+          "USER_SEMANTIC_CONFIRMATION",
+          "DIRECT_REFERENCE_REQUIRED"
+        ]
+      },
+      {
+        "evidenceClass": "candidate",
+        "id": "evidence:v1:cb38d651490034d4b4e4b8e8d42007b765de27af66f8e715a13d4160f8567e47",
+        "role": "reference",
+        "location": {
+          "file": "server/decoys.fixture",
+          "lines": [
+            3,
+            3
+          ],
+          "excerpt": "// targetField = row.source_field;"
+        },
+        "provenance": {
+          "discoveredBy": [
+            "ripgrep"
+          ],
+          "verifiedBy": "filesystem",
+          "operations": [
+            "RIPGREP_SEARCH",
+            "FILESYSTEM_READ_RANGE"
+          ]
+        },
+        "reasonCodes": [
+          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
+        ],
+        "promotionRequirements": [
+          "USER_SEMANTIC_CONFIRMATION",
+          "DIRECT_REFERENCE_REQUIRED"
+        ]
+      },
+      {
+        "evidenceClass": "candidate",
+        "id": "evidence:v1:a3ee8718a6e1a0e75eed0fa63f5efeeacadb6723cc3082cb4c765464aad0a223",
+        "role": "reference",
+        "location": {
+          "file": "server/decoys.fixture",
+          "lines": [
+            4,
+            4
+          ],
+          "excerpt": "const example = \"targetField = row.source_field\";"
+        },
+        "provenance": {
+          "discoveredBy": [
+            "ripgrep"
+          ],
+          "verifiedBy": "filesystem",
+          "operations": [
+            "RIPGREP_SEARCH",
+            "FILESYSTEM_READ_RANGE"
+          ]
+        },
+        "reasonCodes": [
+          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
+        ],
+        "promotionRequirements": [
+          "USER_SEMANTIC_CONFIRMATION",
+          "DIRECT_REFERENCE_REQUIRED"
+        ]
+      },
+      {
+        "evidenceClass": "candidate",
+        "id": "evidence:v1:7aaa9c8ae6e73fa641bea50b4569c0a677384d37fca3ab75cdf13005dc5e4d00",
+        "role": "reference",
+        "location": {
+          "file": "server/decoys.fixture",
+          "lines": [
+            5,
+            5
+          ],
+          "excerpt": "interface Dto { targetField: row.source_field }"
+        },
+        "provenance": {
+          "discoveredBy": [
+            "ripgrep"
+          ],
+          "verifiedBy": "filesystem",
+          "operations": [
+            "RIPGREP_SEARCH",
+            "FILESYSTEM_READ_RANGE"
+          ]
+        },
+        "reasonCodes": [
+          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
+        ],
+        "promotionRequirements": [
+          "USER_SEMANTIC_CONFIRMATION",
+          "DIRECT_REFERENCE_REQUIRED"
+        ]
+      },
+      {
+        "evidenceClass": "candidate",
+        "id": "evidence:v1:5d4ec245e8f488353c16cfc690a6e5b78144d28b2691b06f442d1fa1226d7657",
+        "role": "reference",
+        "location": {
+          "file": "server/decoys.fixture",
+          "lines": [
+            6,
+            6
+          ],
+          "excerpt": "@Field({ targetField: row.source_field })"
+        },
+        "provenance": {
+          "discoveredBy": [
+            "ripgrep"
+          ],
+          "verifiedBy": "filesystem",
+          "operations": [
+            "RIPGREP_SEARCH",
+            "FILESYSTEM_READ_RANGE"
+          ]
+        },
+        "reasonCodes": [
+          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
+        ],
+        "promotionRequirements": [
+          "USER_SEMANTIC_CONFIRMATION",
+          "DIRECT_REFERENCE_REQUIRED"
+        ]
+      },
+      {
+        "evidenceClass": "candidate",
+        "id": "evidence:v1:7761ca54f15ce7354006b7a8e6fa2698b036eae2e70127c028b229779a72fa43",
+        "role": "reference",
+        "location": {
+          "file": "server/decoys.fixture",
+          "lines": [
+            7,
+            7
+          ],
+          "excerpt": "return { targetField };"
+        },
+        "provenance": {
+          "discoveredBy": [
+            "ripgrep"
+          ],
+          "verifiedBy": "filesystem",
+          "operations": [
+            "RIPGREP_SEARCH",
+            "FILESYSTEM_READ_RANGE"
+          ]
+        },
+        "reasonCodes": [
+          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
+        ],
+        "promotionRequirements": [
+          "USER_SEMANTIC_CONFIRMATION",
+          "DIRECT_REFERENCE_REQUIRED"
+        ]
+      }
+    ],
+    "coverage": {
+      "backends": [
+        {
+          "backend": "ripgrep",
+          "status": "used",
+          "hitCount": 9
+        }
+      ],
+      "fallbackChecked": false,
+      "indexState": "unknown",
+      "indexFreshness": "not-applicable",
+      "limitsReached": [],
+      "exclusionSummary": {
+        "OUTSIDE_LAYER_HINT": 2
+      }
+    },
+    "nextActions": [
+      "CONFIRM_CANDIDATE"
+    ]
+  }
+}

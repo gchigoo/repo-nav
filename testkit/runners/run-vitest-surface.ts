@@ -3,6 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  RUNNER_GROUP_ALIASES,
   RUNNER_SELECTIONS,
   type RunnerSurface,
 } from './runner-registry.js';
@@ -10,14 +11,27 @@ import {
 interface ParsedSelection {
   readonly groups: readonly string[];
   readonly cases: readonly string[];
+  readonly all: boolean;
+  readonly reportPerformance: boolean;
 }
 
 function parseSelections(args: readonly string[]): ParsedSelection {
   const groups: string[] = [];
   const cases: string[] = [];
+  let all = false;
+  let reportPerformance = false;
 
   for (let index = 0; index < args.length; index += 1) {
     const flag = args[index];
+    if (flag === '--all') {
+      all = true;
+      continue;
+    }
+    if (flag === '--report-performance') {
+      reportPerformance = true;
+      continue;
+    }
+
     const value = args[index + 1];
 
     if (flag !== '--group' && flag !== '--case') {
@@ -35,7 +49,11 @@ function parseSelections(args: readonly string[]): ParsedSelection {
     index += 1;
   }
 
-  return { groups, cases };
+  if (all && (groups.length > 0 || cases.length > 0)) {
+    throw new Error('--all cannot be combined with --group or --case.');
+  }
+
+  return { groups, cases, all, reportPerformance };
 }
 
 function assertKnownSelections(
@@ -43,6 +61,10 @@ function assertKnownSelections(
   selection: ParsedSelection,
 ): void {
   const registry = RUNNER_SELECTIONS[surface];
+
+  if (selection.reportPerformance && surface !== 'golden') {
+    throw new Error('--report-performance is only supported by the golden runner.');
+  }
 
   for (const group of selection.groups) {
     if (!registry.groups.has(group)) {
@@ -56,6 +78,14 @@ function assertKnownSelections(
   }
 }
 
+function expandGroups(
+  surface: RunnerSurface,
+  groups: readonly string[],
+): readonly string[] {
+  const aliases = RUNNER_GROUP_ALIASES[surface];
+  return [...new Set(groups.flatMap((group) => aliases[group] ?? [group]))];
+}
+
 function serializeSelection(values: readonly string[]): string {
   return JSON.stringify(values);
 }
@@ -66,6 +96,10 @@ export async function runVitestSurface(
 ): Promise<number> {
   const selection = parseSelections(args);
   assertKnownSelections(surface, selection);
+  const selectedGroups = selection.all
+    ? []
+    : expandGroups(surface, selection.groups);
+  const selectedCases = selection.all ? [] : selection.cases;
 
   const repositoryRoot = resolve(
     dirname(fileURLToPath(import.meta.url)),
@@ -89,8 +123,9 @@ export async function runVitestSurface(
         env: {
           ...process.env,
           REPO_NAV_TEST_SURFACE: surface,
-          REPO_NAV_TEST_GROUPS: serializeSelection(selection.groups),
-          REPO_NAV_TEST_CASES: serializeSelection(selection.cases),
+          REPO_NAV_TEST_GROUPS: serializeSelection(selectedGroups),
+          REPO_NAV_TEST_CASES: serializeSelection(selectedCases),
+          REPO_NAV_REPORT_PERFORMANCE: selection.reportPerformance ? '1' : '0',
         },
         stdio: 'inherit',
         windowsHide: true,

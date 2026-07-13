@@ -1,0 +1,34 @@
+{
+  "ok": true,
+  "evidence": {
+    "schemaVersion": "1.0",
+    "status": "timeout",
+    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "normalizedTerms": [
+      {
+        "value": "targetField",
+        "caseSensitive": true
+      }
+    ],
+    "confirmed": [],
+    "candidates": [],
+    "coverage": {
+      "backends": [
+        {
+          "backend": "codegraph",
+          "status": "failed",
+          "reasonCode": "BACKEND_ABORTED",
+          "hitCount": 0
+        }
+      ],
+      "fallbackChecked": false,
+      "indexState": "error",
+      "indexFreshness": "unknown",
+      "limitsReached": [
+        "TIMEOUT_REACHED"
+      ],
+      "exclusionSummary": {}
+    },
+    "nextActions": []
+  }
+}

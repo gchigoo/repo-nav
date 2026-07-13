@@ -1,0 +1,119 @@
+{
+  "schemaVersion": "1.0",
+  "caseId": "large-synthetic-repository-v1",
+  "generator": {
+    "seed": 20260710,
+    "sourceFiles": 1000,
+    "modules": 50,
+    "directMappings": 10,
+    "namedDecoys": 200,
+    "fileSizeDistribution": {
+      "small": 500,
+      "medium": 350,
+      "large": 150
+    }
+  },
+  "generatorConfigHash": "f359ff248dfb9ba073b7d36881058ff48ec240bd1e3b6660c9bcccc4194c8a86",
+  "corpusHash": "3a66ce5d9121dba0d833acc9a1429d70e1ee03eff9e278db60ee6015b48e8c5e",
+  "gitCommit": "1fdcc0449e7a173dcbcac0a650c6920b4a3244d9",
+  "environment": {
+    "node": "v24.15.0",
+    "platform": "win32",
+    "release": "10.0.26200",
+    "arch": "x64",
+    "cpu": "Intel(R) Core(TM) 7 250H",
+    "dependencies": {
+      "@modelcontextprotocol/sdk": "1.29.0",
+      "@nestjs/common": "11.1.28",
+      "@nestjs/core": "11.1.28",
+      "reflect-metadata": "0.2.2",
+      "rxjs": "7.8.2",
+      "zod": "4.4.3",
+      "@nestjs/testing": "11.1.28",
+      "@types/node": "24.13.3",
+      "ajv": "8.20.0",
+      "tsx": "4.23.0",
+      "typescript": "5.8.3",
+      "vitest": "4.1.10",
+      "yaml": "2.9.0"
+    }
+  },
+  "warmupRuns": 1,
+  "measuredRuns": 5,
+  "runs": [
+    {
+      "index": 1,
+      "elapsedMs": 70.84609999999998,
+      "peakRssBytes": 122716160,
+      "projectionHash": "8d5a229c4ca5660e4236d4a3743a9aae930faf6e5132c9eec16af0c7e6bd969c",
+      "status": "partial",
+      "confirmedCount": 10,
+      "candidateCount": 10,
+      "limitsReached": ["MAX_FILES_REACHED"]
+    },
+    {
+      "index": 2,
+      "elapsedMs": 61.875299999999925,
+      "peakRssBytes": 120451072,
+      "projectionHash": "8d5a229c4ca5660e4236d4a3743a9aae930faf6e5132c9eec16af0c7e6bd969c",
+      "status": "partial",
+      "confirmedCount": 10,
+      "candidateCount": 10,
+      "limitsReached": ["MAX_FILES_REACHED"]
+    },
+    {
+      "index": 3,
+      "elapsedMs": 59.81700000000001,
+      "peakRssBytes": 123416576,
+      "projectionHash": "8d5a229c4ca5660e4236d4a3743a9aae930faf6e5132c9eec16af0c7e6bd969c",
+      "status": "partial",
+      "confirmedCount": 10,
+      "candidateCount": 10,
+      "limitsReached": ["MAX_FILES_REACHED"]
+    },
+    {
+      "index": 4,
+      "elapsedMs": 60.5471,
+      "peakRssBytes": 122245120,
+      "projectionHash": "8d5a229c4ca5660e4236d4a3743a9aae930faf6e5132c9eec16af0c7e6bd969c",
+      "status": "partial",
+      "confirmedCount": 10,
+      "candidateCount": 10,
+      "limitsReached": ["MAX_FILES_REACHED"]
+    },
+    {
+      "index": 5,
+      "elapsedMs": 66.8315,
+      "peakRssBytes": 128516096,
+      "projectionHash": "8d5a229c4ca5660e4236d4a3743a9aae930faf6e5132c9eec16af0c7e6bd969c",
+      "status": "partial",
+      "confirmedCount": 10,
+      "candidateCount": 10,
+      "limitsReached": ["MAX_FILES_REACHED"]
+    }
+  ],
+  "summary": {
+    "medianElapsedMs": 61.875299999999925,
+    "p95ElapsedMs": 70.84609999999998,
+    "peakRssBytes": 128516096
+  },
+  "correctness": {
+    "stableProjectionHash": "8d5a229c4ca5660e4236d4a3743a9aae930faf6e5132c9eec16af0c7e6bd969c",
+    "status": "partial",
+    "confirmedCount": 10,
+    "candidateCount": 10,
+    "limitsReached": ["MAX_FILES_REACHED"]
+  },
+  "cleanup": {
+    "attempted": true,
+    "succeeded": true,
+    "fixtureRemoved": true
+  },
+  "trend": {
+    "baselineAvailable": false,
+    "timingIsBlocking": false,
+    "medianDeltaPercent": null,
+    "p95DeltaPercent": null,
+    "peakRssDeltaPercent": null
+  }
+}

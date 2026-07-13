@@ -707,7 +707,7 @@ discovery:v1\0{POSIX-normalized-relative-file}\0{start}\0{end}\0{sha256(unredact
 8. **`mvp-golden-regression-suite`** — 建立完整 positive/negative/failure/lifecycle fixture family、稳定 snapshot evaluator 和受控大型合成仓库性能基线。
    - 所属模块：Verification Kit
    - 依赖：`evidence-output-guardrails`
-   - 状态：in-progress
+   - 状态：done
    - 对应 feature：`2026-07-10-mvp-golden-regression-suite`
    - 备注：覆盖 mapping、DTO/test/docs decoy、layer/path decoy、CodeGraph missing/no-result/failed、stdio shutdown、redaction、limits 和 false-confirmation。
 

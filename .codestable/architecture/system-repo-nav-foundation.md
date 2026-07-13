@@ -1,11 +1,11 @@
 ---
 doc_type: architecture
 slug: repo-nav-foundation
-scope: RepoNav 当前已落地的公共契约、repository 安全 seams、CodeGraph-primary/ripgrep-fallback evidence engine、有界 candidate policy、状态/预算/redaction/error output guardrails、stdio MCP surface 与本地验证基础设施
-summary: Zod schema v1 定义数据契约，安全 reader/process adapters 承担仓库边界，RepositoryEvidenceEngine 编排并治理 CodeGraph/ripgrep 的 verified EvidencePack，MCP host 通过只输出 safe parity result 的 stdio 暴露 repo_nav_locate
+scope: RepoNav 当前已落地的公共契约、repository 安全 seams、CodeGraph-primary/ripgrep-fallback evidence engine、有界 candidate policy、状态/预算/redaction/error output guardrails、stdio MCP surface 与发布候选级 Verification Kit
+summary: Zod schema v1 定义数据契约，安全 reader/process adapters 承担仓库边界，RepositoryEvidenceEngine 编排 verified EvidencePack，stdio MCP 暴露 repo_nav_locate，shared Golden evaluator、完整 fixture ownership、真实 lifecycle probe 与 fixed synthetic baseline 锁定发布候选行为
 status: current
 last_reviewed: 2026-07-13
-tags: [repo-nav, foundation, evidence, candidate-policy, output-guardrails, redaction, repository-safety, codegraph, ripgrep, fallback, mcp, stdio]
+tags: [repo-nav, foundation, evidence, candidate-policy, output-guardrails, redaction, repository-safety, codegraph, ripgrep, fallback, mcp, stdio, golden, regression]
 depends_on: []
 implements: [source-of-truth-evidence]
 ---
@@ -24,6 +24,10 @@ implements: [source-of-truth-evidence]
 - **CandidatePolicy**：Evidence Engine 内部的候选分类与有界选择阶段；只消费已核验 DiscoveryRecord/context，按封闭 truth table 生成无 public ID 的 draft，再由 engine 统一物化。
 - **Candidate window**：`RepositoryReader.readWindow` 围绕 seed focus 读取的同文件、最多 12 行/4 KiB verified context；它只用于局部 alias/entity/scope 召回，不替换 confirmed location、discovery key 或 ID。
 - **Verification Kit**：`testkit/` 下的 manifests、fixtures 与 unit/Golden/MCP runners；它不是 production module。
+- **GoldenCaseEvaluator**：success/error manifest expectation 的唯一 evaluator；service 与 MCP runner 只生产 observation，完整 public projection 由 companion snapshot deep-exact 锁定。
+- **Completeness report**：把 contract enum/code owner 绑定到实际 companion observation、executable schema probe 或逐 code negative mutation；禁止用 runner/group 名称自证。
+- **Lifecycle probe**：独立于 LocateResult 的真实 Nest/MCP/process-tree 测试；通过 context marker 与 direct/descendant PID 观察 shutdown，并在 fault/timeout/nonzero 后统一清理。
+- **Performance signal**：固定 1,000-file synthetic corpus 的 blocking correctness/hash/cleanup 与 non-blocking environment-aware timing trend；不是生产 SLA。
 - **RepositoryReader**：production filesystem seam；只接受 realpath 后的 repository root 与 normalized root-relative POSIX file path，返回 typed failures。
 - **SafeProcessRunner**：production child-process seam；只接受 executable/argv/cwd/explicit env 与固定 budgets，强制 `shell:false`、stdio capture 和有界 tree cleanup。
 - **MCP Surface**：`McpModule`、low-level MCP server handlers 与 `McpStdioHost` 组成的本地协议边界；只暴露 `repo_nav_locate`，不启动 HTTP listener。
@@ -35,7 +39,7 @@ implements: [source-of-truth-evidence]
 
 ## 1. 定位与受众
 
-这份地图描述 F7 后已可执行的 RepoNav foundation：结构化 locate request 优先经过 CodeGraph structured probe/query，并在 binary/index missing、no-result、failed、incomplete、unverified 或 unsupported intent 时显式执行 literal ripgrep fallback；所有命中经安全文件核验、discovery merge、保守 direct classification 与有界 candidate expansion，再由统一 finalization policies 裁决 status、budgets、coverage/nextActions、redaction 与 safe error，最后通过本地 stdio MCP 的 `repo_nav_locate` 输出。当前已有 production CodeGraph/ripgrep backend collection、可观察 fallback/index coverage、全状态 EvidencePack guardrails、MCP parity boundary 与受控 fixture 闭环；发布级完整回归/性能基线仍由后续 roadmap item 承担。
+这份地图描述 F8 后已可执行并具备发布候选回归门禁的 RepoNav foundation：结构化 locate request 优先经过 CodeGraph structured probe/query，并在 binary/index missing、no-result、failed、incomplete、unverified 或 unsupported intent 时显式执行 literal ripgrep fallback；所有命中经安全文件核验、discovery merge、保守 direct classification 与有界 candidate expansion，再由统一 finalization policies 裁决 status、budgets、coverage/nextActions、redaction 与 safe error，最后通过本地 stdio MCP 的 `repo_nav_locate` 输出。production backend/guardrails/MCP surface 之外，Verification Kit 现已用 shared evaluator、完整 enum/code ownership、真实 lifecycle cleanup probe、full suites 与 fixed synthetic baseline 锁定当前行为；debug CLI/operator guide 仍不属于当前现状。
 
 ## 2. 结构与交互
 
@@ -69,7 +73,7 @@ flowchart LR
   Engine --> Contracts["src/contracts"]
   Server --> Serializer["Safe output serializer"]
   Serializer --> Redactor
-  Tests["test + testkit"] --> Engine
+  Tests["unit + Golden + MCP suites"] --> Engine
   Tests --> CodeGraph
   Tests --> Ripgrep
   Tests --> Reader
@@ -77,6 +81,11 @@ flowchart LR
   Tests --> Server
   Tests --> Host
   Tests --> Entry
+  Manifests["manifests + exact companion snapshots"] --> Evaluator["GoldenCaseEvaluator"]
+  Evaluator --> Tests
+  Completeness["enum/code completeness probes"] --> Tests
+  Lifecycle["Nest + host + process-tree lifecycle probe"] --> Host
+  Synthetic["fixed 1000-file synthetic corpus"] --> Engine
 ```
 
 - `src/contracts/` 持有 schema v1、normalization、Evidence ID/排序，以及 repository/process/backend/evidence service 契约；production modules 只依赖 contracts/runtime。
@@ -94,6 +103,10 @@ flowchart LR
 - `McpStdioHost` 只合并 SDK request 与 host shutdown 为 caller abort，整轮 request deadline 唯一由 Evidence Engine 的 `LocateAbortCoordinator` 持有；`McpShutdownCoordinator` 在 EOF、平台 signal、transport/parser failure 或 bootstrap failure时按 host → Nest context 的顺序 best-effort 清理。
 - `DiagnosticScrubber` 只服务正式 stderr diagnostics；stdout 始终保留 MCP frames-only，public evidence redaction 与 diagnostic scrub 不共享模糊 replace 语义。
 - `src/main.ts` 在首次异步启动前安装 lifecycle handlers，支持 startup shutdown intent 排队；正常 EOF/受支持 signal exit 0，fatal transport/bootstrap failure exit 1。
+- `testkit/contracts/golden-evaluator.ts` 是 success/error expectation 的唯一实现；`golden-projection.ts` 只 normalize repository root，class/reason/ID/order/excerpt/promotion/provenance/coverage/actions 保持 exact。
+- `fixture-completeness.ts` 从 contract constants 对账 79 个 owner，并要求 owner 指向实际 snapshot observation、schema probe 或逐 reason-code mutation；23 个 success manifests 与 23 个 companion snapshots exact 配对。
+- `McpLifecycleCaseRunner` 对 production bin 只报告真实可观测状态；instrumented probe 导入 `AppModule`、真实 host 与 `NodeSafeProcessRunner`，通过 marker/PID 验证 context、direct/descendant cleanup，并统一清理 fault/timeout/nonzero 路径。
+- large synthetic runner 用固定 seed 生成 1,000 files / 50 modules / 10 mappings / 200 decoys，warmup 1 + measured 5；runtime report 写 gitignored `test-artifacts/`，reviewed baseline 位于 `testkit/baselines/`，tests 不覆盖 baseline。
 
 ## 3. 数据与状态
 
@@ -112,6 +125,7 @@ flowchart LR
 - MCP public input/output schema 发布为 JSON Schema 2020-12 exact object surface；标准 schema 可表达的 tuple arity、closed items 与 unique arrays 均锁定，NFKC/UTF-8 byte budget/cross-field refine 由 `$comment`/description 声明并继续由 runtime Zod 执行。
 - `LocateToolOutput` 是 tool boundary 的唯一结构化状态；`isError=false` 对应成功及 recoverable engine status，`isError=true` 只对应 `INVALID_INPUT`、`INVALID_REPOSITORY`、`PATH_OUTSIDE_ROOT`、`INTERNAL_ERROR`。
 - 进程生命周期状态只存在于 host/coordinator 内存：connect promise、tracked calls、abort controller、shutdown promise和startup intent；close 幂等且同一 shutdown 返回同一 promise。
+- Verification Kit 的持久状态只有 versioned manifests/companion snapshots/ownership metadata 与 reviewed performance baseline；每次 completeness/lifecycle/performance runtime JSON 写入 gitignored `test-artifacts/`，synthetic temp repository 在 `finally` 删除。
 
 ## 4. 关键决策
 
@@ -133,6 +147,10 @@ flowchart LR
 - request abort 来源采取 first-writer-wins；caller 与 deadline 后到事件不能覆盖首次来源，CodeGraph 多 hit 核验只输出 abort 前已完成的 verified evidence。
 - public error action 是 code 白名单：只有 missing/empty terms 的 `INVALID_INPUT` 可携带 `ADD_TERM`，其余 error/action 组合在 application/MCP boundary 被归一化删除。
 - sensitive output 是双层防线：Evidence Engine 在 service result 上 redaction，MCP serializer 对任意 service success 再防御性 redaction；任何新增 matcher 语法必须同步 forbidden corpus。
+- Golden regression 采用 allowlist normalization：只有 repository absolute root/temp/report-only environment 可变；public class/reason/ID/order/excerpt/promotion/provenance/coverage/actions 的任何漂移必须失败。
+- Completeness 不能由 case/group 名称推断；新增 enum/code 必须有机器可验证 owner evidence，confirmed/candidate reason 还必须有逐 code false-positive mutation。
+- Lifecycle assertion 不用主进程 exit 推断 Nest/context/child 状态；未安装 probe 时返回 `null`，安装 probe 时 marker/PID 是唯一观察来源，所有异常路径执行末端 cleanup。
+- Synthetic correctness/config/corpus/projection/cleanup 是 blocking，elapsed/median/p95/RSS 只作 environment-aware trend；baseline 只能经 review 更新。
 
 ## 5. 代码锚点
 
@@ -169,6 +187,10 @@ flowchart LR
 - `test/mcp/request-cancellation.spec.ts` / `lifecycle-contract.spec.ts` — pre/late cancellation、compiled bin、EOF/signal、transport failure 与 cleanup fault matrix。
 - `test/unit/locate-status-evaluator.spec.ts` / `output-guardrails.spec.ts` — abort source race、CodeGraph evidence preservation、fixed backend timeout、redaction/error policy 边界。
 - `test/golden/output-guardrails.spec.ts` / `test/mcp/redaction-output-parity.spec.ts` — limits、service/MCP forbidden values、template/malformed/cross-evidence 与 public metadata 证据。
+- `testkit/contracts/golden-evaluator.ts` / `golden-projection.ts` / `test/golden/mvp-evaluator.spec.ts` — shared success/error evaluator、exact companion projection 与 deliberate mutation 证据。
+- `testkit/contracts/fixture-completeness.ts` / `fixture-coverage-probes.ts` / `test/golden/fixture-completeness.spec.ts` — 79 个 enum/code owner、23/23 snapshot pairs、unrelated-owner 与逐 code negative guards。
+- `testkit/contracts/mcp-lifecycle-harness.ts` / `testkit/fixtures/mcp/lifecycle-probe.ts` / `test/mcp/lifecycle-contract.spec.ts` — production stdio、真实 Nest context marker、direct/descendant PID 与 timeout/nonzero cleanup。
+- `testkit/performance/large-synthetic-repository.ts` / `test/golden/large-synthetic-repository.spec.ts` — fixed corpus、5-run stable projection、environment report、baseline separation 与 temp cleanup。
 
 ## 6. 已知约束 / 边界情况
 
@@ -187,6 +209,9 @@ flowchart LR
 - SDK `server.onerror` 当前统一 fail-closed exit 1；若未来需要容忍 peer protocol anomaly，必须重新区分 fatal transport failure 与可恢复 diagnostic。
 - Shutdown 当前依赖 evidence service/child 协作响应 AbortSignal；非协作实现可能使 tracked settle 无期限等待，当前没有进程内 hard deadline。
 - Windows 按 design 通过 stdin EOF 验证 graceful shutdown；真实 SIGINT/SIGTERM exit 0 由非 Windows CI 覆盖。
+- Golden full suite 的 `exclusion-summary` 不适用 forbidden-ID guard，因此有一个显式 conditional skip；不是环境缺口。
+- Synthetic timing 仅覆盖当前 Windows/Node/ripgrep 与受控 corpus，不能代表真实 monorepo；只用 correctness/hash/cleanup 阻塞。
+- Lifecycle PID marker 文件在外层进程极端异常时存在截断/PID reuse小窗口；正常、deliberate leak、timeout 与 nonzero 路径已有真实清理证据。
 
 ## 7. 相关文档
 
@@ -198,3 +223,8 @@ flowchart LR
 - F5 design/acceptance: `../features/2026-07-10-candidate-evidence-policy/candidate-evidence-policy-design.md` / `candidate-evidence-policy-acceptance.md`。
 - F6 design/acceptance: `../features/2026-07-10-codegraph-fallback-orchestration/codegraph-fallback-orchestration-design.md` / `codegraph-fallback-orchestration-acceptance.md`。
 - F7 design/acceptance: `../features/2026-07-10-evidence-output-guardrails/evidence-output-guardrails-design.md` / `evidence-output-guardrails-acceptance.md`。
+- F8 design/acceptance: `../features/2026-07-10-mvp-golden-regression-suite/mvp-golden-regression-suite-design.md` / `mvp-golden-regression-suite-acceptance.md`。
+
+## 8. 变更日志
+
+- 2026-07-13：F8 acceptance 回填 shared Golden evaluator、machine-verified completeness、真实 lifecycle probe 与 fixed synthetic performance baseline 的当前结构。

@@ -1,0 +1,136 @@
+{
+  "gate_id": "goal-consistency-gate",
+  "stage": "final-audit",
+  "status": "passed",
+  "blocking": [],
+  "warnings": [],
+  "evidence": [
+    {
+      "feature": "repository-evidence-foundation",
+      "artifacts_checked": [
+        "acceptance",
+        "checklist",
+        "dod_contract_results",
+        "dod_results",
+        "evidence_pack",
+        "evidence_pack_results",
+        "gate_results",
+        "qa",
+        "review"
+      ]
+    },
+    {
+      "feature": "repository-access-process-safety",
+      "artifacts_checked": [
+        "acceptance",
+        "checklist",
+        "dod_contract_results",
+        "dod_results",
+        "evidence_pack",
+        "evidence_pack_results",
+        "gate_results",
+        "qa",
+        "review"
+      ]
+    },
+    {
+      "feature": "text-source-evidence-engine",
+      "artifacts_checked": [
+        "acceptance",
+        "checklist",
+        "dod_contract_results",
+        "dod_results",
+        "evidence_pack",
+        "evidence_pack_results",
+        "gate_results",
+        "qa",
+        "review"
+      ]
+    },
+    {
+      "feature": "mcp-locate-surface",
+      "artifacts_checked": [
+        "acceptance",
+        "checklist",
+        "dod_contract_results",
+        "dod_results",
+        "evidence_pack",
+        "evidence_pack_results",
+        "gate_results",
+        "qa",
+        "review"
+      ]
+    },
+    {
+      "feature": "candidate-evidence-policy",
+      "artifacts_checked": [
+        "acceptance",
+        "checklist",
+        "dod_contract_results",
+        "dod_results",
+        "evidence_pack",
+        "evidence_pack_results",
+        "gate_results",
+        "qa",
+        "review"
+      ]
+    },
+    {
+      "feature": "codegraph-fallback-orchestration",
+      "artifacts_checked": [
+        "acceptance",
+        "checklist",
+        "dod_contract_results",
+        "dod_results",
+        "evidence_pack",
+        "evidence_pack_results",
+        "gate_results",
+        "qa",
+        "review"
+      ]
+    },
+    {
+      "feature": "evidence-output-guardrails",
+      "artifacts_checked": [
+        "acceptance",
+        "checklist",
+        "dod_contract_results",
+        "dod_results",
+        "evidence_pack",
+        "evidence_pack_results",
+        "gate_results",
+        "qa",
+        "review"
+      ]
+    },
+    {
+      "feature": "mvp-golden-regression-suite",
+      "artifacts_checked": [
+        "acceptance",
+        "checklist",
+        "dod_contract_results",
+        "dod_results",
+        "evidence_pack",
+        "evidence_pack_results",
+        "gate_results",
+        "qa",
+        "review"
+      ]
+    },
+    {
+      "feature": "debug-cli-mcp-guide",
+      "artifacts_checked": [
+        "acceptance",
+        "checklist",
+        "dod_contract_results",
+        "dod_results",
+        "evidence_pack",
+        "evidence_pack_results",
+        "gate_results",
+        "qa",
+        "review"
+      ]
+    }
+  ],
+  "providers": {}
+}

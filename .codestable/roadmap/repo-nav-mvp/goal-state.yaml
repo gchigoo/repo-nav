@@ -1,7 +1,7 @@
 roadmap: repo-nav-mvp
 status: ready-to-dispatch
 baseline_ref: a356b6117ed65c2959132f0d6b62485295d60ccb
-current_feature_index: 0
+current_feature_index: 1
 features:
 - slug: repository-evidence-foundation
   roadmap_item: repository-evidence-foundation
@@ -11,7 +11,7 @@ features:
   review: .codestable/features/2026-07-10-repository-evidence-foundation/repository-evidence-foundation-review.md
   qa: .codestable/features/2026-07-10-repository-evidence-foundation/repository-evidence-foundation-qa.md
   acceptance: .codestable/features/2026-07-10-repository-evidence-foundation/repository-evidence-foundation-acceptance.md
-  status: pending
+  status: accepted
 - slug: repository-access-process-safety
   roadmap_item: repository-access-process-safety
   feature_dir: .codestable/features/2026-07-10-repository-access-process-safety

@@ -1,0 +1,22 @@
+schemaVersion: '1.0'
+id: foundation-success
+fixtureRoot: testkit/fixtures/foundation
+kind: success
+request:
+  repoPath: testkit/fixtures/foundation
+  question: Where is hcp_id mapped?
+  terms: [hcp_id]
+expected:
+  ok: true
+  status: ok
+  confirmed:
+    - file: mapping.ts
+      contains: 'hcpCode: row.hcp_id'
+      role: value-mapping
+      reasonCodes: [DIRECT_ALIAS_MAPPING, EXACT_TERM_MATCH]
+  candidates: []
+  forbiddenEvidenceIds:
+    - evidence:v1:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+  requiredCoverageCodes: [CODEGRAPH_INDEX_MISSING]
+  minimumExclusionCounts:
+    UNVERIFIED_FILE_CONTENT: 1

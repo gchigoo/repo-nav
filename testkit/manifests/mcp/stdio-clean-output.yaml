@@ -1,0 +1,7 @@
+schemaVersion: '1.0'
+id: stdio-clean-output
+scenario: stdio-clean-output
+expected:
+  stdoutMode: mcp-frames-only
+  exitCode: 0
+  maxShutdownMs: 5000

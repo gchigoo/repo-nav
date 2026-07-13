@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -12,7 +13,7 @@ if os.environ.get("PYTHONDONTWRITEBYTECODE") != "1":
     os.execvpe(sys.executable, [sys.executable, *sys.argv], os.environ)
 sys.dont_write_bytecode = True
 
-from codestable_gate_common import gate_result, main_exit, parse_args, repo_root, run_command
+from codestable_gate_common import gate_result, main_exit, parse_args, repo_root
 
 
 CLEAN_PATTERNS = ("TODO", "FIXME", "XXX")
@@ -38,23 +39,29 @@ def is_under(path: str, prefix: str) -> bool:
     return path == clean or path.startswith(clean + "/")
 
 
-def changed_files(root: Path, paths: list[str]) -> list[str]:
-    quoted = " ".join(f"'{path}'" for path in paths)
-    command = "git status --porcelain -uall"
-    if quoted:
-        command = f"{command} -- {quoted}"
-    status = run_command(command, root)
-    if status["exit_code"] != 0:
-        return []
+def changed_files(root: Path, paths: list[str]) -> tuple[list[str], str | None]:
+    completed = subprocess.run(
+        ["git", "status", "--porcelain", "-uall", "--", *paths],
+        cwd=root,
+        shell=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if completed.returncode != 0:
+        detail = completed.stderr[-1000:].strip()
+        return [], f"git status failed with exit code {completed.returncode}: {detail}"
+
     files: list[str] = []
-    for line in str(status["stdout"]).splitlines():
+    for line in completed.stdout.splitlines():
         if not line:
             continue
         path = line[3:]
         if " -> " in path:
             path = path.split(" -> ", 1)[1]
         files.append(path.strip('"'))
-    return files
+    return files, None
 
 
 def main() -> None:
@@ -85,7 +92,11 @@ def main() -> None:
             if line.strip() and not line.strip().startswith("#")
         )
     check_paths = args.check_path or allowed
-    raw_files = changed_files(root, check_paths)
+    raw_files, git_error = changed_files(root, check_paths)
+    if git_error is not None:
+        result = gate_result("scope-gate", args.stage, "blocked", [git_error])
+        main_exit(result, args.json_out)
+
     files = [path for path in raw_files if not is_machine_artifact(path)]
     ignored = [path for path in raw_files if is_machine_artifact(path)]
     out_of_scope = [

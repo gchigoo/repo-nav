@@ -1,0 +1,16 @@
+# F1 implementation scope approved by the feature design.
+.gitignore
+package.json
+package-lock.json
+tsconfig.json
+tsconfig.build.json
+vitest.config.ts
+src
+test
+testkit
+.codestable/roadmap/repo-nav-mvp/goal-state.yaml
+.codestable/tools/codestable-scope-gate.py
+.codestable/architecture
+.codestable/roadmap/repo-nav-mvp/repo-nav-mvp-items.yaml
+.codestable/roadmap/repo-nav-mvp/repo-nav-mvp-roadmap.md
+.codestable/roadmap/repo-nav-mvp/goal-features/repository-evidence-foundation.md

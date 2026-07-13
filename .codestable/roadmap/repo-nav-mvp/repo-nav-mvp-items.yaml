@@ -4,7 +4,7 @@ items:
 - slug: repository-evidence-foundation
   description: 建立 NestJS 11 standalone、严格 TypeScript 工程、版本化证据 schema、输入归一化、DI tokens、合成 fixture manifest 与验证脚本
   depends_on: []
-  status: in-progress
+  status: done
   feature: 2026-07-10-repository-evidence-foundation
   minimal_loop: false
   notes: 不引入 LLM 或 HTTP adapter，先锁定 literal 输入、byte budgets、reason codes、ID 和排序契约

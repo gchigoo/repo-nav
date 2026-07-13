@@ -1,0 +1,33 @@
+{
+  "name": "repo-nav",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic repository evidence service for local MCP clients.",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "tsx testkit/runners/unit-runner.ts",
+    "test:golden": "tsx testkit/runners/golden-runner.ts",
+    "test:mcp": "tsx testkit/runners/mcp-runner.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "@nestjs/common": "11.1.28",
+    "@nestjs/core": "11.1.28",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "11.1.28",
+    "@types/node": "24.13.3",
+    "tsx": "4.23.0",
+    "typescript": "5.8.3",
+    "vitest": "4.1.10",
+    "yaml": "2.9.0"
+  }
+}

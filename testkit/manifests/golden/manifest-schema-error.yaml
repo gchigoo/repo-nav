@@ -1,0 +1,16 @@
+schemaVersion: '1.0'
+id: foundation-error
+fixtureRoot: testkit/fixtures/foundation
+kind: error
+requestJson:
+  repoPath: testkit/fixtures/foundation
+  question: Missing search terms
+  terms: []
+expected:
+  ok: false
+  error:
+    code: INVALID_INPUT
+    recoverable: true
+    suggestedAction: ADD_TERM
+  mcpIsError: true
+  structuredTextParity: true

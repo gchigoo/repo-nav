@@ -6,76 +6,76 @@ steps:
   exit_signal: build/typecheck/unit/golden/MCP 五个入口均启动真实程序并正确传播退出码
   verification: npm run build && npm run typecheck && npm test -- --group runner-smoke && npm run test:golden -- --case runner-smoke && npm run test:mcp -- --case runner-smoke
   artifacts: [package.json, lockfile, runner command logs]
-  status: pending
+  status: done
 - id: S2
   action: 固化公共 schema 与 normalization/ID/排序常量
   exit_signal: literal、byte、case、enum、ID、排序的正反 contract tests 全部通过
   verification: npm test -- --group contract --case term-case-parity
   artifacts: [src/contracts public exports, contract test report]
-  status: pending
+  status: done
 - id: S3
   action: 建立 fail-closed DI skeleton 与 test overrides
   exit_signal: context 可创建关闭，默认 provider fail closed，fake seams 可被 override
   verification: npm test -- --group di
   artifacts: [AppModule, runtime tokens, provider graph report]
-  status: pending
+  status: done
 - id: S4
   action: 建立 Golden success/error 判别联合与共享 evaluator
   exit_signal: success/error manifest 可判别且 required/forbidden/exclusion 断言有效
   verification: npm run test:golden -- --case manifest-schema --case evaluator-smoke
   artifacts: [GoldenCase schema, synthetic manifests, evaluator logs]
-  status: pending
+  status: done
 - id: S5
   action: 建立独立 McpLifecycleCase 与 MCP runner harness
   exit_signal: lifecycle schema 与 synthetic stdio frames/exit/timeout harness 通过且未混入 LocateResult
   verification: npm run test:mcp -- --case lifecycle-manifest-schema --case runner-smoke
   artifacts: [McpLifecycleCase schema, MCP harness logs]
-  status: pending
+  status: done
 checks:
 - id: C1
   item: Zod 是 runtime schema 唯一来源，TypeScript 类型由 inference 导出
   source: design 0/2.1
-  status: pending
+  status: passed
 - id: C2
   item: LocateRequest/LocateResult/EvidencePack 与 schema v1 constants 对齐 roadmap 4.1/4.6/4.7
   source: design 2.1
-  status: pending
+  status: passed
 - id: C3
   item: 四个 Symbol.for tokens 与唯一有序 backend collection seam
   source: design 1/2.1
-  status: pending
+  status: passed
 - id: C4
   item: reader/service 默认 provider fail closed，不能返回伪 EvidencePack
   source: design 1/2.1/3.1
-  status: pending
+  status: passed
 - id: C5
   item: test factory 通过 overrideProvider 替换 backend/reader/service
   source: design 2.1/2.2
-  status: pending
+  status: passed
 - id: C6
   item: GoldenSuccessCase 与 GoldenErrorCase 组成判别联合并共用 evaluator
   source: design 0/2.1/3.1
-  status: pending
+  status: passed
 - id: C7
   item: McpLifecycleCase 使用独立 schema 与 runner
   source: design 0/2.2/3.1
-  status: pending
+  status: passed
 - id: C8
   item: production source 不依赖 testkit/test
   source: design 2.1/3.2
-  status: pending
+  status: passed
 - id: C9
   item: 五个 package scripts 是真实入口且失败返回非零退出
   source: design 2.3/3.1
-  status: pending
+  status: passed
 - id: C10
   item: F1 不包含真实 reader/backend/engine/MCP tool/HTTP/LLM/数据库
   source: design 1/3.2
-  status: pending
+  status: passed
 - id: C11
   item: command logs、schema/manifest samples、artifact inventory 可复核
   source: design 3.4
-  status: pending
+  status: passed
 dod:
   commands:
   - id: CMD-BUILD

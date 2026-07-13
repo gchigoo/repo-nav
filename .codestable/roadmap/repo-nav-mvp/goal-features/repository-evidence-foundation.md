@@ -3,7 +3,7 @@ doc_type: roadmap-goal-feature
 roadmap: repo-nav-mvp
 feature: 2026-07-10-repository-evidence-foundation
 roadmap_item: repository-evidence-foundation
-status: pending
+status: accepted
 ---
 
 # repository-evidence-foundation Goal 执行规格

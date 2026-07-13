@@ -658,7 +658,7 @@ discovery:v1\0{POSIX-normalized-relative-file}\0{start}\0{end}\0{sha256(unredact
 1. **`repository-evidence-foundation`** — 建立 NestJS 11 standalone、严格 TypeScript 工程、版本化 schema、输入归一化、DI tokens、fixture manifest 和统一验证脚本。
    - 所属模块：Evidence Engine、Repository Backends、Verification Kit
    - 依赖：无
-   - 状态：in-progress
+   - 状态：done
    - 对应 feature：`2026-07-10-repository-evidence-foundation`
    - 备注：创建 AppModule/provider skeleton 与 build/typecheck/unit/golden/MCP test 入口；用 schema tests 锁定 literal string、byte budgets、reason codes、ID canonicalization 和排序常量，不引入 LLM 或 HTTP adapter。
 

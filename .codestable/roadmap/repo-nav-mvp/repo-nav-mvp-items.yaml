@@ -28,7 +28,7 @@ items:
   description: 通过 Nest standalone 和 stdio MCP 暴露带 Zod schema、structuredContent text parity、typed isError 与生命周期清理的 repo_nav_locate
   depends_on:
   - text-source-evidence-engine
-  status: in-progress
+  status: done
   feature: 2026-07-10-mcp-locate-surface
   minimal_loop: false
   notes: MCP SDK v1.29.0 稳定 API 为规划基线，实现时重新核验并由 lockfile 固定稳定版本

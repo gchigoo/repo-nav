@@ -1,0 +1,769 @@
+{
+  "sdkVersion": "1.29.0",
+  "tool": {
+    "name": "repo_nav_locate",
+    "title": "Locate repository evidence",
+    "description": "Locate current, filesystem-verified source-of-truth evidence in a repository.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "readOnly": true,
+      "type": "object",
+      "properties": {
+        "repoPath": {
+          "type": "string",
+          "minLength": 1,
+          "description": "repoPath must remain non-empty after NFKC normalization and trimming; runtime validation limits it to 4096 UTF-8 bytes."
+        },
+        "question": {
+          "type": "string",
+          "minLength": 1,
+          "description": "question must remain non-empty after NFKC normalization and trimming; runtime validation limits it to 4096 UTF-8 bytes."
+        },
+        "terms": {
+          "readOnly": true,
+          "minItems": 1,
+          "maxItems": 16,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "search term must remain non-empty after NFKC normalization and trimming; runtime validation limits it to 128 UTF-8 bytes."
+          },
+          "$comment": "Runtime validation limits all normalized positive terms to 1024 UTF-8 bytes in total."
+        },
+        "termCase": {
+          "type": "string",
+          "enum": [
+            "sensitive",
+            "insensitive",
+            "smart"
+          ]
+        },
+        "anchors": {
+          "readOnly": true,
+          "maxItems": 16,
+          "type": "array",
+          "items": {
+            "readOnly": true,
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "symbol",
+                  "file",
+                  "table",
+                  "route",
+                  "term"
+                ]
+              },
+              "value": {
+                "type": "string",
+                "minLength": 1,
+                "description": "anchor value must remain non-empty after NFKC normalization and trimming; runtime validation limits it to 512 UTF-8 bytes."
+              }
+            },
+            "required": [
+              "kind",
+              "value"
+            ],
+            "additionalProperties": false,
+            "$comment": "Runtime validation additionally rejects absolute and repository-escaping file anchor values."
+          }
+        },
+        "layers": {
+          "readOnly": true,
+          "maxItems": 7,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "client",
+              "server",
+              "db",
+              "test",
+              "docs",
+              "config",
+              "unknown"
+            ]
+          }
+        },
+        "negativeTerms": {
+          "readOnly": true,
+          "minItems": 0,
+          "maxItems": 16,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "negative search term must remain non-empty after NFKC normalization and trimming; runtime validation limits it to 128 UTF-8 bytes."
+          },
+          "$comment": "Runtime validation limits all normalized negative terms to 1024 UTF-8 bytes in total."
+        },
+        "limits": {
+          "readOnly": true,
+          "type": "object",
+          "properties": {
+            "maxFiles": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            },
+            "maxConfirmed": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            },
+            "maxCandidates": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 20
+            },
+            "timeoutMs": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 30000
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "repoPath",
+        "question",
+        "terms"
+      ],
+      "additionalProperties": false,
+      "$comment": "Runtime Zod validation additionally enforces a serialized input UTF-8 byte budget and cross-field refinements."
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "oneOf": [
+        {
+          "readOnly": true,
+          "type": "object",
+          "properties": {
+            "ok": {
+              "type": "boolean",
+              "const": true
+            },
+            "evidence": {
+              "readOnly": true,
+              "type": "object",
+              "properties": {
+                "schemaVersion": {
+                  "type": "string",
+                  "const": "1.0"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "ok",
+                    "partial",
+                    "no_result",
+                    "backend_unavailable",
+                    "timeout"
+                  ]
+                },
+                "repositoryRoot": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "normalizedTerms": {
+                  "readOnly": true,
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "readOnly": true,
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "caseSensitive": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "value",
+                      "caseSensitive"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "confirmed": {
+                  "readOnly": true,
+                  "type": "array",
+                  "items": {
+                    "readOnly": true,
+                    "type": "object",
+                    "properties": {
+                      "evidenceClass": {
+                        "type": "string",
+                        "const": "confirmed"
+                      },
+                      "id": {
+                        "type": "string",
+                        "pattern": "^evidence:v1:[a-f0-9]{64}$"
+                      },
+                      "role": {
+                        "type": "string",
+                        "enum": [
+                          "execution-site",
+                          "value-mapping",
+                          "definition",
+                          "reference",
+                          "related"
+                        ]
+                      },
+                      "location": {
+                        "readOnly": true,
+                        "type": "object",
+                        "properties": {
+                          "file": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "symbol": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "lines": {
+                            "readOnly": true,
+                            "type": "array",
+                            "prefixItems": [
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              }
+                            ],
+                            "minItems": 2,
+                            "maxItems": 2,
+                            "items": false,
+                            "$comment": "Runtime Zod validation additionally requires the first line number to be less than or equal to the second."
+                          },
+                          "excerpt": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "redaction": {
+                            "readOnly": true,
+                            "type": "object",
+                            "properties": {
+                              "applied": {
+                                "type": "boolean",
+                                "const": true
+                              },
+                              "reasonCodes": {
+                                "readOnly": true,
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "SECRET_LIKE_VALUE",
+                                    "CONNECTION_STRING",
+                                    "PERSONAL_DATA",
+                                    "BINARY_OR_OVERSIZED_CONTENT"
+                                  ]
+                                },
+                                "uniqueItems": true
+                              }
+                            },
+                            "required": [
+                              "applied",
+                              "reasonCodes"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "file",
+                          "lines",
+                          "excerpt"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "provenance": {
+                        "readOnly": true,
+                        "type": "object",
+                        "properties": {
+                          "discoveredBy": {
+                            "readOnly": true,
+                            "minItems": 1,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "codegraph",
+                                "ripgrep",
+                                "filesystem"
+                              ]
+                            },
+                            "uniqueItems": true
+                          },
+                          "verifiedBy": {
+                            "type": "string",
+                            "const": "filesystem"
+                          },
+                          "operations": {
+                            "readOnly": true,
+                            "minItems": 1,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "CODEGRAPH_QUERY",
+                                "RIPGREP_SEARCH",
+                                "FILESYSTEM_READ_RANGE",
+                                "FILESYSTEM_FIND_MATCHES"
+                              ]
+                            },
+                            "uniqueItems": true
+                          }
+                        },
+                        "required": [
+                          "discoveredBy",
+                          "verifiedBy",
+                          "operations"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "reasonCodes": {
+                        "readOnly": true,
+                        "minItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "EXACT_TERM_MATCH",
+                            "EXACT_SYMBOL_ANCHOR",
+                            "DIRECT_ALIAS_MAPPING"
+                          ]
+                        },
+                        "uniqueItems": true
+                      }
+                    },
+                    "required": [
+                      "evidenceClass",
+                      "id",
+                      "role",
+                      "location",
+                      "provenance",
+                      "reasonCodes"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "candidates": {
+                  "readOnly": true,
+                  "type": "array",
+                  "items": {
+                    "readOnly": true,
+                    "type": "object",
+                    "properties": {
+                      "evidenceClass": {
+                        "type": "string",
+                        "const": "candidate"
+                      },
+                      "id": {
+                        "type": "string",
+                        "pattern": "^evidence:v1:[a-f0-9]{64}$"
+                      },
+                      "role": {
+                        "type": "string",
+                        "enum": [
+                          "execution-site",
+                          "value-mapping",
+                          "definition",
+                          "reference",
+                          "related"
+                        ]
+                      },
+                      "location": {
+                        "readOnly": true,
+                        "type": "object",
+                        "properties": {
+                          "file": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "symbol": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "lines": {
+                            "readOnly": true,
+                            "type": "array",
+                            "prefixItems": [
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              }
+                            ],
+                            "minItems": 2,
+                            "maxItems": 2,
+                            "items": false,
+                            "$comment": "Runtime Zod validation additionally requires the first line number to be less than or equal to the second."
+                          },
+                          "excerpt": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "redaction": {
+                            "readOnly": true,
+                            "type": "object",
+                            "properties": {
+                              "applied": {
+                                "type": "boolean",
+                                "const": true
+                              },
+                              "reasonCodes": {
+                                "readOnly": true,
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "SECRET_LIKE_VALUE",
+                                    "CONNECTION_STRING",
+                                    "PERSONAL_DATA",
+                                    "BINARY_OR_OVERSIZED_CONTENT"
+                                  ]
+                                },
+                                "uniqueItems": true
+                              }
+                            },
+                            "required": [
+                              "applied",
+                              "reasonCodes"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "file",
+                          "lines",
+                          "excerpt"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "provenance": {
+                        "readOnly": true,
+                        "type": "object",
+                        "properties": {
+                          "discoveredBy": {
+                            "readOnly": true,
+                            "minItems": 1,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "codegraph",
+                                "ripgrep",
+                                "filesystem"
+                              ]
+                            },
+                            "uniqueItems": true
+                          },
+                          "verifiedBy": {
+                            "type": "string",
+                            "const": "filesystem"
+                          },
+                          "operations": {
+                            "readOnly": true,
+                            "minItems": 1,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "CODEGRAPH_QUERY",
+                                "RIPGREP_SEARCH",
+                                "FILESYSTEM_READ_RANGE",
+                                "FILESYSTEM_FIND_MATCHES"
+                              ]
+                            },
+                            "uniqueItems": true
+                          }
+                        },
+                        "required": [
+                          "discoveredBy",
+                          "verifiedBy",
+                          "operations"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "reasonCodes": {
+                        "readOnly": true,
+                        "minItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "EXACT_TERM_WITHOUT_DIRECT_MAPPING",
+                            "SYMBOL_REFERENCE_ONLY",
+                            "SAME_SCOPE_SIMILAR_IDENTIFIER",
+                            "SAME_ENTITY_SIBLING",
+                            "ALIAS_SOURCE_NEIGHBOR",
+                            "SECONDARY_BACKEND_HIT"
+                          ]
+                        },
+                        "uniqueItems": true
+                      },
+                      "promotionRequirements": {
+                        "readOnly": true,
+                        "minItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "USER_SEMANTIC_CONFIRMATION",
+                            "DIRECT_REFERENCE_REQUIRED",
+                            "CALL_PATH_REQUIRED"
+                          ]
+                        },
+                        "uniqueItems": true
+                      }
+                    },
+                    "required": [
+                      "evidenceClass",
+                      "id",
+                      "role",
+                      "location",
+                      "provenance",
+                      "reasonCodes",
+                      "promotionRequirements"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "coverage": {
+                  "readOnly": true,
+                  "type": "object",
+                  "properties": {
+                    "backends": {
+                      "readOnly": true,
+                      "type": "array",
+                      "items": {
+                        "readOnly": true,
+                        "type": "object",
+                        "properties": {
+                          "backend": {
+                            "type": "string",
+                            "enum": [
+                              "codegraph",
+                              "ripgrep"
+                            ]
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "used",
+                              "unavailable",
+                              "skipped",
+                              "failed"
+                            ]
+                          },
+                          "reasonCode": {
+                            "type": "string",
+                            "enum": [
+                              "CODEGRAPH_INDEX_MISSING",
+                              "CODEGRAPH_UNAVAILABLE",
+                              "CODEGRAPH_NO_RESULT",
+                              "RIPGREP_UNAVAILABLE",
+                              "RIPGREP_NO_RESULT",
+                              "BACKEND_PROCESS_FAILED",
+                              "BACKEND_ABORTED"
+                            ]
+                          },
+                          "hitCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "backend",
+                          "status",
+                          "hitCount"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "fallbackChecked": {
+                      "type": "boolean"
+                    },
+                    "indexState": {
+                      "type": "string",
+                      "enum": [
+                        "available",
+                        "missing",
+                        "unavailable",
+                        "error",
+                        "unknown"
+                      ]
+                    },
+                    "indexFreshness": {
+                      "type": "string",
+                      "enum": [
+                        "not-applicable",
+                        "unknown",
+                        "possibly-stale"
+                      ]
+                    },
+                    "limitsReached": {
+                      "readOnly": true,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "MAX_FILES_REACHED",
+                          "MAX_CONFIRMED_REACHED",
+                          "MAX_CANDIDATES_REACHED",
+                          "MAX_FILE_BYTES_REACHED",
+                          "MAX_EXCERPT_BYTES_REACHED",
+                          "TIMEOUT_REACHED"
+                        ]
+                      }
+                    },
+                    "exclusionSummary": {
+                      "readOnly": true,
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "enum": [
+                          "NEGATIVE_TERM_MATCH",
+                          "OUTSIDE_LAYER_HINT",
+                          "DUPLICATE_LOCATION",
+                          "UNVERIFIED_FILE_CONTENT"
+                        ]
+                      },
+                      "additionalProperties": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    }
+                  },
+                  "required": [
+                    "backends",
+                    "fallbackChecked",
+                    "indexState",
+                    "indexFreshness",
+                    "limitsReached",
+                    "exclusionSummary"
+                  ],
+                  "additionalProperties": false
+                },
+                "nextActions": {
+                  "readOnly": true,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "ADD_TERM",
+                      "ADD_SYMBOL_ANCHOR",
+                      "CONFIRM_CANDIDATE",
+                      "INITIALIZE_CODEGRAPH",
+                      "RETRY_WITH_HIGHER_LIMIT"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "status",
+                "repositoryRoot",
+                "normalizedTerms",
+                "confirmed",
+                "candidates",
+                "coverage",
+                "nextActions"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "ok",
+            "evidence"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "readOnly": true,
+          "type": "object",
+          "properties": {
+            "ok": {
+              "type": "boolean",
+              "const": false
+            },
+            "error": {
+              "readOnly": true,
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "enum": [
+                    "INVALID_INPUT",
+                    "INVALID_REPOSITORY",
+                    "PATH_OUTSIDE_ROOT",
+                    "INTERNAL_ERROR"
+                  ]
+                },
+                "message": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "recoverable": {
+                  "type": "boolean"
+                },
+                "suggestedAction": {
+                  "type": "string",
+                  "enum": [
+                    "ADD_TERM",
+                    "ADD_SYMBOL_ANCHOR",
+                    "CONFIRM_CANDIDATE",
+                    "INITIALIZE_CODEGRAPH",
+                    "RETRY_WITH_HIGHER_LIMIT"
+                  ]
+                }
+              },
+              "required": [
+                "code",
+                "message",
+                "recoverable"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "ok",
+            "error"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "$comment": "Runtime Zod validation additionally enforces cross-collection evidence ID and other custom refinements.",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  }
+}

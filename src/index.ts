@@ -5,3 +5,8 @@ export * from './repository/node-repository-reader.js';
 export * from './repository/ripgrep-backend.js';
 export * from './repository/node-safe-process-runner.js';
 export * from './evidence/repository-evidence-engine.js';
+export * from './mcp/locate-tool-schema.js';
+export * from './mcp/locate-tool-output.js';
+export * from './mcp/repo-nav-mcp-server.js';
+export * from './mcp/mcp-stdio-host.js';
+export * from './mcp/mcp-shutdown-coordinator.js';

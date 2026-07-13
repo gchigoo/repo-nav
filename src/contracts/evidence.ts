@@ -213,4 +213,5 @@ export const LocateResultSchema = z.discriminatedUnion('ok', [
     .readonly(),
 ]);
 export type LocateResult = z.infer<typeof LocateResultSchema>;
+export const LocateToolOutputSchema = LocateResultSchema;
 export type LocateToolOutput = LocateResult;

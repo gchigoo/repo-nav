@@ -1,7 +1,7 @@
 roadmap: repo-nav-mvp
 status: ready-to-dispatch
 baseline_ref: a356b6117ed65c2959132f0d6b62485295d60ccb
-current_feature_index: 3
+current_feature_index: 4
 features:
 - slug: repository-evidence-foundation
   roadmap_item: repository-evidence-foundation
@@ -38,7 +38,7 @@ features:
   review: .codestable/features/2026-07-10-mcp-locate-surface/mcp-locate-surface-review.md
   qa: .codestable/features/2026-07-10-mcp-locate-surface/mcp-locate-surface-qa.md
   acceptance: .codestable/features/2026-07-10-mcp-locate-surface/mcp-locate-surface-acceptance.md
-  status: pending
+  status: accepted
 - slug: candidate-evidence-policy
   roadmap_item: candidate-evidence-policy
   feature_dir: .codestable/features/2026-07-10-candidate-evidence-policy

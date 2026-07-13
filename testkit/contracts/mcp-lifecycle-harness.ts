@@ -1,7 +1,9 @@
 import { spawn } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 
+import { LATEST_PROTOCOL_VERSION } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
 import {
@@ -51,6 +53,22 @@ export interface McpLifecycleObservation {
   readonly elapsedMs: number;
 }
 
+function resolveProductionBin(): {
+  readonly projectRoot: string;
+  readonly childPath: string;
+} {
+  const projectRoot = resolve(import.meta.dirname, '..', '..');
+  const packageJson: unknown = JSON.parse(
+    readFileSync(resolve(projectRoot, 'package.json'), 'utf8'),
+  );
+  const packageBin = z
+    .object({
+      bin: z.strictObject({ 'repo-nav-mcp': z.string().min(1) }),
+    })
+    .parse(packageJson).bin['repo-nav-mcp'];
+  return { projectRoot, childPath: resolve(projectRoot, packageBin) };
+}
+
 export function parseMcpStdoutFrames(
   stdout: string,
 ): readonly Readonly<Record<string, unknown>>[] {
@@ -79,21 +97,15 @@ export async function runMcpLifecycleCase(
   caseInput: McpLifecycleCase,
 ): Promise<McpLifecycleObservation> {
   const lifecycleCase = McpLifecycleCaseSchema.parse(caseInput);
-  const childPath = resolve(
-    import.meta.dirname,
-    '..',
-    'fixtures',
-    'mcp',
-    'synthetic-stdio-child.ts',
-  );
+  const { childPath, projectRoot } = resolveProductionBin();
   const startedAt = performance.now();
 
   return await new Promise<McpLifecycleObservation>((resolveObservation, reject) => {
     const child = spawn(
       process.execPath,
-      ['--import', 'tsx', childPath, lifecycleCase.scenario],
+      [childPath],
       {
-        cwd: resolve(import.meta.dirname, '..', '..'),
+        cwd: projectRoot,
         stdio: ['pipe', 'pipe', 'pipe'],
         windowsHide: true,
       },
@@ -101,11 +113,65 @@ export async function runMcpLifecycleCase(
     let stdout = '';
     let stderr = '';
     let timedOut = false;
+    let stdoutRemainder = '';
+    let shutdownTriggered = false;
 
     child.stdout.setEncoding('utf8');
     child.stderr.setEncoding('utf8');
     child.stdout.on('data', (chunk: string) => {
       stdout += chunk;
+      stdoutRemainder += chunk;
+      const lines = stdoutRemainder.split(/\r?\n/u);
+      stdoutRemainder = lines.pop() ?? '';
+      for (const line of lines) {
+        if (line.length === 0) {
+          continue;
+        }
+        const frame = JSON.parse(line) as Readonly<Record<string, unknown>>;
+        if (frame.id === 1) {
+          child.stdin.write(
+            `${JSON.stringify({
+              jsonrpc: '2.0',
+              method: 'notifications/initialized',
+            })}\n`,
+          );
+          child.stdin.write(
+            `${JSON.stringify({
+              jsonrpc: '2.0',
+              id: 2,
+              method: 'tools/list',
+            })}\n`,
+          );
+        }
+        if (frame.id === 2) {
+          child.stdin.write(
+            `${JSON.stringify({
+              jsonrpc: '2.0',
+              id: 3,
+              method: 'tools/call',
+              params: {
+                name: 'repo_nav_locate',
+                arguments: {
+                  repoPath: projectRoot,
+                  question: 'production-bin-lifecycle',
+                  terms: [],
+                },
+              },
+            })}\n`,
+          );
+        }
+        if (frame.id === 3 && !shutdownTriggered) {
+          shutdownTriggered = true;
+          if (
+            lifecycleCase.scenario === 'graceful-shutdown' &&
+            process.platform !== 'win32'
+          ) {
+            child.kill('SIGINT');
+          } else {
+            child.stdin.end();
+          }
+        }
+      }
     });
     child.stderr.on('data', (chunk: string) => {
       stderr += chunk;
@@ -121,11 +187,18 @@ export async function runMcpLifecycleCase(
       reject(error);
     });
     child.once('spawn', () => {
-      if (lifecycleCase.scenario === 'graceful-shutdown') {
-        child.stdin.end('shutdown\n');
-      } else {
-        child.stdin.end();
-      }
+      child.stdin.write(
+        `${JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'initialize',
+          params: {
+            protocolVersion: LATEST_PROTOCOL_VERSION,
+            capabilities: {},
+            clientInfo: { name: 'repo-nav-lifecycle', version: '0.1.0' },
+          },
+        })}\n`,
+      );
     });
     child.once('close', (code) => {
       clearTimeout(timeout);
@@ -157,6 +230,69 @@ export async function runMcpLifecycleCase(
       } catch (error: unknown) {
         reject(error);
       }
+    });
+  });
+}
+
+export async function runMcpTransportErrorCase(
+  maxShutdownMs: number,
+): Promise<McpLifecycleObservation> {
+  const { childPath, projectRoot } = resolveProductionBin();
+  const startedAt = performance.now();
+
+  return await new Promise<McpLifecycleObservation>((resolveObservation, reject) => {
+    const child = spawn(process.execPath, [childPath], {
+      cwd: projectRoot,
+      stdio: ['pipe', 'pipe', 'pipe'],
+      windowsHide: true,
+    });
+    let stdout = '';
+    let stderr = '';
+    let timedOut = false;
+
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    child.stdout.on('data', (chunk: string) => {
+      stdout += chunk;
+    });
+    child.stderr.on('data', (chunk: string) => {
+      stderr += chunk;
+    });
+
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      child.kill();
+    }, maxShutdownMs);
+    child.once('error', (error) => {
+      clearTimeout(timeout);
+      reject(error);
+    });
+    child.once('spawn', () => {
+      child.stdin.write('{"jsonrpc":\n');
+    });
+    child.once('close', (code) => {
+      clearTimeout(timeout);
+      child.stdin.destroy();
+      if (timedOut) {
+        reject(
+          new Error(`MCP transport error case exceeded ${maxShutdownMs}ms.`),
+        );
+        return;
+      }
+      if (code !== 1) {
+        reject(
+          new Error(
+            `MCP transport error exit code ${code ?? 'null'} did not match 1.`,
+          ),
+        );
+        return;
+      }
+      resolveObservation({
+        exitCode: code,
+        stdoutFrames: stdout.length === 0 ? [] : parseMcpStdoutFrames(stdout),
+        stderr,
+        elapsedMs: performance.now() - startedAt,
+      });
     });
   });
 }

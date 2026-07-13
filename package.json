@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Deterministic repository evidence service for local MCP clients.",
+  "bin": {
+    "repo-nav-mcp": "dist/main.js"
+  },
   "engines": {
     "node": ">=20.0.0"
   },
@@ -12,7 +15,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsx testkit/runners/unit-runner.ts",
     "test:golden": "tsx testkit/runners/golden-runner.ts",
-    "test:mcp": "tsx testkit/runners/mcp-runner.ts"
+    "test:mcp": "npm run build --silent && tsx testkit/runners/mcp-runner.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",
@@ -25,6 +28,7 @@
   "devDependencies": {
     "@nestjs/testing": "11.1.28",
     "@types/node": "24.13.3",
+    "ajv": "8.20.0",
     "tsx": "4.23.0",
     "typescript": "5.8.3",
     "vitest": "4.1.10",

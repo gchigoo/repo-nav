@@ -5,9 +5,17 @@ import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 
 import {
+  createMcpShutdownCoordinator,
+  createMcpStartupShutdownController,
+  NodeMcpStdioHost,
+  type McpShutdownReporter,
+  type RepositoryEvidenceService,
+} from '../../src/index.js';
+import {
   McpLifecycleCaseSchema,
   parseMcpStdoutFrames,
   runMcpLifecycleCase,
+  runMcpTransportErrorCase,
   type McpLifecycleCase,
 } from '../../testkit/contracts/index.js';
 import { isSelected } from '../../testkit/testing/selection.js';
@@ -45,15 +53,214 @@ describe.runIf(isSelected(identity))('MCP lifecycle contract', () => {
       }).success,
     ).toBe(false);
   });
+});
 
-  it('accepts only MCP frames on stdout and propagates clean exit', async () => {
+describe.runIf(
+  isSelected({ group: 'mcp-surface', caseId: 'stdio-clean-output' }),
+)('MCP production stdout', () => {
+  it('accepts only real MCP frames on stdout and propagates clean exit', async () => {
     const observation = await runMcpLifecycleCase(
       loadLifecycleCase('stdio-clean-output.yaml'),
     );
 
     expect(observation.exitCode).toBe(0);
-    expect(observation.stdoutFrames).toHaveLength(1);
+    expect(observation.stdoutFrames).toHaveLength(3);
+    expect(observation.stdoutFrames[0]).toMatchObject({
+      id: 1,
+      result: { capabilities: { tools: { listChanged: false } } },
+    });
+    expect(observation.stdoutFrames[1]).toMatchObject({
+      id: 2,
+      result: { tools: [{ name: 'repo_nav_locate' }] },
+    });
+    expect(observation.stdoutFrames[2]).toMatchObject({
+      id: 3,
+      result: {
+        isError: true,
+        structuredContent: {
+          ok: false,
+          error: { code: 'INVALID_INPUT' },
+        },
+      },
+    });
     expect(observation.stderr).toBe('');
+  });
+});
+
+describe.runIf(
+  isSelected({ group: 'mcp-surface', caseId: 'stdio-graceful-shutdown' }),
+)('MCP production shutdown', () => {
+  it('treats an SDK transport parse failure as fatal without stdout pollution', async () => {
+    const observation = await runMcpTransportErrorCase(5_000);
+    expect(observation.exitCode).toBe(1);
+    expect(observation.stdoutFrames).toEqual([]);
+    expect(observation.stderr).toBe('');
+  });
+
+  it('keeps a host closed when connect and close overlap', async () => {
+    const host = new NodeMcpStdioHost({
+      locate: async () => {
+        throw new Error('Not called by lifecycle test.');
+      },
+    });
+    const privateHost = host as unknown as {
+      server: {
+        connect(): Promise<void>;
+        close(): Promise<void>;
+      };
+      readonly state: string;
+    };
+    let releaseConnect: (() => void) | undefined;
+    privateHost.server.connect = async () => {
+      await new Promise<void>((resolveConnect) => {
+        releaseConnect = resolveConnect;
+      });
+    };
+    privateHost.server.close = async () => undefined;
+
+    const connecting = host.connect();
+    const closing = host.close('signal');
+    releaseConnect?.();
+    await connecting;
+    await closing;
+
+    expect(privateHost.state).toBe('closed');
+    expect(host.close('eof')).toBe(closing);
+  });
+
+  it('queues a shutdown intent until the application coordinator is ready', async () => {
+    const calls: string[] = [];
+    const startup = createMcpStartupShutdownController();
+    startup.request('signal', 0);
+    const pending = startup.bind({
+      shutdown: async (reason, exitCode) => {
+        calls.push(`${reason}:${exitCode}`);
+      },
+    });
+
+    expect(pending).toBeDefined();
+    await pending;
+    expect(calls).toEqual(['signal:0']);
+  });
+
+  it('settles tracked calls and closes state even when the SDK server close fails', async () => {
+    const service: RepositoryEvidenceService = {
+      locate: async () => {
+        throw new Error('Not called by lifecycle test.');
+      },
+    };
+    const host = new NodeMcpStdioHost(service);
+    const privateHost = host as unknown as {
+      readonly server: { close(): Promise<void> };
+      readonly trackedCalls: Set<{
+        readonly controller: AbortController;
+        readonly settled: Promise<void>;
+        settle(): void;
+      }>;
+    };
+    privateHost.server.close = async () => {
+      throw new Error('synthetic server close failure');
+    };
+    let settle: (() => void) | undefined;
+    const tracked = {
+      controller: new AbortController(),
+      settled: new Promise<void>((resolveTracked) => {
+        settle = resolveTracked;
+      }),
+      settle: () => settle?.(),
+    };
+    privateHost.trackedCalls.add(tracked);
+
+    const close = host.close('transport-error');
+    expect(tracked.controller.signal.aborted).toBe(true);
+    settle?.();
+    await expect(close).rejects.toThrow('MCP stdio host close failed.');
+    expect(host.close('signal')).toBe(close);
+    await expect(host.connect()).rejects.toThrow(/only connect once/iu);
+  });
+
+  it('attempts application cleanup once after host close failure', async () => {
+    const calls: string[] = [];
+    const host = {
+      connect: async () => undefined,
+      close: async () => {
+        calls.push('host.close');
+        throw new Error('synthetic host close failure');
+      },
+    };
+    const application = {
+      close: async () => {
+        calls.push('application.close');
+      },
+    };
+    const reporter: McpShutdownReporter = {
+      reportFailure: () => calls.push('reportFailure'),
+      setExitCode: (exitCode) => calls.push(`exit:${exitCode}`),
+    };
+    const coordinator = createMcpShutdownCoordinator(
+      application,
+      host,
+      reporter,
+    );
+
+    const first = coordinator.shutdown('transport-error', 0);
+    const second = coordinator.shutdown('signal', 0);
+    expect(second).toBe(first);
+    await first;
+    expect(calls).toEqual([
+      'host.close',
+      'application.close',
+      'reportFailure',
+      'exit:1',
+    ]);
+  });
+
+  it('reports application close failure after a successful host close', async () => {
+    const calls: string[] = [];
+    const coordinator = createMcpShutdownCoordinator(
+      {
+        close: async () => {
+          calls.push('application.close');
+          throw new Error('synthetic application close failure');
+        },
+      },
+      {
+        close: async () => {
+          calls.push('host.close');
+        },
+      },
+      {
+        reportFailure: () => calls.push('reportFailure'),
+        setExitCode: (exitCode) => calls.push(`exit:${exitCode}`),
+      },
+    );
+
+    await coordinator.shutdown('transport-error', 0);
+    expect(calls).toEqual([
+      'host.close',
+      'application.close',
+      'reportFailure',
+      'exit:1',
+    ]);
+  });
+
+  it('returns one close promise and rejects reconnect after shutdown', async () => {
+    const service: RepositoryEvidenceService = {
+      locate: async () => ({
+        ok: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Not called by lifecycle test.',
+          recoverable: false,
+        },
+      }),
+    };
+    const host = new NodeMcpStdioHost(service);
+    const firstClose = host.close('eof');
+    const secondClose = host.close('signal');
+    expect(secondClose).toBe(firstClose);
+    await firstClose;
+    await expect(host.connect()).rejects.toThrow(/only connect once/iu);
   });
 
   it('rejects JSON diagnostics and blank lines that are not protocol frames', () => {
@@ -74,7 +281,7 @@ describe.runIf(isSelected(identity))('MCP lifecycle contract', () => {
     const observation = await runMcpLifecycleCase(lifecycleCase);
 
     expect(observation.exitCode).toBe(0);
-    expect(observation.stdoutFrames).toHaveLength(2);
+    expect(observation.stdoutFrames).toHaveLength(3);
     expect(observation.elapsedMs).toBeLessThan(
       lifecycleCase.expected.maxShutdownMs,
     );

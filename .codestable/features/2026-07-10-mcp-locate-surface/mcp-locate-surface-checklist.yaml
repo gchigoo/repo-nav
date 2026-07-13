@@ -6,82 +6,82 @@ steps:
   exit_signal: initialize 声明 tools，list 仅含 repo_nav_locate，schemas 为精确 object，unknown name 不调用 service且无 HTTP
   verification: npm run test:mcp -- --case initialize-tools-capability --case tool-list-schema --case single-tool-readonly --case unknown-tool-jsonrpc-boundary
   artifacts: [McpModule, tool registry, schema snapshot, provider graph assertion]
-  status: pending
+  status: done
 - id: S2
   action: 实现 success/recoverable output mapping
   exit_signal: ok/no_result/partial/backend_unavailable/timeout 均 isError=false 且 structured/text 同值
   verification: npm run test:mcp -- --case source-field-mapping --case recoverable-status-parity
   artifacts: [output serializer, stdio transcripts]
-  status: pending
+  status: done
 - id: S3
   action: 实现 schema-invalid 与四类 tool error mapping
   exit_signal: typed code/recoverable/action/isError/parity 正确且 message 无 stack/绝对路径/raw stderr
   verification: npm run test:mcp -- --case invalid-input --case invalid-repo --case path-outside-root --case internal-error-parity
   artifacts: [error mapping table, error transcripts]
-  status: pending
+  status: done
 - id: S4
   action: 实现 request cancellation、stdio lifecycle 与幂等 shutdown
   exit_signal: SDK cancellation/EOF/平台 signal/transport failure 通过合并 signal 在 maxShutdownMs 内清理 in-flight child、host 和 Nest context
   verification: npm run test:mcp -- --case request-cancellation-cleanup --case stdio-clean-output --case stdio-graceful-shutdown
   artifacts: [production main.ts, McpStdioHost, lifecycle report]
-  status: pending
+  status: done
 checks:
 - id: C1
   item: SDK v1.29.0 被 lockfile 固定并使用 low-level list/call handlers
   source: design 1
-  status: pending
+  status: passed
 - id: C2
   item: envelope-valid arguments 由 LocateRequestSchema 手工 parse 并映射 INVALID_INPUT
   source: design 0/1/3.1
-  status: pending
+  status: passed
 - id: C3
   item: protocol-invalid envelope 保持 SDK JSON-RPC error boundary
   source: design 0/2.1/3.2
-  status: pending
+  status: passed
 - id: C4
   item: initialize 声明 tools capability，list 只有 repo_nav_locate 且 input/output 顶层为精确 object schema
   source: design 1/3.1
-  status: pending
+  status: passed
 - id: C5
   item: success/error 均经 LocateToolOutputSchema 自校验和同一 serializer
   source: design 1/2.1
-  status: pending
+  status: passed
 - id: C6
   item: recoverable statuses isError=false，四类 tool errors isError=true
   source: design 2.1
-  status: pending
+  status: passed
 - id: C7
   item: structuredContent/text parse 后严格等值
   source: design 0/2.1
-  status: pending
+  status: passed
 - id: C8
   item: message/stdout 不含 stack、绝对敏感路径、raw stderr 或临时日志
   source: design 1/3.1
-  status: pending
+  status: passed
 - id: C9
   item: unknown tool 在 input parse 前返回 MCP InvalidParams，service 不调用且无 RepoNav output
   source: design 1/2.1/3.1
-  status: pending
+  status: passed
 - id: C10
   item: SDK request signal、host shutdown 与 deadline 合并为 LocateExecutionContext.signal
   source: design 2.1/2.2
-  status: pending
+  status: passed
 - id: C11
   item: McpStdioHost connect once、close idempotent、tracked locate 可 abort
   source: design 2.1/2.2
-  status: pending
+  status: passed
 - id: C12
   item: EOF/signal/transport/bootstrap failure 关闭顺序与 exit code 可判定
   source: design 2.2/3.1
-  status: pending
+  status: passed
 - id: C13
   item: provider/import graph 无 HTTP listener 且 handler 不直连 reader/backend/classifier
   source: design 1/3.2
-  status: pending
+  status: passed
 - id: C14
   item: tool schema、stdio transcript、lifecycle cleanup artifacts 可盘点
   source: design 3.4
-  status: pending
+  status: passed
 dod:
   commands:
   - id: CMD-BUILD

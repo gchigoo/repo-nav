@@ -1,0 +1,73 @@
+{
+  "gate_id": "scope-gate",
+  "stage": "acceptance.before_done",
+  "status": "passed",
+  "blocking": [],
+  "warnings": [],
+  "evidence": [
+    {
+      "changed_files": [
+        ".codestable/features/2026-07-10-mcp-locate-surface/mcp-locate-surface-checklist.yaml",
+        ".codestable/roadmap/repo-nav-mvp/goal-state.yaml",
+        "package-lock.json",
+        "package.json",
+        "src/app/app.module.ts",
+        "src/contracts/evidence.ts",
+        "src/index.ts",
+        "test/mcp/lifecycle-contract.spec.ts",
+        "test/unit/di.spec.ts",
+        "testkit/contracts/index.ts",
+        "testkit/contracts/mcp-lifecycle-harness.ts",
+        "testkit/runners/runner-registry.ts",
+        ".codestable/features/2026-07-10-mcp-locate-surface/implementation-scope.txt",
+        ".codestable/features/2026-07-10-mcp-locate-surface/mcp-locate-surface-acceptance.md",
+        ".codestable/features/2026-07-10-mcp-locate-surface/mcp-locate-surface-evidence-pack.md",
+        ".codestable/features/2026-07-10-mcp-locate-surface/mcp-locate-surface-implementation.md",
+        ".codestable/features/2026-07-10-mcp-locate-surface/mcp-locate-surface-lifecycle-report.md",
+        ".codestable/features/2026-07-10-mcp-locate-surface/mcp-locate-surface-qa.md",
+        ".codestable/features/2026-07-10-mcp-locate-surface/mcp-locate-surface-review.md",
+        ".codestable/features/2026-07-10-mcp-locate-surface/mcp-locate-surface-step-2-fix.md",
+        ".codestable/features/2026-07-10-mcp-locate-surface/mcp-locate-surface-tool-schema.json",
+        "src/main.ts",
+        "src/mcp/locate-tool-output.ts",
+        "src/mcp/locate-tool-schema.ts",
+        "src/mcp/mcp-shutdown-coordinator.ts",
+        "src/mcp/mcp-stdio-host.ts",
+        "src/mcp/mcp.module.ts",
+        "src/mcp/repo-nav-mcp-server.ts",
+        "test/mcp/request-cancellation.spec.ts",
+        "test/mcp/tool-error-parity.spec.ts",
+        "test/mcp/tool-output-parity.spec.ts",
+        "test/mcp/tool-surface.spec.ts",
+        "testkit/contracts/mcp-stdio-harness.ts",
+        "testkit/contracts/mcp-tool-result.ts",
+        "testkit/fixtures/mcp/fixture-evidence.service.ts",
+        "testkit/fixtures/mcp/repo-nav-mcp-fixture.ts"
+      ],
+      "ignored_machine_artifacts": [
+        ".codestable/features/2026-07-10-mcp-locate-surface/mcp-locate-surface-dod-results.json",
+        ".codestable/features/2026-07-10-mcp-locate-surface/mcp-locate-surface-evidence-pack-results.json",
+        ".codestable/features/2026-07-10-mcp-locate-surface/mcp-locate-surface-gate-results.json"
+      ],
+      "allowed_prefixes": [
+        ".codestable/features/2026-07-10-mcp-locate-surface",
+        "package.json",
+        "package-lock.json",
+        "src/app",
+        "src/contracts",
+        "src/mcp",
+        "src/runtime",
+        "src/main.ts",
+        "src/index.ts",
+        "test/mcp",
+        "test/unit",
+        "testkit/contracts",
+        "testkit/fixtures/mcp",
+        "testkit/manifests/mcp",
+        "testkit/runners",
+        ".codestable/roadmap/repo-nav-mvp/goal-state.yaml"
+      ]
+    }
+  ],
+  "providers": {}
+}

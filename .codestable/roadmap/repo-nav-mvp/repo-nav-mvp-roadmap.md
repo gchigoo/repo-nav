@@ -679,7 +679,7 @@ discovery:v1\0{POSIX-normalized-relative-file}\0{start}\0{end}\0{sha256(unredact
 4. **`mcp-locate-surface`** — 通过 Nest standalone + stdio MCP 暴露 `repo_nav_locate`，提供 Zod schema、structuredContent/text parity、typed isError 和生命周期清理。
    - 所属模块：MCP Surface
    - 依赖：`text-source-evidence-engine`
-   - 状态：in-progress
+   - 状态：done
    - 对应 feature：`2026-07-10-mcp-locate-surface`
    - 备注：以 MCP TypeScript SDK v1.29.0 稳定 API 为规划基线；feature-design 重新核验、lockfile 固定实际稳定版本，禁止静默切换 alpha。
 

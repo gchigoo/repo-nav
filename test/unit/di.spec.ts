@@ -15,6 +15,7 @@ import {
   type RepositorySearchBackend,
 } from '../../src/contracts/index.js';
 import { RepositoryEvidenceEngine } from '../../src/evidence/repository-evidence-engine.js';
+import { NodeMcpStdioHost } from '../../src/mcp/mcp-stdio-host.js';
 import { RipgrepBackend } from '../../src/repository/ripgrep-backend.js';
 import {
   MCP_STDIO_HOST,
@@ -90,7 +91,7 @@ class FakeService implements RepositoryEvidenceService {
 }
 
 describe.runIf(isSelected(identity))('NestJS standalone DI assembly', () => {
-  it('creates and closes a non-HTTP context with the ordered F3 backend engine', async () => {
+  it('creates and closes a non-HTTP context with the F4 MCP host', async () => {
     const application = await createRepoNavApplicationContext();
     try {
       const backends = application.get<readonly RepositorySearchBackend[]>(
@@ -115,7 +116,8 @@ describe.runIf(isSelected(identity))('NestJS standalone DI assembly', () => {
         ok: false,
         error: { code: 'INVALID_REPOSITORY' },
       });
-      expect(() => application.get(MCP_STDIO_HOST)).toThrow();
+      expect(application.get(MCP_STDIO_HOST)).toBeInstanceOf(NodeMcpStdioHost);
+      expect('listen' in application).toBe(false);
     } finally {
       await application.close();
     }
@@ -138,6 +140,7 @@ describe.runIf(isSelected(identity))('NestJS standalone DI assembly', () => {
     ).toEqual([backend]);
     expect(testingModule.get(REPOSITORY_READER)).toBe(reader);
     expect(testingModule.get(REPOSITORY_EVIDENCE_SERVICE)).toBe(service);
+    expect(testingModule.get(MCP_STDIO_HOST)).toBeInstanceOf(NodeMcpStdioHost);
 
     await expect(testingModule.close()).resolves.toBeUndefined();
   });

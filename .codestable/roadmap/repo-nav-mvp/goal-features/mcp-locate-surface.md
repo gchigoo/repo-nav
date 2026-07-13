@@ -3,7 +3,7 @@ doc_type: roadmap-goal-feature
 roadmap: repo-nav-mvp
 feature: 2026-07-10-mcp-locate-surface
 roadmap_item: mcp-locate-surface
-status: pending
+status: accepted
 ---
 
 # mcp-locate-surface Goal 执行规格

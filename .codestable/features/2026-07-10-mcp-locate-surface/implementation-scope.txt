@@ -1,0 +1,16 @@
+# F4 implementation scope approved by the feature design.
+package.json
+package-lock.json
+src/app
+src/contracts
+src/mcp
+src/runtime
+src/main.ts
+src/index.ts
+test/mcp
+test/unit
+testkit/contracts
+testkit/fixtures/mcp
+testkit/manifests/mcp
+testkit/runners
+.codestable/roadmap/repo-nav-mvp/goal-state.yaml

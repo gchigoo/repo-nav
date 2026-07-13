@@ -5,7 +5,6 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import {
   LocateRequestSchema,
-  resolveLocateLimits,
   type LocateRequest,
   type RepositoryEvidenceService,
 } from '../contracts/index.js';
@@ -139,14 +138,7 @@ export class NodeMcpStdioHost implements McpStdioHost, OnModuleDestroy {
     argumentsValue: Readonly<Record<string, unknown>> | undefined,
   ): boolean {
     const terms = argumentsValue?.terms;
-    return (
-      !Array.isArray(terms) ||
-      terms.length === 0 ||
-      terms.some(
-        (term) =>
-          typeof term !== 'string' || term.normalize('NFKC').trim().length === 0,
-      )
-    );
+    return terms === undefined || (Array.isArray(terms) && terms.length === 0);
   }
 
   private async executeTrackedLocate(
@@ -167,8 +159,6 @@ export class NodeMcpStdioHost implements McpStdioHost, OnModuleDestroy {
     if (sdkSignal.aborted || this.shutdownController.signal.aborted) {
       abort();
     }
-    const timeout = setTimeout(abort, resolveLocateLimits(request.limits).timeoutMs);
-
     try {
       const result = await this.evidenceService.locate(request, {
         signal: tracked.controller.signal,
@@ -177,7 +167,6 @@ export class NodeMcpStdioHost implements McpStdioHost, OnModuleDestroy {
     } catch {
       return serializeLocateToolOutput(internalLocateError());
     } finally {
-      clearTimeout(timeout);
       sdkSignal.removeEventListener('abort', abort);
       this.shutdownController.signal.removeEventListener('abort', abort);
       tracked.settle();

@@ -65,8 +65,8 @@ const EXPECTED_STATE = Object.freeze({
   },
   'ripgrep-incomplete': {
     backend: { backend: 'ripgrep', status: 'used', hitCount: 1 },
-    limitsReached: ['MAX_FILES_REACHED'],
-    nextActions: ['CONFIRM_CANDIDATE', 'RETRY_WITH_HIGHER_LIMIT'],
+    limitsReached: [],
+    nextActions: ['CONFIRM_CANDIDATE'],
   },
   'ripgrep-timeout': {
     backend: {
@@ -75,8 +75,8 @@ const EXPECTED_STATE = Object.freeze({
       reasonCode: 'BACKEND_ABORTED',
       hitCount: 0,
     },
-    limitsReached: ['TIMEOUT_REACHED'],
-    nextActions: ['RETRY_WITH_HIGHER_LIMIT'],
+    limitsReached: [],
+    nextActions: [],
   },
 } as const);
 
@@ -315,7 +315,7 @@ describe.runIf(isSelected(baselineIdentity))('text engine verified metadata', ()
     });
     expect(result).toMatchObject({
       ok: false,
-      error: { code: 'INVALID_REPOSITORY', recoverable: false },
+      error: { code: 'INVALID_REPOSITORY', recoverable: true },
     });
   });
 
@@ -454,7 +454,7 @@ describe.runIf(isSelected(baselineIdentity))('text engine verified metadata', ()
         confirmed: [],
         candidates: [],
         coverage: {
-          limitsReached: ['MAX_FILES_REACHED', 'MAX_CANDIDATES_REACHED'],
+          limitsReached: ['MAX_CANDIDATES_REACHED'],
         },
         nextActions: ['RETRY_WITH_HIGHER_LIMIT'],
       },

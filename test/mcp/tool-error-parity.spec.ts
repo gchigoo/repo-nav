@@ -48,7 +48,19 @@ describe.runIf(selected('invalid-input'))('MCP invalid input mapping', () => {
       },
       {
         argumentsValue: { ...baseArguments, terms: 'hcp_id' },
+        suggestedAction: undefined,
+      },
+      {
+        argumentsValue: { ...baseArguments, terms: [] },
         suggestedAction: 'ADD_TERM',
+      },
+      {
+        argumentsValue: { ...baseArguments, terms: ['hcp_id', 7] },
+        suggestedAction: undefined,
+      },
+      {
+        argumentsValue: { ...baseArguments, terms: [''] },
+        suggestedAction: undefined,
       },
       {
         argumentsValue: { ...baseArguments, question: 'x'.repeat(20_000) },
@@ -79,6 +91,7 @@ describe.runIf(selected('invalid-input'))('MCP invalid input mapping', () => {
 async function verifyServiceError(
   question: string,
   code: RepoNavToolError['code'],
+  recoverable: boolean,
 ): Promise<void> {
   const session = await connectMcpStdioFixture();
   try {
@@ -89,7 +102,7 @@ async function verifyServiceError(
     const parsed = parseLocateToolResultParity(result);
     expectSafeError(parsed, code);
     if (!parsed.output.ok) {
-      expect(parsed.output.error.recoverable).toBe(false);
+      expect(parsed.output.error.recoverable).toBe(recoverable);
       expect(parsed.output.error.suggestedAction).toBeUndefined();
     }
   } finally {
@@ -99,13 +112,21 @@ async function verifyServiceError(
 
 describe.runIf(selected('invalid-repo'))('MCP invalid repository mapping', () => {
   it('preserves the typed code while sanitizing unsafe detail', async () => {
-    await verifyServiceError('error:INVALID_REPOSITORY', 'INVALID_REPOSITORY');
+    await verifyServiceError(
+      'error:INVALID_REPOSITORY',
+      'INVALID_REPOSITORY',
+      true,
+    );
   });
 });
 
 describe.runIf(selected('path-outside-root'))('MCP path boundary mapping', () => {
   it('preserves the typed code while sanitizing unsafe detail', async () => {
-    await verifyServiceError('error:PATH_OUTSIDE_ROOT', 'PATH_OUTSIDE_ROOT');
+    await verifyServiceError(
+      'error:PATH_OUTSIDE_ROOT',
+      'PATH_OUTSIDE_ROOT',
+      false,
+    );
   });
 });
 
@@ -113,7 +134,16 @@ describe.runIf(selected('internal-error-parity'))(
   'MCP internal exception mapping',
   () => {
     it('turns thrown failures into safe typed parity output', async () => {
-      await verifyServiceError('throw:INTERNAL_ERROR', 'INTERNAL_ERROR');
+      await verifyServiceError(
+        'throw:INTERNAL_ERROR',
+        'INTERNAL_ERROR',
+        false,
+      );
+      await verifyServiceError(
+        'error:INTERNAL_ERROR',
+        'INTERNAL_ERROR',
+        false,
+      );
     });
   },
 );

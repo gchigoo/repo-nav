@@ -53,7 +53,7 @@ items:
   depends_on:
   - candidate-evidence-policy
   - codegraph-fallback-orchestration
-  status: in-progress
+  status: done
   feature: 2026-07-10-evidence-output-guardrails
   minimal_loop: false
   notes: filesystem process 安全已由 repository-access-process-safety 提供，本条只治理 EvidencePack 输出

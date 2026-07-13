@@ -6,6 +6,7 @@ import { z } from 'zod';
 import {
   ANCHOR_KINDS,
   DEFAULT_LOCATE_LIMITS,
+  LOCATE_LIMIT_MAXIMUMS,
   LOCATE_INPUT_MAX_BYTES,
   REPO_LAYERS,
   TERM_CASE_MODES,
@@ -102,10 +103,22 @@ export type LocateAnchor = z.infer<typeof LocateAnchorSchema>;
 
 export const LocateLimitsSchema = z
   .strictObject({
-    maxFiles: z.int().min(1).max(20).optional(),
-    maxConfirmed: z.int().min(1).max(20).optional(),
-    maxCandidates: z.int().min(0).max(20).optional(),
-    timeoutMs: z.int().min(1_000).max(30_000).optional(),
+    maxFiles: z.int().min(1).max(LOCATE_LIMIT_MAXIMUMS.maxFiles).optional(),
+    maxConfirmed: z
+      .int()
+      .min(1)
+      .max(LOCATE_LIMIT_MAXIMUMS.maxConfirmed)
+      .optional(),
+    maxCandidates: z
+      .int()
+      .min(0)
+      .max(LOCATE_LIMIT_MAXIMUMS.maxCandidates)
+      .optional(),
+    timeoutMs: z
+      .int()
+      .min(1_000)
+      .max(LOCATE_LIMIT_MAXIMUMS.timeoutMs)
+      .optional(),
   })
   .readonly();
 export type LocateLimits = z.infer<typeof LocateLimitsSchema>;

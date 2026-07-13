@@ -4,6 +4,7 @@ import type {
   McpShutdownReason,
   McpStdioHost,
 } from './mcp-stdio-host.js';
+import { writeScrubbedDiagnostic } from './diagnostic-scrubber.js';
 
 export interface McpShutdownCoordinator {
   shutdown(reason: McpShutdownReason, exitCode: number): Promise<void>;
@@ -29,7 +30,7 @@ const NODE_PROCESS_REPORTER: McpShutdownReporter = Object.freeze({
     process.exitCode = exitCode;
   },
   reportFailure: () => {
-    process.stderr.write('RepoNav MCP shutdown failed.\n');
+    writeScrubbedDiagnostic('RepoNav MCP shutdown failed.');
   },
 });
 

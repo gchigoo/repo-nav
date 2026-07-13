@@ -700,7 +700,7 @@ discovery:v1\0{POSIX-normalized-relative-file}\0{start}\0{end}\0{sha256(unredact
 7. **`evidence-output-guardrails`** — 汇合 candidate 与 CodeGraph 分支，实现完整状态转换、全局结果预算、敏感 excerpt redaction、coverage/nextActions 和错误输出 parity。
    - 所属模块：Evidence Engine、MCP Surface
    - 依赖：`candidate-evidence-policy`、`codegraph-fallback-orchestration`
-   - 状态：in-progress
+   - 状态：done
    - 对应 feature：`2026-07-10-evidence-output-guardrails`
    - 备注：聚焦 EvidencePack 输出治理；filesystem/process 安全已由 F2 提供。通过 partial/timeout-with-evidence、backend-unavailable、invalid/internal errors 和 redaction cases 验收。
 

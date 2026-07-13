@@ -8,12 +8,15 @@ import {
 } from '../../../src/contracts/index.js';
 import { RepositoryEvidenceEngine } from '../../../src/evidence/repository-evidence-engine.js';
 import { NodeRepositoryReader } from '../../../src/repository/node-repository-reader.js';
+import { writeScrubbedDiagnostic } from '../../../src/mcp/diagnostic-scrubber.js';
 import {
   CandidateFixtureBackend,
   candidateFixtureRoot,
 } from '../candidate-policy/candidate-fixture-backend.js';
 
 const FIXTURE_EVIDENCE_ID = `evidence:v1:${'0'.repeat(64)}`;
+const MALFORMED_EVIDENCE_ID = `evidence:v1:${'1'.repeat(64)}`;
+const DERIVED_EVIDENCE_ID = `evidence:v1:${'2'.repeat(64)}`;
 
 function requestedStatus(question: string): LocateStatus {
   const marker = 'status:';
@@ -36,6 +39,7 @@ function requestedStatus(question: string): LocateStatus {
 function successResult(request: LocateRequest): LocateResult {
   const status = requestedStatus(request.question);
   const sourceMapping = request.question === 'source-field-mapping';
+  const redactionOutput = request.question === 'redaction-output-parity';
   return {
     ok: true,
     evidence: {
@@ -46,7 +50,7 @@ function successResult(request: LocateRequest): LocateResult {
         request.terms,
         request.termCase ?? 'smart',
       ),
-      confirmed: sourceMapping
+      confirmed: sourceMapping || redactionOutput
         ? [
             {
               evidenceClass: 'confirmed',
@@ -56,7 +60,9 @@ function successResult(request: LocateRequest): LocateResult {
                 file: 'server/mapping.ts',
                 symbol: 'hcpId',
                 lines: [1, 1],
-                excerpt: 'hcpId = hcp_id;',
+                excerpt: redactionOutput
+                  ? 'api_key=rawSecretValue; password="my secret value"; secret=\'abc,def\'; token=`my backtick secret`; passwd=`backtick,comma`; client_secret="my \\"escaped\\" secret"; dsn=postgres://admin:dbPassword@localhost/app?token=querySecret; owner=stan.guo@mail.ru; phone=+86 138-0013-8000'
+                  : 'hcpId = hcp_id;',
               },
               provenance: {
                 discoveredBy: ['ripgrep'],
@@ -65,9 +71,55 @@ function successResult(request: LocateRequest): LocateResult {
               },
               reasonCodes: ['DIRECT_ALIAS_MAPPING', 'EXACT_TERM_MATCH'],
             },
+            ...(redactionOutput
+              ? [
+                  {
+                    evidenceClass: 'confirmed' as const,
+                    id: MALFORMED_EVIDENCE_ID,
+                    role: 'value-mapping' as const,
+                    location: {
+                      file: 'server/malformed.ts',
+                      lines: [1, 1] as const,
+                      excerpt: 'password="malformed shared value',
+                    },
+                    provenance: {
+                      discoveredBy: ['ripgrep' as const],
+                      verifiedBy: 'filesystem' as const,
+                      operations: [
+                        'RIPGREP_SEARCH' as const,
+                        'FILESYSTEM_READ_RANGE' as const,
+                      ],
+                    },
+                    reasonCodes: [
+                      'DIRECT_ALIAS_MAPPING' as const,
+                      'EXACT_TERM_MATCH' as const,
+                    ],
+                  },
+                ]
+              : []),
           ]
         : [],
-      candidates: [],
+      candidates: redactionOutput
+        ? [
+            {
+              evidenceClass: 'candidate',
+              id: DERIVED_EVIDENCE_ID,
+              role: 'related',
+              location: {
+                file: 'server/derived.ts',
+                lines: [1, 1],
+                excerpt: 'const alias = "malformed shared value";',
+              },
+              provenance: {
+                discoveredBy: ['ripgrep'],
+                verifiedBy: 'filesystem',
+                operations: ['RIPGREP_SEARCH', 'FILESYSTEM_READ_RANGE'],
+              },
+              reasonCodes: ['SAME_ENTITY_SIBLING'],
+              promotionRequirements: ['DIRECT_REFERENCE_REQUIRED'],
+            },
+          ]
+        : [],
       coverage: {
         backends:
           status === 'backend_unavailable'
@@ -114,6 +166,7 @@ function errorResult(code: string): LocateResult | undefined {
       message:
         'Unsafe fixture detail C:\\private\\repo\\secret.ts\n    at fixture (raw stderr)',
       recoverable: false,
+      suggestedAction: 'ADD_TERM',
     },
   };
 }
@@ -123,6 +176,11 @@ export class FixtureEvidenceService implements RepositoryEvidenceService {
     request: LocateRequest,
     context: LocateExecutionContext,
   ): Promise<LocateResult> {
+    if (request.question === 'redaction-output-parity') {
+      writeScrubbedDiagnostic(
+        'token=rawDiagnosticSecret C:\\private\\repo\\secret.ts stan.guo@mail.ru',
+      );
+    }
     if (request.question === 'candidate-minimal-loop') {
       const engine = new RepositoryEvidenceEngine(
         [new CandidateFixtureBackend()],

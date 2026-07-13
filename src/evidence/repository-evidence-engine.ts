@@ -1,11 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import {
-  comparePublicEvidence,
+  createPublicErrorResult,
   createDiscoveryKey,
   DEFAULT_MAX_FILE_BYTES,
   LIMIT_REASON_CODES,
-  NEXT_ACTION_CODES,
   normalizeLocateAnchors,
   normalizeSearchTerms,
   RepositoryAccessError,
@@ -18,13 +17,12 @@ import {
   type LocateExecutionContext,
   type LocateRequest,
   type LocateResult,
-  type LocateStatus,
-  type NextActionCode,
   type NormalizedLocateAnchor,
   type NormalizedSearchTerm,
   type RepositoryEvidenceService,
   type RepositoryReader,
   type RepositorySearchBackend,
+  type ResolvedLocateLimits,
   type SearchBackendId,
 } from '../contracts/index.js';
 import {
@@ -32,16 +30,38 @@ import {
   REPOSITORY_SEARCH_BACKENDS,
 } from '../runtime/tokens.js';
 import {
+  LocateAbortCoordinator,
+  type LocateAbortSource,
+} from './abort-source.js';
+import {
   applyCandidatePolicy,
   createVerifiedCandidateContext,
   materializeCandidateDraft,
 } from './candidate-policy.js';
 import { classifyDiscoveryRecords } from './direct-mapping-classifier.js';
 import { verifyAndMergeBackendHits } from './discovery-record.js';
+import { redactLocateResult } from './evidence-redactor.js';
+import { evaluateLocateStatus } from './locate-status-evaluator.js';
+import { createNextActions } from './next-action-policy.js';
+import {
+  selectCandidateBudget,
+  selectConfirmedBudget,
+} from './result-budget-selector.js';
 
 const CLASSIFICATION_MAX_LINES = 12;
 const CLASSIFICATION_MAX_BYTES = 4 * 1024;
-const MAX_TIMEOUT_MS = 30_000;
+
+type LocateSuccessEvidence = Extract<LocateResult, { readonly ok: true }>['evidence'];
+
+interface TimeoutResultOptions {
+  readonly attempts?: readonly BackendAttempt[];
+  readonly codeGraphHealth?: BackendHealth;
+  readonly confirmed?: LocateSuccessEvidence['confirmed'];
+  readonly candidates?: LocateSuccessEvidence['candidates'];
+  readonly limitsReached?: readonly LimitReasonCode[];
+  readonly exclusionSummary?: LocateSuccessEvidence['coverage']['exclusionSummary'];
+  readonly fallbackChecked?: boolean;
+}
 
 function compareText(left: string, right: string): number {
   return left === right ? 0 : left < right ? -1 : 1;
@@ -167,37 +187,16 @@ function selectBackendHits(
 function toolError(error: unknown): LocateResult {
   if (error instanceof RepositoryAccessError) {
     if (error.code === 'INVALID_REPOSITORY') {
-      return {
-        ok: false,
-        error: {
-          code: 'INVALID_REPOSITORY',
-          message: error.message,
-          recoverable: false,
-        },
-      };
+      return createPublicErrorResult('INVALID_REPOSITORY');
     }
     if (
       error.code === 'PATH_OUTSIDE_ROOT' ||
       error.code === 'INVALID_RELATIVE_PATH'
     ) {
-      return {
-        ok: false,
-        error: {
-          code: 'PATH_OUTSIDE_ROOT',
-          message: error.message,
-          recoverable: false,
-        },
-      };
+      return createPublicErrorResult('PATH_OUTSIDE_ROOT');
     }
   }
-  return {
-    ok: false,
-    error: {
-      code: 'INTERNAL_ERROR',
-      message: error instanceof Error ? error.message : 'Unexpected repository evidence failure.',
-      recoverable: false,
-    },
-  };
+  return createPublicErrorResult('INTERNAL_ERROR');
 }
 
 @Injectable()
@@ -219,17 +218,20 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
     const anchors = normalizeLocateAnchors(request.anchors ?? [], mode);
     const termsForVerification = verificationTerms(normalizedTerms, anchors);
     const negativeTerms = normalizeSearchTerms(request.negativeTerms ?? [], mode);
-    const controller = new AbortController();
-    let internalDeadlineReached = false;
-    const abortFromCaller = (): void => controller.abort(context.signal.reason);
+    const abortCoordinator = new LocateAbortCoordinator();
+    const abortFromCaller = (): void => {
+      abortCoordinator.abort('caller', context.signal.reason);
+    };
     if (context.signal.aborted) {
       abortFromCaller();
     } else {
       context.signal.addEventListener('abort', abortFromCaller, { once: true });
     }
     const deadline = setTimeout(() => {
-      internalDeadlineReached = true;
-      controller.abort(new Error('Repository evidence deadline reached.'));
+      abortCoordinator.abort(
+        'deadline',
+        new Error('Repository evidence deadline reached.'),
+      );
     }, limits.timeoutMs);
     deadline.unref();
 
@@ -237,14 +239,14 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
     try {
       repositoryRoot = await this.reader.resolveRoot(
         request.repoPath,
-        controller.signal,
+        abortCoordinator.signal,
       );
-      if (controller.signal.aborted) {
+      if (abortCoordinator.signal.aborted) {
         return this.timeoutResult(
           repositoryRoot,
           normalizedTerms,
-          context.signal.aborted,
-          limits.timeoutMs,
+          abortCoordinator.source,
+          limits,
         );
       }
 
@@ -274,16 +276,24 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
       if (codegraph !== undefined) {
         codegraphResult = await codegraph.search(
           backendRequest,
-          controller.signal,
+          abortCoordinator.signal,
         );
-        if (controller.signal.aborted) {
+        if (abortCoordinator.signal.aborted) {
           return this.timeoutResult(
             repositoryRoot,
             normalizedTerms,
-            context.signal.aborted,
-            limits.timeoutMs,
-            [attemptFor('codegraph', codegraphResult.health, codegraphResult.hits.length)],
-            codegraphResult.health,
+            abortCoordinator.source,
+            limits,
+            {
+              attempts: [
+                attemptFor(
+                  'codegraph',
+                  codegraphResult.health,
+                  codegraphResult.hits.length,
+                ),
+              ],
+              codeGraphHealth: codegraphResult.health,
+            },
           );
         }
         if (
@@ -310,7 +320,7 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
               1,
               limits.maxConfirmed + limits.maxCandidates,
             ),
-            signal: controller.signal,
+            signal: abortCoordinator.signal,
           });
           const primaryClassified = classifyDiscoveryRecords(
             primaryMerged.records,
@@ -320,7 +330,63 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
               negativeTerms,
               primaryAttempted: true,
             },
+            {
+              ...(primaryMerged.duplicateLocations > 0
+                ? { DUPLICATE_LOCATION: primaryMerged.duplicateLocations }
+                : {}),
+              ...(primaryMerged.unverifiedLocations > 0
+                ? { UNVERIFIED_FILE_CONTENT: primaryMerged.unverifiedLocations }
+                : {}),
+            },
           );
+          if (abortCoordinator.signal.aborted) {
+            const primaryConfirmed = selectConfirmedBudget(
+              primaryClassified.confirmed,
+              limits.maxConfirmed,
+            );
+            const primaryCandidates = selectCandidateBudget(
+              primaryClassified.candidates,
+              limits.maxCandidates,
+            );
+            const timeoutLimits: LimitReasonCode[] = ['TIMEOUT_REACHED'];
+            if (primarySelection.filesTruncated) {
+              timeoutLimits.push('MAX_FILES_REACHED');
+            }
+            for (const failure of primaryMerged.failures) {
+              if (failure.code === 'MAX_FILE_BYTES_REACHED') {
+                timeoutLimits.push('MAX_FILE_BYTES_REACHED');
+              }
+              if (failure.code === 'MAX_EXCERPT_BYTES_REACHED') {
+                timeoutLimits.push('MAX_EXCERPT_BYTES_REACHED');
+              }
+            }
+            if (primaryConfirmed.truncated) {
+              timeoutLimits.push('MAX_CONFIRMED_REACHED');
+            }
+            if (primaryCandidates.truncated) {
+              timeoutLimits.push('MAX_CANDIDATES_REACHED');
+            }
+            return this.timeoutResult(
+              repositoryRoot,
+              normalizedTerms,
+              abortCoordinator.source,
+              limits,
+              {
+                attempts: [
+                  attemptFor(
+                    'codegraph',
+                    codegraphResult.health,
+                    codegraphResult.hits.length,
+                  ),
+                ],
+                codeGraphHealth: codegraphResult.health,
+                confirmed: primaryConfirmed.selected,
+                candidates: primaryCandidates.selected,
+                limitsReached: uniqueSchemaOrder(timeoutLimits, LIMIT_REASON_CODES),
+                exclusionSummary: primaryClassified.exclusionSummary,
+              },
+            );
+          }
           skipFallback =
             !primarySelection.filesTruncated &&
             !primaryMerged.aborted &&
@@ -333,14 +399,22 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
                   evidence.role === 'execution-site'),
             );
         }
-        if (controller.signal.aborted) {
+        if (abortCoordinator.signal.aborted) {
           return this.timeoutResult(
             repositoryRoot,
             normalizedTerms,
-            context.signal.aborted,
-            limits.timeoutMs,
-            [attemptFor('codegraph', codegraphResult.health, codegraphResult.hits.length)],
-            codegraphResult.health,
+            abortCoordinator.source,
+            limits,
+            {
+              attempts: [
+                attemptFor(
+                  'codegraph',
+                  codegraphResult.health,
+                  codegraphResult.hits.length,
+                ),
+              ],
+              codeGraphHealth: codegraphResult.health,
+            },
           );
         }
       }
@@ -349,7 +423,7 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
         fallbackChecked = codegraphResult !== undefined;
         ripgrepResult = await ripgrep.search(
           backendRequest,
-          controller.signal,
+          abortCoordinator.signal,
         );
       }
 
@@ -370,7 +444,7 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
           maxExcerptLines: CLASSIFICATION_MAX_LINES,
         },
         maxMatchesPerHit: Math.max(1, limits.maxConfirmed + limits.maxCandidates),
-        signal: controller.signal,
+        signal: abortCoordinator.signal,
       });
       const initialExclusions: Partial<Record<ExclusionReasonCode, number>> = {};
       if (merged.duplicateLocations > 0) {
@@ -389,13 +463,16 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
         },
         initialExclusions,
       );
-      const confirmed = Object.freeze(
-        classified.confirmed.slice(0, limits.maxConfirmed),
+      const confirmedSelection = selectConfirmedBudget(
+        classified.confirmed,
+        limits.maxConfirmed,
       );
-      const existingCandidates = classified.candidates.slice(
-        0,
+      const confirmed = confirmedSelection.selected;
+      const existingCandidateSelection = selectCandidateBudget(
+        classified.candidates,
         limits.maxCandidates,
       );
+      const existingCandidates = existingCandidateSelection.selected;
       const retainedSeedKeys = new Set(
         [...confirmed, ...existingCandidates].map((evidence) =>
           createDiscoveryKey(evidence.location),
@@ -419,7 +496,7 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
               maxExcerptBytes: CLASSIFICATION_MAX_BYTES,
               maxExcerptLines: CLASSIFICATION_MAX_LINES,
             },
-            controller.signal,
+            abortCoordinator.signal,
           );
           candidateContexts.push(createVerifiedCandidateContext(record, window));
         } catch (error: unknown) {
@@ -447,14 +524,16 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
           0,
           limits.maxCandidates - existingCandidates.length,
         ),
-        signal: controller.signal,
+        signal: abortCoordinator.signal,
       });
-      const candidates = Object.freeze(
+      const candidateSelection = selectCandidateBudget(
         [
           ...existingCandidates,
           ...candidatePolicy.candidates.map(materializeCandidateDraft),
-        ].sort(comparePublicEvidence),
+        ],
+        limits.maxCandidates,
       );
+      const candidates = candidateSelection.selected;
       const confirmedKeys = new Set(
         confirmed.map((evidence) => createDiscoveryKey(evidence.location)),
       );
@@ -467,11 +546,11 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
           'Candidate policy violated discovery-key mutual exclusion.',
         );
       }
-      const confirmedTruncated =
-        classified.confirmed.length > limits.maxConfirmed;
+      const confirmedTruncated = confirmedSelection.truncated;
       const candidatesTruncated =
-        classified.candidates.length > limits.maxCandidates ||
-        candidatePolicy.truncated;
+        existingCandidateSelection.truncated ||
+        candidatePolicy.truncated ||
+        candidateSelection.truncated;
 
       const strategyComplete = skipFallback
         ? codegraphResult?.health.state === 'available' &&
@@ -479,12 +558,7 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
         : ripgrepResult?.health.state === 'available' && ripgrepResult.complete;
       const finalBackendResult = ripgrepResult ?? codegraphResult;
       const limitReasons: LimitReasonCode[] = [];
-      if (
-        filesTruncated ||
-        (strategyComplete !== true &&
-          finalBackendResult?.health.state === 'available' &&
-          finalBackendResult.complete === false)
-      ) {
+      if (filesTruncated) {
         limitReasons.push('MAX_FILES_REACHED');
       }
       for (const failure of merged.failures) {
@@ -508,11 +582,9 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
         limitReasons.push('MAX_CANDIDATES_REACHED');
       }
       if (
-        internalDeadlineReached ||
+        abortCoordinator.source !== 'none' ||
         merged.aborted ||
-        context.signal.aborted ||
-        (ripgrepResult?.health.reasonCode === 'BACKEND_ABORTED' &&
-          strategyComplete !== true)
+        abortCoordinator.signal.aborted
       ) {
         limitReasons.push('TIMEOUT_REACHED');
       }
@@ -521,25 +593,21 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
         state: 'unavailable' as const,
         reasonCode: 'RIPGREP_UNAVAILABLE' as const,
       };
-      const status = this.statusFor(
-        finalHealth,
-        strategyComplete === true,
-        confirmed.length + candidates.length,
+      const status = evaluateLocateStatus({
+        abortSource: abortCoordinator.source,
+        finalBackendHealth: finalHealth,
+        strategyComplete: strategyComplete === true,
+        evidenceCount: confirmed.length + candidates.length,
         limitsReached,
-        context.signal.aborted,
-      );
-      const nextActions = this.nextActionsFor(
+      }).status;
+      const nextActions = createNextActions({
         status,
-        candidates.length > 0,
-        filesTruncated ||
-          (strategyComplete !== true &&
-            finalBackendResult?.health.state === 'available') ||
-          confirmedTruncated ||
-          candidatesTruncated,
-        context.signal.aborted,
-        limits.timeoutMs,
-        codegraphResult?.health.state === 'missing',
-      );
+        hasCandidates: candidates.length > 0,
+        limitsReached,
+        abortSource: abortCoordinator.source,
+        limits,
+        initializeCodeGraph: codegraphResult?.health.state === 'missing',
+      });
       const attempts = Object.freeze([
         ...(codegraphResult === undefined
           ? []
@@ -560,8 +628,7 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
               ),
             ]),
       ]);
-
-      return {
+      return redactLocateResult({
         ok: true,
         evidence: {
           schemaVersion: '1.0',
@@ -580,17 +647,17 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
           },
           nextActions,
         },
-      };
+      });
     } catch (error: unknown) {
       if (
         (error instanceof RepositoryAccessError && error.code === 'ABORTED') ||
-        controller.signal.aborted
+        abortCoordinator.signal.aborted
       ) {
         return this.timeoutResult(
           repositoryRoot,
           normalizedTerms,
-          context.signal.aborted,
-          limits.timeoutMs,
+          abortCoordinator.source,
+          limits,
         );
       }
       return toolError(error);
@@ -600,100 +667,50 @@ export class RepositoryEvidenceEngine implements RepositoryEvidenceService {
     }
   }
 
-  private statusFor(
-    health: BackendHealth,
-    complete: boolean,
-    evidenceCount: number,
-    limitsReached: readonly LimitReasonCode[],
-    callerAborted: boolean,
-  ): LocateStatus {
-    if (
-      callerAborted ||
-      health.reasonCode === 'BACKEND_ABORTED' ||
-      limitsReached.includes('TIMEOUT_REACHED')
-    ) {
-      return 'timeout';
-    }
-    if (health.state !== 'available') {
-      return evidenceCount > 0 ? 'partial' : 'backend_unavailable';
-    }
-    if (!complete || limitsReached.length > 0) {
-      return 'partial';
-    }
-    return evidenceCount > 0 ? 'ok' : 'no_result';
-  }
-
-  private nextActionsFor(
-    status: LocateStatus,
-    hasCandidates: boolean,
-    retryableLimitReached: boolean,
-    callerAborted: boolean,
-    timeoutMs: number,
-    initializeCodeGraph = false,
-  ): readonly NextActionCode[] {
-    const actions: NextActionCode[] = [];
-    if (status === 'no_result') {
-      actions.push('ADD_TERM', 'ADD_SYMBOL_ANCHOR');
-    }
-    if (hasCandidates) {
-      actions.push('CONFIRM_CANDIDATE');
-    }
-    if (
-      initializeCodeGraph &&
-      (status === 'no_result' || status === 'backend_unavailable')
-    ) {
-      actions.push('INITIALIZE_CODEGRAPH');
-    }
-    if (
-      (status === 'partial' && retryableLimitReached) ||
-      (status === 'timeout' && !callerAborted && timeoutMs < MAX_TIMEOUT_MS)
-    ) {
-      actions.push('RETRY_WITH_HIGHER_LIMIT');
-    }
-    return uniqueSchemaOrder(actions, NEXT_ACTION_CODES);
-  }
-
   private timeoutResult(
     repositoryRoot: string,
     normalizedTerms: ReturnType<typeof normalizeSearchTerms>,
-    callerAborted: boolean,
-    timeoutMs: number,
-    attempts: readonly BackendAttempt[] = [
+    abortSource: LocateAbortSource,
+    limits: ResolvedLocateLimits,
+    options: TimeoutResultOptions = {},
+  ): LocateResult {
+    const attempts = options.attempts ?? [
       {
-        backend: 'ripgrep',
-        status: 'skipped',
-        reasonCode: 'BACKEND_ABORTED',
+        backend: 'ripgrep' as const,
+        status: 'skipped' as const,
+        reasonCode: 'BACKEND_ABORTED' as const,
         hitCount: 0,
       },
-    ],
-    codeGraphHealth?: BackendHealth,
-  ): LocateResult {
-    return {
+    ];
+    const confirmed = options.confirmed ?? [];
+    const candidates = options.candidates ?? [];
+    const limitsReached = options.limitsReached ?? ['TIMEOUT_REACHED'];
+    return redactLocateResult({
       ok: true,
       evidence: {
         schemaVersion: '1.0',
         status: 'timeout',
         repositoryRoot,
         normalizedTerms,
-        confirmed: [],
-        candidates: [],
+        confirmed,
+        candidates,
         coverage: {
           backends: attempts,
-          fallbackChecked: false,
-          indexState: indexStateFor(codeGraphHealth),
-          indexFreshness: indexFreshnessFor(codeGraphHealth),
-          limitsReached: ['TIMEOUT_REACHED'],
-          exclusionSummary: {},
+          fallbackChecked: options.fallbackChecked ?? false,
+          indexState: indexStateFor(options.codeGraphHealth),
+          indexFreshness: indexFreshnessFor(options.codeGraphHealth),
+          limitsReached,
+          exclusionSummary: options.exclusionSummary ?? {},
         },
-        nextActions: this.nextActionsFor(
-          'timeout',
-          false,
-          false,
-          callerAborted,
-          timeoutMs,
-        ),
+        nextActions: createNextActions({
+          status: 'timeout',
+          hasCandidates: candidates.length > 0,
+          limitsReached,
+          abortSource,
+          limits,
+        }),
       },
-    };
+    });
   }
 
   private backendUnavailableResult(

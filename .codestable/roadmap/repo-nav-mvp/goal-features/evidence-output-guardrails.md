@@ -3,7 +3,7 @@ doc_type: roadmap-goal-feature
 roadmap: repo-nav-mvp
 feature: 2026-07-10-evidence-output-guardrails
 roadmap_item: evidence-output-guardrails
-status: pending
+status: accepted
 ---
 
 # evidence-output-guardrails Goal 执行规格

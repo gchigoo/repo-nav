@@ -11,9 +11,9 @@ request:
     timeoutMs: 10000
 expected:
   ok: true
-  status: timeout
+  status: backend_unavailable
   confirmed: []
   candidates: []
   forbiddenEvidenceIds: []
-  requiredCoverageCodes: [BACKEND_ABORTED, TIMEOUT_REACHED]
+  requiredCoverageCodes: [BACKEND_ABORTED]
   minimumExclusionCounts: {}

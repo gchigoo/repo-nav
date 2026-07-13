@@ -156,6 +156,13 @@ export const DEFAULT_LOCATE_LIMITS = Object.freeze({
   timeoutMs: 10_000,
 } as const);
 
+export const LOCATE_LIMIT_MAXIMUMS = Object.freeze({
+  maxFiles: 20,
+  maxConfirmed: 20,
+  maxCandidates: 20,
+  timeoutMs: 30_000,
+} as const);
+
 export const LOCATE_INPUT_MAX_BYTES = 16 * 1024;
 export const DEFAULT_MAX_FILE_BYTES = 2 * 1024 * 1024;
 export const DEFAULT_MAX_EXCERPT_BYTES = 16 * 1024;

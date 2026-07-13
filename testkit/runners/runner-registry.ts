@@ -33,6 +33,8 @@ export const RUNNER_SELECTIONS: Readonly<
       'codegraph-parser',
       'codegraph-query-plan',
       'codegraph-live-smoke',
+      'locate-status',
+      'output-guardrails',
     ]),
     cases: new Set([
       'runner-smoke',
@@ -59,6 +61,14 @@ export const RUNNER_SELECTIONS: Readonly<
       'codegraph-parser',
       'codegraph-query-plan',
       'indexed-temp-repo',
+      'transition-matrix-completeness',
+      'hit-unverified-fallback-complete',
+      'hit-unverified-fallback-unavailable',
+      'caller-abort-empty',
+      'caller-abort-with-evidence',
+      'internal-deadline-below-max',
+      'internal-deadline-at-max',
+      'redaction-policy',
     ]),
   }),
   golden: Object.freeze({
@@ -68,6 +78,8 @@ export const RUNNER_SELECTIONS: Readonly<
       'text-evidence-engine',
       'candidate-policy',
       'codegraph-fallback',
+      'result-limits',
+      'output-redaction',
     ]),
     cases: new Set([
       'runner-smoke',
@@ -94,6 +106,10 @@ export const RUNNER_SELECTIONS: Readonly<
       'codegraph-symbol-complete-no-fallback',
       'codegraph-secondary-provenance-table',
       'backend-unavailable',
+      'partial-empty-limit',
+      'partial-with-evidence',
+      'secret-redaction',
+      'redaction-metadata',
     ]),
   }),
   mcp: Object.freeze({
@@ -115,6 +131,7 @@ export const RUNNER_SELECTIONS: Readonly<
       'stdio-clean-output',
       'stdio-graceful-shutdown',
       'candidate-minimal-loop',
+      'redaction-output-parity',
     ]),
   }),
 });

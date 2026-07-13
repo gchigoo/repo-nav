@@ -12,6 +12,7 @@ import {
   createMcpStartupShutdownController,
   type McpShutdownCoordinator,
 } from './mcp/mcp-shutdown-coordinator.js';
+import { writeScrubbedDiagnostic } from './mcp/diagnostic-scrubber.js';
 import { MCP_STDIO_HOST } from './runtime/tokens.js';
 
 function installProcessShutdownHandlers(
@@ -55,7 +56,7 @@ async function bootstrap(): Promise<void> {
     }
     await host.connect();
   } catch {
-    process.stderr.write('RepoNav MCP bootstrap failed.\n');
+    writeScrubbedDiagnostic('RepoNav MCP bootstrap failed.');
     if (coordinator !== undefined) {
       await coordinator.shutdown('bootstrap-error', 1);
     } else if (application !== undefined) {

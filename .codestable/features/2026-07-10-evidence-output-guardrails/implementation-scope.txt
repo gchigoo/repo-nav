@@ -1,0 +1,21 @@
+# F7 implementation scope approved by the feature design.
+src/contracts
+src/evidence
+src/mcp
+src/repository
+src/index.ts
+src/main.ts
+test/unit
+test/golden
+test/mcp
+testkit/contracts
+testkit/fixtures/output-guardrails
+testkit/fixtures/mcp
+testkit/manifests/golden
+testkit/manifests/mcp
+testkit/runners
+.codestable/roadmap/repo-nav-mvp/goal-state.yaml
+.codestable/roadmap/repo-nav-mvp/goal-features/evidence-output-guardrails.md
+.codestable/roadmap/repo-nav-mvp/repo-nav-mvp-items.yaml
+.codestable/roadmap/repo-nav-mvp/repo-nav-mvp-roadmap.md
+.codestable/architecture

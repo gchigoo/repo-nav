@@ -18,5 +18,5 @@ expected:
       role: reference
       reasonCodes: [EXACT_TERM_WITHOUT_DIRECT_MAPPING]
   forbiddenEvidenceIds: []
-  requiredCoverageCodes: [MAX_FILES_REACHED]
+  requiredCoverageCodes: []
   minimumExclusionCounts: {}

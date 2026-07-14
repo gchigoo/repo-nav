@@ -1,0 +1,125 @@
+schemaVersion: '1.0'
+successCases:
+  alias-candidate: alias-candidate
+  backend-unavailable: backend-unavailable
+  codegraph-failed: codegraph-failed
+  codegraph-global-abort-no-fallback: codegraph-global-abort-no-fallback
+  codegraph-hit-unverified: codegraph-hit-unverified
+  codegraph-incomplete: codegraph-incomplete
+  codegraph-local-timeout-fallback: codegraph-local-timeout-fallback
+  codegraph-missing: codegraph-missing
+  codegraph-no-result: codegraph-no-result
+  codegraph-secondary-provenance-table: codegraph-secondary-provenance-table
+  codegraph-symbol-complete-no-fallback: codegraph-symbol-complete-no-fallback
+  exclusion-summary: exclusion-summary
+  false-confirmation-decoys: false-confirmation-decoys
+  foundation-success: manifest-evaluator
+  mcp-source-field-mapping: mcp-golden-adapter
+  ripgrep-failed: ripgrep-failed
+  ripgrep-incomplete: ripgrep-incomplete
+  ripgrep-timeout: ripgrep-timeout
+  ripgrep-unavailable: ripgrep-unavailable
+  sibling-candidate: sibling-candidate
+  sibling-false-positive: sibling-false-positive
+  source-field-mapping: source-field-mapping
+  text-engine-baseline: text-engine-baseline
+errorCases:
+  foundation-error: manifest-evaluator
+families:
+  RepoLayer:
+    client: {positive: contract-code-probes}
+    server: {positive: source-field-mapping}
+    db: {positive: contract-code-probes}
+    test: {positive: contract-code-probes}
+    docs: {positive: contract-code-probes}
+    config: {positive: contract-code-probes}
+    unknown: {positive: contract-code-probes}
+  AnchorKind:
+    symbol: {positive: codegraph-symbol-complete-no-fallback}
+    file: {positive: contract-code-probes}
+    table: {positive: contract-code-probes}
+    route: {positive: contract-code-probes}
+    term: {positive: contract-code-probes}
+  TermCaseMode:
+    sensitive: {positive: sibling-candidate}
+    insensitive: {positive: source-field-mapping}
+    smart: {positive: contract-code-probes}
+  LocateStatus:
+    ok: {positive: source-field-mapping}
+    partial: {positive: ripgrep-incomplete}
+    no_result: {positive: contract-code-probes}
+    backend_unavailable: {positive: backend-unavailable}
+    timeout: {positive: codegraph-global-abort-no-fallback}
+  EvidenceSource:
+    codegraph: {positive: codegraph-incomplete}
+    ripgrep: {positive: source-field-mapping}
+    filesystem: {positive: sibling-candidate}
+  SearchBackendId:
+    codegraph: {positive: codegraph-incomplete}
+    ripgrep: {positive: source-field-mapping}
+  EvidenceRole:
+    execution-site: {positive: codegraph-symbol-complete-no-fallback}
+    value-mapping: {positive: source-field-mapping}
+    definition: {positive: contract-code-probes}
+    reference: {positive: false-confirmation-decoys}
+    related: {positive: sibling-candidate}
+  ConfirmedReasonCode:
+    EXACT_TERM_MATCH: {positive: source-field-mapping, negative: evaluator-negative-self-test}
+    EXACT_SYMBOL_ANCHOR: {positive: codegraph-symbol-complete-no-fallback, negative: evaluator-negative-self-test}
+    DIRECT_ALIAS_MAPPING: {positive: source-field-mapping, negative: evaluator-negative-self-test}
+  CandidateReasonCode:
+    EXACT_TERM_WITHOUT_DIRECT_MAPPING: {positive: false-confirmation-decoys, negative: evaluator-negative-self-test}
+    SYMBOL_REFERENCE_ONLY: {positive: contract-code-probes, negative: evaluator-negative-self-test}
+    SAME_SCOPE_SIMILAR_IDENTIFIER: {positive: sibling-candidate, negative: evaluator-negative-self-test}
+    SAME_ENTITY_SIBLING: {positive: sibling-candidate, negative: evaluator-negative-self-test}
+    ALIAS_SOURCE_NEIGHBOR: {positive: alias-candidate, negative: evaluator-negative-self-test}
+    SECONDARY_BACKEND_HIT: {positive: codegraph-secondary-provenance-table, negative: evaluator-negative-self-test}
+  DiscoveryReasonCode:
+    LITERAL_TERM_HIT: {positive: contract-code-probes}
+    SYMBOL_SEARCH_HIT: {positive: contract-code-probes}
+    FILE_ANCHOR_HIT: {positive: contract-code-probes}
+  PromotionRequirementCode:
+    USER_SEMANTIC_CONFIRMATION: {positive: sibling-candidate}
+    DIRECT_REFERENCE_REQUIRED: {positive: source-field-mapping}
+    CALL_PATH_REQUIRED: {positive: contract-code-probes}
+  EvidenceOperationCode:
+    CODEGRAPH_QUERY: {positive: codegraph-incomplete}
+    RIPGREP_SEARCH: {positive: source-field-mapping}
+    FILESYSTEM_READ_RANGE: {positive: source-field-mapping}
+    FILESYSTEM_FIND_MATCHES: {positive: sibling-candidate}
+  BackendReasonCode:
+    CODEGRAPH_INDEX_MISSING: {positive: codegraph-missing}
+    CODEGRAPH_UNAVAILABLE: {positive: backend-unavailable}
+    CODEGRAPH_NO_RESULT: {positive: codegraph-no-result}
+    RIPGREP_UNAVAILABLE: {positive: ripgrep-unavailable}
+    RIPGREP_NO_RESULT: {positive: contract-code-probes}
+    BACKEND_PROCESS_FAILED: {positive: codegraph-failed}
+    BACKEND_ABORTED: {positive: codegraph-global-abort-no-fallback}
+  LimitReasonCode:
+    MAX_FILES_REACHED: {positive: contract-code-probes}
+    MAX_CONFIRMED_REACHED: {positive: contract-code-probes}
+    MAX_CANDIDATES_REACHED: {positive: contract-code-probes}
+    MAX_FILE_BYTES_REACHED: {positive: contract-code-probes}
+    MAX_EXCERPT_BYTES_REACHED: {positive: contract-code-probes}
+    TIMEOUT_REACHED: {positive: codegraph-global-abort-no-fallback}
+  ExclusionReasonCode:
+    NEGATIVE_TERM_MATCH: {positive: exclusion-summary}
+    OUTSIDE_LAYER_HINT: {positive: exclusion-summary}
+    DUPLICATE_LOCATION: {positive: exclusion-summary}
+    UNVERIFIED_FILE_CONTENT: {positive: exclusion-summary}
+  RedactionReasonCode:
+    SECRET_LIKE_VALUE: {positive: contract-code-probes}
+    CONNECTION_STRING: {positive: contract-code-probes}
+    PERSONAL_DATA: {positive: contract-code-probes}
+    BINARY_OR_OVERSIZED_CONTENT: {positive: contract-code-probes}
+  NextActionCode:
+    ADD_TERM: {positive: manifest-evaluator}
+    ADD_SYMBOL_ANCHOR: {positive: contract-code-probes}
+    CONFIRM_CANDIDATE: {positive: source-field-mapping}
+    INITIALIZE_CODEGRAPH: {positive: contract-code-probes}
+    RETRY_WITH_HIGHER_LIMIT: {positive: contract-code-probes}
+  ToolErrorCode:
+    INVALID_INPUT: {positive: manifest-evaluator}
+    INVALID_REPOSITORY: {positive: contract-code-probes}
+    PATH_OUTSIDE_ROOT: {positive: contract-code-probes}
+    INTERNAL_ERROR: {positive: contract-code-probes}

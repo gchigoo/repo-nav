@@ -1,0 +1,68 @@
+roadmap: repo-nav-public-beta
+created: 2026-07-23
+items:
+- slug: public-output-boundary-v2
+  description: 建立 raw/public 模型分离、字段级脱敏、逻辑 repository ref、请求内公共 ID、strict success error schema 与 locate 输出通道 forbidden scan
+  depends_on: []
+  status: done
+  feature: 2026-07-23-public-output-boundary-v2
+  minimal_loop: true
+  notes: 通过 internal test seam 完成 v2 安全最小闭环但不切换生产 v1；绝对 root、Git object ID、raw excerpt/hash 和内部 discovery key 不得穿过公共边界
+- slug: relevance-ranking-budget
+  description: 以显式锚点优先和离散相关性层级替换纯字典序预算，并实现跨文件 round-robin 与未满足锚点报告
+  depends_on:
+  - public-output-boundary-v2
+  status: planned
+  minimal_loop: false
+  notes: 不公开概率 confidence；同分才使用稳定路径与行号 tie-break
+- slug: request-snapshot-cache
+  description: 引入请求级文件快照与 verified record cache，复用 CodeGraph 预验证结果并在公共组装前丢弃请求期间发生变化的文件证据
+  depends_on:
+  - relevance-ranking-budget
+  status: planned
+  minimal_loop: false
+  notes: 同一 canonical file 每次请求最多解码一次；变化 消失 不可读或复核失败均丢弃受影响证据，不实现跨请求 cache
+- slug: cross-platform-ci-baseline
+  description: 建立 Node 22/24 与 Windows Linux macOS 的 build typecheck unit Golden MCP docs 和进程路径验证矩阵
+  depends_on: []
+  status: planned
+  minimal_loop: false
+  notes: 在 streaming process 和 Unicode path 改动进入主线前提供 blocking platform evidence
+- slug: streaming-ripgrep
+  description: 修正 N+1 输出上限语义，流式解析 ripgrep JSON，在达到 maxHits 或 stdout 上限时保留 bounded partial evidence
+  depends_on:
+  - cross-platform-ci-baseline
+  - relevance-ranking-budget
+  status: planned
+  minimal_loop: false
+  notes: 必须按 contract mapping 证明 maxHits output cap timeout request abort nonzero exit 的 termination limit degradation strategyComplete，并且不遗留进程树
+- slug: input-abort-contract-v2
+  description: 将 question 定义为可选说明文本，拆分 filesystem path normalization，并提供 request abort source strategy completeness 与 per-backend termination ledger
+  depends_on:
+  - public-output-boundary-v2
+  status: planned
+  minimal_loop: false
+  notes: question 内容不得影响 search plan；filesystem path 不做 NFKC 或静默 trim
+- slug: repository-scope-policy
+  description: 统一 basename extension nested segment prefix 及冲突优先级、显式 test docs 请求以及 confirmed candidate 共用的 scope decision
+  depends_on:
+  - input-abort-contract-v2
+  status: planned
+  minimal_loop: false
+  notes: test 优先于 docs 再优先于 production prefix segment；test docs 即使显式请求仍保持 fail-closed，不直接提升为 confirmed
+- slug: language-capability-boundary
+  description: 引入 TypeScript JavaScript SQL 和 unsupported fallback adapters，并公开 text search 与 semantic classification 能力差异
+  depends_on:
+  - repository-scope-policy
+  status: planned
+  minimal_loop: false
+  notes: public-beta 不新增其他语言的 semantic adapter；unsupported language 只能产生 verified literal candidate
+- slug: public-beta-release
+  description: 原子切换生产 locate schema v2，并补齐版本来源 Node engines license security metadata lint format migration guide package dry-run 与 beta release gate
+  depends_on:
+  - request-snapshot-cache
+  - streaming-ripgrep
+  - language-capability-boundary
+  status: planned
+  minimal_loop: false
+  notes: 所有真实 coverage field producer 就绪前不得用占位值切换 v2；license 选择、移除 private、merge、push 与发布仍需 owner 单独批准

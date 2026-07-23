@@ -1,0 +1,14 @@
+.codestable/features/2026-07-23-public-output-boundary-v2
+.codestable/architecture/system-repo-nav-foundation.md
+.codestable/roadmap/repo-nav-public-beta
+src/contracts/v2
+src/evidence/public-output
+test/unit/public-output-v2-contract.spec.ts
+test/unit/public-output-v2-errors-projection.spec.ts
+test/unit/public-output-v2-no-cutover.spec.ts
+test/unit/public-output-v2-redaction.spec.ts
+test/unit/public-result-assembler-v2.spec.ts
+test/golden/public-output-v2.spec.ts
+testkit/contracts/public-output-v2-import-inventory.ts
+testkit/fixtures/public-output-v2
+testkit/runners/runner-registry.ts

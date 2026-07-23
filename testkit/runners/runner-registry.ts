@@ -65,6 +65,7 @@ export const RUNNER_SELECTIONS: Readonly<
       'debug-cli-locate',
       'debug-cli-probe',
       'debug-cli-golden',
+      'public-output-v2',
     ]),
     cases: new Set([
       'runner-smoke',
@@ -104,6 +105,15 @@ export const RUNNER_SELECTIONS: Readonly<
       'debug-cli-locate',
       'debug-cli-probe',
       'debug-cli-golden',
+      'schema-contract-families',
+      'field-redaction',
+      'location-redaction',
+      'assembler-allowlist',
+      'ordinal-ids',
+      'derived-status',
+      'safe-errors',
+      'synthetic-parity',
+      'no-cutover-import-inventory',
     ]),
   }),
   golden: Object.freeze({
@@ -122,6 +132,7 @@ export const RUNNER_SELECTIONS: Readonly<
       'final-status',
       'verification-contract',
       'performance',
+      'public-output-v2',
     ]),
     cases: new Set([
       'runner-smoke',
@@ -162,6 +173,8 @@ export const RUNNER_SELECTIONS: Readonly<
       'security-family-contract',
       'final-status-family-contract',
       'contract-code-probes',
+      'public-output-v2-projection',
+      'public-output-v2-determinism',
     ]),
   }),
   mcp: Object.freeze({

@@ -1,0 +1,159 @@
+feature: 2026-07-23-public-output-boundary-v2
+created: '2026-07-23'
+steps:
+- id: S1
+  action: 建立完整 raw public LocateResultV2 strict schema cross-field contract 与 runner selection identity
+  exit_signal: schema ownership matrix 每个 family 的正例和 deliberate mutation 通过，定向命令不出现 unknown group case
+  verification: npm test -- --group public-output-v2 --case schema-contract-families
+  artifacts: [raw and public v2 contracts, schema family mutation inventory, runner registry entries]
+  status: done
+- id: S2
+  action: 实现 response-level sensitive corpus 与 term path symbol excerpt 字段安全策略
+  exit_signal: F1-REDACTION-001 F1-LOCATION-001 F1-CONTROL-001 F1-PLACEHOLDER-001 F1-PATH-INVARIANT-001 按字段 truth table 全部通过且 forbidden corpus 无原值
+  verification: npm test -- --group public-output-v2 --case field-redaction --case location-redaction && npm run test:golden -- --group public-output-v2
+  artifacts: [SensitiveValuePolicyV2, hostile corpus, field truth table]
+  status: done
+- id: S3
+  action: 实现 PublicResultAssemblerV2 strict raw parse allowlist derived location degradation status 与 response-local ordinal
+  exit_signal: F1-ID-001 F1-ALLOWLIST-001 F1-LOCATION-STATUS-001 通过，非法 extra output-owned field 只返回 safe INTERNAL_ERROR，0 1 多隐藏路径的 degradation status exact，ID 严格连续
+  verification: npm test -- --group public-output-v2 --case assembler-allowlist --case ordinal-ids --case derived-status
+  artifacts: [PublicResultAssemblerV2, status precedence matrix, exact success projection]
+  status: done
+- id: S4
+  action: 实现 v2 safe error table 与 synthetic locate projection parity
+  exit_signal: F1-ERROR-001 F1-PARITY-001 通过，四个 error exact，synthetic service structured text debug-locate parse 后等值且 success error 全 projection forbidden scan 无原值
+  verification: npm test -- --group public-output-v2 --case safe-errors --case synthetic-parity
+  artifacts: [safe error matrix, synthetic parity projection]
+  status: done
+- id: S5
+  action: 完成 completeness determinism registered import inventory no-cutover 与 full regression hardening
+  exit_signal: F1 全部 case 有 owner，重复组装 bytes 稳定，package barrels engine MCP CLI 对 v2 无 reachability，full unit Golden MCP docs 保持 v1 且全部通过
+  verification: npm test -- --group public-output-v2 --case no-cutover-import-inventory && npm run build && npm run typecheck && npm test && npm run test:golden -- --all && npm run test:mcp -- --all && npm run test:docs
+  artifacts: [case fixture inventory, import inventory report, forbidden scan report with stderr N A rationale, aggregate command logs]
+  status: done
+checks:
+- id: C1
+  item: raw success error strict schema 禁止 schemaVersion repositoryRef status ID resolvable redaction metadata LOCATION_REDACTED 与任意 extra field
+  source: 名词契约
+  status: passed
+- id: C2
+  item: public LocateResultV2 success error evidence coverage enums 与 roadmap public-contract-v2 完整一致
+  source: 名词契约
+  status: passed
+- id: C3
+  item: backend ledger unique order 与 status completion termination reason hitCount 组合均有正反 owner
+  source: 名词契约
+  status: passed
+- id: C4
+  item: canonical arrays snapshot scope capability anchor abort nextActions 与 status 的 cross-field families 均有正反 owner
+  source: 名词契约
+  status: passed
+- id: C5
+  item: assembler 保留上游最终数组顺序并严格生成 confirmed 后 candidate 的 0001 到 N 连续 ID
+  source: 编排骨架
+  status: passed
+- id: C6
+  item: term symbol excerpt 可字段替换 敏感 file 整体隐藏并满足 resolvable metadata truth table
+  source: 流程级约束
+  status: passed
+- id: C7
+  item: underscore hyphen camel Pascal credential connection PII oversized malformed control ANSI bidi 和 cross-field token propagation 均有 owner case
+  source: 验收场景
+  status: passed
+- id: C8
+  item: placeholder collision 由 metadata 判定 无 metadata 的字面 placeholder 保持普通内容
+  source: 验收场景
+  status: passed
+- id: C9
+  item: raw file absolute drive UNC backslash dot root escape NUL fail-closed，合法 newline path 整体隐藏
+  source: 流程级约束
+  status: passed
+- id: C10
+  item: 0 个隐藏 path 不增加 LOCATION_REDACTED，1 或多个只增加一次并按 precedence 派生 status
+  source: 流程级约束
+  status: passed
+- id: C11
+  item: allowlist assembly 不使用 raw object spread 且 extra root remote branch discovery hash error detail 只产生 safe INTERNAL_ERROR
+  source: 流程级约束
+  status: passed
+- id: C12
+  item: 四个 safe error code exact 且只有 INVALID_INPUT 可以携带 ADD_TERM
+  source: 名词契约
+  status: passed
+- id: C13
+  item: synthetic service structured JSON text debug-locate projection parse 后等值并对 success error 全面执行 forbidden scan
+  source: 验收场景
+  status: passed
+- id: C14
+  item: registered import inventory 证明 src root contracts barrel Evidence Engine MCP CLI 对 v2 module 不可达
+  source: 范围守护
+  status: passed
+- id: C15
+  item: production public JSON Schema service MCP CLI docs 和 v1 snapshots 不切换 v2
+  source: 范围守护
+  status: passed
+- id: C16
+  item: F1 不实现 ranking snapshot backend termination scope language producer 或默认 coverage helper
+  source: 范围守护
+  status: passed
+- id: C17
+  item: 不新增 Nest provider DI token external adapter persistence logger 或 diagnostic stderr policy
+  source: 挂载点
+  status: passed
+- id: C18
+  item: dormant F1 无 stderr producer 的 N A 理由落盘，error projection 不借此跳过 forbidden scan
+  source: 范围守护
+  status: passed
+- id: C19
+  item: v2 contract policy assembler runner cases reports 与 no-cutover 证据均能从 artifact inventory 反查
+  source: 验收场景
+  status: passed
+dod:
+  commands:
+  - id: CMD-BUILD
+    command: npm run build
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-TYPECHECK
+    command: npm run typecheck
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-V2-UNIT
+    command: npm test -- --group public-output-v2
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-V2-GOLDEN
+    command: npm run test:golden -- --group public-output-v2
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-NOCUTOVER
+    command: npm test -- --group public-output-v2 --case no-cutover-import-inventory
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-UNIT-ALL
+    command: npm test
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-GOLDEN-ALL
+    command: npm run test:golden -- --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-MCP-ALL
+    command: npm run test:mcp -- --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-DOCS
+    command: npm run test:docs
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-DOCTOR
+    command: python .codestable/tools/codestable-doctor.py --root .
+    core: false
+    failure_handling: document-baseline
+  evidence_required: [command_output, diff_summary, artifact_inventory, schema_mutation_inventory, forbidden_scan_report, no_cutover_report]
+  cleanliness:
+    debug_output: forbidden
+    temporary_todo_fixme: forbidden
+    commented_out_code: forbidden
+    unused_imports: forbidden
+    real_credentials: forbidden

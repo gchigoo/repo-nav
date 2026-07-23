@@ -1,11 +1,11 @@
 ---
 doc_type: architecture
 slug: repo-nav-foundation
-scope: RepoNav 当前已落地的公共契约、repository 安全 seams、CodeGraph-primary/ripgrep-fallback evidence engine、有界 candidate policy、状态/预算/redaction/error output guardrails、stdio MCP、debug CLI、executable docs 与发布候选级 Verification Kit
-summary: Zod schema v1 定义数据契约，安全 reader/process adapters 承担仓库边界，RepositoryEvidenceEngine 编排 verified EvidencePack，stdio MCP 暴露 repo_nav_locate，shallow debug CLI 复用 application/testkit seams，shared Golden、lifecycle、docs/schema drift 与 synthetic baseline 锁定发布候选行为
+scope: RepoNav 当前已落地的 production v1 公共契约、repository 安全 seams、CodeGraph-primary/ripgrep-fallback evidence engine、有界 candidate policy、状态/预算/redaction/error output guardrails、stdio MCP、debug CLI、executable docs、发布候选级 Verification Kit，以及尚未接入 production 的 v2 raw/public 输出安全边界
+summary: Production 继续由 Zod schema v1、RepositoryEvidenceEngine、stdio MCP 与 shallow debug CLI 提供；独立的 dormant LocateResultV2 strict contract、字段级 SensitiveValuePolicyV2 和 PublicResultAssemblerV2 已通过 synthetic test seam 落地，但 package/service/MCP/CLI/docs 仍无 v2 edge，真实原子切换由 public-beta F9 独占
 status: current
-last_reviewed: 2026-07-13
-tags: [repo-nav, foundation, evidence, candidate-policy, output-guardrails, redaction, repository-safety, codegraph, ripgrep, fallback, mcp, stdio, cli, docs, golden, regression]
+last_reviewed: 2026-07-23
+tags: [repo-nav, foundation, evidence, candidate-policy, output-guardrails, redaction, repository-safety, codegraph, ripgrep, fallback, mcp, stdio, cli, docs, golden, regression, schema-v2, public-assembler, no-cutover]
 depends_on: []
 implements: [source-of-truth-evidence]
 ---
@@ -38,6 +38,23 @@ implements: [source-of-truth-evidence]
 - **Safe public error policy**：按四个 tool error code 固定 message/recoverable/action 白名单；application、MCP structured/text 与 `isError` 共用。
 - **Debug CLI**：`tools/cli` 下的本地 shallow adapter；locate 复用 application/output policy，probe 只读 infrastructure health，golden 复用 Verification Kit，不拥有新的业务语义。
 - **Executable docs**：四份 public docs 中的登记 snippets 由 `test:docs` 解析并通过真实 MCP/CLI binaries 执行，同时对账 schema projection、artifact inventory 与 import graph。
+- **LocateResultV2**：已落地但未接入 production 的 strict public success/error
+  contract；固定 `schemaVersion='2.0'`、逻辑 `repositoryRef`、coverage/status 与
+  response-local evidence ID，不替换当前 v1 `LocateResult`。
+- **FinalizedUnsafeLocateResultV2**：v2 assembler 的 strict internal input；保留
+  upstream coverage 与 raw term/file/symbol/excerpt，但禁止 public ID/status/
+  repositoryRef/redaction metadata 和 assembler-owned degradation。
+- **PublicResultAssemblerV2**：唯一把 strict raw v2 facts 物化为 public
+  `LocateResultV2` 的 pure allowlist boundary；负责字段策略、derived
+  degradation/status、safe errors、continuous ordinal ID 与最终 schema parse。
+- **SensitiveValuePolicyV2**：对 term、file、symbol、excerpt 执行 response-local
+  corpus propagation、secret/connection/PII/malformed/control redaction 和 exact
+  metadata；敏感 file 整体隐藏。
+- **v2 response-local ordinal ID**：按 confirmed 后 candidate 的最终数组顺序生成
+  `evidence:v2:0001..N`，不含 raw excerpt/content/discovery/Git hash。
+- **v2 no-cutover invariant**：F1 的 v2 modules 只由 synthetic fixture、unit/Golden
+  和 import-inventory tests 可达；package barrels、Evidence Engine、MCP、CLI、docs
+  不得形成 production edge，直到 F9 原子切换。
 
 ## 1. 定位与受众
 
@@ -93,6 +110,12 @@ flowchart LR
   Completeness["enum/code completeness probes"] --> Tests
   Lifecycle["Nest + host + process-tree lifecycle probe"] --> Host
   Synthetic["fixed 1000-file synthetic corpus"] --> Engine
+  V2Raw["FinalizedUnsafeLocateResultV2<br/>dormant test seam"] --> V2Policy["SensitiveValuePolicyV2"]
+  V2Policy --> V2Assembler["PublicResultAssemblerV2"]
+  V2Assembler --> V2Schema["LocateResultV2 strict parse"]
+  V2Schema --> V2Projection["synthetic service / structured / text / debug"]
+  V2Tests["v2 unit + Golden + no-cutover inventory"] --> V2Raw
+  V2Tests --> V2Projection
   Docs["four executable docs"] --> DocsSmoke["DocsSmokeRunner"]
   DocsSmoke --> Entry
   DocsSmoke --> CliEntry
@@ -100,6 +123,10 @@ flowchart LR
 ```
 
 - `src/contracts/` 持有 schema v1、normalization、Evidence ID/排序，以及 repository/process/backend/evidence service 契约；production modules 只依赖 contracts/runtime。
+- `src/contracts/v2/` 与 `src/evidence/public-output/` 持有 dormant v2
+  raw/public strict contract、字段策略、assembler 和 synthetic projection；图中没有
+  指向 production App/Evidence/MCP/CLI/docs 的 edge，且 package barrels 不导出这些
+  modules。
 - `EvidenceModule` 以 `useExisting` 分别把 `NodeRepositoryReader` 和 `RepositoryEvidenceEngine` 暴露为 `REPOSITORY_READER`、`REPOSITORY_EVIDENCE_SERVICE`。
 - `RepositoryBackendsModule` 提供 `NodeSafeProcessRunner`、`CodeGraphBackend` 与 `RipgrepBackend`，并通过 factory 输出有序、冻结的 `[codegraph, ripgrep]` backend collection；binary missing 不移除 provider。
 - `CodeGraphBackend` 只解析 `status --json` 与 `query --json` stdout；probe 记录 binary/index/version/freshness capability，query planner 为 symbol/identifier entries 生成稳定单参数 invocation 并共享 total `maxHits`。required fields malformed 时 fail closed，additional fields forward-compatible。
@@ -124,6 +151,19 @@ flowchart LR
 
 ## 3. 数据与状态
 
+- Dormant v2 先以 `FinalizedUnsafeLocateResultV2Schema` 拒绝 output-owned fields、
+  非 canonical arrays、contradictory backend/snapshot/scope/capability/abort/status
+  facts 与非法 repository locator；programmer contract violation 只产生 fixed
+  `INTERNAL_ERROR`。
+- `PublicResultAssemblerV2` 对完整 raw response 收集 sensitive corpus，按
+  term/file/symbol/excerpt 字段策略处理，canonical union
+  `LOCATION_REDACTED`，派生最终 status，再显式 allowlist 组装并按 final order
+  分配连续 v2 ordinal ID；public schema 负责最终 cross-field parse。
+- v2 字段策略使用合成 hostile corpus 覆盖 secret assignment、fixed credential、
+  connection、email/phone、malformed/oversized、C0/DEL/ANSI/bidi 与跨字段 token；
+  literal placeholder 只有结合 metadata/resolvable 才具有 redaction 语义。
+- v2 state 只存在于单次 pure function 调用和 synthetic tests；没有 DI provider、
+  cache、数据库、Redis、文件持久化或日志。`package.json` 仍为 `private: true`。
 - `LocateRequestSchema` 负责 strict input、NFKC/UTF-8 budgets、per-term case 与 file/symbol anchors；engine 解析默认 limits，并把 term 与 anchor metadata 传给 backend/verification/classifier。
 - CodeGraph/ripgrep discovery facts 经当前文件核验后才成为 `DiscoveryRecord`；相同 key 的重复/permuted hits 先合并 provenance，classification、primary role、public ID 与排序均在 merge 后执行。
 - Direct mapping confirmed 仅覆盖同一 executable statement 的 `target = source`、可执行 object literal 的 `target: source`、受支持 SQL query call/`.sql` alias，以及 exact anchored implementation/definition；其余 exact term/symbol reference降为 candidate。
@@ -144,6 +184,15 @@ flowchart LR
 
 ## 4. 关键决策
 
+- v2 raw/public separation 通过单一 `PublicResultAssemblerV2` 强制；producer 不得
+  构造 public ID/status/redaction metadata，projection 不得再次 redaction、派生
+  status 或分配 ID。
+- F1 的 no-cutover 是一等契约而非临时说明：v1 仍是唯一 production
+  service/MCP/CLI/docs contract；F9 独占 package export、真实 transport parity 与
+  原子切换，其他 feature 不得提前挂载或填充虚假 coverage facts。
+- v2 public result 使用 response-local ordinal ID 和逻辑 repository ref，不暴露
+  raw root、Git object ID、discovery/content hash；字段安全与 cross-field truth
+  由 strict schemas + hostile mutation 双重拥有。
 - Backend 只产 discovery facts；public evidence 必须由当前文件核验和统一 classifier 产生。
 - 顺序固定为 verify → discovery merge → classify once → primary role → ID → sort，禁止先分类再合并或以 ranking 推断 confirmed。
 - Ripgrep 使用 literal fixed-string argv 与 per-seed case mode，不经 shell；JSON parser只读取结构化 match/submatch字段。
@@ -171,6 +220,24 @@ flowchart LR
 
 ## 5. 代码锚点
 
+- `src/contracts/v2/locate-result-v2.ts` — dormant v2 raw/public strict schemas、
+  backend/snapshot/status/redaction cross-field invariants、canonical coverage、
+  status derivation 与 response-local ID contract。
+- `src/evidence/public-output/sensitive-value-policy-v2.ts` — v2 response-local
+  corpus、term/file/symbol/excerpt field adapters、fixed placeholders 与 hostile
+  matcher families。
+- `src/evidence/public-output/public-result-assembler-v2.ts` — strict raw parse、
+  explicit allowlist、derived degradation/status、continuous ordinal ID 与 fixed
+  safe errors。
+- `src/evidence/public-output/synthetic-locate-projection-v2.ts` — F1-only
+  service/structured/text/debug equivalent projections。
+- `testkit/contracts/public-output-v2-import-inventory.ts` /
+  `test/unit/public-output-v2-no-cutover.spec.ts` — deliberate reachability mutation
+  owner 与当前 production no-cutover gate。
+- `test/unit/public-output-v2-*.spec.ts` /
+  `test/unit/public-result-assembler-v2.spec.ts` /
+  `test/golden/public-output-v2.spec.ts` — strict family mutations、hostile corpus、
+  placeholder collision、safe error/parity、determinism 与 full projection scan。
 - `src/evidence/repository-evidence-engine.ts:RepositoryEvidenceEngine` — CodeGraph-primary/ripgrep-fallback locate orchestration、状态与 next actions。
 - `src/evidence/abort-source.ts:LocateAbortCoordinator` — first-writer-wins caller/deadline ownership。
 - `src/evidence/locate-status-evaluator.ts:evaluateLocateStatus` / `next-action-policy.ts:createNextActions` — final status priority 与 caller-adjustable action policy。
@@ -215,6 +282,12 @@ flowchart LR
 
 ## 6. 已知约束 / 边界情况
 
+- v2 当前是 dormant synthetic in-process seam；真实 MCP/CLI/stderr parity 尚未由
+  production v2 请求证明，必须留到 F9 cutover gate。
+- v2 no-cutover inventory 对当前相对 ESM import/export graph 有效，不等价于完整
+  TypeScript module resolution；新增 import 形态时必须同步 gate。
+- `locate-result-v2.ts` 与 `sensitive-value-policy-v2.ts` 体量较大但职责仍分别集中
+  于完整 contract owner 与 field policy；后续扩展应持续监控结构复杂度。
 - 当前没有数字 confidence；CodeGraph 只覆盖 status/query structured capability，不实现 callers/impact。
 - Redaction 是封闭确定性 matcher，不宣称识别任意自然语言 secret/PII；新增表达形式必须同步 matcher 与真实 service/MCP forbidden corpus。
 - `DiagnosticScrubber` 当前未完整覆盖 UNC 与单段 POSIX absolute path；正式调用只写固定安全 diagnostic，未来放开 raw adapter detail 前必须扩充 matcher。
@@ -237,6 +310,16 @@ flowchart LR
 
 ## 7. 相关文档
 
+- Public-beta roadmap:
+  `../roadmap/repo-nav-public-beta/repo-nav-public-beta-roadmap.md`；
+  F1 `public-output-boundary-v2` 已完成，F9 `public-beta-release` 负责 production
+  v2 cutover。
+- v2 contract/threat model:
+  `../roadmap/repo-nav-public-beta/public-contract-v2.md` /
+  `../roadmap/repo-nav-public-beta/threat-model.md`。
+- F1 design/acceptance:
+  `../features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-design.md`
+  / `public-output-boundary-v2-acceptance.md`。
 - Requirement: `../requirements/source-of-truth-evidence.md`（仍为 draft；F7 已形成全状态/output guardrails，但发布级完整回归、性能基线与 debug/operator guide 尚未形成完整 MVP capability）。
 - Roadmap: `../roadmap/repo-nav-mvp/repo-nav-mvp-roadmap.md`。
 - F1/F2: `../features/2026-07-10-repository-evidence-foundation/` / `../features/2026-07-10-repository-access-process-safety/`。
@@ -251,5 +334,9 @@ flowchart LR
 
 ## 8. 变更日志
 
+- 2026-07-23：F1 acceptance 回填 dormant `LocateResultV2` raw/public strict
+  boundary、字段级 `SensitiveValuePolicyV2`、单一 `PublicResultAssemblerV2`、
+  response-local ordinal ID 与 no-cutover invariant；production 仍保持 v1，
+  F9 独占原子切换。
 - 2026-07-13：F8 acceptance 回填 shared Golden evaluator、machine-verified completeness、真实 lifecycle probe 与 fixed synthetic performance baseline 的当前结构。
 - 2026-07-13：F9 acceptance 回填 shallow debug CLI、process-tree-safe Golden adapter、executable MCP/CLI docs、schema/artifact/import drift gate与 MVP aggregate verification。

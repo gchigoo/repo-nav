@@ -1,0 +1,401 @@
+feature: 2026-07-24-language-capability-boundary
+created: '2026-07-24'
+steps:
+- id: S1
+  action: 只搬不改行为地抽出ECMAScript和SQL consumer-neutral lexical kernels并保留legacy exports
+  exit_signal: existing direct classifier candidate policy arrays IDs order reasons limits与v1 Golden在移动前后deep exact
+  verification: npm test -- --group language-capability-boundary --case move-only-characterization
+  artifacts: [move-only diff inventory, lexical kernel characterization, existing v1 Golden hashes]
+  status: pending
+- id: S2
+  action: 实现F3 pre-final capability extension context selector、F8 preparation leader-follower与neutral carrier runtime-provenance registries、F3 registered-consumer ephemeral cursor seam、shared internal facts promise加distinct per-ref wrappers、observation-derived opaque input、总是signed的三semantic加一fallback dispatch、四ECMAScript modes与terminal one-time state
+  exit_signal: extension conflict、carrier preparation consumer context mode scope hostile swap、same-context dual-mode dual-ref duplicate resolver late settlement、pending fulfilled failed disposed、public wrapper promise identity、TS TSX JS JSX、safe escape decoder SQL fallback truth通过；每context加mode只发行消费一个carrier并启动一次resolver kernel，F3无F8 import
+  verification: npm test -- --group language-capability-boundary --case extension-registry --case typescript-adapter --case javascript-adapter --case one-time-lexical-facts --case embedded-sql-completeness --case sql-adapter --case fallback-literal
+  artifacts: [extension and no-path-accessor matrix, F3 registered consumer neutral carrier ephemeral cursor and F8 runtime-provenance hostile report, shared internal facts promise distinct per-ref wrapper and same-context dual-mode dual-ref leader follower report, no-F3-to-F8-import inventory, TS TSX JS JSX state table, one-time lexical state tombstone counters, embedded SQL safe-decoder escape matrix, SQL signed-none truth table, fallback literal ceiling report]
+  status: pending
+- id: S3
+  action: composition root把F3 registered consumer receipt注入F8 exact observation factory；本revision以F7 child admission和F8 resolver把language port加入同一registrar，每record总是登记signed language source并与direct candidate完成三port private seal arbitration，record或derived-proposal basis经F3 verifier与F7 arbitration-only materializer产supported base draft，fallback只在all-none时由唯一factory产draft
+  exit_signal: F8无path location provenance accessor；language port strict facts-none且supported fallback none不以undefined跳过，forged source fixed-fails；三个ports恰一result且missing duplicate late失败；adapter八kind、cross-port precedence owner tie、scope structure term stability合法格等于唯一真值；create require pre-budget count exact
+  verification: npm test -- --group language-capability-boundary --case scope-candidate-ceiling --case adapter-product-table --case stable-eligible-count
+  artifacts: [exact observation factory and injected F3 registered consumer receipt proof, no-F8-path-location-provenance API probe, F8 child admission resolver language port extension and strict signed facts-none fixed-error report, three-port complete-set seal and late registration report, F3 record plus derived-proposal basis verifier to F7 arbitration-only materializer chain, cross-port overlap precedence owner tie and eight-row full product matrix, post-arbitration F8 single fallback factory report, create require pre-budget count and stable eligible evidence dual-pool report]
+  status: pending
+- id: S4
+  action: ranking后由capability-coverage owner产capability fragment；F8 revision原子把F7三项contribution tuple扩为exact materialization snapshot scope capability四项并由F6按index 0到3各exact accessor一次；accepted orchestrator验证four prerequisites，source/materialization pure delegate，aggregation经F2 core accessor到F6并把identity backend requestOutcome statusV2提交F1C registrar创建private complete envelope，finalizer只消费completion-bearing token；EvidenceModule只登记一个non-exported ready provider
+  exit_signal: F7三项tuple、missing extra duplicate reorder index3 clone cross-execution capability-proof swap均在读取前失败且无fragment/status；合法四项tuple accessors各一次；internal accessor与four-prerequisite inspector各一次，missing/preseed时全stage零调用；aggregation fresh-add generated owners，finalizer不读取old input envelope；七stage counters exact且production仍v1
+  verification: npm test -- --group language-capability-boundary --case capability-proof --case capability-contribution --case real-complete-shadow && npm run test:golden -- --group language-capability-boundary && npm test -- --group canonical-locate-bridge --case canonical-transport-reachability
+  artifacts: [F2 retained-ref import graph, exact four-contribution tuple type index accessor and hostile mutation report, four-prerequisite and generated-owner lifecycle inventory, accepted orchestrator factory and seven wrappers, three-acquisition exact-once report, prerequisite-token source delegation, F2 core to F6 to F1C completion registrar matrix, fresh complete-envelope and old-envelope-forbidden report, unique ready-provider inventory, seven-stage counters, real v2 shadow Golden, v1 isolation]
+  status: pending
+- id: S5
+  action: 在已通过F4/F7 base后由F8同revision加入exact unit tuple五marker六格，按test/golden/large-synthetic-repository.spec.ts完成large permutation、全量回归与文档收尾
+  exit_signal: F4/F7 base不依赖F8资产；F8 child-owned union owner path markers与五marker六格通过，large exact owner counters hashes稳定，无parallel mapper port owner或premature transport
+  verification: npm test && npm run test:golden -- --all && npm run test:mcp -- --all && npm run test:docs && npm run test:platform
+  artifacts: [large permutation report, F4 registry mutations, six-cell markers, full regression logs, docs updates, scope inventory, review QA acceptance]
+  status: pending
+checks:
+- id: C1
+  item: S1只迁移mask token balanced structure与pure predicates并保留legacy exports，不改变现有v1 classification candidate behavior
+  source: design S1 / F8-MOVE-001
+  status: pending
+- id: C2
+  item: extension只从F3 same-execution TrustedPreFinalCapabilityViewV2按eligibleRef读取private-basename-derived last extension；API无POSIX segments identity locator public redacted path raw native path caller string，post-final capability连extension与context accessor也没有
+  source: design key decision 1 / F8-EXT-001
+  status: pending
+- id: C3
+  item: last dot必须非首非尾且只ASCII lowercase，不做locale Unicode NFKC trim separator conversion或path normalize
+  source: design key decision 1 / F8-EXT-001
+  status: pending
+- id: C4
+  item: TypeScript extension exact为ts tsx mts cts，JavaScript为js jsx mjs cjs，SQL为sql，其余含hidden trailing compound lookalike均fallback
+  source: design key decisions 1 and 2 / F8-EXT-001
+  status: pending
+- id: C5
+  item: registry ASCII-fold后extension全局唯一且fallback最后，duplicate overlap nonASCII或fallback提前初始化失败
+  source: design key decision 2 / F8-EXT-001
+  status: pending
+- id: C6
+  item: public semanticClassification固定typescript javascript sql enum order且不从runtime registry或input生成
+  source: design key decision 2 / F8-CONTRIBUTION-001
+  status: pending
+- id: C7
+  item: composition root用F3 language-capability admission登记VerifiedLanguageCursorConsumerV2并把exact RegisteredVerifiedLanguageConsumerV2注入createTrustedLanguageCapabilityObservationV2；factory绑定pre-final capability scope views、eligibleRef file bucket extension context adapter mode F7 decision F3 basis bundle receipt execution后才签observation
+  source: design key decision 3 / F8-TRUST-001
+  status: pending
+- id: C8
+  item: missing extra swapped ref、伪造extension context mode decision或basis receipts、clone cross-view cross-pool cross-execution observation在classification前拒绝；compile API probe证明F8无segments path location provenance且post-final无extension context读取
+  source: design key decision 3 / F8-TRUST-001
+  status: pending
+- id: C9
+  item: createLanguageLexicalPreparationRefV2只在F8绑定observation eligibleRef context adapter mode execution；leader用F3 issueVerifiedLanguagePreparationCarrierV2取得neutral carrier并由F8绑定runtime provenance，再经consumeVerifiedLanguageContextV2取得one-shot proof；F3从不import或透传F8 preparation ref，普通caller不能提交裸mode context callback或读取source
+  source: design key decision 4 / F8-LEXICAL-001
+  status: pending
+- id: C10
+  item: ts和tsx支持assignment object class function method interface type enum与type-position rules，tsx只有balanced brace expression恢复TS facts
+  source: design key decision 5 / F8-TS-001
+  status: pending
+- id: C11
+  item: js和jsx支持共同runtime rules但TS-only declarations type positions、JSX tag text attr value不得冒充semantic definition
+  source: design key decision 6 / F8-JS-001
+  status: pending
+- id: C12
+  item: generic JSX ambiguity或未闭合tag attr string brace使structureComplete false并只能literal candidate，TSX type syntax仅在TS expression mode有效
+  source: design key decision 5 / F8-TS-001 F8-JS-001
+  status: pending
+- id: C13
+  item: embedded SQL仅接受bare或noncomputed nonoptional member的query select addSelect恰一闭合single double literal参数；bounded无eval scanner只解码plain以及backslash quote n r t safe escapes，line continuation hex unicode octal null identity trailing escape与template extra arg不进SQL helper
+  source: design key decision 6 / F8-EMBEDDED-SQL-001
+  status: pending
+- id: C14
+  item: SQL adapter只认complete SQL facts中的alias和CREATE TABLE同table column语义，unterminated comment quote dollar quote paren与JS syntax不匹配
+  source: design key decision 7 / F8-SQL-001
+  status: pending
+- id: C15
+  item: 三semantic adapter加一fallback policy只接F8-signed opaque input并总是返回LanguageAdapterProducerResultV2；supported无facts仍签producerKind none source，fallback签fallback-literal或fallback-none source；semantic input绑定observation ref context mode preparation carrier leader proof facts F7 scope decision execution，caller不能构造input或直调绕过registry
+  source: design key decision 8
+  status: pending
+- id: C16
+  item: F8 source ref绑定exact VerifiedProducerBasisReceiptsV2 bundle；derived-neighbor必须用F3 proposal-specific bundle；F8 resolver经F7 child admission登记并返回strict facts-none，F7完整三port arbitrator供应record或proposal-specific location provenance并只向arbitration-only materializer暴露winner；forged source固定失败且F8无复制mapper或facts arbitration factory
+  source: design key decision 9 / F8-SCOPE-001 F8-ADAPTER-PRODUCT-001
+  status: pending
+- id: C17
+  item: fallback不import或调用semantic kernel neighbor context confirmed factory，language port先登记signed none；只有F7 complete-set arbitration为none时唯一materializeFallbackLiteralCandidateV2才可对有verified matched term的record产恰好一个literal reference candidate，base winner存在时fallback调用零次
+  source: design key decision 10 / F8-FALLBACK-001
+  status: pending
+- id: C18
+  item: fallback reason exact UNSUPPORTED_LANGUAGE_LITERAL且promotion exact SUPPORTED_LANGUAGE_ADAPTER_REQUIRED，多terms不复制candidate，无term返回fallback-none signed source并经language port none后成为undefined draft但stable ref仍计unsupported
+  source: design key decisions 10 and 12 / F8-FALLBACK-001 F8-COUNT-001
+  status: pending
+- id: C19
+  item: expanded v2 adapter lane与legacy v1 classifier candidate lane各有独立record universe且只共享snapshot与consumer-neutral tokens
+  source: design key decision 11 / F8-V1-001
+  status: pending
+- id: C20
+  item: expanded fallback不得删除保留抑制legacy candidate，F9前legacy IDs order coverage Golden deep exact
+  source: design key decision 11 / F8-V1-001
+  status: pending
+- id: C21
+  item: createCapabilityPreBudgetCountV2只在negative merge dedupe final snapshot purge后从exact F3 TrustedStableEligibleCapabilityViewV2加F7 TrustedStableEligibleScopeViewV2与eligible pool snapshot fold scope proofs计算且发生在F2 evidence budget前；post-final capability records只有eligibleRef fileBucketRef
+  source: design key decision 12 / F8-COUNT-001
+  status: pending
+- id: C22
+  item: requireCapabilityPreBudgetCountV2以完整expected observation stable views eligible pool snapshot fold scope proof execution tuple验证token并只暴露nonnegative safe count；count按globally unique eligibleRef且只读pre-final observation已有adapter decision，caller不能提交count或ref array
+  source: design key decision 12 / F8-COUNT-001
+  status: pending
+- id: C23
+  item: classification undefined和candidate budget zero仍计unsupported，stable evidence pool retained arrays public DTO或scope fragment不能替代eligible pool
+  source: design key decisions 12 and 13 / F8-COUNT-001 F8-ADAPTER-PRODUCT-001
+  status: pending
+- id: C24
+  item: CapabilityOutcomeContributionV2从唯一strict Zod schema output递归readonly派生且count为nonnegative safe integer
+  source: design key decision 14 / F8-CONTRIBUTION-001
+  status: pending
+- id: C25
+  item: buildCapabilityCoverageV2 exact接收preBudgetCount retainedDecisionSeal observation eligiblePool snapshotProof foldProof scopeProof execution，一次产固定fragment同值contribution与opaque proof，不能接受caller count decision array且F8不构造request-outcome
+  source: design key decision 14
+  status: pending
+- id: C26
+  item: F8 revision原子把F7 exact三项tuple扩为readonly PublicMaterializationContributionV2 SnapshotOutcomeContributionV2 ScopeOutcomeContributionV2 CapabilityOutcomeContributionV2四项且index 0 1 2 3固定；F6读取任何值前按序调用四个owner accessor各一次，旧三项 missing extra duplicate reorder clone cross-execution capability proof swap均无fragment status；合法count大于零唯一加入SEMANTIC_LANGUAGE_UNSUPPORTED
+  source: design key decision 14 / F8-CONTRIBUTION-001
+  status: pending
+- id: C27
+  item: ranking后sealCapabilityRetainedDecisionsV2 exact接收pre-budget token与EvidenceRankingOutcomeV2，第一步调用requireEvidenceRankingRetainedDecisionViewV2以same snapshotProof execution只取得confirmed candidate StableRecordRefV2 arrays，再从private ledger核对每条retained evidence的adapter arbitration producer materialized decision，封存observation eligible pool snapshot fold scope proofs execution且不接caller decision ref array
+  source: design key decision 15 / F8-TRUST-001
+  status: pending
+- id: C28
+  item: requireCapabilityCoverageFactsV2 exact接收expected preBudgetCount retainedDecisionSeal observation eligible pool snapshot fold scope proofs execution并由F8重验固定tuple count unsupported set与retained mapping；只有src/evidence/language/capability-coverage-v2.ts可导入retained-decision accessor，accepted orchestrator F6 package均不得导入；F8不得导入F2 owner-private source view raw draft file bucket budget trace，F1C不得省略token或重算语言真值
+  source: design key decision 15 / F8-TRUST-001
+  status: pending
+- id: C29
+  item: fallback retained evidence必须candidate且fallback reason promotion exact，supported evidence不得带fallback reason，任何pool record decision count proof swap在composer前invalid-facts
+  source: design key decision 15 / F8-TRUST-001
+  status: pending
+- id: C30
+  item: F8 accepted orchestrator独占internal DI token zero-argument factory与七个private wrappers，三项factory各exact一次；先用requireCanonicalLocateExecutionTokenV2恢复same token，再以inspectLocateProjectionPrerequisiteOwnersV2确认snapshot ranking scope capability且拒绝base预置backend request-outcome，success把opaque prerequisite token放入shared context；任一pre-stage gate失败七stage全0，backend request-outcome缺失不阻止source；aggregation registrar补齐后形成首个real private six-owner envelope
+  source: design key decision 16 / F8-REAL-SHADOW-001
+  status: pending
+- id: C31
+  item: real success no-result partial cancelled timeout unavailable只返回capability-bound accepted token，requireAcceptedCompleteRealLocateShadowV2以accepted canonical input expected capability验证并从F1C registry重验same internal token后返回F1C exact value compact JSON bytes及serialized token；caller不能提交internal token且fixed failure无raw leak
+  source: F8-REAL-SHADOW-001
+  status: pending
+- id: C32
+  item: RepositoryEvidenceService MCP debug CLI在F9前仍只返回same-run exact v1 projection且actual runtime graph无v2 projector edge；复用canonical-locate-bridge/canonical-transport-reachability与test/unit/public-output-v2-no-cutover.spec.ts，不登记F8第三alias
+  source: design key decision 16 / F8-V1-001 / reused F1C-REACHABILITY-001
+  status: pending
+- id: C33
+  item: CompleteRealLocateShadowStageOwnersV2为七stage定义exact previous-token加shared context与0或1 counter；source将context.prerequisites原样传F2，materialization pure delegate；aggregation调用F2 core accessor和F6 aggregator后把identity backend requestOutcome statusV2提交F1C registrar，registrar从prerequisite registry恢复base并fresh-add两owner后freeze；owner-finalization调用finalize aggregation execution且不得读取context.input.envelope；internal accessor或prerequisite inspector失败七项全0，stage i失败后later stage全0，任一失败只影响shadow不改变v1 exact object
+  source: F8-V1-001
+  status: pending
+- id: C34
+  item: deliberate service到v2 projector mutation返回完整forbidden path且type-only fact edge不误报
+  source: reused F1C-REACHABILITY-001
+  status: pending
+- id: C35
+  item: 一个eligibleRef一次decision；same-context same-mode并发或双eligible ref只有一个private shared facts promise一个leader F3 carrier resolver kernel但每ref wrapper promise与input token distinct，same-context dual-mode各一次，五次permutation的adapter set count fragment contribution v2 arrays与v1 hash稳定
+  source: design key decision 17 / F8-LARGE-001
+  status: pending
+- id: C36
+  item: large artifact只含fixture IDs adapter kind counts hashes不含raw path excerpt term symbol identity或locator
+  source: design key decision 17 / F8-LARGE-001
+  status: pending
+- id: C37
+  item: F4与F7 base不要求F8资产；F8 revision原子把F8-LANG-001 exact unit tuple加入PlatformContractIdV1 union且fixture testkit/fixtures/language-capability-v2/extension-matrix-v2.ts、assertion owner test/unit/language-capability-platform.spec.ts与runner testkit/runners/runner-registry.ts固定
+  source: design key decision 18 / F8-LANG-001
+  status: pending
+- id: C38
+  item: typescriptExtensionCasesV2 javascriptExtensionCasesV2 sqlExtensionCasesV2 fallbackCandidateCasesV2 unsupportedCountCasesV2五个exact fixture exports逐一对应五个assertion exports与marker；删除任一export binding assertion、wrong path zero marker、错tuple union或缩小OS集合使test/unit/platform-contract-registry.spec.ts失败且Node22 24三OS五marker exact
+  source: design key decision 18 / F8-LANG-001
+  status: pending
+- id: C39
+  item: implementation等待F7 acceptance并复用F3双池与producer-basis verifier、F7 scope/opaque registrar/materializer、F6 contribution、F4 base registry与F1C composer，不建平行mapper port pool aggregator或transport
+  source: design key decision 19
+  status: pending
+- id: C40
+  item: actual upstream signature proof order漂移时block并重跑F8独立design review
+  source: design key decision 19
+  status: pending
+- id: C41
+  item: roadmap architecture public contract threat compatibility同步adapter count last-owner complete-shadow与F9 no-cutover边界
+  source: required actions
+  status: pending
+- id: C42
+  item: exact allow manifest与check-path root覆盖全部staged unstaged untracked changes且cleanliness paths无夹带
+  source: CMD-SCOPE-CHECK
+  status: pending
+- id: C43
+  item: preparation registry绑定observation ref context mode execution与leader follower；lexical registry严格pending fulfilled failed disposed，并发双ref只共享private internal promise但外部wrapper identity必须不同，failed terminal不重试，abort-before-start carrier resolver kernel计数0，abort-during terminalize且late resolve follower settlement不发布，tombstone保留且旧carrier token proof失效
+  source: design key decision 4 / F8-LEXICAL-001
+  status: pending
+- id: C44
+  item: full adapter mode乘八kind乘scope structure term stability逐格验证；language port内及direct candidate language三port的direct加anchor、anchor加literal、literal加secondary、secondary加derived、semantic加derived与same-kind owner tie按F7 precedence只选一kind；missing duplicate late port source、basis proposal receipts及location provenance override在draft前失败
+  source: design key decision 13 / F8-ADAPTER-PRODUCT-001
+  status: pending
+- id: C45
+  item: fallback已有exact symbol只可保留不能semantic改写，supported incomplete结构不得保留semantic symbol或derived neighbor
+  source: design key decisions 10 and 13 / F8-FALLBACK-001 F8-ADAPTER-PRODUCT-001
+  status: pending
+- id: C46
+  item: F4 assertion owner固定test/unit/language-capability-platform.spec.ts且scope manifest不创建或包含test/platform
+  source: design key decision 18 / CMD-SCOPE-CHECK
+  status: pending
+- id: C47
+  item: wrong neutral carrier runtime provenance preparation mode context ref scope registered consumer receipt或leader consumption proof swap、direct duplicate F3 resolver、read-before-verify、cross-execution及caller直调adapter kernel在任何source facts或draft暴露前失败
+  source: design key decisions 3 4 and 8 / F8-LEXICAL-001 F8-TRUST-001
+  status: pending
+- id: C48
+  item: embedded SQL escape逐类断言escaped quote backslash n r t exact decoded payload可进入helper，line continuation hex unicode octal null identity trailing escape只进verified-literal branch，有term为candidate；无term必须产supported signed none source并走F7 language port后成为undefined draft
+  source: design key decision 6 / F8-EMBEDDED-SQL-001
+  status: pending
+- id: C49
+  item: complete supported有term但无semantic facts必须签verified-literal source，complete或malformed supported无term无facts必须签none source；fallback只签fallback-literal或fallback-none且language port resolution均none；所有result都走source registration，forged source不得当none，F8不能直接签F7 facts seal arbitration token
+  source: design key decision 13 / F8-ADAPTER-PRODUCT-001
+  status: pending
+- id: C50
+  item: F8 private source ref和language port facts view只携带producer kind、完整VerifiedProducerBasisReceiptsV2 bundle及必要definition derived enums；derived bundle绑定DerivedEvidenceProposalRefV2，F7 arbitration调用F3 verifier前不得出现path location provenance
+  source: design key decisions 3 8 and 9 / F8-ADAPTER-PRODUCT-001 F8-TRUST-001
+  status: pending
+- id: C51
+  item: same-context双mode必须使用两个preparation refs与两个neutral carriers且各一个leader；same-mode双eligible refs各有per-ref preparation binding和distinct wrapper promise但复用同一private context-mode facts promise与leader carrier consumption proof，follower不得二次调用F3 resolver
+  source: design key decision 4 / F8-LEXICAL-001
+  status: pending
+- id: C52
+  item: F8 revision只用F7 issueScopeBoundProducerChildPortAdmissionV2获得one-use language admission，以createLanguageAdapterScopeProducerResolverV2和registerLanguageAdapterScopeProducerPortV2原子扩展同一registrar；F7 base两个ports保持不变，不允许parallel registrar unadmitted resolver runtime flag或wrong-owner source
+  source: design key decision 8 / F8-ADAPTER-PRODUCT-001
+  status: pending
+- id: C53
+  item: no-cutover assertion owner固定test/unit/public-output-v2-no-cutover.spec.ts且case固定canonical-locate-bridge/canonical-transport-reachability；large assertion owner固定test/golden/large-synthetic-repository.spec.ts
+  source: design case ownership inventory / reused F1C-REACHABILITY-001 / F8-LARGE-001
+  status: pending
+- id: C54
+  item: materializeLanguageCapabilityRecordV2是F8 revision唯一record composition API；F7 arbitration facts只调用F7 materializer，arbitration none加fallback-literal只调用F8 fallback factory，supported none或fallback-none返回undefined，任一record draft count为0或1
+  source: design key decisions 9-10 / F8-ADAPTER-PRODUCT-001 F8-FALLBACK-001
+  status: pending
+- id: C55
+  item: 17个F8 stable IDs逐项具有exact group case fixture assertion runner contract owner path且testkit/runners/runner-registry.ts显式登记；F1C-REACHABILITY-001只复用不登记F8 alias；F8-LANG-001五assertion export inventory与markers逐项exact
+  source: design case fixture ownership inventory
+  status: pending
+- id: C56
+  item: accepted orchestrator exact owner为src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.ts并独占ACCEPTED_COMPLETE_REAL_LOCATE_SHADOW_ORCHESTRATOR_V2、createAcceptedCompleteRealLocateShadowOrchestratorV2及七个private wrappers；F2 acquisition exact owner为src/evidence/public-output/f2-locate-projection-stages-v2.ts，F1C acquisition exact owners为src/evidence/canonical/required-owner-finalizer-v2.ts与src/evidence/canonical/materialized-locate-result-composer-v2.ts，aggregation registrar owner为src/evidence/canonical/locate-projection-stage-registrar-v2.ts且只允许本文件aggregation wrapper导入并接受opaque identity加trusted aggregation exact statusV2，status clone swap cross-execution在composer前失败；EvidenceModule exact owner为src/evidence/evidence.module.ts且只登记一个non-exported provider，trusted serializer与counter probe owner保持冻结；F9 success path只可internal deep import DI token orchestrator interface attempt accessor，不得import outer factory provider descriptor createF2LocateProjectionStagesV2 createRequiredOwnerFinalizerV2 createMaterializedLocateResultComposerV2 internal token accessor stage owners F1C finalized composer schema success serializer或test probe
+  source: design key decision 20 / F8-REAL-SHADOW-001
+  status: pending
+- id: C57
+  item: F2 createF2LocateProjectionStagesV2、F1C createRequiredOwnerFinalizerV2与createMaterializedLocateResultComposerV2均为zero-argument deep-internal runtime acquisition ABI且在F8 outer factory construction各exact一次，F2 methods与F1C instances绑定对应wrapper并拒绝duplicate acquisition；finalizer只签TrustedFinalizedLocateFactsV2，composition schema serialization分别由冻结实例或函数执行且不能折叠；accepted和failure tokens无own-property且private registry绑定canonical input projection capability internal execution token terminal serialized token，input capability token clone swap stale cross-execution在source facts value JSON bytes暴露前失败
+  source: design key decision 20 / F8-REAL-SHADOW-001
+  status: pending
+dod:
+  commands:
+  - id: CMD-BUILD
+    command: npm run build
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-TYPECHECK
+    command: npm run typecheck
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-F8-UNIT
+    command: npm test -- --group language-capability-boundary
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-UPSTREAM-REGRESSION
+    command: npm test -- --group direct-mapping-classifier --group candidate-truth-table --group candidate-discovery --group candidate-context --group candidate-classification --group candidate-budget --group candidate-permutation --group request-snapshot-cache --group repository-scope-policy --group input-abort-contract-v2 --group canonical-locate-bridge
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-UNIT-ALL
+    command: npm test
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-F8-GOLDEN
+    command: npm run test:golden -- --group language-capability-boundary
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-GOLDEN-ALL
+    command: npm run test:golden -- --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-MCP-ALL
+    command: npm run test:mcp -- --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-DOCS
+    command: npm run test:docs
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-PLATFORM
+    command: npm run test:platform
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-YAML
+    command: python .codestable/tools/validate-yaml.py --file .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-checklist.yaml --yaml-only
+    core: false
+    failure_handling: fix-or-block
+  - id: CMD-DOD-GATE
+    command: python .codestable/tools/codestable-dod-contract-gate.py --design .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-design.md --stage design
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-PACKAGE-BOUNDARY
+    command: npm run build && npm test -- --group canonical-locate-bridge --case canonical-package-declaration-boundary --case canonical-transport-reachability
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-SCOPE-CHECK
+    command: python .codestable/tools/codestable-scope-gate.py --feature-dir .codestable/features/2026-07-24-language-capability-boundary --allow-file .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-scope-allow.txt --check-path . --cleanliness-path src/evidence/language --cleanliness-path src/evidence/direct-mapping-classifier.ts --cleanliness-path src/evidence/candidate-policy.ts --cleanliness-path src/evidence/request-snapshot --cleanliness-path src/evidence/scope --cleanliness-path src/evidence/request-outcome --cleanliness-path src/evidence/public-output --cleanliness-path src/evidence/canonical --cleanliness-path src/evidence/evidence.module.ts --cleanliness-path src/contracts/v2 --cleanliness-path test/unit --cleanliness-path test/golden --cleanliness-path testkit --stage implementation.before_review
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-SPEC
+    command: python .codestable/tools/codestable-spec-governance.py --root . analyze
+    core: false
+    failure_handling: fix-or-block
+  - id: CMD-DIFF-CHECK
+    command: git diff --check
+    core: false
+    failure_handling: fix-or-block
+  actions:
+  - id: A1
+    action: 更新architecture记录no-segments且post-final无extension context的views、F3 record和derived-proposal basis no-F8-path verifier及registered consumer neutral carrier cursor、F8 shared facts promise distinct wrappers与runtime-provenance state、F7 child admission resolver complete-set arbitration-only materializer、exact prebudget count F2 retained-ref accessor retained seal coverage build owner、F1C canonical input capability internal-token accessor、F8 accepted complete-real orchestrator internal DI token zero-argument factory、F2和两个F1C exact-once acquisitions、source materialization pure delegation、no-source aggregation registration、EvidenceModule唯一non-exported provider exact seven-stage callbacks与F9 no-cutover
+    owner: feature implementer
+    blocking: true
+  - id: A2
+    action: 同步public contract compatibility threat与migration guide的exact adapter和count语义
+    owner: feature implementer
+    blocking: true
+  - id: A3
+    action: 创建exact allow manifest并以CMD-SCOPE-CHECK对账root changed paths
+    owner: feature implementer
+    blocking: true
+  - id: A4
+    action: 在已通过F4/F7 base后由F8同revision加入union binding fixture owner markers，owner授权后取得六格证据；F4/F7 base不得要求F8资产
+    owner: repository owner
+    blocking: true
+  required_artifacts:
+  - move-only v1 characterization
+  - extension registry no-path-accessor probe and TS TSX JS JSX state truth tables
+  - F8 preparation refs plus F3 registered consumer neutral carrier ephemeral cursor, no-F3-to-F8-import, runtime-provenance, shared internal facts promise and distinct per-ref wrapper same-context dual-mode dual-ref duplicate late-settlement terminal lifecycle report
+  - embedded SQL safe-decoder complete-call and escape matrix
+  - exact F8 observation factory with injected F3 registered consumer receipt plus pre-post view and producer-basis binding hostile mapping no-path-location-provenance API probe
+  - F8 child admission resolver language port extension, always-signed supported fallback facts-none fixed-error, three-port complete-set seal to F3 record and derived-proposal basis verifier and F7 arbitration-only materializer chain
+  - F7 cross-port overlap precedence owner tie unique eight-row supported materializer, post-arbitration F8 single fallback factory, full adapter product and F3 dual-pool count report
+  - create-require prebudget count, F2 least-privilege retained-stable-ref accessor import graph, retained-decision seal, build capability facts, schema-derived contribution and F6 degradation status report
+  - F8 owner accessor expected token no-F1C-recompute mutation and four-prerequisite to fresh complete-envelope lifecycle
+  - accepted-complete-real orchestrator exact internal DI token interface attempt accessor zero-argument factory and seven private wrappers, F2 createF2LocateProjectionStagesV2 plus F1C createRequiredOwnerFinalizerV2 and createMaterializedLocateResultComposerV2 zero-argument signatures exact-once acquisition and exact returned-method-instance wrapper binding, source-materialization pure delegation and duplicate F1B schema materializer mutations, no-source F2 core accessor to F6 aggregator to F1C aggregation registrar identity-backend-requestOutcome-status exact completion registration and clone-swap-preseed-cross-execution matrix plus no-F9-import mutation, EvidenceModule unique non-exported useFactory provider plus missing duplicate wrong-token wrong-factory export mutation inventory, F1C canonical input projection-capability internal-token registry accessor plus four-prerequisite inspector and old-envelope-forbidden hostile matrix, CompleteRealLocateShadowStageContextV2 and CompleteRealLocateShadowStageOwnersV2 exact callbacks, seven-stage order failure codes counter probe and capability input token swap report
+  - F1C finalized facts to composition schema serialization exact call chain
+  - capability-bound complete real v2 shadow Golden forbidden scan and v1 exact-reference isolation
+  - reused F1C-REACHABILITY-001 canonical-locate-bridge canonical-transport-reachability and DI consumer graph evidence owned by test/unit/public-output-v2-no-cutover.spec.ts
+  - large adapter counters permutation hashes owned by test/golden/large-synthetic-repository.spec.ts
+  - F4 and F7 base nondependency plus F8 child-owned exact unit tuple union owner path, five fixture and assertion exports, self-test mutations and five-marker six-cell evidence
+  - 17 F8 stable case exact owner inventory, reused F1C reachability evidence, runner registry and docs updates
+  - scope inventory review QA acceptance
+  cleanliness:
+    public_or_redacted_path_adapter_selection: forbidden
+    duplicate_path_scope_or_extension_mapper: forbidden
+    duplicate_lexical_materialization_or_bare_kernel_import: forbidden
+    f3_imports_f8_preparation_or_language_module: forbidden
+    unbound_neutral_carrier_or_runtime_provenance: forbidden
+    shared_public_wrapper_promise_across_refs: forbidden
+    lexical_mode_not_bound_by_preparation_ref: forbidden
+    duplicate_f3_resolver_for_same_context_mode: forbidden
+    late_lexical_leader_or_follower_publish: forbidden
+    duplicate_supported_candidate_confirmation_or_fallback_literal_materializer: forbidden
+    f8_path_location_or_provenance_in_producer_source_or_port: forbidden
+    parallel_or_unadmitted_scope_producer_resolver_registry: forbidden
+    forged_language_source_treated_as_none: forbidden
+    supported_or_fallback_none_skips_language_port: forbidden
+    caller_supplied_port_result_arbitration_count_or_decision_array: forbidden
+    producer_overlap_double_materialization_or_derived_precedence: forbidden
+    derived_proposal_uses_record_location_or_provenance: forbidden
+    fallback_semantic_kernel_neighbor_or_confirmed: forbidden
+    fallback_materialized_when_f7_arbitration_has_facts: forbidden
+    unsupported_count_from_evidence_or_public_output: forbidden
+    capability_facts_built_without_prebudget_count_or_retained_seal: forbidden
+    f8_imports_f2_raw_ranking_source_view_or_budget_registry: forbidden
+    f6_or_package_imports_f2_retained_decision_accessor: forbidden
+    accepted_orchestrator_imports_f2_retained_decision_accessor: forbidden
+    duplicate_f8_source_schema_materializer_or_field_budget: forbidden
+    aggregation_core_accessor_with_caller_source: forbidden
+    f8_non_aggregation_wrapper_imports_f1c_stage_registrar: forbidden
+    supported_evidence_with_fallback_reason: forbidden
+    legacy_view_derived_from_v2_adapter_lane: forbidden
+    f1c_composer_serializer_language_or_status_derivation: forbidden
+    f9_direct_stage_owner_f2_f1c_acquisition_serializer_or_test_probe_import: forbidden
+    accepted_shadow_public_dto_or_failure_stage_detail: forbidden
+    parallel_capability_owner_or_aggregator: forbidden
+    premature_v2_transport: forbidden
+    third_f8_no_cutover_case_alias: forbidden
+    raw_path_excerpt_term_symbol_in_artifact: forbidden
+    debug_output_todo_fixme_commented_code: forbidden

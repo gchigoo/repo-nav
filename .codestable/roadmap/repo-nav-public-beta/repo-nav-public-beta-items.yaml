@@ -6,63 +6,96 @@ items:
   depends_on: []
   status: done
   feature: 2026-07-23-public-output-boundary-v2
-  minimal_loop: true
-  notes: 通过 internal test seam 完成 v2 安全最小闭环但不切换生产 v1；绝对 root、Git object ID、raw excerpt/hash 和内部 discovery key 不得穿过公共边界
-- slug: relevance-ranking-budget
-  description: 以显式锚点优先和离散相关性层级替换纯字典序预算，并实现跨文件 round-robin 与未满足锚点报告
+  minimal_loop: false
+  notes: 通过 internal test seam 建立 dormant v2 边界但不切换生产 v1；2026-07-23 beta 复审发现的低熵 corpus、placeholder 放大和资源上限缺口由后续 corrective items 处理，不改写本条历史验收
+- slug: span-redaction-corpus-policy-v2
+  description: 用基于原始字段 span 的单次物化替换递归字符串替换，并为跨字段 corpus 建立传播资格、匹配边界、电话负样本和多 reason 稳定规则
   depends_on:
   - public-output-boundary-v2
-  status: planned
+  status: done
+  feature: 2026-07-24-span-redaction-corpus-policy-v2
   minimal_loop: false
-  notes: 不公开概率 confidence；同分才使用稳定路径与行号 tie-break
-- slug: request-snapshot-cache
-  description: 引入请求级文件快照与 verified record cache，复用 CodeGraph 预验证结果并在公共组装前丢弃请求期间发生变化的文件证据
+  notes: 2026-07-27 acceptance passed；本地 assignment 始终脱敏；通用 assignment 只有满足传播资格才进入 corpus；placeholder 永不二次扫描，路径不得按任意子串命中
+- slug: public-result-resource-budgets-v2
+  description: 为 raw contract、corpus、公共字段和完整序列化响应建立数量与 UTF-8 字节硬上限，并对 N/N+1 和超限 fail-closed 行为提供回归证据
   depends_on:
-  - relevance-ranking-budget
-  status: planned
+  - span-redaction-corpus-policy-v2
+  status: in-progress
+  feature: 2026-07-24-public-result-resource-budgets-v2
+  minimal_loop: true
+  notes: raw 计数和字段上限必须在递归 corpus 扫描前生效；公共字段在脱敏后复核，总响应超限返回固定安全 INTERNAL_ERROR
+- slug: canonical-locate-facts-bridge
+  description: 建立typed partial fact envelope、four-prerequisite admission token、source/materialization registrars、aggregation fresh-completion registrar、只消费completion token的finalizer、v1 adapter与不可达transport的v2 shadow
+  depends_on:
+  - public-result-resource-budgets-v2
+  status: in-progress
+  feature: 2026-07-24-canonical-locate-facts-bridge
   minimal_loop: false
-  notes: 同一 canonical file 每次请求最多解码一次；变化 消失 不可读或复核失败均丢弃受影响证据，不实现跨请求 cache
+  notes: pre-stage只要求snapshot ranking scope capability并拒绝预置backend request-outcome；aggregation exact补齐后两owner并冻结new complete envelope，finalizer不得读取old partial envelope；production仍v1
+- slug: request-snapshot-cache
+  description: 在单一canonical execution内建立legacy-compatible与expanded-v2双lane、raw locator/legacy adapter、scope-folded public-safe selector、请求级snapshot/cache与typed stable trust pool，并在公共组装前丢弃变化文件证据
+  depends_on:
+  - canonical-locate-facts-bridge
+  status: in-progress
+  feature: 2026-07-24-request-snapshot-cache
+  minimal_loop: false
+  notes: 同一canonical file每次请求最多解码一次；telemetry-only raw prefix不得进入safe pool；变化 消失 不可读或复核失败均丢弃受影响证据，不实现跨请求cache
+- slug: relevance-ranking-budget
+  description: 在F3 trusted stable pool上实现case-aware anchor、priority-descending结构排序、collision-atomic预算与round-robin，并以唯一two-stage factory完成F1B source preflight、F1 materialization及F1C source/materialization registration
+  depends_on:
+  - request-snapshot-cache
+  status: in-progress
+  feature: 2026-07-24-relevance-ranking-budget
+  minimal_loop: false
+  notes: 不公开概率confidence；distinct collision整组排除并保留private collision-anchor proof；F2 acceptance的future F8 accessor runtime importer均为0，只冻结exact allowlist
 - slug: cross-platform-ci-baseline
-  description: 建立 Node 22/24 与 Windows Linux macOS 的 build typecheck unit Golden MCP docs 和进程路径验证矩阵
-  depends_on: []
-  status: planned
+  description: 建立受支持 Node 22/24 与 Windows Linux macOS 的 build typecheck unit Golden MCP docs 和进程路径验证矩阵
+  depends_on:
+  - public-output-boundary-v2
+  status: in-progress
+  feature: 2026-07-24-cross-platform-ci-baseline
   minimal_loop: false
-  notes: 在 streaming process 和 Unicode path 改动进入主线前提供 blocking platform evidence
+  notes: 作为立即可启动的 safety-net lane；冻结 beta engines 为 ^22.0.0 || ^24.0.0，并在每个后续 feature 增加对应 matrix case，F5 前必须形成 blocking platform evidence
 - slug: streaming-ripgrep
-  description: 修正 N+1 输出上限语义，流式解析 ripgrep JSON，在达到 maxHits 或 stdout 上限时保留 bounded partial evidence
+  description: 修正 N+1 输出上限语义，流式解析 ripgrep JSON，在达到 maxHits 或 stdout 上限时保留 bounded attempt telemetry，并输出带 complete-safe-set 或 telemetry-only eligibility 的统一 BackendExecutionOutcomeV2
   depends_on:
   - cross-platform-ci-baseline
   - relevance-ranking-budget
-  status: planned
+  status: in-progress
+  feature: 2026-07-24-streaming-ripgrep
   minimal_loop: false
-  notes: 必须按 contract mapping 证明 maxHits output cap timeout request abort nonzero exit 的 termination limit degradation strategyComplete，并且不遗留进程树
+  notes: 只拥有 backend/process 的 termination facts 与清理；incomplete raw prefix 不进入 F3 safe pool F2 selector或public evidence，只有完整 backend或fallback safe set可选；证明 maxHits output cap process timeout abort signal nonzero exit 的 outcome，不聚合 request abortSource status limits nextActions
 - slug: input-abort-contract-v2
-  description: 将 question 定义为可选说明文本，拆分 filesystem path normalization，并提供 request abort source strategy completeness 与 per-backend termination ledger
+  description: 将question定义为可选说明文本，拆分filesystem path normalization，并以direct integration seam聚合backend/request-outcome/status/proof；real envelope mount由F8唯一完成
   depends_on:
-  - public-output-boundary-v2
-  status: planned
+  - streaming-ripgrep
+  status: in-progress
+  feature: 2026-07-24-input-abort-contract-v2
   minimal_loop: false
-  notes: question 内容不得影响 search plan；filesystem path 不做 NFKC 或静默 trim
+  notes: F6 acceptance不声称real owner mount且production F2 core accessor与F1C registrar importer均为0；F8 future wrapper是唯一production bridge；其余input abort语义不变
 - slug: repository-scope-policy
   description: 统一 basename extension nested segment prefix 及冲突优先级、显式 test docs 请求以及 confirmed candidate 共用的 scope decision
   depends_on:
   - input-abort-contract-v2
-  status: planned
+  status: in-progress
+  feature: 2026-07-24-repository-scope-policy
   minimal_loop: false
   notes: test 优先于 docs 再优先于 production prefix segment；test docs 即使显式请求仍保持 fail-closed，不直接提升为 confirmed
 - slug: language-capability-boundary
-  description: 引入 TypeScript JavaScript SQL 和 unsupported fallback adapters，并公开 text search 与 semantic classification 能力差异
+  description: 引入TypeScript JavaScript SQL与unsupported fallback adapters，并以唯一ready provider执行four-prerequisite admission、F2两段、F6 aggregation、F1C fresh complete-envelope finalization，装配首个complete real-v2 shadow
   depends_on:
   - repository-scope-policy
-  status: planned
+  status: in-progress
+  feature: 2026-07-24-language-capability-boundary
   minimal_loop: false
-  notes: public-beta 不新增其他语言的 semantic adapter；unsupported language 只能产生 verified literal candidate
+  notes: aggregation exact提交backend requestOutcome status，finalizer只消费completion-bearing token；F9只消费accepted token/interface，不导入prerequisite inspector registrar stage owner或acquisition symbols
 - slug: public-beta-release
   description: 原子切换生产 locate schema v2，并补齐版本来源 Node engines license security metadata lint format migration guide package dry-run 与 beta release gate
   depends_on:
   - request-snapshot-cache
   - streaming-ripgrep
   - language-capability-boundary
-  status: planned
+  status: in-progress
+  feature: 2026-07-24-public-beta-release
   minimal_loop: false
   notes: 所有真实 coverage field producer 就绪前不得用占位值切换 v2；license 选择、移除 private、merge、push 与发布仍需 owner 单独批准

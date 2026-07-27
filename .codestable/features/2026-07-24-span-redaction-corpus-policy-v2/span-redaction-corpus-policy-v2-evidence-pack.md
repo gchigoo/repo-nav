@@ -1,0 +1,457 @@
+---
+doc_type: feature-evidence-pack
+feature: 2026-07-24-span-redaction-corpus-policy-v2
+status: generated
+---
+
+# 2026-07-24-span-redaction-corpus-policy-v2 evidence pack
+
+## 1. Scope
+
+- Design: `.codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-design.md`
+- Checklist: `.codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-checklist.yaml`
+
+## 2. DoD Results
+
+```json
+{
+  "gate_id": "dod-runner",
+  "stage": "implementation.before_review",
+  "status": "passed",
+  "blocking": [],
+  "warnings": [
+    "CMD-DIFF-CHECK: non-core command failed with exit 2"
+  ],
+  "evidence": [
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.1.0 build\n> tsc -p tsconfig.build.json && tsc -p tsconfig.cli.json\n\n",
+      "stderr": "",
+      "id": "CMD-BUILD",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.1.0 typecheck\n> tsc -p tsconfig.json --noEmit\n\n",
+      "stderr": "",
+      "id": "CMD-TYPECHECK",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm test -- --group public-output-v2 --case span-redaction --case corpus-policy --case corpus-boundaries --case phone-corpus-policy --case redaction-amplification --case public-safe-ranking-key",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.1.0 test\n> tsx testkit/runners/unit-runner.ts --group public-output-v2 --case span-redaction --case corpus-policy --case corpus-boundaries --case phone-corpus-policy --case redaction-amplification --case public-safe-ranking-key\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ↓ test/unit/scope-gate.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/public-output-v2-no-cutover.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/public-output-v2-contract.spec.ts (25 tests | 25 skipped)\n ↓ test/unit/contract.spec.ts (12 tests | 12 skipped)\n ↓ test/unit/public-result-assembler-v2.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/public-output-v2-errors-projection.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/direct-mapping-classifier.spec.ts (34 tests | 34 skipped)\n ↓ test/unit/repository-reader.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/safe-process-runner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/process-cleanup.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/ripgrep-backend.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/codegraph-live-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/unit/codegraph-backend.spec.ts (8 tests | 8 skipped)\n ✓ test/unit/public-output-v2-redaction.spec.ts (19 tests | 8 skipped) 62ms\n ↓ test/unit/repository-safety.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/runner-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/unit/output-guardrails.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/evidence-merge.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/codegraph-query-planner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/locate-status-evaluator.spec.ts (13 tests | 13 skipped)\n ↓ test/unit/candidate-policy.spec.ts (37 tests | 37 skipped)\n ↓ test/unit/di.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/debug-cli-shell.spec.ts (10 tests | 10 skipped)\n\n Test Files  1 passed | 22 skipped (23)\n      Tests  11 passed | 215 skipped (226)\n   Start at  17:11:43\n   Duration  1.73s (transform 3.38s, setup 0ms, import 13.76s, tests 62ms, environment 3ms)\n\n",
+      "stderr": "",
+      "id": "CMD-F1A-UNIT",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm test -- --group public-output-v2",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.1.0 test\n> tsx testkit/runners/unit-runner.ts --group public-output-v2\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ✓ test/unit/public-output-v2-no-cutover.spec.ts (3 tests) 39ms\n ✓ test/unit/public-output-v2-contract.spec.ts (25 tests) 78ms\n ↓ test/unit/contract.spec.ts (12 tests | 12 skipped)\n ✓ test/unit/public-result-assembler-v2.spec.ts (7 tests) 71ms\n ✓ test/unit/public-output-v2-errors-projection.spec.ts (4 tests) 69ms\n ↓ test/unit/evidence-merge.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/output-guardrails.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/process-cleanup.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/direct-mapping-classifier.spec.ts (34 tests | 34 skipped)\n ↓ test/unit/repository-reader.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/codegraph-live-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/unit/codegraph-query-planner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/codegraph-backend.spec.ts (8 tests | 8 skipped)\n ↓ test/unit/runner-smoke.spec.ts (1 test | 1 skipped)\n ✓ test/unit/public-output-v2-redaction.spec.ts (19 tests) 112ms\n ↓ test/unit/repository-safety.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/scope-gate.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/locate-status-evaluator.spec.ts (13 tests | 13 skipped)\n ↓ test/unit/candidate-policy.spec.ts (37 tests | 37 skipped)\n ↓ test/unit/ripgrep-backend.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/safe-process-runner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/di.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/debug-cli-shell.spec.ts (10 tests | 10 skipped)\n\n Test Files  5 passed | 18 skipped (23)\n      Tests  58 passed | 168 skipped (226)\n   Start at  17:11:46\n   Duration  1.85s (transform 4.37s, setup 0ms, import 16.28s, tests 370ms, environment 6ms)\n\n",
+      "stderr": "",
+      "id": "CMD-V2-UNIT",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run test:golden -- --group public-output-v2",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.1.0 test:golden\n> tsx testkit/runners/golden-runner.ts --group public-output-v2\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ↓ test/golden/runner-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/golden/output-guardrails.spec.ts (8 tests | 8 skipped)\n ✓ test/golden/public-output-v2.spec.ts (7 tests) 43ms\n ↓ test/golden/large-synthetic-repository.spec.ts (1 test | 1 skipped)\n ↓ test/golden/text-engine-classifier.spec.ts (6 tests | 6 skipped)\n ↓ test/golden/mvp-regression-families.spec.ts (5 tests | 5 skipped)\n ↓ test/golden/fixture-completeness.spec.ts (3 tests | 3 skipped)\n ↓ test/golden/golden-contract.spec.ts (5 tests | 5 skipped)\n ↓ test/golden/mvp-evaluator.spec.ts (8 tests | 8 skipped)\n ↓ test/golden/candidate-policy.spec.ts (3 tests | 3 skipped)\n ↓ test/golden/codegraph-fallback.spec.ts (11 tests | 11 skipped)\n ↓ test/golden/text-evidence-engine.spec.ts (14 tests | 14 skipped)\n\n Test Files  1 passed | 11 skipped (12)\n      Tests  7 passed | 65 skipped (72)\n   Start at  17:11:49\n   Duration  1.33s (transform 1.90s, setup 0ms, import 9.82s, tests 43ms, environment 2ms)\n\n",
+      "stderr": "",
+      "id": "CMD-V2-GOLDEN",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm test -- --group public-output-v2 --case no-cutover-import-inventory",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.1.0 test\n> tsx testkit/runners/unit-runner.ts --group public-output-v2 --case no-cutover-import-inventory\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ✓ test/unit/public-output-v2-no-cutover.spec.ts (3 tests) 43ms\n ↓ test/unit/public-output-v2-contract.spec.ts (25 tests | 25 skipped)\n ↓ test/unit/public-result-assembler-v2.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/public-output-v2-errors-projection.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/contract.spec.ts (12 tests | 12 skipped)\n ↓ test/unit/evidence-merge.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/direct-mapping-classifier.spec.ts (34 tests | 34 skipped)\n ↓ test/unit/output-guardrails.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/runner-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/unit/process-cleanup.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/public-output-v2-redaction.spec.ts (19 tests | 19 skipped)\n ↓ test/unit/repository-reader.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/codegraph-query-planner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/codegraph-live-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/unit/codegraph-backend.spec.ts (8 tests | 8 skipped)\n ↓ test/unit/scope-gate.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/repository-safety.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/locate-status-evaluator.spec.ts (13 tests | 13 skipped)\n ↓ test/unit/candidate-policy.spec.ts (37 tests | 37 skipped)\n ↓ test/unit/ripgrep-backend.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/safe-process-runner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/di.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/debug-cli-shell.spec.ts (10 tests | 10 skipped)\n\n Test Files  1 passed | 22 skipped (23)\n      Tests  3 passed | 223 skipped (226)\n   Start at  17:11:51\n   Duration  1.85s (transform 4.28s, setup 0ms, import 16.78s, tests 43ms, environment 6ms)\n\n",
+      "stderr": "",
+      "id": "CMD-NOCUTOVER",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.1.0 test\n> tsx testkit/runners/unit-runner.ts\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ✓ test/unit/public-output-v2-no-cutover.spec.ts (3 tests) 40ms\n ✓ test/unit/public-output-v2-contract.spec.ts (25 tests) 88ms\n ✓ test/unit/public-output-v2-errors-projection.spec.ts (4 tests) 46ms\n ✓ test/unit/contract.spec.ts (12 tests) 40ms\n ✓ test/unit/public-result-assembler-v2.spec.ts (7 tests) 75ms\n ✓ test/unit/evidence-merge.spec.ts (6 tests) 21ms\n ✓ test/unit/output-guardrails.spec.ts (7 tests) 24ms\n ✓ test/unit/codegraph-query-planner.spec.ts (6 tests) 28ms\n ✓ test/unit/direct-mapping-classifier.spec.ts (34 tests) 107ms\n ✓ test/unit/codegraph-backend.spec.ts (8 tests) 40ms\n ✓ test/unit/public-output-v2-redaction.spec.ts (19 tests) 120ms\n ✓ test/unit/repository-reader.spec.ts (6 tests) 105ms\n ✓ test/unit/runner-smoke.spec.ts (1 test) 5ms\n ✓ test/unit/repository-safety.spec.ts (5 tests) 49ms\n ✓ test/unit/ripgrep-backend.spec.ts (6 tests) 134ms\n ✓ test/unit/candidate-policy.spec.ts (37 tests) 284ms\n ✓ test/unit/di.spec.ts (2 tests) 60ms\n ✓ test/unit/debug-cli-shell.spec.ts (10 tests) 24ms\n ✓ test/unit/scope-gate.spec.ts (2 tests) 721ms\n     ✓ passes shell metacharacters to git as literal path arguments  485ms\n ✓ test/unit/safe-process-runner.spec.ts (6 tests) 945ms\n ✓ test/unit/locate-status-evaluator.spec.ts (13 tests) 2031ms\n     ✓ distinguishes its own deadline from a caller abort  1008ms\n     ✓ retains verification completed before the abort  1001ms\n ✓ test/unit/codegraph-live-smoke.spec.ts (1 test) 3332ms\n     ✓ indexes, probes, queries, and removes only the temporary repository  3330ms\n ✓ test/unit/process-cleanup.spec.ts (6 tests) 10024ms\n     ✓ terminates direct child and descendant on caller abort and settles once  1955ms\n     ✓ terminates direct child and descendant on timeout  1871ms\n     ✓ terminates direct child and descendant when stdout exactly reaches its cap  1399ms\n     ✓ terminates direct child and descendant when stderr exactly reaches its cap  1378ms\n     ✓ rejects within a fixed cleanup deadline when tree termination fails  3297ms\n\n Test Files  23 passed (23)\n      Tests  226 passed (226)\n   Start at  17:11:55\n   Duration  11.23s (transform 3.95s, setup 0ms, import 17.25s, tests 18.34s, environment 5ms)\n\n",
+      "stderr": "",
+      "id": "CMD-UNIT-ALL",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run test:golden -- --all",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.1.0 test:golden\n> tsx testkit/runners/golden-runner.ts --all\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ✓ test/golden/runner-smoke.spec.ts (1 test) 4ms\n ✓ test/golden/public-output-v2.spec.ts (7 tests) 53ms\n ✓ test/golden/output-guardrails.spec.ts (8 tests) 51ms\n ✓ test/golden/golden-contract.spec.ts (5 tests) 88ms\n ✓ test/golden/text-engine-classifier.spec.ts (6 tests | 1 skipped) 120ms\n ✓ test/golden/mvp-evaluator.spec.ts (8 tests) 147ms\n ✓ test/golden/mvp-regression-families.spec.ts (5 tests) 216ms\n ✓ test/golden/fixture-completeness.spec.ts (3 tests) 235ms\n ✓ test/golden/candidate-policy.spec.ts (3 tests) 175ms\n ✓ test/golden/codegraph-fallback.spec.ts (11 tests) 269ms\n ✓ test/golden/text-evidence-engine.spec.ts (14 tests) 1204ms\n     ✓ confirms a multiline mapping through the real ripgrep-to-reader chain  860ms\n ✓ test/golden/large-synthetic-repository.spec.ts (1 test) 1979ms\n     ✓ keeps five real-engine projections stable and records environment-aware timing  1977ms\n\n Test Files  12 passed (12)\n      Tests  71 passed | 1 skipped (72)\n   Start at  17:12:07\n   Duration  3.12s (transform 1.98s, setup 0ms, import 10.00s, tests 4.54s, environment 2ms)\n\n",
+      "stderr": "",
+      "id": "CMD-GOLDEN-ALL",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run test:mcp -- --all",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.1.0 test:mcp\n> npm run build --silent && tsx testkit/runners/mcp-runner.ts --all\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ✓ test/mcp/runner-smoke.spec.ts (1 test) 6ms\n ✓ test/mcp/tool-surface.spec.ts (8 tests) 276ms\n ✓ test/mcp/redaction-output-parity.spec.ts (1 test) 1549ms\n     ✓ keeps forbidden values out of structured, text, stdout protocol, and stderr  1547ms\n ✓ test/mcp/mcp-golden-adapter.spec.ts (1 test) 1556ms\n     ✓ feeds both success and error transport observations to the shared evaluator  1554ms\n ✓ test/mcp/candidate-minimal-loop.spec.ts (1 test) 1572ms\n     ✓ returns confirmed and bounded candidates with transport parity  1569ms\n ✓ test/mcp/tool-output-parity.spec.ts (2 tests) 2640ms\n     ✓ returns one confirmed mapping through real stdio  1511ms\n     ✓ keeps all recoverable statuses out of the MCP error channel  1127ms\n ✓ test/mcp/request-cancellation.spec.ts (3 tests) 3711ms\n     ✓ does not lose cancellation sent before the handler starts work  1569ms\n     ✓ propagates the SDK request signal to the application service  1130ms\n     ✓ aborts an in-flight locate when stdin reaches EOF  1009ms\n ✓ test/mcp/tool-error-parity.spec.ts (4 tests) 5416ms\n     ✓ maps schema-invalid objects to typed parity output  1500ms\n     ✓ preserves the typed code while sanitizing unsafe detail  1107ms\n     ✓ preserves the typed code while sanitizing unsafe detail  1007ms\n     ✓ turns thrown failures into safe typed parity output  1800ms\n ✓ test/mcp/lifecycle-contract.spec.ts (18 tests) 11417ms\n     ✓ accepts only real MCP frames on stdout and propagates clean exit  903ms\n     ✓ treats an SDK transport parse failure as fatal without stdout pollution  707ms\n     ✓ drives graceful shutdown through stdin within the manifest budget  724ms\n     ✓ observes the real Nest context hook and direct/descendant process cleanup  1578ms\n     ✓ fails when the real context close marker is deliberately skipped  1406ms\n     ✓ fails when an actual descendant tree is deliberately left running  2800ms\n     ✓ cleans both child PIDs and the probe directory after a forced timeout  2529ms\n     ✓ cleans both child PIDs and the probe directory after a nonzero exit  734ms\n\n Test Files  9 passed (9)\n      Tests  39 passed (39)\n   Start at  17:12:17\n   Duration  13.44s (transform 1.62s, setup 0ms, import 8.89s, tests 28.14s, environment 1ms)\n\n",
+      "stderr": "",
+      "id": "CMD-MCP-ALL",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run test:docs",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.1.0 test:docs\n> npm run build --silent && tsx testkit/docs/docs-smoke-runner.ts\n\nDocs smoke passed: test-artifacts/docs/docs-smoke-v1.json\n",
+      "stderr": "",
+      "id": "CMD-DOCS",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 2,
+      "stdout": "test/unit/public-output-v2-redaction.spec.ts:658: new blank line at EOF.\n",
+      "stderr": "warning: in the working copy of '.codestable/roadmap/repo-nav-public-beta/repo-nav-public-beta-roadmap-review.md', CRLF will be replaced by LF the next time Git touches it\n",
+      "id": "CMD-DIFF-CHECK",
+      "core": false,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "python .codestable/tools/codestable-spec-governance.py --root . analyze",
+      "exit_code": 0,
+      "stdout": "OK: True\n",
+      "stderr": "",
+      "id": "CMD-SPEC",
+      "core": false,
+      "failure_handling": "fix-or-block"
+    }
+  ],
+  "providers": {},
+  "feature": "2026-07-24-span-redaction-corpus-policy-v2",
+  "inputs": {
+    "checklist": ".codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-checklist.yaml"
+  },
+  "input_digests": {
+    "checklist": "2409173f7a27657b3d9727f812a2057a8a2b28bccc02cb7c93c4b4afe008ddc0"
+  }
+}
+```
+
+## 3. Validation Commands
+
+Extracted from checklist `dod.commands`; see DoD Results for command status.
+
+## 4. Scope And Cleanliness
+
+Design bytes: 35987
+Checklist bytes: 12307
+
+## 5. Residual Risks
+
+- CMD-DIFF-CHECK: non-core command failed with exit 2
+- cleanliness marker TODO in .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-checklist.yaml
+- CMD-DIFF-CHECK: non-core command failed with exit 2
+- scope-gate: cleanliness marker TODO in .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-checklist.yaml
+- dod-runner: CMD-DIFF-CHECK: non-core command failed with exit 2
+
+## 6. Provider Signals
+
+```json
+{
+  "archguard": {
+    "status": "unavailable",
+    "reason": "archguard binary not found on PATH",
+    "warnings": []
+  },
+  "meta_cc": {
+    "status": "unavailable",
+    "reason": "meta-cc summary not found; realtime session collection is out of scope",
+    "warnings": []
+  }
+}
+```
+
+## 7. Gate Results
+
+```json
+{
+  "stage": "implementation.before_review",
+  "status": "passed",
+  "gates": [
+    {
+      "gate_id": "scope-gate",
+      "stage": "implementation.before_review",
+      "status": "passed",
+      "blocking": [],
+      "warnings": [
+        "cleanliness marker TODO in .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-checklist.yaml"
+      ],
+      "evidence": [
+        {
+          "changed_files": [
+            ".codestable/.gitignore",
+            ".codestable/reference/approval-conventions.md",
+            ".codestable/reference/execution-conventions.md",
+            ".codestable/reference/goal-conventions.md",
+            ".codestable/reference/maintainer-notes.md",
+            ".codestable/reference/shared-conventions.md",
+            ".codestable/reference/spec-governance-tools.md",
+            ".codestable/reference/system-overview.md",
+            ".codestable/reference/tools-context.md",
+            ".codestable/reference/tools.md",
+            ".codestable/roadmap/repo-nav-public-beta/approval-report.md",
+            ".codestable/roadmap/repo-nav-public-beta/public-contract-v2.md",
+            ".codestable/roadmap/repo-nav-public-beta/repo-nav-public-beta-items.yaml",
+            ".codestable/roadmap/repo-nav-public-beta/repo-nav-public-beta-roadmap-review.md",
+            ".codestable/roadmap/repo-nav-public-beta/repo-nav-public-beta-roadmap.md",
+            ".codestable/roadmap/repo-nav-public-beta/threat-model.md",
+            ".codestable/roadmap/repo-nav-public-beta/v1-to-v2-compatibility.md",
+            "src/evidence/public-output/public-result-assembler-v2.ts",
+            "src/evidence/public-output/sensitive-value-policy-v2.ts",
+            "test/golden/public-output-v2.spec.ts",
+            "test/unit/public-output-v2-no-cutover.spec.ts",
+            "test/unit/public-output-v2-redaction.spec.ts",
+            "testkit/runners/runner-registry.ts",
+            ".codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-checklist.yaml",
+            ".codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-design-review.md",
+            ".codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-design.md",
+            ".codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-checklist.yaml",
+            ".codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-design-review.md",
+            ".codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-design.md",
+            ".codestable/features/2026-07-24-input-abort-contract-v2/input-abort-contract-v2-checklist.yaml",
+            ".codestable/features/2026-07-24-input-abort-contract-v2/input-abort-contract-v2-design-review.md",
+            ".codestable/features/2026-07-24-input-abort-contract-v2/input-abort-contract-v2-design.md",
+            ".codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-checklist.yaml",
+            ".codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-design-review.md",
+            ".codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-design.md",
+            ".codestable/features/2026-07-24-public-beta-release/public-beta-release-checklist.yaml",
+            ".codestable/features/2026-07-24-public-beta-release/public-beta-release-design-review.md",
+            ".codestable/features/2026-07-24-public-beta-release/public-beta-release-design.md",
+            ".codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-checklist.yaml",
+            ".codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-design-review.md",
+            ".codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-design.md",
+            ".codestable/features/2026-07-24-relevance-ranking-budget/relevance-ranking-budget-checklist.yaml",
+            ".codestable/features/2026-07-24-relevance-ranking-budget/relevance-ranking-budget-design-review.md",
+            ".codestable/features/2026-07-24-relevance-ranking-budget/relevance-ranking-budget-design.md",
+            ".codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-checklist.yaml",
+            ".codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-design-review.md",
+            ".codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-design.md",
+            ".codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-checklist.yaml",
+            ".codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-design-review.md",
+            ".codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-design.md",
+            ".codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-changed-path-inventory.md",
+            ".codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-checklist.yaml",
+            ".codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-design-review.md",
+            ".codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-design.md",
+            ".codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-scope-allow.txt",
+            ".codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-scope-gate.json",
+            ".codestable/features/2026-07-24-streaming-ripgrep/streaming-ripgrep-checklist.yaml",
+            ".codestable/features/2026-07-24-streaming-ripgrep/streaming-ripgrep-design-review.md",
+            ".codestable/features/2026-07-24-streaming-ripgrep/streaming-ripgrep-design.md",
+            ".codestable/reference/agent-conventions.md",
+            ".codestable/reference/solution-depth-conventions.md",
+            ".codestable/roadmap/repo-nav-public-beta/goal-features/canonical-locate-facts-bridge.md",
+            ".codestable/roadmap/repo-nav-public-beta/goal-features/cross-platform-ci-baseline.md",
+            ".codestable/roadmap/repo-nav-public-beta/goal-features/input-abort-contract-v2.md",
+            ".codestable/roadmap/repo-nav-public-beta/goal-features/language-capability-boundary.md",
+            ".codestable/roadmap/repo-nav-public-beta/goal-features/public-beta-release.md",
+            ".codestable/roadmap/repo-nav-public-beta/goal-features/public-output-boundary-v2.md",
+            ".codestable/roadmap/repo-nav-public-beta/goal-features/public-result-resource-budgets-v2.md",
+            ".codestable/roadmap/repo-nav-public-beta/goal-features/relevance-ranking-budget.md",
+            ".codestable/roadmap/repo-nav-public-beta/goal-features/repository-scope-policy.md",
+            ".codestable/roadmap/repo-nav-public-beta/goal-features/request-snapshot-cache.md",
+            ".codestable/roadmap/repo-nav-public-beta/goal-features/span-redaction-corpus-policy-v2.md",
+            ".codestable/roadmap/repo-nav-public-beta/goal-features/streaming-ripgrep.md",
+            ".codestable/roadmap/repo-nav-public-beta/goal-plan.md",
+            ".codestable/roadmap/repo-nav-public-beta/goal-protocol-audit.md",
+            ".codestable/roadmap/repo-nav-public-beta/goal-protocol-feature-loop.md",
+            ".codestable/roadmap/repo-nav-public-beta/goal-protocol-gates.md",
+            ".codestable/roadmap/repo-nav-public-beta/goal-protocol.md",
+            ".codestable/roadmap/repo-nav-public-beta/goal-state.yaml",
+            ".codestable/runtime-manifest.json",
+            "src/evidence/public-output/sensitive-corpus-v2.ts",
+            "src/evidence/public-output/sensitive-detectors-v2.ts",
+            "src/evidence/public-output/sensitive-field-materializer-v2.ts",
+            "src/evidence/public-output/sensitive-phone-v2.ts",
+            "src/evidence/public-output/sensitive-ranking-key-v2.ts",
+            "src/evidence/public-output/sensitive-span-merge-v2.ts",
+            "src/evidence/public-output/sensitive-value-contract-v2.ts",
+            "testkit/fixtures/public-output-v2/corpus-policy-v2.ts",
+            "testkit/fixtures/public-output-v2/no-cutover-import-inventory-v2.ts",
+            "testkit/fixtures/public-output-v2/phone-corpus-v2.ts",
+            "testkit/fixtures/public-output-v2/public-safe-ranking-key-v2.ts",
+            "testkit/fixtures/public-output-v2/redaction-amplification-v2.ts",
+            "testkit/fixtures/public-output-v2/span-redaction-v2.ts"
+          ],
+          "ignored_machine_artifacts": [],
+          "allowed_prefixes": [
+            ".codestable/features/2026-07-24-span-redaction-corpus-policy-v2",
+            ".codestable/features/2026-07-24-span-redaction-corpus-policy-v2",
+            "src/evidence/public-output",
+            "test/unit/public-output-v2-redaction.spec.ts",
+            "test/unit/public-output-v2-no-cutover.spec.ts",
+            "test/golden/public-output-v2.spec.ts",
+            "testkit/runners/runner-registry.ts",
+            "testkit/fixtures/public-output-v2",
+            ".codestable/.gitignore",
+            ".codestable/reference",
+            ".codestable/roadmap/repo-nav-public-beta",
+            ".codestable/runtime-manifest.json",
+            ".codestable/features/2026-07-24-canonical-locate-facts-bridge",
+            ".codestable/features/2026-07-24-cross-platform-ci-baseline",
+            ".codestable/features/2026-07-24-input-abort-contract-v2",
+            ".codestable/features/2026-07-24-language-capability-boundary",
+            ".codestable/features/2026-07-24-public-beta-release",
+            ".codestable/features/2026-07-24-public-result-resource-budgets-v2",
+            ".codestable/features/2026-07-24-relevance-ranking-budget",
+            ".codestable/features/2026-07-24-repository-scope-policy",
+            ".codestable/features/2026-07-24-request-snapshot-cache",
+            ".codestable/features/2026-07-24-streaming-ripgrep"
+          ]
+        }
+      ],
+      "providers": {},
+      "feature": "2026-07-24-span-redaction-corpus-policy-v2",
+      "kind": "executable"
+    },
+    {
+      "gate_id": "dod-runner",
+      "stage": "implementation.before_review",
+      "status": "passed",
+      "blocking": [],
+      "warnings": [
+        "CMD-DIFF-CHECK: non-core command failed with exit 2"
+      ],
+      "evidence": [
+        {
+          "command": "npm run build",
+          "exit_code": 0,
+          "stdout": "\n> repo-nav@0.1.0 build\n> tsc -p tsconfig.build.json && tsc -p tsconfig.cli.json\n\n",
+          "stderr": "",
+          "id": "CMD-BUILD",
+          "core": true,
+          "failure_handling": "fix-or-block"
+        },
+        {
+          "command": "npm run typecheck",
+          "exit_code": 0,
+          "stdout": "\n> repo-nav@0.1.0 typecheck\n> tsc -p tsconfig.json --noEmit\n\n",
+          "stderr": "",
+          "id": "CMD-TYPECHECK",
+          "core": true,
+          "failure_handling": "fix-or-block"
+        },
+        {
+          "command": "npm test -- --group public-output-v2 --case span-redaction --case corpus-policy --case corpus-boundaries --case phone-corpus-policy --case redaction-amplification --case public-safe-ranking-key",
+          "exit_code": 0,
+          "stdout": "\n> repo-nav@0.1.0 test\n> tsx testkit/runners/unit-runner.ts --group public-output-v2 --case span-redaction --case corpus-policy --case corpus-boundaries --case phone-corpus-policy --case redaction-amplification --case public-safe-ranking-key\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ↓ test/unit/scope-gate.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/public-output-v2-no-cutover.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/public-output-v2-contract.spec.ts (25 tests | 25 skipped)\n ↓ test/unit/contract.spec.ts (12 tests | 12 skipped)\n ↓ test/unit/public-result-assembler-v2.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/public-output-v2-errors-projection.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/direct-mapping-classifier.spec.ts (34 tests | 34 skipped)\n ↓ test/unit/repository-reader.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/safe-process-runner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/process-cleanup.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/ripgrep-backend.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/codegraph-live-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/unit/codegraph-backend.spec.ts (8 tests | 8 skipped)\n ✓ test/unit/public-output-v2-redaction.spec.ts (19 tests | 8 skipped) 62ms\n ↓ test/unit/repository-safety.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/runner-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/unit/output-guardrails.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/evidence-merge.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/codegraph-query-planner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/locate-status-evaluator.spec.ts (13 tests | 13 skipped)\n ↓ test/unit/candidate-policy.spec.ts (37 tests | 37 skipped)\n ↓ test/unit/di.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/debug-cli-shell.spec.ts (10 tests | 10 skipped)\n\n Test Files  1 passed | 22 skipped (23)\n      Tests  11 passed | 215 skipped (226)\n   Start at  17:11:43\n   Duration  1.73s (transform 3.38s, setup 0ms, import 13.76s, tests 62ms, environment 3ms)\n\n",
+          "stderr": "",
+          "id": "CMD-F1A-UNIT",
+          "core": true,
+          "failure_handling": "fix-or-block"
+        },
+        {
+          "command": "npm test -- --group public-output-v2",
+          "exit_code": 0,
+          "stdout": "\n> repo-nav@0.1.0 test\n> tsx testkit/runners/unit-runner.ts --group public-output-v2\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ✓ test/unit/public-output-v2-no-cutover.spec.ts (3 tests) 39ms\n ✓ test/unit/public-output-v2-contract.spec.ts (25 tests) 78ms\n ↓ test/unit/contract.spec.ts (12 tests | 12 skipped)\n ✓ test/unit/public-result-assembler-v2.spec.ts (7 tests) 71ms\n ✓ test/unit/public-output-v2-errors-projection.spec.ts (4 tests) 69ms\n ↓ test/unit/evidence-merge.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/output-guardrails.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/process-cleanup.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/direct-mapping-classifier.spec.ts (34 tests | 34 skipped)\n ↓ test/unit/repository-reader.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/codegraph-live-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/unit/codegraph-query-planner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/codegraph-backend.spec.ts (8 tests | 8 skipped)\n ↓ test/unit/runner-smoke.spec.ts (1 test | 1 skipped)\n ✓ test/unit/public-output-v2-redaction.spec.ts (19 tests) 112ms\n ↓ test/unit/repository-safety.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/scope-gate.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/locate-status-evaluator.spec.ts (13 tests | 13 skipped)\n ↓ test/unit/candidate-policy.spec.ts (37 tests | 37 skipped)\n ↓ test/unit/ripgrep-backend.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/safe-process-runner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/di.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/debug-cli-shell.spec.ts (10 tests | 10 skipped)\n\n Test Files  5 passed | 18 skipped (23)\n      Tests  58 passed | 168 skipped (226)\n   Start at  17:11:46\n   Duration  1.85s (transform 4.37s, setup 0ms, import 16.28s, tests 370ms, environment 6ms)\n\n",
+          "stderr": "",
+          "id": "CMD-V2-UNIT",
+          "core": true,
+          "failure_handling": "fix-or-block"
+        },
+        {
+          "command": "npm run test:golden -- --group public-output-v2",
+          "exit_code": 0,
+          "stdout": "\n> repo-nav@0.1.0 test:golden\n> tsx testkit/runners/golden-runner.ts --group public-output-v2\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ↓ test/golden/runner-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/golden/output-guardrails.spec.ts (8 tests | 8 skipped)\n ✓ test/golden/public-output-v2.spec.ts (7 tests) 43ms\n ↓ test/golden/large-synthetic-repository.spec.ts (1 test | 1 skipped)\n ↓ test/golden/text-engine-classifier.spec.ts (6 tests | 6 skipped)\n ↓ test/golden/mvp-regression-families.spec.ts (5 tests | 5 skipped)\n ↓ test/golden/fixture-completeness.spec.ts (3 tests | 3 skipped)\n ↓ test/golden/golden-contract.spec.ts (5 tests | 5 skipped)\n ↓ test/golden/mvp-evaluator.spec.ts (8 tests | 8 skipped)\n ↓ test/golden/candidate-policy.spec.ts (3 tests | 3 skipped)\n ↓ test/golden/codegraph-fallback.spec.ts (11 tests | 11 skipped)\n ↓ test/golden/text-evidence-engine.spec.ts (14 tests | 14 skipped)\n\n Test Files  1 passed | 11 skipped (12)\n      Tests  7 passed | 65 skipped (72)\n   Start at  17:11:49\n   Duration  1.33s (transform 1.90s, setup 0ms, import 9.82s, tests 43ms, environment 2ms)\n\n",
+          "stderr": "",
+          "id": "CMD-V2-GOLDEN",
+          "core": true,
+          "failure_handling": "fix-or-block"
+        },
+        {
+          "command": "npm test -- --group public-output-v2 --case no-cutover-import-inventory",
+          "exit_code": 0,
+          "stdout": "\n> repo-nav@0.1.0 test\n> tsx testkit/runners/unit-runner.ts --group public-output-v2 --case no-cutover-import-inventory\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ✓ test/unit/public-output-v2-no-cutover.spec.ts (3 tests) 43ms\n ↓ test/unit/public-output-v2-contract.spec.ts (25 tests | 25 skipped)\n ↓ test/unit/public-result-assembler-v2.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/public-output-v2-errors-projection.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/contract.spec.ts (12 tests | 12 skipped)\n ↓ test/unit/evidence-merge.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/direct-mapping-classifier.spec.ts (34 tests | 34 skipped)\n ↓ test/unit/output-guardrails.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/runner-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/unit/process-cleanup.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/public-output-v2-redaction.spec.ts (19 tests | 19 skipped)\n ↓ test/unit/repository-reader.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/codegraph-query-planner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/codegraph-live-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/unit/codegraph-backend.spec.ts (8 tests | 8 skipped)\n ↓ test/unit/scope-gate.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/repository-safety.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/locate-status-evaluator.spec.ts (13 tests | 13 skipped)\n ↓ test/unit/candidate-policy.spec.ts (37 tests | 37 skipped)\n ↓ test/unit/ripgrep-backend.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/safe-process-runner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/di.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/debug-cli-shell.spec.ts (10 tests | 10 skipped)\n\n Test Files  1 passed | 22 skipped (23)\n      Tests  3 passed | 223 skipped (226)\n   Start at  17:11:51\n   Duration  1.85s (transform 4.28s, setup 0ms, import 16.78s, tests 43ms, environment 6ms)\n\n",
+          "stderr": "",
+          "id": "CMD-NOCUTOVER",
+          "core": true,
+          "failure_handling": "fix-or-block"
+        },
+        {
+          "command": "npm test",
+          "exit_code": 0,
+          "stdout": "\n> repo-nav@0.1.0 test\n> tsx testkit/runners/unit-runner.ts\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ✓ test/unit/public-output-v2-no-cutover.spec.ts (3 tests) 40ms\n ✓ test/unit/public-output-v2-contract.spec.ts (25 tests) 88ms\n ✓ test/unit/public-output-v2-errors-projection.spec.ts (4 tests) 46ms\n ✓ test/unit/contract.spec.ts (12 tests) 40ms\n ✓ test/unit/public-result-assembler-v2.spec.ts (7 tests) 75ms\n ✓ test/unit/evidence-merge.spec.ts (6 tests) 21ms\n ✓ test/unit/output-guardrails.spec.ts (7 tests) 24ms\n ✓ test/unit/codegraph-query-planner.spec.ts (6 tests) 28ms\n ✓ test/unit/direct-mapping-classifier.spec.ts (34 tests) 107ms\n ✓ test/unit/codegraph-backend.spec.ts (8 tests) 40ms\n ✓ test/unit/public-output-v2-redaction.spec.ts (19 tests) 120ms\n ✓ test/unit/repository-reader.spec.ts (6 tests) 105ms\n ✓ test/unit/runner-smoke.spec.ts (1 test) 5ms\n ✓ test/unit/repository-safety.spec.ts (5 tests) 49ms\n ✓ test/unit/ripgrep-backend.spec.ts (6 tests) 134ms\n ✓ test/unit/candidate-policy.spec.ts (37 tests) 284ms\n ✓ test/unit/di.spec.ts (2 tests) 60ms\n ✓ test/unit/debug-cli-shell.spec.ts (10 tests) 24ms\n ✓ test/unit/scope-gate.spec.ts (2 tests) 721ms\n     ✓ passes shell metacharacters to git as literal path arguments  485ms\n ✓ test/unit/safe-process-runner.spec.ts (6 tests) 945ms\n ✓ test/unit/locate-status-evaluator.spec.ts (13 tests) 2031ms\n     ✓ distinguishes its own deadline from a caller abort  1008ms\n     ✓ retains verification completed before the abort  1001ms\n ✓ test/unit/codegraph-live-smoke.spec.ts (1 test) 3332ms\n     ✓ indexes, probes, queries, and removes only the temporary repository  3330ms\n ✓ test/unit/process-cleanup.spec.ts (6 tests) 10024ms\n     ✓ terminates direct child and descendant on caller abort and settles once  1955ms\n     ✓ terminates direct child and descendant on timeout  1871ms\n     ✓ terminates direct child and descendant when stdout exactly reaches its cap  1399ms\n     ✓ terminates direct child and descendant when stderr exactly reaches its cap  1378ms\n     ✓ rejects within a fixed cleanup deadline when tree termination fails  3297ms\n\n Test Files  23 passed (23)\n      Tests  226 passed (226)\n   Start at  17:11:55\n   Duration  11.23s (transform 3.95s, setup 0ms, import 17.25s, tests 18.34s, environment 5ms)\n\n",
+          "stderr": "",
+          "id": "CMD-UNIT-ALL",
+          "core": true,
+          "failure_handling": "fix-or-block"
+        },
+        {
+          "command": "npm run test:golden -- --all",
+          "exit_code": 0,
+          "stdout": "\n> repo-nav@0.1.0 test:golden\n> tsx testkit/runners/golden-runner.ts --all\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ✓ test/golden/runner-smoke.spec.ts (1 test) 4ms\n ✓ test/golden/public-output-v2.spec.ts (7 tests) 53ms\n ✓ test/golden/output-guardrails.spec.ts (8 tests) 51ms\n ✓ test/golden/golden-contract.spec.ts (5 tests) 88ms\n ✓ test/golden/text-engine-classifier.spec.ts (6 tests | 1 skipped) 120ms\n ✓ test/golden/mvp-evaluator.spec.ts (8 tests) 147ms\n ✓ test/golden/mvp-regression-families.spec.ts (5 tests) 216ms\n ✓ test/golden/fixture-completeness.spec.ts (3 tests) 235ms\n ✓ test/golden/candidate-policy.spec.ts (3 tests) 175ms\n ✓ test/golden/codegraph-fallback.spec.ts (11 tests) 269ms\n ✓ test/golden/text-evidence-engine.spec.ts (14 tests) 1204ms\n     ✓ confirms a multiline mapping through the real ripgrep-to-reader chain  860ms\n ✓ test/golden/large-synthetic-repository.spec.ts (1 test) 1979ms\n     ✓ keeps five real-engine projections stable and records environment-aware timing  1977ms\n\n Test Files  12 passed (12)\n      Tests  71 passed | 1 skipped (72)\n   Start at  17:12:07\n   Duration  3.12s (transform 1.98s, setup 0ms, import 10.00s, tests 4.54s, environment 2ms)\n\n",
+          "stderr": "",
+          "id": "CMD-GOLDEN-ALL",
+          "core": true,
+          "failure_handling": "fix-or-block"
+        },
+        {
+          "command": "npm run test:mcp -- --all",
+          "exit_code": 0,
+          "stdout": "\n> repo-nav@0.1.0 test:mcp\n> npm run build --silent && tsx testkit/runners/mcp-runner.ts --all\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ✓ test/mcp/runner-smoke.spec.ts (1 test) 6ms\n ✓ test/mcp/tool-surface.spec.ts (8 tests) 276ms\n ✓ test/mcp/redaction-output-parity.spec.ts (1 test) 1549ms\n     ✓ keeps forbidden values out of structured, text, stdout protocol, and stderr  1547ms\n ✓ test/mcp/mcp-golden-adapter.spec.ts (1 test) 1556ms\n     ✓ feeds both success and error transport observations to the shared evaluator  1554ms\n ✓ test/mcp/candidate-minimal-loop.spec.ts (1 test) 1572ms\n     ✓ returns confirmed and bounded candidates with transport parity  1569ms\n ✓ test/mcp/tool-output-parity.spec.ts (2 tests) 2640ms\n     ✓ returns one confirmed mapping through real stdio  1511ms\n     ✓ keeps all recoverable statuses out of the MCP error channel  1127ms\n ✓ test/mcp/request-cancellation.spec.ts (3 tests) 3711ms\n     ✓ does not lose cancellation sent before the handler starts work  1569ms\n     ✓ propagates the SDK request signal to the application service  1130ms\n     ✓ aborts an in-flight locate when stdin reaches EOF  1009ms\n ✓ test/mcp/tool-error-parity.spec.ts (4 tests) 5416ms\n     ✓ maps schema-invalid objects to typed parity output  1500ms\n     ✓ preserves the typed code while sanitizing unsafe detail  1107ms\n     ✓ preserves the typed code while sanitizing unsafe detail  1007ms\n     ✓ turns thrown failures into safe typed parity output  1800ms\n ✓ test/mcp/lifecycle-contract.spec.ts (18 tests) 11417ms\n     ✓ accepts only real MCP frames on stdout and propagates clean exit  903ms\n     ✓ treats an SDK transport parse failure as fatal without stdout pollution  707ms\n     ✓ drives graceful shutdown through stdin within the manifest budget  724ms\n     ✓ observes the real Nest context hook and direct/descendant process cleanup  1578ms\n     ✓ fails when the real context close marker is deliberately skipped  1406ms\n     ✓ fails when an actual descendant tree is deliberately left running  2800ms\n     ✓ cleans both child PIDs and the probe directory after a forced timeout  2529ms\n     ✓ cleans both child PIDs and the probe directory after a nonzero exit  734ms\n\n Test Files  9 passed (9)\n      Tests  39 passed (39)\n   Start at  17:12:17\n   Duration  13.44s (transform 1.62s, setup 0ms, import 8.89s, tests 28.14s, environment 1ms)\n\n",
+          "stderr": "",
+          "id": "CMD-MCP-ALL",
+          "core": true,
+          "failure_handling": "fix-or-block"
+        },
+        {
+          "command": "npm run test:docs",
+          "exit_code": 0,
+          "stdout": "\n> repo-nav@0.1.0 test:docs\n> npm run build --silent && tsx testkit/docs/docs-smoke-runner.ts\n\nDocs smoke passed: test-artifacts/docs/docs-smoke-v1.json\n",
+          "stderr": "",
+          "id": "CMD-DOCS",
+          "core": true,
+          "failure_handling": "fix-or-block"
+        },
+        {
+          "command": "git diff --check",
+          "exit_code": 2,
+          "stdout": "test/unit/public-output-v2-redaction.spec.ts:658: new blank line at EOF.\n",
+          "stderr": "warning: in the working copy of '.codestable/roadmap/repo-nav-public-beta/repo-nav-public-beta-roadmap-review.md', CRLF will be replaced by LF the next time Git touches it\n",
+          "id": "CMD-DIFF-CHECK",
+          "core": false,
+          "failure_handling": "fix-or-block"
+        },
+        {
+          "command": "python .codestable/tools/codestable-spec-governance.py --root . analyze",
+          "exit_code": 0,
+          "stdout": "OK: True\n",
+          "stderr": "",
+          "id": "CMD-SPEC",
+          "core": false,
+          "failure_handling": "fix-or-block"
+        }
+      ],
+      "providers": {},
+      "feature": "2026-07-24-span-redaction-corpus-policy-v2",
+      "inputs": {
+        "checklist": ".codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-checklist.yaml"
+      },
+      "input_digests": {
+        "checklist": "2409173f7a27657b3d9727f812a2057a8a2b28bccc02cb7c93c4b4afe008ddc0"
+      }
+    }
+  ],
+  "warnings": [
+    "cleanliness marker TODO in .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-checklist.yaml",
+    "CMD-DIFF-CHECK: non-core command failed with exit 2"
+  ],
+  "blocking": []
+}
+```

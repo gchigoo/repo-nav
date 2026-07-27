@@ -14,9 +14,9 @@ import {
 } from '../../contracts/v2/locate-result-v2.js';
 import {
   collectSensitiveCorpusV2,
-  redactPublicFieldV2,
+  redactPublicFieldForSourceV2,
   type PublicFieldRedactionV2,
-  type SensitiveCorpusEntryV2,
+  type SensitiveCorpusV2,
 } from './sensitive-value-policy-v2.js';
 
 type UnsafeSuccessV2 = Extract<
@@ -91,15 +91,27 @@ function fieldMetadata(
 }
 
 function assembleLocationV2(
+  source: object,
   location: UnsafeConfirmedV2['location'],
-  corpus: readonly SensitiveCorpusEntryV2[],
+  corpus: SensitiveCorpusV2,
 ): EvidenceLocationV2 {
-  const file = redactPublicFieldV2(location.file, 'file', corpus);
+  const file = redactPublicFieldForSourceV2(
+    source,
+    location.file,
+    'file',
+    corpus,
+  );
   const symbol =
     location.symbol === undefined
       ? undefined
-      : redactPublicFieldV2(location.symbol, 'symbol', corpus);
-  const excerpt = redactPublicFieldV2(
+      : redactPublicFieldForSourceV2(
+          source,
+          location.symbol,
+          'symbol',
+          corpus,
+        );
+  const excerpt = redactPublicFieldForSourceV2(
+    source,
     location.excerpt,
     'excerpt',
     corpus,
@@ -133,10 +145,16 @@ function assembleLocationV2(
 }
 
 function publicTermV2(
+  source: object,
   term: UnsafeSuccessV2['evidence']['normalizedTerms'][number],
-  corpus: readonly SensitiveCorpusEntryV2[],
+  corpus: SensitiveCorpusV2,
 ): PublicSearchTermV2 {
-  const redaction = redactPublicFieldV2(term.value, 'term', corpus);
+  const redaction = redactPublicFieldForSourceV2(
+    source,
+    term.value,
+    'term',
+    corpus,
+  );
   return {
     value: redaction.value,
     caseSensitive: term.caseSensitive,
@@ -152,15 +170,16 @@ function publicTermV2(
 }
 
 function publicConfirmedV2(
+  source: object,
   evidence: UnsafeConfirmedV2,
   ordinal: number,
-  corpus: readonly SensitiveCorpusEntryV2[],
+  corpus: SensitiveCorpusV2,
 ): ConfirmedEvidenceV2 {
   return {
     evidenceClass: 'confirmed',
     id: `evidence:v2:${String(ordinal).padStart(4, '0')}`,
     role: evidence.role,
-    location: assembleLocationV2(evidence.location, corpus),
+    location: assembleLocationV2(source, evidence.location, corpus),
     provenance: {
       discoveredBy: evidence.provenance.discoveredBy,
       verifiedBy: 'filesystem',
@@ -171,15 +190,16 @@ function publicConfirmedV2(
 }
 
 function publicCandidateV2(
+  source: object,
   evidence: UnsafeCandidateV2,
   ordinal: number,
-  corpus: readonly SensitiveCorpusEntryV2[],
+  corpus: SensitiveCorpusV2,
 ): CandidateEvidenceV2 {
   return {
     evidenceClass: 'candidate',
     id: `evidence:v2:${String(ordinal).padStart(4, '0')}`,
     role: evidence.role,
-    location: assembleLocationV2(evidence.location, corpus),
+    location: assembleLocationV2(source, evidence.location, corpus),
     provenance: {
       discoveredBy: evidence.provenance.discoveredBy,
       verifiedBy: 'filesystem',
@@ -200,13 +220,14 @@ function canonicalNextActions(
 function assembleSuccessV2(input: UnsafeSuccessV2): LocateResultV2 {
   const corpus = collectSensitiveCorpusV2(input);
   const normalizedTerms = input.evidence.normalizedTerms.map((term) =>
-    publicTermV2(term, corpus),
+    publicTermV2(input, term, corpus),
   );
   const confirmed = input.evidence.confirmed.map((evidence, index) =>
-    publicConfirmedV2(evidence, index + 1, corpus),
+    publicConfirmedV2(input, evidence, index + 1, corpus),
   );
   const candidates = input.evidence.candidates.map((evidence, index) =>
     publicCandidateV2(
+      input,
       evidence,
       confirmed.length + index + 1,
       corpus,

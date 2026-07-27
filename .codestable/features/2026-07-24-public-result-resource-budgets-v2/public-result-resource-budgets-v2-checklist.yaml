@@ -1,0 +1,233 @@
+feature: 2026-07-24-public-result-resource-budgets-v2
+created: '2026-07-24'
+steps:
+- id: S1
+  action: 建立无依赖budget contract leaf、单向guard module、UTF-8 primitives、private abort-at-N+1 counter与唯一可复用internal guardCompactJsonDataV2 API
+  exit_signal: dependency graph无cycle，source 4MiB及request 16KiB accepted subset exact parity、rejected graph和N/N+1通过，caller不知道counter traversal
+  verification: npm test -- --group public-output-v2 --case resource-budget-primitives
+  artifacts: [LocateResultResourceBudgetContractV2, ResultResourceBudgetGuardsV2, dependency inventory, bounded JSON byte counter, accepted subset parity table, runner registry entries]
+  status: pending
+- id: S2
+  action: 在current dormant PublicResultAssemblerV2接入runtime raw input shallow count field aggregate preflight并让current strict source schema复核同一预算，同时用pure synthetic input冻结16KiB generic guard forward ABI
+  exit_signal: F1B-TERM-001 EVIDENCE-001 RAW-FIELD-001 RAW-JSON-001 ORDERING-001通过且poison tail未触发
+  verification: npm test -- --group public-output-v2 --case raw-resource-budgets --case resource-budget-ordering
+  artifacts: [current dormant raw source preflight, current source schema budget refinements, synthetic generic guard parity, poison-tail fixtures, current source mutation inventory, no future caller proof]
+  status: pending
+- id: S3
+  action: 对F1A expanded corpus重算count bytes并校验derived total，再在span materialize后执行四字段public预算
+  exit_signal: F1B-CORPUS-001 PUBLIC-FIELD-001 ORDINAL-001通过，双mode不去重、derived total exact、corpus不截断且field replacement先于current assembler status ordinal composition，record order不变
+  verification: npm test -- --group public-output-v2 --case corpus-resource-budgets --case public-field-resource-budgets
+  artifacts: [corpus recomputation and derived-total guard, F1A collector integration fixture, public field budget policy, exact field and ordinal projections]
+  status: pending
+- id: S4
+  action: 在current dormant assembler status ID ordinal allowlist composition与public strict parse后执行1MiB compact JSON guard并验证最大current source public结构与existing production v1 engine隔离
+  exit_signal: F1B-PUBLIC-JSON-001 MAX-STRUCTURE-001 LEGACY-ISOLATION-001通过，max fixture有headroom且各v2 stage失败只返回shadow error不改existing v1 result，F2 F1C F6 callsite保持N/A
+  verification: npm test -- --group public-output-v2 --case serialized-resource-budget --case maximum-structure-budget --case resource-budget-legacy-isolation && npm run test:golden -- --group public-output-v2
+  artifacts: [serialized result guard, maximum source public structure fixture, measured budget report, v1 exact-reference isolation, aggregate Golden]
+  status: pending
+- id: S5
+  action: 完成failure projection determinism forbidden detail no-truncation no-cutover与全量回归hardening
+  exit_signal: 各failure stage projection等值无raw bytes stage detail，full suites通过且production仍为v1
+  verification: npm run build && npm run typecheck && npm test -- --group public-output-v2 && npm run test:golden -- --group public-output-v2 && npm test && npm run test:golden -- --all && npm run test:mcp -- --all && npm run test:docs
+  artifacts: [case and fixture ownership inventory, runner registry delta, fixed error projection, forbidden detail report, no-cutover evidence, architecture and scope evidence, aggregate command logs]
+  status: pending
+checks:
+- id: C1
+  item: 所有count和bytes常量由LocateResultResourceBudgetsV2唯一提供且schema guards tests无重复magic number
+  source: design §1 frozen budgets / S1
+  status: pending
+- id: C2
+  item: 全部字符串和aggregate统一使用Buffer.byteLength UTF-8语义而非UTF-16 length token或字符数
+  source: design §1 key decisions / S1
+  status: pending
+- id: C3
+  item: guardCompactJsonDataV2封装private counter，对source 4MiB和request 16KiB accepted subset的keys strings lone surrogate finite number和-0与compact JSON bytes一致且在limit plus one停止
+  source: design §3.1 F1B-RAW-JSON-001 / S1
+  status: pending
+- id: C4
+  item: 正常Array intrinsic length与dense data indexes通过；extra array key accessor index symbol额外nonenumerable及任意位置undefined hole cycle record accessor toJSON symbol nonenumerable BigInt function nonfinite或非plain graph fail closed
+  source: design §2.1 bounded counter contract / S1
+  status: pending
+- id: C5
+  item: terms 16 item 128 bytes total 1024 bytes均有N/N+1与multi-byte owner
+  source: design §3.1 F1B-TERM-001 / S2
+  status: pending
+- id: C6
+  item: confirmed candidates total evidence 20 20 40均有N/N+1且count gate不读取超限array element
+  source: design §3.1 F1B-EVIDENCE-001 / S2
+  status: pending
+- id: C7
+  item: raw file 4096 bytes 128 segments symbol 2048 excerpt 16KiB均有N/N+1 owner
+  source: design §3.1 F1B-RAW-FIELD-001 / S2
+  status: pending
+- id: C8
+  item: 400000-byte spaced excerpt按完整field oversized处理不能因单token短而通过
+  source: design §3.1 F1B-RAW-FIELD-001 / S2
+  status: pending
+- id: C9
+  item: unsafe source 4MiB gate发生在deep source Zod full stringify与F1A internal corpus之前
+  source: design §2.2 ordering / S2
+  status: pending
+- id: C10
+  item: unsafe source strict Zod与preflight复用同一limits且每个budget family有defense-in-depth mutation
+  source: design §1 key decisions / S2
+  status: pending
+- id: C11
+  item: expanded corpus 128 entries 32KiB total 8到512 item均有N/N+1，guard重算双mode entries且不按value去重
+  source: design §3.1 F1B-CORPUS-001 / S3
+  status: pending
+- id: C12
+  item: corpus derived total必须是有限非负safe integer并与重算相等，任何超限或mismatch整次fixed error不得截断
+  source: design §2.2 corpus constraint / S3
+  status: pending
+- id: C13
+  item: public term 128 file symbol excerpt 2048 bytes均在F1A materialize后按N/N+1检查
+  source: design §3.1 F1B-PUBLIC-FIELD-001 / S3
+  status: pending
+- id: C14
+  item: public field N+1使用whole-field oversized placeholder且metadata仅BINARY_OR_OVERSIZED_CONTENT
+  source: design §1 key decision 6 / S3
+  status: pending
+- id: C15
+  item: oversized file resolvable false且current dormant assembler只在field replacement后从最终field truth派生一次LOCATION_REDACTED与status，其他field不单独改变status；F1 contribution与F6 aggregation为后续N/A
+  source: design §3.1 F1B-PUBLIC-FIELD-001 / S3
+  status: pending
+- id: C16
+  item: field replacement不删evidence不改current input record refs order lines provenance reason，连续ordinal由current dormant assembler按原顺序分配；F2 real records与F1C composer为后续N/A
+  source: design §3.1 F1B-ORDINAL-001 / S3
+  status: pending
+- id: C17
+  item: serialized counter primitive有1MiB N/N+1，maximum schema-valid parsed result通过integration guard，synthetic guard failure经mapper只返回fixed safe INTERNAL_ERROR
+  source: design §3.1 F1B-PUBLIC-JSON-001 / S4
+  status: pending
+- id: C18
+  item: aggregate error无stage actual bytes path field raw content stack且自身低于public cap
+  source: design §3.1 F1B-PUBLIC-JSON-001 PROJECTION-001 / S4 S5
+  status: pending
+- id: C19
+  item: maximum source含16 terms和20加20 raw evidence，maximum public含2 backends 16 unsatisfied anchors index 0到15及finite enum unique arrays并实测4MiB source与1MiB public headroom
+  source: design §3.1 F1B-MAX-STRUCTURE-001 / S4
+  status: pending
+- id: C20
+  item: maximum fixture超预算时block并回roadmap不得自动调常量截字段或弱化fixture
+  source: design §1 non-obvious dependencies / S4
+  status: pending
+- id: C21
+  item: element poison证明count gate不访问array elements，known accessor field在getter执行前被descriptor gate拒绝，container Proxy异常fail closed，key permutation证明accepted data determinism
+  source: design §3.1 F1B-ORDERING-001 / S2 S5
+  status: pending
+- id: C22
+  item: source corpus public field public schema public JSON各failure stage synthetic v2 projections等值且forbidden scan无detail
+  source: design §3.1 F1B-PROJECTION-001 / S5
+  status: pending
+- id: C23
+  item: 不存在slice drop tail corpus truncation ID reassign或budget驱动ranking
+  source: design §3.3 reverse scope / S5
+  status: pending
+- id: C24
+  item: 不修改F1A detector eligibility span phone propagation或placeholder contract
+  source: design §3.3 reverse scope / S5
+  status: pending
+- id: C25
+  item: 不新增config env pagination compression stream persistence logger或public failure detail
+  source: design §3.3 reverse scope / S5
+  status: pending
+- id: C26
+  item: package service MCP CLI docs仍无schema v2 output edge
+  source: design §3.1 F1B-NOCUTOVER-001 / S5
+  status: pending
+- id: C27
+  item: design §3.2的10个stable group/case全部登记runner，并逐项反查exact fixture assertion runner manifest contract或Golden owner，禁止same existing或抽象owner
+  source: design §3.2 ownership inventory / S1 S2 S3 S4 S5
+  status: pending
+- id: C28
+  item: ACT-ARCH-CHECK落盘architecture update或no-change理由
+  source: design §3.5 Required Actions / S5
+  status: pending
+- id: C29
+  item: ACT-SCOPE-CHECK对账scope gate与完整staged unstaged untracked paths且无ambient夹带
+  source: design §3.5 Required Actions / S5
+  status: pending
+- id: C30
+  item: budget contract leaf不含业务DTO且current source public schema guards F1A materializer dormant assembler依赖方向通过inventory证明无runtime cycle，当前source graph不import F1C F2 F6 owner
+  source: design §2.1 dependency direction / S1
+  status: pending
+- id: C31
+  item: coverage backends最多2项、unsatisfiedAnchors最多16项且requestIndex为0到15，其余enum arrays按唯一有限domain封顶
+  source: design §1 non-obvious dependencies / S1 S2 S4
+  status: pending
+- id: C32
+  item: guardCompactJsonDataV2作为forward internal ABI只能观察pass fail stage且不能读取partial bytes或traversal state；F1B当前只以synthetic caller验证，不创建F2 F6 F1C caller或owner文件
+  source: design guard API and forward ABI ledger / S1 S2
+  status: pending
+- id: C33
+  item: current source corpus public-field public-schema serialized每类v2 shadow failure均不改变同一fixture的existing production v1 engine result exact object graph和bytes，且不创建canonical execution或legacyV1Projection
+  source: design F1B-LEGACY-ISOLATION-001 / S4 S5
+  status: pending
+dod:
+  commands:
+  - id: CMD-BUILD
+    command: npm run build
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-TYPECHECK
+    command: npm run typecheck
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-F1B-UNIT
+    command: npm test -- --group public-output-v2 --case resource-budget-primitives --case raw-resource-budgets --case corpus-resource-budgets --case public-field-resource-budgets --case serialized-resource-budget --case maximum-structure-budget --case resource-budget-ordering --case resource-budget-projection --case resource-budget-legacy-isolation
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-V2-UNIT
+    command: npm test -- --group public-output-v2
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-V2-GOLDEN
+    command: npm run test:golden -- --group public-output-v2
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-NOCUTOVER
+    command: npm test -- --group public-output-v2 --case no-cutover-import-inventory
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-UNIT-ALL
+    command: npm test
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-GOLDEN-ALL
+    command: npm run test:golden -- --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-MCP-ALL
+    command: npm run test:mcp -- --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-DOCS
+    command: npm run test:docs
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-DOCTOR
+    command: python .codestable/tools/codestable-doctor.py --root .
+    core: false
+    failure_handling: document-baseline
+  - id: CMD-DIFF-CHECK
+    command: git diff --check
+    core: false
+    failure_handling: fix-or-block
+  - id: CMD-SPEC
+    command: python .codestable/tools/codestable-spec-governance.py --root . analyze
+    core: false
+    failure_handling: fix-or-block
+  - id: CMD-SCOPE-CHECK
+    command: python .codestable/tools/codestable-scope-gate.py --feature-dir .codestable/features/2026-07-24-public-result-resource-budgets-v2 --allow-file .codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-scope-allow.txt --check-path . --cleanliness-path src/contracts/v2 --cleanliness-path src/evidence/public-output --cleanliness-path test/unit --cleanliness-path test/golden --stage implementation.before_review
+    core: true
+    failure_handling: fix-or-block
+  evidence_required: [command_output, diff_summary, budget_contract_dependency_inventory, compact_guard_api_and_private_counter_inventory, accepted_json_subset_parity, current_source_and_synthetic_generic_guard_mutation_inventory, corpus_budget_and_derived_total_matrix, current_assembler_post_field_status_ordinal_and_public_field_budget_matrix, forward_abi_current_executable_owner_separation_proof, poison_element_and_proxy_report, maximum_current_source_public_structure_measurement, v2_failure_existing_v1_engine_exact_reference_and_bytes_isolation, fixed_error_projection, forbidden_detail_report, case_fixture_ownership_inventory, runner_registry_delta, scope_allow_manifest, full_changed_path_inventory, no_cutover_report, architecture_check, scope_cleanliness_evidence]
+  cleanliness:
+    debug_output: forbidden
+    temporary_todo_fixme: forbidden
+    commented_out_code: forbidden
+    unused_imports: forbidden
+    real_credentials: forbidden
+    silent_budget_relaxation: forbidden
+    external_private_counter_import_or_v1_dependency_on_v2_budget: forbidden

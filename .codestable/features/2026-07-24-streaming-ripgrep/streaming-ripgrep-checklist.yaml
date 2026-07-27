@@ -1,0 +1,411 @@
+feature: 2026-07-24-streaming-ripgrep
+created: '2026-07-24'
+steps:
+- id: S1
+  action: 抽取单一safe process lifecycle kernel、no-child result factory、primary trigger reducer与settlement verdict，让buffered和streaming consumers共用，冻结同步partial finish判别联合与process-exit，并原子迁移stdout stderr N与N加1边界
+  exit_signal: no-child路径零finalizer且null exit signal empty bytes，continue必须全消费且partial返回exact union，top-level async finalizer拒绝，exact N自然完成N加1才limit，process-exit与cleanup precedence exact且buffered全投影逐行通过
+  verification: npm test -- --group streaming-ripgrep --case process-n-plus-one-boundary --case process-terminal-races --case consumer-progress-contract --case stream-consumer-finalizer-and-process-exit --case buffered-compatibility-projection
+  artifacts: [kernel extraction parity, no-child settlement table, N and N plus one byte table, consumer decision and finalizer mutation table, complete buffered compatibility projection, null exit and signal mapping table, terminal reducer race report, listener timer cleanup counters]
+  status: pending
+- id: S2
+  action: 实现raw byte framer pending CR、fatal UTF8、line cap、production context禁用及begin match end summary与exit联合严格协议状态机
+  exit_signal: 所有partition结果deep exact，每个scope至少一match且summary path offset与exit0 positive exit1 zero联合完整，任何伪complete malformed或EOF fragment固定失败
+  verification: npm test -- --group streaming-ripgrep --case json-line-partitions --case json-line-invalid --case protocol-fsm-and-offsets
+  artifacts: [partition corpus, UTF8 CRLF pending table, line boundary report, protocol FSM truth table, path and byte offset hostile corpus]
+  status: pending
+- id: S3
+  action: canonical每request创建唯一且绑定exact request signal的BackendExecutionContextV2并显式贯穿F3和两个backend；所有CodeGraph status query fallback与Ripgrep version group的expanded shared legacy-only work经sync start handle和async signed result authority，再完成三类no-start no-child、conditioned one-use observation、producer reducer receipt与trusted outcome
+  exit_signal: context缺失或swap与bare runner均失败，每physical start原子allocate register invoke并签handle，settlement绑定exact handle只签一次result；五attempt三lane完整，只有same-context已aborted exact signal或registered preparation failure能在零start时签一次observation再签decision，not-aborted plain-object clone swap reuse cross-context execution均失败；legacy-only只进audit，context从完整registry签seal且reducer不接caller facts数组，CodeGraph receipt覆盖所有started terminals并内部解析
+  verification: npm test -- --group streaming-ripgrep --case max-hits-groups --case multi-view-cap-and-order --case exit-outcome-table --case codegraph-outcome-trace --case physical-start-authority --case outcome-schema
+  artifacts: [request-scoped context exact signal and exact four-argument F3 F5 compile signatures, signal or registered preparation failure to one-use no-start observation and decision provenance hostile report, sync start handle async result inventory and bypass mutations, real codegraph status and ripgrep version bindings, three-lane invocation and legacy transactional group audit report, arrival-sort parity and maxHits table, generic preparation no-start and started-no-child unions, cwd identity replacement race report, physical result lane facts closed-set seal reducer and result-only CodeGraph receipt chain, distributive telemetry compile proof, opaque outcome mutation report]
+  status: pending
+- id: S4
+  action: 用same-context TrustedBackendDiscoveryHandoffV2向F3暴露complete-safe full set与provenance health legacy fallback，同时以expanded result facts reducer、CodeGraph receipt observation和no-retainedHits trace accessor闭合F6并保持legacy和F1C no-owner兼容
+  exit_signal: F3 replacement revision只import BackendExecutionContextV2 handoff type和accessor且四参数provider consumer ABI由同一compile fixture锁定，structural eligibility telemetry prefix factory registry不可达；started和no-start terminal handoff、full-set provenance health fallback request legacyCap swap均失败，legacy-only不进trace，F6看不到retainedHits或selectionEligibility且telemetry exact匹配BackendAttemptV2，complete fallback可选且production v1 deep exact
+  verification: npm run typecheck && npm test -- --group streaming-ripgrep --case eligibility-gate --case v1-parity-and-trace --case backend-trace-closure
+  artifacts: [F3 handoff full-set provenance health legacy fallback hostile report, CodeGraph result receipt observation and trace proof mutation report, F6 no-retainedHits API probe, zero-membership proof, complete fallback proof, v1 parity and exact-N delta, real trace owner inventory]
+  status: pending
+- id: S5
+  action: 完成真实大输出cleanup、包含F5-PROC-003的F4六格bindings、全量回归及architecture scope review QA acceptance
+  exit_signal: large stream有界且五次稳定，normal termination后direct descendant全dead，六格markers与全套core commands通过且无raw artifact
+  verification: npm run build && npm run typecheck && npm test -- --group streaming-ripgrep && npm test -- --group process-contract --group process-output-isolation --group process-cleanup --group ripgrep-backend --group codegraph-probe --group codegraph-parser --group codegraph-query-plan && npm test -- --group request-snapshot-cache --group relevance-ranking-budget --group canonical-locate-bridge && npm test && npm run test:golden -- --group streaming-ripgrep --case large-streaming-ripgrep && npm run test:golden -- --all && npm run test:mcp -- --all && npm run test:docs && npm run test:platform && python .codestable/tools/codestable-dod-contract-gate.py --design .codestable/features/2026-07-24-streaming-ripgrep/streaming-ripgrep-design.md --stage design
+  artifacts: [large bounded report, real cleanup evidence, six-cell marker reports, runner registry delta, architecture update, scope inventory, review QA acceptance]
+  status: pending
+checks:
+- id: C1
+  item: buffered run与runStreaming复用唯一spawn listener timer termination cleanup settle kernel且不存在第二套process state machine
+  source: design key decision 1 / S1
+  status: pending
+- id: C2
+  item: stdout与stderr exact N不终止，只有观察N加1 sentinel才limit且sentinel不保留不交给consumer
+  source: design key decision 2 / F5-PROC-001
+  status: pending
+- id: C3
+  item: kernel只对非空offered调用push且continue必须全消费，stop必须safe integer并消费1到offered length
+  source: design consumer progress contract / F5-PROC-003
+  status: pending
+- id: C4
+  item: NaN小数负数continue zero或partial stop zero或越界及throw固定consumer-invalid且suffix不重投
+  source: design consumer progress contract / F5-PROC-003
+  status: pending
+- id: C5
+  item: consumer在N内partial stop先于同chunkN加1，只有全消费N prefix仍continue时output limit获胜且chunk无关
+  source: design stop limit priority / F5-PROC-001
+  status: pending
+- id: C6
+  item: injected clock spawn event scheduler驱动primary reducer只冻结abort timeout limits stop invalid首trigger且process close exit signal不作为primary trigger
+  source: design primary trigger reducer / F5-PROC-002
+  status: pending
+- id: C7
+  item: settlement固定cleanup invariant高于finalizer invalid高于primary高于process-exit高于completed，push finish partial throw矩阵stdout可用性与settle once exact；kernel只验证top-level同步exact wrapper，任意TValue由consumer同步validator决定
+  source: design settlement verdict / F5-PROC-002
+  status: pending
+- id: C8
+  item: 无primary的close只调用一次finish，只有nonnegative safe integer exitCode加null signal可completed；null exit signal close非法pair固定process-exit并丢弃stdout；termination只调用一次partial且pending未终止line永不物化为hit
+  source: design stream completion and exit orthogonality
+  status: pending
+- id: C9
+  item: stderr使用bounded collector并执行相同N加1语义，内容不得进入outcome log或artifact
+  source: design stderr collector
+  status: pending
+- id: C10
+  item: maxLineBytes固定1048576且N payload加CRLF合法，N加1 payload在追加前失败，pending memory有界
+  source: design CRLF pending state / F5-STREAM-002
+  status: pending
+- id: C11
+  item: 每条LF终止line使用fatal UTF8 decoder且code point跨任意chunk boundary结果一致
+  source: design event validation / F5-STREAM-001
+  status: pending
+- id: C12
+  item: parser config显式allowContext且production固定false，FSM要求begin end平衡同path每scope至少一match、唯一terminal summary且summary后无event
+  source: design protocol FSM / F5-STREAM-003
+  status: pending
+- id: C13
+  item: production任何context立即拒绝，test-only allowContext时也只在已有match的open scope内且path逐code-unit一致，bytes-only path lines submatch全部拒绝
+  source: design protocol FSM and event validation / F5-STREAM-003
+  status: pending
+- id: C14
+  item: submatch start end按lines text UTF8 bytes验证范围且slice fatal decode后逐code-unit等于match text
+  source: design event and offset validation / F5-STREAM-003
+  status: pending
+- id: C15
+  item: summary counters安全且searches不少于scopes，searches-with-match matched-lines matches分别与matched scopes events submatches exact
+  source: design summary completeness / F5-STREAM-003
+  status: pending
+- id: C16
+  item: missing duplicate malformed summary empty scope和final unterminated line均consumer-invalid，exit0只接受positive matches且exit1只接受zero scope zero match，其他exit失败
+  source: design summary completeness / F5-EXIT-001
+  status: pending
+- id: C17
+  item: maxHits计parseMatch展开后的logical BackendHit且single event symbols按canonical order只保留至expanded N
+  source: design multi-view accumulator / F5-HITS-001
+  status: pending
+- id: C18
+  item: legacy lane严格复现旧file anchors以及group boundary分支slice后sort和natural completion分支sort后slice；每group先bounded staging，只有valid summary加accepted exit才原子commit，parser process summary exit失败discard当前group但保留anchors和此前commits；path source line reason symbol CRLF trim及complete算法deep exact
+  source: design multi-view accumulator / F5-MULTIVIEW-001
+  status: pending
+- id: C19
+  item: expanded达到N且仍有file process或group work冻结early-stop telemetry，其他active lane继续观察同process
+  source: design multi-view accumulator / F5-HITS-001
+  status: pending
+- id: C20
+  item: 所有lane冻结或完成后才consumer-stop，每active group最多一次process parse且terminal后不启动后续group
+  source: design shared process stop / F5-MULTIVIEW-001
+  status: pending
+- id: C21
+  item: expanded只有全部groups FSM完整无cap terminal时complete-safe-set且不得从legacy topN补齐
+  source: design complete-safe-set boundary
+  status: pending
+- id: C22
+  item: generic streaming failure union不含executable-not-found，区分no-child invalid other-spawn pre-aborted与started process-exit abort timeout two limits stop invalid cleanup；completed只保留合法integer exit加null signal
+  source: design safe process discriminated union / F5-EXIT-001
+  status: pending
+- id: C23
+  item: BackendPhysicalAttemptExecutorV2内部独占availability preparation并只resolve prepared或private-registry登记exact identity的AvailabilityProbePreparationFailureV2 other-spawn-error且不登记start；prepared与failure均绑定backend exact request context execution，prepared另绑定executable real codegraph status或rg version argv cwd bigint identity nonce，dedicated result明确not-found或other且绝不返回旧SafeProcessResult
+  source: design safe process discriminated union / F5-EXIT-001
+  status: pending
+- id: C24
+  item: generic invalid pre-aborted spawn返回完整SafeProcessNoChildResultV2；backend no-start只允许backend-bound executor在零start时从context exact request signal且已aborted或same-context registered preparation failure签一次opaque observation，再由same-context execution factory恢复backend reason counters签decision；not-aborted signal lookalike different signal、failure plain-object clone swap reuse、observation clone reuse及cross-backend context execution均在handoff前失败；executor-started availability或buffered streaming OS no-child有ordinal和signed result；三类均零consumer finalizer tree cleanup且不reject raw error
+  source: design backend mapping / F5-EXIT-001
+  status: pending
+- id: C25
+  item: executor-started stable executable not found映射backend-specific unavailable，其他started no-child映射failed process-error，started shared abort映射used aborted BACKEND_ABORTED，preparation failure invalid pre-abort no-start均无outcome
+  source: design backend mapping / F5-EXIT-001
+  status: pending
+- id: C26
+  item: complete-safe-set只允许used complete none，zero hit reason匹配backend且nonzero complete无reason
+  source: design strict outcome union / F5-OUTCOME-001
+  status: pending
+- id: C27
+  item: early-stop output-limit无reason，aborted只BACKEND_ABORTED，failed只BACKEND_PROCESS_FAILED，unavailable零hits
+  source: design strict outcome union / F5-OUTCOME-001
+  status: pending
+- id: C28
+  item: hitCount等于retainedHits length且hits深冻结不超lane cap，非法branch combination在factory拒绝
+  source: design strict outcome union / F5-OUTCOME-001
+  status: pending
+- id: C29
+  item: sealed ExpandedBackendAttemptReducerV2内的private outcome factory是唯一签发者并返回无own-property ValidatedBackendExecutionOutcomeV2，private WeakMap绑定真实shape execution context seal与完整physical result set，clone cast及原token跨execution均抛fixed invalid-outcome invariant
+  source: design trusted constructor / F5-OUTCOME-001
+  status: pending
+- id: C30
+  item: requireBackendExecutionOutcomeV2与completeSafeHitsV2仅供F5 factory tests；trace accessor把validated outcomes投影成逐union member不含retainedHits和selectionEligibility且exact匹配BackendAttemptV2的BackendExecutionTelemetryViewV2，F6只消费该value view
+  source: design trusted constructor / F5-ELIGIBILITY-001
+  status: pending
+- id: C31
+  item: F5 replacement revision让F3 production只import BackendExecutionContextV2 TrustedBackendDiscoveryHandoffV2与requireBackendDiscoveryHandoffForF3V2；同一compile fixture证明searchViews request signal context execution四参数provider consumer ABI exact且signal为context登记的exact request signal，accessor验证same request execution full-set hit identity querySeed matchedAnchor health legacy legacyCap fallback facts，noneligible与no-start raw prefix不可达且complete fallback可贡献
+  source: approved Epic delta / F5-ELIGIBILITY-001
+  status: pending
+- id: C32
+  item: CodeGraph availability exact argv为status --json repositoryRoot，missing unavailable cap unsupported timeout process error abort complete zero和nonzero映射同一outcome union
+  source: design CodeGraph contract / F5-CODEGRAPH-001
+  status: pending
+- id: C33
+  item: equal-cap shared与different-cap legacy-first expanded plans按laneMask执行，legacy-only plan group fallback及其failure只进compatibility audit不污染expanded outcome
+  source: design CodeGraph contract / F5-CODEGRAPH-001
+  status: pending
+- id: C34
+  item: canonical每request只创建一个BackendExecutionContextV2并把exact request AbortSignal一对一登记且禁止第二context复用；context内backend-bound executor独占preparation no-start observation ordinal registry runner invocation start-handle result signer；sync allocate register invoke后返回handle，async settle只签exact-handle result，facts factory在context登记expanded-related事实，seal从registry读取该backend全部相关starts并拒绝missing duplicate unsettled wrong-lane reorder late-start，reducer只接seal按first related ordinal归约
+  source: design trusted backend trace / F5-TRACE-001
+  status: pending
+- id: C35
+  item: CodeGraph result receipt接受每个started terminal并只从signed result内部strict解析completed stdout，valid映射available或missing-index，malformed exit error映射error，not-found映射tool-unavailable，其余terminal映射error；not-observed只在exact registry的expanded-related CodeGraph starts均为零时签发，caller无parsed-status注入口
+  source: design trusted backend trace / F5-TRACE-001
+  status: pending
+- id: C36
+  item: F5不创建backend request-outcome scope capability owner，real shadow仍缺四owner
+  source: canonical public contract ownership / F5-TRACE-001
+  status: pending
+- id: C37
+  item: F6独占public attempt ledger backend owner request-outcome fallback strategy abort status limits degradation actions，只消费F5 trace accessor已验证的no-retainedHits telemetry values与index facts且不重解stdout
+  source: canonical public contract backend outcome ownership
+  status: pending
+- id: C38
+  item: legacy独立lane保持两个旧物化分支及非边界v1 exact且arrival-sort反转不变，每active group不二次运行ripgrep，exact-N delta单独记录
+  source: design multi-view and F5-V1-001
+  status: pending
+- id: C39
+  item: normal early-stop output-limit abort timeout invalid返回前direct descendant全dead且listener timer consumer state释放
+  source: design cleanup guarantee / F5-CLEANUP-001
+  status: pending
+- id: C40
+  item: cleanup注入失败只承诺fixed invariant与direct hard kill，harness观察后test-only cleanup不冒充production
+  source: F4 cleanup boundary / F5-CLEANUP-001
+  status: pending
+- id: C41
+  item: F4-PROC-003和004在同revision迁移为exact-N success及N加1limit并移除旧assertions
+  source: design platform binding delta
+  status: pending
+- id: C42
+  item: F5-PROC-001含cleanup override marker、F5-PROC-003 exact含partial-valid-invalid-union top-level-async-finalizer-rejected与null-exit-or-signal-process-exit marker、F5-RG-001含exit-summary marker且与F5-CLEANUP-001使用冻结tuple加入六格
+  source: design platform binding delta
+  status: pending
+- id: C43
+  item: 六个platform tuple case marker全局唯一且expected actual markers exact，nonapplicable或skipped不伪pass
+  source: F4 platform contract
+  status: pending
+- id: C44
+  item: large synthetic与real temp repo记录bounded line hit stderr counters及五次stable outcome hash但不记录raw values
+  source: F5-LARGE-001
+  status: pending
+- id: C45
+  item: src process不得import ripgrep evidence且ripgrep stream不得spawn；canonical以外不得创建execution context，CodeGraph backend F3 multi-view Ripgrep backend不得持bare runner preparation port或child_process，production不得importtestkit或tools ci
+  source: reverse checks
+  status: pending
+- id: C46
+  item: 不新增stream parser依赖async consumer unbounded string arraydebug raw artifact或第二cleanup实现
+  source: explicit non-goals and cleanliness
+  status: pending
+- id: C47
+  item: package engines private license version及MCP CLI projector不变且production继续v1
+  source: compatibility boundary
+  status: pending
+- id: C48
+  item: implementation admission要求F2 F3 acceptance与F4 base远程matrix required-check acceptance均done，不预要求F5 markers；F5同revision自行扩closed union bindings owners markers并在实现后取得六格
+  source: design implementation admission
+  status: pending
+- id: C49
+  item: architecture更新kernel FSM multiview outcome trace F6 seam telemetry gate legacy删除条件并带source pointers
+  source: design section 4 / ACT-ARCH-UPDATE
+  status: pending
+- id: C50
+  item: exact scope allow manifest与check-path根目录覆盖全部staged unstaged untracked changes
+  source: ACT-SCOPE-CHECK
+  status: pending
+- id: C51
+  item: runner registry登记全部unit Golden platform cases且unknown group case contract marker失败
+  source: ownership inventory
+  status: pending
+- id: C52
+  item: framer用单byte pending CR处理CRLF，payload raw CR显式invalid且CR pipe LF孤立双CR边界有fixtures
+  source: design CRLF pending state / F5-STREAM-001
+  status: pending
+- id: C53
+  item: partial与finish都必须同步返回exact ok true value或ok false consumer-invalid union；top-level Promise thenable undefined missing extra key错误discriminant与throw固定consumer-invalid且不重试，nested Promise或thenable只由owner validator接受或拒绝
+  source: design consumer exception safety / F5-PROC-003
+  status: pending
+- id: C54
+  item: buffered compatibility projection逐项冻结completed exit0、completed nonzero、process-exit到旧non-zero-exit、generic other-spawn到旧spawn-error、no-child aborted、四种started termination及cleanup固定Promise rejection；executable-not-found与consumer-only kinds不可输入
+  source: design buffered compatibility projection truth table / F5-PROC-003
+  status: pending
+- id: C55
+  item: availability prepared token mutation覆盖cross-executable cross-probe reuse request swap nonce start-handle result cwd rename symlink bigint stat race及cross-execution，preparation只fixed minimal union且generic path永远不能产生executable-not-found
+  source: design dedicated availability preparation and execution ports / F5-EXIT-001
+  status: pending
+- id: C56
+  item: CodeGraph not-observed positive覆盖expanded zero-start与ripgrep-only，negative覆盖status query fallback任一already-start及registry clone cross-execution
+  source: design physical-start registry / F5-CODEGRAPH-001
+  status: pending
+- id: C57
+  item: physical-start-authority mutation覆盖context缺失或swap、singleton持runner、spawn-before-register、bare runner import、旁路registry、伪ordinal start-handle signed result lane facts receipt；正常路径每次start恰一ordinal entry handle和settled result
+  source: design unique physical-start authority / F5-START-AUTHORITY-001
+  status: pending
+- id: C58
+  item: S1 verification和artifacts必须显式包含buffered-compatibility-projection case及逐行结果，不能以group隐含覆盖替代
+  source: design S1 / buffered compatibility projection
+  status: pending
+- id: C59
+  item: F5 replacement revision的F3 import inventory只允许BackendExecutionContextV2 TrustedBackendDiscoveryHandoffV2 type与requireBackendDiscoveryHandoffForF3V2；F3 base design不反向import F5，outcome telemetry factory registry completeSafeHitsV2及raw retained prefix不可达
+  source: design outcome provenance / F5-ELIGIBILITY-001
+  status: pending
+- id: C60
+  item: accepted F4 base不含F5 IDs；F5同revision原子迁移F4两项boundary binding并把四项F5 binding加入closed union及process ripgrep fixture test-unit owner runner markers；unextended ID漏owner wrong-path zero-marker错tuple重复case缩小OS mutation失败且无test/platform
+  source: design platform binding delta / F4-EXT-001
+  status: pending
+- id: C61
+  item: F5-ELIGIBILITY-001 exact compile owners为test/unit/f3-f5-multiview-abi-v2.type-test.ts与testkit/fixtures/backend-execution-v2/f3-f5-handoff-v2.ts，证明started只接logical attempt、no-start只接same-context one-use observation签发的decision、普通cause或decision shape不可构造且legacyCap只能等于expected request legacyMaxHits
+  source: design F3 exact four-argument handoff / F5-ELIGIBILITY-001
+  status: pending
+- id: C62
+  item: F5-OUTCOME-001 exact compile owner test/unit/backend-telemetry-view-v2.type-test.ts证明DistributiveOmitV2逐member去除retainedHits和selectionEligibility、结果exact assignable BackendAttemptV2且used complete aborted failed unavailable各branch仍可按reasonCode穷举narrow，普通Omit回归或任一internal字段泄漏必须失败
+  source: design backend outcome strict union / F5-OUTCOME-001
+  status: pending
+- id: C63
+  item: F5-MULTIVIEW-001记录每group staging N和N加1、commit与discard counters，失败group不能泄漏partial legacy hits且此前commits与file anchors保持deep exact
+  source: design transactional legacy group staging / F5-MULTIVIEW-001
+  status: pending
+- id: C64
+  item: F5-TRACE-001证明context registry到closed-set seal到single reducer到handoff和trace共用同一logical attempt outcome，caller不能提交facts数组或parsed CodeGraph status，seal后late start固定失败
+  source: design physical result reducer and receipt authority / F5-TRACE-001
+  status: pending
+- id: C65
+  item: 17个stable IDs逐项具有exact executable group case fixture assertion runner contract path，testkit/runners/runner-registry.ts显式登记全部cases且unknown group case无fallback
+  source: design case fixture ownership inventory
+  status: pending
+dod:
+  commands:
+  - id: CMD-BUILD
+    command: npm run build
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-TYPECHECK
+    command: npm run typecheck
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-F5-UNIT
+    command: npm test -- --group streaming-ripgrep
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-PROCESS-REGRESSION
+    command: npm test -- --group process-contract --group process-output-isolation --group process-cleanup --group ripgrep-backend --group codegraph-probe --group codegraph-parser --group codegraph-query-plan
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-UPSTREAM-REGRESSION
+    command: npm test -- --group request-snapshot-cache --group relevance-ranking-budget --group canonical-locate-bridge
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-UNIT-ALL
+    command: npm test
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-F5-GOLDEN
+    command: npm run test:golden -- --group streaming-ripgrep --case large-streaming-ripgrep
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-GOLDEN-ALL
+    command: npm run test:golden -- --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-MCP-ALL
+    command: npm run test:mcp -- --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-DOCS
+    command: npm run test:docs
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-PLATFORM
+    command: npm run test:platform
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-YAML
+    command: python .codestable/tools/validate-yaml.py --file .codestable/features/2026-07-24-streaming-ripgrep/streaming-ripgrep-checklist.yaml --yaml-only
+    core: false
+    failure_handling: fix-or-block
+  - id: CMD-DOD-GATE
+    command: python .codestable/tools/codestable-dod-contract-gate.py --design .codestable/features/2026-07-24-streaming-ripgrep/streaming-ripgrep-design.md --stage design
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-SPEC
+    command: python .codestable/tools/codestable-spec-governance.py --root . analyze
+    core: false
+    failure_handling: fix-or-block
+  - id: CMD-DIFF-CHECK
+    command: git diff --check
+    core: false
+    failure_handling: fix-or-block
+  actions:
+  - id: A1
+    action: acceptance前更新architecture并记录三类no-start no-child、exact request signal或registered preparation failure到one-use observation再到decision的trust chain、request-scoped context、sync start async result authority、availability、producer reducer trace、F3 handoff与F6 no-hits seam
+    owner: feature implementer
+    blocking: true
+  - id: A2
+    action: 用exact allow manifest和check-path根目录执行scope gate
+    owner: feature implementer
+    blocking: true
+  - id: A3
+    action: owner授权后取得F4同revision六格F5 platform marker evidence
+    owner: repository owner
+    blocking: true
+  required_artifacts:
+  - process kernel extraction parity
+  - generic no-child minimal registered preparation failure and executor-started no-child shape counter ordinal outcome report
+  - exact request signal or registered failure to one-use no-start observation and decision provenance with not-aborted plain-object clone swap reuse cross-context and cross-execution hostile report
+  - N and N plus one byte, synchronous wrapper versus nested value validator, explicit S1 buffered compatibility projection, null-exit signal and terminal race reports
+  - JSON partition and invalid corpora
+  - protocol FSM path and byte-offset hostile corpus
+  - expanded shared legacy-only maxHits group invocation arrival-sort parity and compatibility audit
+  - availability preparation non-rejection, dedicated execution union, real CodeGraph status and Ripgrep version argv and cwd pre-post bigint identity report
+  - request-scoped execution context and F3 backend port signatures
+  - synchronous start-handle asynchronous signed-result inventory and bypass ordinal handle result mutation report
+  - safe process process-exit plus CodeGraph and Ripgrep outcome truth tables
+  - physical result expanded-lane facts closed-set seal logical reducer and result-only CodeGraph receipt producer chain mutation report
+  - trusted CodeGraph physical-start registry, zero-expanded-start observation and no-retainedHits backend trace mutation report
+  - F3 trusted handoff full-set hit provenance health legacy fallback request-signal context hostile accessor and zero-membership evidence
+  - v1 parity exact-N delta and real trace owner inventory
+  - real process cleanup and large bounded reports
+  - F4 base admission plus F5 same-revision closed-union four-binding fixture test-unit owner self-test mutations and exact top-level-async-finalizer-rejected six-cell marker evidence
+  - runner registry delta
+  - architecture update
+  - scope allow manifest and full changed-path inventory
+  - review QA acceptance
+  cleanliness:
+    raw_stdout_stderr_or_hit_artifact: forbidden
+    second_process_lifecycle_or_cleanup: forbidden
+    bare_runner_spawn_context_or_start_registry_bypass: forbidden
+    availability_raw_rejection_or_old_result_type: forbidden
+    f3_outcome_telemetry_factory_completeSafeHits_or_raw_prefix_import: forbidden
+    f6_retained_hits_access: forbidden
+    async_or_malformed_consumer_finalizer: forbidden
+    kernel_guessing_nested_consumer_value: forbidden
+    null_exit_or_signal_treated_as_completed: forbidden
+    existence_only_probe_cwd_verification: forbidden
+    reusable_or_request-swappable_probe_capability: forbidden
+    structural_or_cross_execution_codegraph_observation: forbidden
+    structural_or_unregistered_no_start_cause_observation_or_decision: forbidden
+    unbounded_line_or_full_stdout_buffer_in_ripgrep: forbidden
+    telemetry_hit_in_v2_evidence: forbidden
+    legacy_view_derived_from_expanded_prefix: forbidden
+    placeholder_public_owner: forbidden
+    new_stream_parser_dependency: forbidden
+    debug_output_todo_fixme_commented_code: forbidden

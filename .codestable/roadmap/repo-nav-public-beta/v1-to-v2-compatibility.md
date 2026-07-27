@@ -12,8 +12,10 @@ created: 2026-07-23
 v2 是一次明确的不兼容升级。RepoNav 当前 package 仍是 `0.x` 且未开放 npm 稳定安装，因此选择在 public-beta 前一次性修正安全与语义边界，不长期维护会继续暴露绝对路径和内容派生 ID 的 v1 双写模式。
 
 - F1 只建立 v2 assembler、安全策略和 strict schema 的 internal/test seam；production locate 仍返回 v1。
-- F2/F3/F5/F6/F7/F8 提供真实 v2 field facts。
-- F9 在全部 owner tests 通过后原子切换 service、MCP locate 和 debug CLI locate；不存在“部分字段为 v2、部分字段用占位值”的过渡输出。
+- F1A/F1B 在切换前修复 span redaction/corpus policy，并冻结 raw/public/aggregate resource budgets。
+- F1C 建立真实 service 的 typed fact envelope、required-owner finalizer 与 v1 projector；F3/F2/F5/F6/F7/F8 逐项提供真实 snapshot、ranking、backend、request outcome、scope 和 capability fragments。
+- 每项先从真实 envelope 验证自己的 fragment，并保持 v1 public regression；缺失 owner 不生成 v2。F8 才允许完整真实 v2 shadow result，但仍无 transport edge。
+- F9 在全部 owner tests 通过后只切换 projector binding，原子切换 service、MCP locate 和 debug CLI locate；不存在“部分字段为 v2、部分字段用占位值”的过渡输出。
 
 ## 2. 输入变化
 
@@ -26,6 +28,12 @@ v2 是一次明确的不兼容升级。RepoNav 当前 package 仍是 `0.x` 且�
 | `terms` / `negativeTerms` NFKC + trim | 保持不变 | 兼容 | 无 |
 | symbol/table/route/term anchor | 保持语义文本归一化 | 兼容 | 无 |
 
+### Runtime support
+
+| v1/current package | public-beta target | 兼容性 | 调用方动作 |
+|---|---|---|---|
+| `engines.node >=20` | `^22.0.0 || ^24.0.0` | **breaking**；Node 20 不在 beta 支持范围 | 在升级 RepoNav 前先升级到 Node 22 或 24；CI/容器固定受支持 major |
+
 ## 3. 输出变化
 
 | v1 | v2 | 兼容性/原因 |
@@ -34,12 +42,14 @@ v2 是一次明确的不兼容升级。RepoNav 当前 package 仍是 `0.x` 且�
 | `repositoryRoot: absolutePath` | `repositoryRef: "local-repository"` | breaking；阻断用户名、客户名和本机目录泄露 |
 | `normalizedTerms[].value` 原样 | 敏感 value 被替换并带 redaction | breaking；搜索词本身可能是 token、邮箱或连接串 |
 | location redaction 只表示 excerpt | file/symbol/excerpt 分字段 metadata；敏感 file 使用 `[REDACTED_PATH]` + `resolvable=false` | breaking；被隐藏路径不再宣称可导航 |
+| 无完整 output resource contract | normalized terms、evidence counts、raw/public fields（public term 128 bytes）、corpus 与 serialized response 均有 UTF-8 hard limits | breaking；超限 contract violation fail closed，不输出无界 payload |
 | `evidence:v1:{sha256}` | `evidence:v2:NNNN` | breaking；删除 raw excerpt hash 侧信道 |
 | ID 可跨相同内容请求稳定 | ID 只保证当前 response 唯一 | breaking；客户端不得跨请求持久化 |
-| class/role/file/line/id 固定排序 | anchor tier + 分 class round-robin + stable tie-break | breaking；数组顺序改变 |
+| class/role/file/line/id 固定排序 | anchor tier + 分 class round-robin + public-safe structured ordering；distinct selector/ordering collision 整组 defer/exclude，禁止 raw/hash tie-break | breaking；数组顺序改变且歧义组 fail closed |
 | coverage 仅含 backend/index/limit/exclusion | 新增 strategy、degradation、anchor、snapshot、scope、capability 字段 | breaking；所有新增字段都是 required |
 | backend `status/reasonCode/hitCount` | 增加 `completion` 和 `termination`；去掉未启动的 `skipped` ledger entry | breaking；只记录真实 attempt |
 | 无 abort source | request-level `abortSource: none|caller|deadline` | breaking；backend timeout 在 attempt 中表达 |
+| caller cancel 与 deadline 都表现为 `timeout` | caller 为 `cancelled`，deadline 为 `timeout` | breaking；调用方可准确区分用户取消与系统期限 |
 | 无 snapshot | `gitState/consistency/filesChecked/discardedEvidenceCount` | breaking；不返回 Git revision/object ID |
 | status 由旧 helper 决定 | 使用固定 precedence truth table | 行为变化；degradation/incomplete/unsatisfied anchor 可导致 partial |
 | anchor 无 satisfaction ledger | `unsatisfiedAnchors` 带 `candidate|none` 和原因 | breaking |
@@ -70,7 +80,7 @@ tool error code 保留四个值，但 v2 将完整 safe error union 纳入 stric
 - `no_result` 仍不能证明代码中不存在目标。
 - CodeGraph 仍为 primary，ripgrep 仍为显式 fallback。
 - 当前文件系统核验仍是 public evidence 的必要条件。
-- 顶层 status 名称和四个 tool error code 不扩张。
+- 四个 tool error code 不扩张；顶层 status 仅新增 `cancelled` 来区分 caller cancellation。
 
 ## 6. 客户端迁移步骤
 
@@ -80,10 +90,12 @@ tool error code 保留四个值，但 v2 将完整 safe error union 纳入 stric
 4. 不依赖 file 字典序；按数组顺序消费已完成 ranking 的结果。
 5. `location.resolvable=false` 时不构造本地跳转。
 6. 读取 `strategyComplete`、`unsatisfiedAnchors`、`degradations`、`snapshot`、`scope`、`abortSource` 和 `capabilities`。
-7. 区分 request abort 与 backend attempt termination。
+7. 区分 request abort 与 backend attempt termination；`cancelled` 表示 caller，`timeout` 表示整体 deadline，backend 自身 timeout 只看 attempt ledger。
 8. 允许公共 term、file、symbol、excerpt 包含有 metadata 的 redaction placeholder。
-9. CLI automation 不再强制提供 `--question`，但继续强制至少一个 `--term`；file anchor 改用 `/`。
-10. 对 MCP error 同时检查 `ok:false` 和 `isError=true`。
+9. 不假设任意长度 public payload；按 1 MiB result 上限配置客户端读取，并把 safe `INTERNAL_ERROR` 当作不可恢复 contract failure。
+10. CLI automation 不再强制提供 `--question`，但继续强制至少一个 `--term`；file anchor 改用 `/`。
+11. 对 MCP error 同时检查 `ok:false` 和 `isError=true`。
+12. 运行环境从 Node 20 升级到 Node 22 或 24；不要依赖未进入 blocking matrix 的 Node major。
 
 ## 7. Snapshot 与 Golden 迁移
 
@@ -92,6 +104,8 @@ tool error code 保留四个值，但 v2 将完整 safe error union 纳入 stric
 - final file check 失败、文件消失或不可读与内容变化同样 fail-closed：受影响 evidence 被丢弃且结果至少 partial；`snapshot.consistency=unknown` 不得与 retained evidence 共存。
 - 更新 snapshot 前必须先通过：
   - sensitive input/secret/root/Git-object/internal-hash forbidden scan；
+  - low-entropy corpus、placeholder amplification、phone negative 与 multi-reason permutation；
+  - raw/public/corpus/serialized-response N/N+1 和 multi-byte byte-budget mutation；
   - all-anchor priority 与 satisfaction truth table；
   - term/backend/anchor permutation stability；
   - response ID uniqueness；

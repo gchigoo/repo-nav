@@ -1,0 +1,433 @@
+feature: 2026-07-24-repository-scope-policy
+created: '2026-07-24'
+steps:
+- id: S1
+  action: 只搬不改行为地把既有layer resolver与constants抽入scope子目录并保留兼容export
+  exit_signal: 现有resolver classifier exclusion和v1 Golden在移动前后deep exact且无新增policy语义
+  verification: npm test -- --group repository-scope-policy --case move-only-characterization
+  artifacts: [move-only diff inventory, resolver characterization report, existing v1 Golden hash]
+  status: pending
+- id: S2
+  action: 复用F3 discriminated strict-expanded与frozen-legacy raw path lanes实现repo-scope-v1 comparison priority prefix segment与request scope canonicalization
+  exit_signal: source-flavor、drive-relative/absolute/UNC/device、三平台native/request backslash与legacy parity truth tables全部通过且duplicate conflict table fail closed
+  verification: npm test -- --group repository-scope-policy --case path-comparison --case priority --case request-scope
+  artifacts: [machine raw dual-lane table, comparison table, priority table, prefix segment table, request scope table, mutation report]
+  status: pending
+- id: S3
+  action: F7 pure path-only callback经F3登记为trusted adapter；F3建立expanded-legacy lane universe并在fixed 800和F2 maxFiles前fold；F7 base创建execution registrar并只登记direct classifier和candidate collector两个opaque ports，每record完整收集strict facts-or-none resolution后从private registry seal并由F3 record或derived-proposal basis verifier与唯一cross-port arbitrator materializer产draft
+  exit_signal: F3拒绝adapter universe callback membership与selector hostile mapping，legacy selected-set proof receipts pool完整且legacy-only不回填expanded；两个F7 base ports覆盖七种kind和合法none，每port每record恰一resolution，missing duplicate late或forged source固定失败，seal不接caller数组，F8 port尚不存在但neutral child admission resolver可用，overlap owner tie与allowed candidate-only严格符合唯一truth table
+  verification: npm test -- --group repository-scope-policy --case pre-budget-selection --case safe-key-collision --case filter-counts --case explicit-test-docs --case candidate-pool --case scope-bound-evidence-materializer-v2
+  artifacts: [F3 raw dual-lane and direct adapter registrar proof, hostile callback universe membership report, interned locator opaque identity ledger, legacy selection proof receipt pool integrity and no-expanded-backfill report, four-row pre-cap fold and fixed-800 selector proof, maxFiles expanded legacy lane matrix, pre-final lifecycle report, execution registrar two opaque base-port factories and neutral F8 child admission resolver staging inventory, complete port-set seal and late registration report, strict facts-none and fixed source error report, record and derived-proposal producer-basis receipt verifier no-F8-path probe, cross-port precedence owner tie and arbitration-only eight-row materializer mutation table]
+  status: pending
+- id: S4
+  action: F3从private excluded ledger签ScopeCoverageBasisV2，从post-final same-proof stable eligible scope view由buildScopeCoverageV1只读basis count并签opaque facts proof，再只经requireScopeCoverageFactsV1与requireScopeOutcomeContributionV2固定顺序accessors接入F1C和F6；F7 revision原子把F6 contributions改为materialization snapshot scope三项exact tuple且不预留future index 3
+  exit_signal: unmatched只由post-final stable eligible records决定，outside只经F3 narrow basis accessor；token execution pool snapshot fold coverage-basis proofs stable membership matched outside schema按固定顺序验证，三项tuple的missing extra duplicate reorder clone cross-execution source-proof swap在值前拒绝且三个owner accessor各exact一次，当前source type test graph无future capability slot type accessor fixture case check artifact import，count加减一 mixed included误计或任一swap统一无detail INTERNAL_ERROR，real shadow仍只缺capability
+  verification: npm test -- --group repository-scope-policy --case unmatched-stable-pool --case trust-proof --case real-owner-envelope
+  artifacts: [pre-post lifecycle matrix, stable eligible matched unmatched report, F3 ScopeCoverageBasis narrow count and mutation report, fold eligible evidence pool substitution mutation report, exact pre legacy stable decision ABI, materialization snapshot scope exact tuple owner-accessor and no-future-slot mutation report, real owner inventory, missing capability evidence, F8 dual seam contract]
+  status: pending
+- id: S5
+  action: 在已通过F4 base后由F7同revision加入exact unit registry tuple与四assertion六格path truth，并完成v1 compatibility large permutation及roadmap architecture contract scope review QA acceptance
+  exit_signal: F4 base不依赖F7资产；F7 child-owned union binding fixture owner markers同revision且self-test/六格通过，existing v1 deep exact且intentional delta固定，无raw path或premature v2输出
+  verification: npm test && npm run test:golden -- --all && npm run test:mcp -- --all && npm run test:docs && npm run test:platform
+  artifacts: [v1 compatibility Golden, large permutation hash, F4 exact registry tuple and self-test mutations, six-cell markers, architecture contract threat docs, scope inventory, review QA acceptance]
+  status: pending
+checks:
+- id: C1
+  item: S1只移动现有resolver constants并保留兼容export，不改变任何既有layer classification
+  source: design S1 / F7-MOVE-001
+  status: pending
+- id: C2
+  item: S1前后现有classifier exclusion ordering IDs和v1 Golden deep exact
+  source: F7-MOVE-001
+  status: pending
+- id: C3
+  item: F7不声明第二locator类型，policy只接收F3 VerifiedScopePolicyPathViewV2；backend native与request-anchor posix为discriminated input，raw string clone NUL POSIX absolute所有drive-prefix UNC device empty dot dotdot duplicate trailing在读取前拒绝
+  source: design key decision 1
+  status: pending
+- id: C4
+  item: Windows backend native backslash转换为slash，Linux darwin backend native backslash拒绝，backend或request POSIX slash三平台接受，caller backslash三平台拒绝；policy只执行ASCII A到Z lowercase
+  source: design key decision 2 / F7-PATH-001
+  status: pending
+- id: C5
+  item: CodeGraph与ripgrep raw value同时进入F3 strict expanded factory和LegacyBackendPathAdapterV1；只有legacy adapter可旧replaceAll posix normalize，expanded rejection固定empty incomplete且不改legacy，policy不处理separator或Unicode NFKC trim normalize
+  source: design key decisions 2 and 9
+  status: pending
+- id: C6
+  item: test segment集合含test tests __tests__ spec specs fixtures __fixtures__ e2e且精确匹配
+  source: design key decision 3 / F7-TEST-001
+  status: pending
+- id: C7
+  item: basename只按精确中缀 .spec. 或 .test. 命中test且优先于docs prefix与ordinary segments
+  source: design key decision 3 / F7-TEST-001
+  status: pending
+- id: C8
+  item: docs segment集合含doc docs documentation examples且extension集合为md mdx rst adoc
+  source: design key decision 4 / F7-DOCS-001
+  status: pending
+- id: C9
+  item: 根README md为docs而mydocs segment不按substring命中
+  source: design key decision 4 / F7-DOCS-001
+  status: pending
+- id: C10
+  item: explicit prefix只从root按segment vector匹配并覆盖roadmap冻结的client server db config映射
+  source: design key decision 5 / F7-PREFIX-001
+  status: pending
+- id: C11
+  item: 最长explicit prefix获胜且重复或同path冲突mapping在policy初始化时fail closed
+  source: design key decision 5 / F7-PREFIX-001
+  status: pending
+- id: C12
+  item: prefix未命中时从root到basename扫描ordinary segment并采用第一个精确匹配
+  source: design key decision 6 / F7-SEGMENT-001
+  status: pending
+- id: C13
+  item: packages foo server client示例稳定解析server且无规则命中解析unknown
+  source: design key decision 6 / F7-SEGMENT-001
+  status: pending
+- id: C14
+  item: 完整priority严格为test docs longest explicit prefix leftmost ordinary unknown
+  source: design key decisions 3 to 6
+  status: pending
+- id: C15
+  item: missing与empty layers得到requested空和固定effective client server db config unknown
+  source: design key decision 7 / F7-REQUEST-001
+  status: pending
+- id: C16
+  item: 显式layers去重并按REPO_LAYERS enum order生成requested effective unmatched
+  source: design key decision 7 / F7-REQUEST-001
+  status: pending
+- id: C17
+  item: included test docs decision恒为candidate-only，production unknown为allowed，未请求layer为excluded
+  source: design key decision 8
+  status: pending
+- id: C18
+  item: F7 callback先经F3 registerTrustedScopePolicyAdapterV2签token；F3 registrar绑定canonical expanded legacy lane universe pre-cap pool resolved scope execution，按unique interned locator直接调用path-only callback并向opaque identities fan-out后签observation
+  source: design key decision 9
+  status: pending
+- id: C19
+  item: adapter或universe clone callback swap lane membership add omit、decision replay、forged cross-execution observation或resolved scope mismatch在任何consumer前fail closed，temporary与F7 adapter都不能自行签F3 token
+  source: design key decisions 9 and 17 / F7-TRUST-001
+  status: pending
+- id: C20
+  item: F3在fixed 800前执行scope group fold并签proof与TrustedScopeFoldedSelectorViewV2，F2先经accessor验证token再执行anchor reservation与maxFiles，legacy selector保持旧budget arrival sort但从universe legacy subset取同一decision
+  source: design key decision 10 / F7-SELECT-001
+  status: pending
+- id: C21
+  item: F2只接收F3 opaque selector token anchor intents maxFiles execution且在任何facts观察前调用accessor，不得接收caller filtered pool、从public-safe file重算scope或用raw locator破safe-key tie
+  source: design key decision 10
+  status: pending
+- id: C22
+  item: F3 all-included同confirmation整组保留，all-excluded included-excluded mixed及allowed-candidate-only mixed按四行truth table整组排除并在proof中绑定全部groups eligible subset excluded ledger collision与resolved scope
+  source: design key decision 10 / F7-COLLISION-001
+  status: pending
+- id: C23
+  item: backend planner只接收requested layers，missing empty固定传空而不回填default effective；private completeness hint authoritative false
+  source: design key decision 11
+  status: pending
+- id: C24
+  item: CodeGraph显式非空requested layers继续按既有unsupported dimension处理且ripgrep与CodeGraph不得各自定义authoritative mapping或过滤hit
+  source: design key decision 11
+  status: pending
+- id: C25
+  item: F3 private file-anchor或range line symbol metadata由opaque identity ref表示，每identity exact绑定一个interned locator ref；same path跨backend occurrence共用ref且policy一次后fan-out，unique excluded identity只计一次OUTSIDE_LAYER_HINT且不占expanded budget
+  source: design key decision 12 / F7-FILTER-001
+  status: pending
+- id: C26
+  item: mixed safe group只把真实excluded identities加入F3 excluded ledger，included ambiguity只记collision incomplete与关联anchor BUDGET_EXCEEDED，negative count由后续F3 observation独立投影且不回写outside
+  source: design key decision 12 / F7-FILTER-001
+  status: pending
+- id: C27
+  item: direct classifier只接收included observation并在candidate-only时于classification源头禁止confirmed
+  source: design key decision 13 / F7-EXPLICIT-001
+  status: pending
+- id: C28
+  item: candidate-only direct mapping与symbol definition使用既有candidate reason和promotion contract而非低confidence confirmed
+  source: design key decision 13 / F7-EXPLICIT-001
+  status: pending
+- id: C29
+  item: candidate policy records contexts seeds neighbors reserved-token与F8 adapter选择都来自F3 pre-final view，view绑定observation fold eligible subset exact selection verified record execution；final check同时purge eligible与evidence两个池
+  source: design key decision 14 / F7-CANDIDATE-001
+  status: pending
+- id: C30
+  item: default test docs完全不参与candidate discovery，显式test docs derived result仍只能candidate，classification undefined只保留在eligible池而不冒充evidence
+  source: design key decision 14 / F7-CANDIDATE-001
+  status: pending
+- id: C31
+  item: matched set在negative merge dedupe与final snapshot purge后且F2 evidence budget前只从unique TrustedStableEligibleDiscoveryPoolV2 records计算
+  source: design key decision 15 / F7-UNMATCHED-001
+  status: pending
+- id: C32
+  item: classification undefined的post-final same-proof stable eligible record仍使layer matched，changed unreadable negative或scope-fold-excluded record不匹配；pre-final view不能宣称matched且stable evidence pool不能替代eligible pool
+  source: design key decision 15 / F7-UNMATCHED-001
+  status: pending
+- id: C33
+  item: unmatched严格等于effective减post-final matched并按enum order且不受final evidence truncation影响；F7 unmatched与F8 unsupported count读同一post-final proof，adapter选择只读pre-final view
+  source: design key decision 15 / F7-UNMATCHED-001
+  status: pending
+- id: C34
+  item: buildScopeCoverageV1以eligible pool snapshot proof fold proof ScopeCoverageBasisV2 resolved scope与execution调用F3 stable及coverage-basis accessors，outside只取basis的nonnegative safe count且F7无法读取excluded ledger或接受caller count；返回无own-property ScopeCoverageFactsV1 token并封存strict fragment contribution proof但不构造request-outcome
+  source: design key decision 16
+  status: pending
+- id: C35
+  item: requireScopeCoverageFactsV1和requireScopeOutcomeContributionV2 exact signatures按token proof execution、expected eligible snapshot fold coverage-basis resolved scope、stable membership matched、F3 basis outside、strict schema equality顺序验证；任一失败统一SCOPE_COVERAGE_INVARIANT映射fixed INTERNAL_ERROR且不暴露detail
+  source: design key decision 17 / F7-TRUST-001
+  status: pending
+- id: C36
+  item: synthetic trusted capability补齐完整envelope后finalizer拒绝candidate-only confirmed、scope fragment或contribution swap、eligible与evidence pool substitution、coverage-basis count加减一或pool proof execution swap、cross-execution proof且serializer调用零次
+  source: design key decision 17 / F7-TRUST-001
+  status: pending
+- id: C37
+  item: F8 adapter选择只能用requirePreFinalCapabilityViewV2加F7 requirePreFinalScopeDecisionV1，unsupported count只能用post-final stable capability/scope view加requireStableScopeDecisionV1，legacy只用requireLegacyScopeDecisionV1；不存在可替换宽ScopeDecisionAccessor对象，两阶段职责不可互换且不得复制path policy
+  source: design key decision 18
+  status: pending
+- id: C38
+  item: 800个excluded docs先于server且maxFiles一时expanded lane仍选server，799 800 801 eligible边界按fixed cap原子处理而legacy lane保持旧selector结果，existing top-level fixtures deep exact且delta独立Golden
+  source: design key decision 19 / F7-V1-001
+  status: pending
+- id: C39
+  item: v1 projector与v2 shadow复用同一canonical execution和scope observation但保持独立legacy与expanded selection lanes且不二次运行backend reader
+  source: design key decision 19
+  status: pending
+- id: C40
+  item: real envelope新增scope后required owner inventory恰好只缺capability且strict serializer仍未调用；F7 revision的RequestOutcomeAggregationContributionTupleV2 exact为PublicMaterializationContributionV2 SnapshotOutcomeContributionV2 ScopeOutcomeContributionV2且owner order固定materialization snapshot scope，missing extra duplicate reorder clone cross-execution source-proof swap在值前失败，当前无future index 3
+  source: design key decisions 16 and 20 / F7-ENVELOPE-001
+  status: pending
+- id: C41
+  item: production service MCP CLI仍只选择v1 projector且无第二transport或schema v2 output
+  source: design key decision 20
+  status: pending
+- id: C42
+  item: 每个unique interned locator只决策一次并向opaque identities fan-out，最大hit set五次permutation的fold proof excluded ledger eligible pool fragment count selection和hash稳定
+  source: design key decision 21 / F7-LARGE-001
+  status: pending
+- id: C43
+  item: F4 base验收不要求F7 ID文件marker；F7 revision原子扩展contractId union并加入F7-SCOPE-001 exact unit tuple、fixture和test/unit/scope-policy-platform.spec.ts owner，Node22 24三OS四assertion及删除字段 wrong-path zero-marker错tuple缩OS mutations通过
+  source: platform ownership / F7-SCOPE-001
+  status: pending
+- id: C44
+  item: roadmap与architecture显式拆分F3 raw双lane interned locator lane universe direct adapter registrar fold fixed cap opaque selector、pre-final classifier F8 adapter与post-final coverage F8 count，public contract threat compatibility scope manifest F4 registry review QA acceptance全部闭环
+  source: required actions and artifacts
+  status: pending
+- id: C45
+  item: group内排列 backend arrival raw locator origin discovery key与反向排序不得改变F3 fold proof excluded ledger collision anchor ledger或opaque selector membership
+  source: design key decision 10 / F7-COLLISION-001
+  status: pending
+- id: C46
+  item: all four safe-group rows覆盖全排列和fixed cap 799 800 801，fold发生在800与F2 maxFiles前，excluded groups不占discovery anchor file evidence budget且matched只来自后续post-final stable eligible records
+  source: design key decision 10 / F7-COLLISION-001
+  status: pending
+- id: C47
+  item: same private file-anchor或range tuple跨backend只计一个opaque identity且exact绑定interned locator ref，不同line symbol和pre-read aliases分别计数，backend permutation不产生代表ref，canonical merge不回写excluded ledger或outside
+  source: design key decision 12 / F7-FILTER-001
+  status: pending
+- id: C48
+  item: requirePreFinalScopeClassificationViewV2 requireLegacyScopeClassificationViewV2 requireStableEligibleScopeViewV2、F7三个exact lifecycle decision functions与buildScopeCoverageV1均在暴露decision或count前验证对应universe fold selection verified membership、snapshot eligible proof、ScopeCoverageBasis与same execution
+  source: design key decisions 9 16 and 17 / F7-TRUST-001
+  status: pending
+- id: C49
+  item: real missing capability case与synthetic complete hostile scope case分离，F1C missing-first不得遮蔽scope proof mutation
+  source: design key decision 17 / F7-TRUST-001
+  status: pending
+- id: C50
+  item: implementation等待F6 acceptance done；F3 F2 F4 base F6 acceptance后的actual接口签名 proof ordering与registry必须与本设计核对，漂移则重跑F7独立design review；F7 acceptance只要求两个F7-owned ports与neutral child admission resolver protocol，不得依赖F8 language port
+  source: design implementation admission
+  status: pending
+- id: C51
+  item: direct mapping加anchored symbol、direct mapping加term、anchored definition execution、anchored reference only、literal term、secondary、derived neighbor与合法none八行在allowed和candidate-only下的class role reasons promotions canonical symbol逐项符合唯一producer truth table，F8 adapter不得自建downgrade mapper
+  source: design candidate-only producer truth source / F7-MATERIALIZER-001
+  status: pending
+- id: C52
+  item: pre-final scope view只在observation fold eligible subset exact selection verified record execution全部绑定后可读并驱动classifier candidate F8 adapter；mixed safe group included member不能只凭observation重新进入
+  source: design key decisions 13-14 / F7-TRUST-001
+  status: pending
+- id: C53
+  item: post-final stable scope view必须绑定eligible pool opaque snapshot proof fold proof execution且只计算matched unmatched outside或F8 unsupported count，任何用其重新分类或adapter选择的mutation失败
+  source: design key decisions 15-18 / F7-UNMATCHED-001
+  status: pending
+- id: C54
+  item: backend response fallback和F2均不能提供cap，scope fold后唯一literal 800 authority与799 800 801 group边界可重算，800个excluded groups仍不消费cap
+  source: design key decision 10 / F7-SELECT-001
+  status: pending
+- id: C55
+  item: raw truth source覆盖C冒号foo C冒号 C斜杠foo drive absolute UNC device namespace、Windows native backslash接受、Linux darwin native backslash拒绝、POSIX三OS接受及caller backslash三OS拒绝
+  source: design key decisions 1-2 / F7-PATH-001
+  status: pending
+- id: C56
+  item: F7 base composition root先createScopeBoundProducerRegistrarV2再以exact registrar创建登记direct与candidate两个opaque ports；只允许F7 issue的one-use language-adapter child admission绑定neutral resolver，F8 port在后续revision原子扩展同一registrar，F7 base不实现不登记不依赖
+  source: design producer registrar and materializer / F7-MATERIALIZER-001
+  status: pending
+- id: C57
+  item: 每个base port只识别自己WeakMap source并返回exact facts-or-none；unregistered forged wrong-owner source抛SCOPE_PRODUCER_SOURCE_INVARIANT而非none，direct port六kind candidate port proposal-specific derived-neighbor及合法none覆盖八行，每port每record必须登记恰一resolution
+  source: F7-MATERIALIZER-001
+  status: pending
+- id: C58
+  item: legacy selector先签完整selected-set proof，F3按exact ordinal生成policy-only LegacySelectedPathReceiptV2并seal TrustedLegacySelectedPathPoolV2；漏项重复换序clone cross-execution拒绝，legacy-only ref不进入expanded pool且不得以expanded locator回填
+  source: design key decisions 9 and 12 / F7-FILTER-001
+  status: pending
+- id: C59
+  item: EligibleDiscoveryRefV2仅表示identity而不暗示stability；TrustedPreFinalEligibleRecordViewV2与TrustedPreFinalScopeRecordViewV2只在pre-final classification seam可用，TrustedStableScopeRecordViewV2与TrustedStableEligibleRecordViewV2必须绑定stable pool和snapshot proof，任何跨生命周期替换在读取前拒绝
+  source: design lifecycle API / F7-TRUST-001
+  status: pending
+- id: C60
+  item: port facts只携带producer kind和F3 VerifiedProducerBasisReceiptsV2完整opaque bundle及必要definition derived enums；direct record bundle与DerivedEvidenceProposalRefV2 proposal-specific bundle不可替换，F7只在arbitration调用requireScopeBoundProducerBasisV2后取得exact location provenance及safe term anchor symbol view，F8不能返回或覆盖path location provenance
+  source: design producer basis seam / F7-MATERIALIZER-001
+  status: pending
+- id: C61
+  item: producer precedence跨全部registered ports固定direct-anchored direct-term anchored-definition anchored-reference verified-literal secondary derived none；同kind owner tie固定direct-classifier language-adapter candidate-collector，direct加anchor、anchor加literal、literal加secondary、secondary加derived及semantic加derived每格只选一次
+  source: design producer overlap precedence table / F7-MATERIALIZER-001
+  status: pending
+- id: C62
+  item: registerScopeBoundProducerSourceV2把每port signed facts或none写入private record registry，sealScopeBoundProducerRecordSetV2不接caller数组且拒绝missing duplicate late port source，arbitrateScopeBoundEvidenceProducerV2输出唯一opaque proof；materializeScopeBoundEvidenceV2只接受该proof，all-none返回undefined且draft mapper零调用
+  source: design producer registrar and materializer / F7-MATERIALIZER-001
+  status: pending
+- id: C63
+  item: ScopeCoverageBasisV2 ScopeCoverageFactsV1与ScopeCoverageProofV1均opaque且fragment contribution只能由owner accessor暴露；F1C F6不得从visible fragment scalar反推trust、F7不得直接读excluded ledger或更改accessor validation ordering
+  source: design key decisions 16-17 / F7-TRUST-001
+  status: pending
+- id: C64
+  item: F7-MATERIALIZER-001逐项mutation registrar admission resolver port source source-receipt set-seal arbitration clone cross-execution，任一失败发生在basis value或draft前且complete set仍可对两个base owners执行exact arbitration
+  source: design key decision 23 / F7-MATERIALIZER-001
+  status: pending
+- id: C65
+  item: derived-neighbor必须先由F3 registerDerivedEvidenceProposalRefV2绑定verified token proposal，再由requirePreFinalDerivedProducerBasisReceiptsV2签bundle；seed record location或普通record bundle冒充proposal时失败
+  source: design key decision 23 / F7-MATERIALIZER-001
+  status: pending
+- id: C66
+  item: 19个F7 stable IDs逐项映射19个unique exact group case fixture assertion runner manifest contract或Golden owner path，runner registry与fixture ownership manifest拒绝unknown duplicate zero-run及抽象owner cell；F7-LARGE-001有独立large-scope-permutation case
+  source: design stable case fixture assertion runner ownership inventory
+  status: pending
+dod:
+  commands:
+  - id: CMD-BUILD
+    command: npm run build
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-TYPECHECK
+    command: npm run typecheck
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-F7-UNIT
+    command: npm test -- --group repository-scope-policy
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-F7-MATERIALIZER
+    command: npm test -- --group repository-scope-policy --case scope-bound-evidence-materializer-v2
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-UPSTREAM-REGRESSION
+    command: npm test -- --group request-snapshot-cache --group relevance-ranking-budget --group input-abort-contract-v2 --group direct-mapping-classifier --group candidate-truth-table --group candidate-discovery --group candidate-context --group candidate-classification --group candidate-budget --group candidate-permutation
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-UNIT-ALL
+    command: npm test
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-F7-GOLDEN
+    command: npm run test:golden -- --group repository-scope-policy
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-GOLDEN-ALL
+    command: npm run test:golden -- --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-MCP-ALL
+    command: npm run test:mcp -- --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-DOCS
+    command: npm run test:docs
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-PLATFORM
+    command: npm run test:platform
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-YAML
+    command: python .codestable/tools/validate-yaml.py --file .codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-checklist.yaml --yaml-only
+    core: false
+    failure_handling: fix-or-block
+  - id: CMD-DOD-GATE
+    command: python .codestable/tools/codestable-dod-contract-gate.py --design .codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-design.md --stage design
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-SCOPE-CHECK
+    command: python .codestable/tools/codestable-scope-gate.py --feature-dir .codestable/features/2026-07-24-repository-scope-policy --allow-file .codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-scope-allow.txt --check-path . --cleanliness-path src/repository/codegraph-json.ts --cleanliness-path src/repository/ripgrep-backend.ts --cleanliness-path src/evidence/scope --cleanliness-path src/evidence/request-snapshot --cleanliness-path src/evidence/ranking --cleanliness-path src/evidence/candidate-policy.ts --cleanliness-path src/evidence/direct-mapping-classifier.ts --cleanliness-path src/contracts --cleanliness-path test/unit --cleanliness-path test/golden --cleanliness-path testkit --stage implementation.before_review
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-SPEC
+    command: python .codestable/tools/codestable-spec-governance.py --root . analyze
+    core: false
+    failure_handling: fix-or-block
+  - id: CMD-DIFF-CHECK
+    command: git diff --check
+    core: false
+    failure_handling: fix-or-block
+  actions:
+  - id: A1
+    action: 更新roadmap与architecture记录F3 raw双lane interned locator lane universe registrar fold fixed-800 selector及ScopeCoverageBasis、F7 execution registrar two-base-port complete-set seal cross-port arbitration到F8 child admission resolver staging、record和derived-proposal producer-basis verifier与precedence、pre-post exact lifecycle、opaque scope facts proof accessor fixed ordering和F9 no-cutover
+    owner: feature implementer
+    blocking: true
+  - id: A2
+    action: 同步public contract threat compatibility的exact policy与intentional v1 delta
+    owner: feature implementer
+    blocking: true
+  - id: A3
+    action: 创建exact allow manifest并以CMD-SCOPE-CHECK对check-path根目录执行scope gate
+    owner: feature implementer
+    blocking: true
+  - id: A4
+    action: 在已通过F4 base后由F7同revision加入union binding fixture owner markers，owner授权后取得六格证据；F4 base不得要求F7资产
+    owner: repository owner
+    blocking: true
+  required_artifacts:
+  - move-only characterization and existing v1 baseline
+  - F3 strict expanded and frozen legacy raw path, comparison, priority, prefix, segment and request scope truth tables
+  - interned locator opaque identity and canonical expanded legacy lane universe report
+  - F3 direct trusted path-only adapter registrar and hostile callback membership report
+  - four-row pre-cap fold proof, fixed-800 opaque selector and maxFiles expanded legacy lane matrix
+  - frozen legacy selection proof policy-only receipt trusted pool integrity and no-expanded-backfill hostile report
+  - excluded ledger and anchor incomplete report
+  - F7 execution registrar two opaque base-port factories and neutral F8 child admission resolver staging inventory
+  - per-record complete port-set seal late registration and strict facts-or-none unregistered-source fixed-invariant report
+  - F3 record and derived-proposal basis term anchor symbol source receipt verifier and proposal-specific no-F8-path-location-provenance API probe
+  - cross-port mutually exclusive overlap precedence owner tie arbitration-only materializer eight-row truth mutation report
+  - pre-final classifier capability adapter and post-final matched unsupported lifecycle report
+  - neutral EligibleDiscoveryRefV2 and distinct pre-final stable record-view API probe
+  - matched unmatched same-proof stable eligible pool report
+  - opaque F3 ScopeCoverageBasisV2 count mutation plus ScopeCoverageFactsV1 and ScopeCoverageProofV1 exact accessor signatures fixed validation ordering error and contribution mutation report
+  - F6 current materialization snapshot scope exact three-contribution tuple owner-accessor inventory and missing extra duplicate reorder clone cross-execution source-proof swap plus no-future-index-3 mutation report
+  - scope observation fold eligible and evidence pool substitution mutation report
+  - synthetic complete hostile finalizer and real missing-capability evidence
+  - v1 compatibility Golden and intentional delta
+  - large permutation hash and four-assertion six-cell markers
+  - 19 stable ID unique exact group case fixture assertion runner manifest contract and Golden ownership inventory plus unknown duplicate zero-run self-test
+  - F4 base nondependency plus F7 child-owned exact unit registry tuple with fixture assertionOwner and union deletion wrong-path zero-marker wrong-tuple OS-set self-test mutations
+  - architecture contract threat compatibility updates
+  - scope allow manifest and full changed-path inventory
+  - review QA acceptance
+  cleanliness:
+    unicode_or_locale_lowercase_nfkc_trim_posix_normalize: forbidden
+    policy_level_backslash_conversion: forbidden
+    raw_absolute_or_unverified_path_in_scope_policy: forbidden
+    lossy_normalization_in_expanded_locator_or_outside_legacy_adapter: forbidden
+    parallel_locator_proof_or_platform_registry: forbidden
+    duplicate_scope_mapper_or_f8_policy_copy: forbidden
+    unadmitted_structural_scope_producer_callback_or_parallel_port_registry: forbidden
+    f8_language_port_required_or_registered_in_f7_base: forbidden
+    forged_scope_producer_source_treated_as_none: forbidden
+    producer_location_path_or_provenance_supplied_by_f8: forbidden
+    producer_overlap_double_materialization: forbidden
+    caller_supplied_producer_result_array_or_post_seal_registration: forbidden
+    materializer_accepts_raw_port_facts: forbidden
+    derived_proposal_uses_seed_record_location_or_provenance: forbidden
+    visible_scope_fragment_or_contribution_used_as_trust_token: forbidden
+    f7_direct_excluded_ledger_or_caller_outside_count: forbidden
+    scope_coverage_validation_order_or_fixed_error_drift: forbidden
+    stable_evidence_pool_used_for_eligibility: forbidden
+    backend_authoritative_layer_filter: forbidden
+    backend_effective_layers_backfill: forbidden
+    test_docs_confirmed_or_semantic_promotion: forbidden
+    second_request_outcome_owner_or_capability_placeholder: forbidden
+    raw_path_in_public_artifact: forbidden
+    premature_v2_transport: forbidden
+    debug_output_todo_fixme_commented_code: forbidden

@@ -2,127 +2,76 @@
 doc_type: roadmap-review
 roadmap: repo-nav-public-beta
 status: passed
-reviewed: 2026-07-23
-round: 3
+review_state: passed
+review_reason: round 10 independent full review passed with no remaining findings
+reviewer_id: /root/review_roadmap_r10
+reviewed: 2026-07-27
+round: 10
 ---
 
-# repo-nav-public-beta roadmap 审查状态
+# repo-nav-public-beta roadmap 独立审查报告
 
-## 1. Round 1 Scope And Inputs
+## Verdict
 
-- Independent reviewer：Task agent `/root/public_beta_roadmap_review`。
-- Verdict：`changes-requested`。
-- Roadmap SHA-256：`ADE68257B41EAC1938DA4509DB59E542E11F5245C52DC246BEC7F5DB66E8F991`
-- Items SHA-256：`7A3F132E6179B72DE8B53C75A3EE23280C48B4BDAFC106FE92B0A97F746763A4`
-- Public contract SHA-256：`1E7B7C4BF4C79C25AEE96547B5E384AD85CE25AF7311703589AAA454B288D447`
-- Compatibility SHA-256：`5AC6E8B05066DC8F33CF52AA3960F386278691444622D46F607AF0F675E97051`
-- Threat model SHA-256：`69D76561F83642B6F15BFE31845FFDD87DAC399AD1F4A3222F16F979DF8E56C5`
-- Related current architecture：`.codestable/architecture/system-repo-nav-foundation.md`
-- Related requirement：`.codestable/requirements/source-of-truth-evidence.md`
-- Review input：2026-07-22 外部静态 review 与当前 `fd1d528` 源码/测试基线。
+- Verdict: **PASSED**
+- Findings: blocking 0 / important 0 / nit 0
+- Independent reviewer: `/root/review_roadmap_r10`
+- Scope: roadmap、12-item DAG、public contract、compatibility、threat model、child current-revision closure、implementation admission与rollback containment
 
-## 2. Round 1 Findings
+本结论表示计划已经达到可实施的设计质量，但不等于实施授权。`all-child-designs-current-revision` 仍为 `pending`；收到统一 owner 确认前不得进入 implementation、goal driver、commit、merge、push、publish、release 或 cutover。
 
-### Blocking
+## Frozen top-level candidate
 
-1. v2 strict schema 未闭合，多个类型、reason/status transition 未定义；F1 又被要求在后续 field owner 前切换 v2，无法诚实交付。
-2. public snapshot 暴露 Git object ID，与“禁止稳定内容/仓库指纹”冲突。
-3. snapshot changed 只降级 status，仍可能返回变化文件的 stale confirmed。
-4. status、degradation、request abort、backend termination 和 unsatisfied anchor 缺少统一 precedence truth table。
+| Artifact | SHA-256 |
+|---|---|
+| Roadmap | `0AB8DDD41F4792A9B3F24EAF1C8B42988479D3C3CDB08413147050B1169A2470` |
+| Items | `449319D40886BFC3D972385ECFD45D585864ECF72266178F9C046E70C4ACE483` |
+| Public contract | `6F4FAB7C2FE9F317771C6161DDA02EEC1794968908D4532AAE220B0BEE02B2BC` |
+| Compatibility | `9C2AADD03DD5840CC41293E7F8A1857F3CB9551336EDD8D95943B39612130196` |
+| Threat model | `AD0733DA7D5F0CF4AF2656D4C9EDBB1C1268536B5F6887771AEA6001D09F570E` |
+| Approval report | `280C214E06EBB340AAE4AC7773DD4A6D97DFB7DBD4306191B90D811795E97CAB` |
 
-### Important
+## Frozen child manifest
 
-1. 敏感路径被部分替换后不能继续承诺可导航。
-2. ranking 未覆盖 table/route/term、anchor satisfaction、分 class round-robin 与 permutation 边界。
-3. scope 未报告 effective policy，默认/显式 test/docs 规则未冻结。
-4. streaming-ripgrep 缺少 ranking/public-contract 依赖。
-5. compatibility 未列出 file-anchor backslash 等 breaking changes。
-6. forbidden scan 的“不得包含原始 term”会错误禁止普通 normalized term。
-7. safe error union、MCP `isError` 和 CLI error parity 未闭合。
-8. “所有 CLI 输出共用 locate assembler”范围过宽。
-9. language extension mapping 与 unsupported hit count 时点未定义。
+| Item | Feature | Design SHA-256 | Checklist SHA-256 | Current review |
+|---|---|---|---|---|
+| F1 | public-output-boundary-v2 | `3B969CDE0E84A1FAC38FC5B0FC8F7A309F834946B80C40F17BC4047822368C87` | `312301CAC1BCA6D50F7F67EB2C97792EC423BE809C6EDE7FACDAB2F978804215` | passed; historical acceptance preserved |
+| F1A | span-redaction-corpus-policy-v2 | `7BCEE9CAB5146B0103DE53A22467C6E7C3F6483D05B9ADD544C8BC1F85D3D0AC` | `8493DD5060AA96CFF7A6F8DEF8577AC41C82D98A0B23740BB878E531506DF5C2` | passed |
+| F1B | public-result-resource-budgets-v2 | `45FBEC5630A819E857E7129D9FED40B79A0F992D36F3D4265578A2DE74824188` | `1DBB92D90314254EFB4901653C9C91C4D8628635360DD7F0241C06F19C25F4F8` | passed |
+| F1C | canonical-locate-facts-bridge | `4899E6D8E28C6F7E49CA3F24514650601CF6F7C9A970F3B159FA11AAA425743C` | `023CA266A3A9B18654293FCD9D282D6488371DF0CA60D9CF96056F351C1565BD` | Round 10 passed |
+| F3 | request-snapshot-cache | `857E4D79E99EF3E14A91CF24ACDC0DCE1B42C6EFA808CC049EF60C0BFF573D05` | `0BE46EFB212C31F19367AF480E18D52635D9D550B2971A4E5D4F7C85C0F23105` | Round 9 passed |
+| F2 | relevance-ranking-budget | `C62493F1AF9D2665D23200EB2B9CE16C155FE60551E48E309386FA49E085811D` | `DB46D02FB74A7C511C9902E2E629DA640DDBDF41B6BAC8889038AEDDC8EBB638` | Round 8 passed |
+| F4 | cross-platform-ci-baseline | `DC0CD6D7A044F839E66773213794F683279037FD6A509A019795835BC4A7A225` | `C35637921733064DE471D80D4B52225141FBA6DECB2693F74776E865169C3C56` | passed |
+| F5 | streaming-ripgrep | `0259AF422CCCAF1A298A57E476EE3885EFA235A84CA882AB69191CEED0C14C07` | `D2D6BF67E8F35E2B2F88C25E8B2286299EB7464A50C62E36DB3029E22476BCD0` | Round 4 plus focused closure passed |
+| F6 | input-abort-contract-v2 | `E636EA0ABA65F49AEDE9F6CEF2DABEC5254482FBAE32F561FA77AB41D7870C96` | `D01128E2F1347A23FA636ED71AA7D74CF086D380CB10463BAE700A5C60F1D6B6` | Round 5 passed |
+| F7 | repository-scope-policy | `12F70D7044F7CBFFAFBDCDEA6FD000B8C4C6AC8754736CA7CEDC20E0EE736BF7` | `C62AC314ACA9E3C81CD02405DEB3272D8AD239BDBC4BEF450A3DD8B3802AE7C7` | Round 2 passed |
+| F8 | language-capability-boundary | `753FDEE44D133B1FC830FC586E8A30B4E78DC246EEA43506574A36F3196E91EF` | `FA963F085BC500BDBB594C549512047264490BC4E36706EB6E2DDCA0DAA21728` | Round 7 passed |
+| F9 | public-beta-release | `A5669C02827E5FCEBB5CBB5FD05EF1FDFEA47B6BB50D6477F3F408B989F2DE3F` | `65A09D0F4968747DB97B073DA3CF28AB771A636018CD9269A99CB348BEBDFEF6` | Round 4 plus focused compatibility closure passed |
 
-### Additional
+## Closure evidence
 
-- approval report 需要限定为 PR-00 启动授权。
-- threat model 应覆盖 prompt injection、control/bidi/ANSI、恶意路径和 redaction placeholder collision。
-- 后续 feature design 需要稳定 case ID 与 fixture owner。
+1. **Lifecycle**：pre-stage只检查 `snapshot/ranking/scope/capability` 并拒绝预置 `backend/request-outcome`；aggregation fresh-add generated owners并返回completion-bearing token；finalizer禁止读取old partial envelope。
+2. **ABI evolution**：F6 acceptance只证明direct aggregation seam；F8是唯一production mount；contribution tuple按F6 `[materialization,snapshot]`、F7 `[...,scope]`、F8 `[...,capability]`原子演进。
+3. **F9 boundary**：F9只消费accepted façade/token，不导入prerequisite inspector、registrar、stage owner或acquisition factory；F9前production仍只可达v1。
+4. **Ordering and telemetry**：public-safe structured ordering、collision-atomic defer/exclude已冻结，禁止raw/hash tie-break；F5 `retainedHits`仅供内部诊断，F6只接收neutral telemetry。
+5. **Admission**：design-ready不等于implementation-ready；每个下游必须等待依赖项current-revision acceptance done，F9还要求全部上游acceptance和owner preflight。
+6. **Rollback**：任一accepted upstream contract/ABI/hash变化或revert都会级联使transitive downstream review、QA、acceptance和evidence hash失效；按reverse DAG回退或完整重跑closure，期间冻结下游admission与F9。
+7. **DAG**：12 items无环，唯一minimal loop为F1B；F3/F2/F8保留原子item，但各自以S1-S5 fail-fast阶段控制规模风险。
 
-## 3. Main-Agent Verification And Revision
+## Mechanical and baseline evidence
 
-主 agent 对照当前 strict Zod v1 contract、safe public error policy 和 roadmap DAG 逐项复核，接受上述 findings，并完成以下修订：
+- YAML validation：passed。
+- 12组DoD Contract gate：passed。
+- Spec-governance inventory/analyze：`OK: True`。
+- Canonical seam：roadmap/public-contract中的136行契约逐字一致。
+- `git diff --check`：passed。
+- Baseline code candidate（2026-07-27，planning文档修改前后功能代码未变）：build、typecheck、unit 214/214、Golden 71 passed + 1 approved skip、MCP 39/39、docs smoke均通过。
+- Threat T13覆盖missing prerequisite、preseed generated owner、completion-token clone/swap/cross-execution、old-envelope substitution以及F6 direct/F8 mount边界。
 
-- F1 改为 internal/test v2 assembler 安全最小闭环；F9 在所有真实 field producer 就绪后原子 cutover，禁止 placeholder coverage。
-- `public-contract-v2.md` 定义完整 request/success/error/evidence/coverage 枚举和结构，以及 status precedence。
-- 删除 public Git revision/object ID；snapshot 只报告粗粒度 `gitState`。
-- final snapshot check 在公共 ID 分配前执行；变化文件的 confirmed/candidate 全部丢弃且不重读。
-- request-level `abortSource` 收窄为 `none|caller|deadline`；backend termination 进入 attempt ledger。
-- 敏感 path 整体替换为 `[REDACTED_PATH]` 并设置 `resolvable=false`。
-- 冻结五类 anchor tier/satisfaction、anchor reservation、分 class round-robin 和 permutation 规则。
-- 冻结 `repo-scope-v1` 映射、默认 effective scope、test/docs candidate-only 规则。
-- F5 依赖改为 `cross-platform-ci-baseline + relevance-ranking-budget`。
-- compatibility 增补 input/output/error/transport breaking changes。
-- language mapping 固定 TS/JS/SQL extensions，并定义 unsupported count 的过滤与预算时点。
-- threat model 增补 untrusted evidence、control/bidi/ANSI、恶意路径和 placeholder collision。
-- approval report 增加 `approval_scope: start-pr00-contract-planning-only`。
+## Residual execution risk
 
-## 4. Round 2 Reviewed Hashes
+本轮只审查计划与设计，不替代未来runtime evidence。F3/F2/F8实现面较大，实施时必须保持其S1-S5 fail-fast stage、scoped commit和current-revision gate；任一红项停止当前feature且不得推进下游。remote ruleset、merge、push、tag、license、`private: true`变更、npm publish、GitHub release和production cutover仍是独立owner动作。
 
-- Roadmap SHA-256：`4E4B8CE162EF492D0164AED4E918C3CF0F45C862A4B60616DD0C9A0006E5BF20`
-- Items SHA-256：`661787C263AEE7E5F65B4DF3B78359DCDC775EA679D2BF91C8589A438E7CE197`
-- Public contract SHA-256：`CD560BDEB42E3D2080CB5D278DA2E09816111169E2FEE261C425ED8E0294A62E`
-- Compatibility SHA-256：`0C1D5DE5FA9237049EEF29CDD40F68E6AA6CB87E640FCA3B12ADEDC7C0BEA6A8`
-- Threat model SHA-256：`739044951ACB61FBAC2860F90B36F52EED08FF2232D91992F4987BBD90939D33`
+## Next gate
 
-## 5. Round 2 Findings And Revision
-
-Round 2 独立 verdict 仍为 `changes-requested`，但确认 Round 1 的四个 blocking 与九个 important findings 均已关闭。新 findings：
-
-1. **Blocking**：`repo-scope-v1` 遗漏 `.spec/.test` basename、fixture/spec segments、docs extensions 和 multi-layer 冲突优先级，可能把 test fixture 重新提升为 production confirmed。
-2. **Blocking**：snapshot `unknown` 未 fail-closed；final check 失败、消失或不可读仍可能保留 stale evidence。
-3. **Important**：F1 redaction metadata、`resolvable`、response ID 连续性和 canonical collection order 缺少 cross-field invariant。
-4. **Important**：F5 的 maxHits/output cap/backend timeout/request abort/non-zero exit 没有完整映射到 termination、limit、degradation 和 strategy completeness。
-
-主 agent 接受并完成以下修订：
-
-- scope 冲突顺序冻结为 `test > docs > longest explicit prefix > leftmost ordinary segment > unknown`，恢复现有 basename、fixture/spec segment 和 docs extension 边界，并列出 blocking fixtures。
-- retained evidence 只能来自 final check 成功且未变化文件；变化、消失、不可读和 identity/stat 失败全部丢弃并强制 partial；`unknown` 只允许零已读文件且零 evidence。
-- 增加 redaction fields、placeholder/resolvable、metadata exactness、term redaction、ID `0001..N` 连续性和 nextActions canonical order 的 `superRefine` invariant。
-- 增加 termination mapping table，冻结六类 process event 及完整 fallback 对 provisional degradation/strategy 的影响。
-
-## 6. Round 3 Candidate Hashes
-
-- Roadmap SHA-256：`A8C3278E1DDAF74D9A9E177C0669A7024839485F0C15DF30E5F04F81E6075525`
-- Items SHA-256：`7BC7DC36AC21EBF20616490A0B4310C93E88F858B005CDA96CF2598BD6AA8441`
-- Public contract SHA-256：`2CB77858AC46BFD091D19A47E56566102A75A5B7AFCBB307264FB46A5E0636FA`
-- Compatibility SHA-256：`C5E58D5BA2BD3C95BB1B4754E57388F41C6225596AF3EF5F83EF97EB3756BB02`
-- Threat model SHA-256：`8E8EFD5812E0603EA82403C2BC85D8A3CFCAD7CA52C76E33F298063635069C2A`
-
-## 7. Deterministic Checks
-
-- Markdown/YAML UTF-8、frontmatter、尾随空白和 code fence 检查通过。
-- items.yaml：9 条唯一 item、状态均为 `planned`、依赖均存在、DAG 无环。
-- 唯一 minimal loop：`public-output-boundary-v2`，但只交付可测试的内部 v2 安全边界，不提前切换生产。
-- Roadmap、contract、compatibility、threat model 本地链接检查通过。
-- `validate-yaml` 通过。
-- `codestable-spec-governance inventory/analyze` 通过且无 finding。
-- 上一轮 `codestable-doctor` 对本 roadmap 无 finding；全仓一个既有 P1 位于 `.codestable/features/2026-07-10-debug-cli-mcp-guide/debug-cli-mcp-guide-review.md`，不属于本次 diff。
-
-## 8. Round 3 Independent Verdict
-
-- Reviewer：Task agent `/root/public_beta_roadmap_review`。
-- Verdict：`passed`。
-- Blocking：无。
-- Important：无仍会阻断 F1 design 的问题。
-- Reviewer 确认 Round 3 五份 candidate hash 与本报告完全匹配，F1 internal/test seam 与 F9 atomic cutover 闭合。
-- 本次通过只结束 roadmap review gate，允许进入 `public-output-boundary-v2` feature design；不自动授权 implementation、commit、merge、push 或发布。
-
-## 9. Activation Record
-
-- 2026-07-23：owner 已通过“按计划开始推进”授权 PR-00，round 3 独立审查通过后激活 roadmap。
-- 激活动作仅把主文档 `status: draft` 改为 `status: active`；正文、contract、threat model 与 items DAG 未改变，因此无需重跑独立语义 review。
-- Active roadmap SHA-256：`DCB4EA863C43E7A3FC32FD07197409DAD8358225B31C96E6F72ECE94F92AC797`
-- Items SHA-256：`7BC7DC36AC21EBF20616490A0B4310C93E88F858B005CDA96CF2598BD6AA8441`
-- Public contract SHA-256：`2CB77858AC46BFD091D19A47E56566102A75A5B7AFCBB307264FB46A5E0636FA`
-- Compatibility SHA-256：`C5E58D5BA2BD3C95BB1B4754E57388F41C6225596AF3EF5F83EF97EB3756BB02`
-- Threat model SHA-256：`8E8EFD5812E0603EA82403C2BC85D8A3CFCAD7CA52C76E33F298063635069C2A`
+向owner提交命名决策 `all-child-designs-current-revision`。只有owner明确批准当前统一设计包后，F1A与F4才成为首批可进入implementation的item；其余item继续按DAG等待上游acceptance done。

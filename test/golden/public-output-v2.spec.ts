@@ -58,7 +58,7 @@ describe.runIf(projectionSelected)('public output v2 hostile field projection', 
       excerpt: {
         value:
           'postgres://[REDACTED]@example.test/app?token=[REDACTED] ' +
-          'owner=[REDACTED][REDACTED]',
+          'owner=[REDACTED]',
         reasonCodes: [
           'CONNECTION_STRING',
           'PERSONAL_DATA',
@@ -91,7 +91,7 @@ describe.runIf(projectionSelected)('public output v2 hostile field projection', 
     }
     term.value = `password=${forbidden}`;
     evidence.location.file = `src/${forbidden}/config.ts`;
-    evidence.location.symbol = `databasePassword${forbidden}`;
+    evidence.location.symbol = `databasePassword-${forbidden}`;
     evidence.location.excerpt = `password=${forbidden}`;
 
     const parsed = assemblePublicLocateResultV2(raw);

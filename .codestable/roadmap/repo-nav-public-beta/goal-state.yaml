@@ -1,0 +1,148 @@
+roadmap: repo-nav-public-beta
+status: running
+baseline_ref: 9d7b0e237e3cd9245d1f057a2ad504b1d1028d7d
+driver_kind: host-agent
+driver_id: "06c57bbc-6ea2-4038-a133-a77038e95a06"
+execution_confirmation_id: "ge-6e44d402368a"
+acceptance_authorization: approved
+acceptance_authorization_ref: "approval-report.md#goal-acceptance"
+commit_authorization: approved
+commit_authorization_ref: "approval-report.md#goal-commits"
+handoff_reason: ""
+handoff_next: ""
+current_feature_index: 2
+features:
+- slug: public-output-boundary-v2
+  roadmap_item: public-output-boundary-v2
+  feature_dir: .codestable/features/2026-07-23-public-output-boundary-v2
+  design: .codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-design.md
+  checklist: .codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-checklist.yaml
+  review: .codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-review.md
+  qa: .codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-qa.md
+  acceptance: .codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-acceptance.md
+  status: accepted
+- slug: span-redaction-corpus-policy-v2
+  roadmap_item: span-redaction-corpus-policy-v2
+  feature_dir: .codestable/features/2026-07-24-span-redaction-corpus-policy-v2
+  design: .codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-design.md
+  checklist: .codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-checklist.yaml
+  review: .codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-review.md
+  qa: .codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-qa.md
+  acceptance: .codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-acceptance.md
+  status: accepted
+- slug: cross-platform-ci-baseline
+  roadmap_item: cross-platform-ci-baseline
+  feature_dir: .codestable/features/2026-07-24-cross-platform-ci-baseline
+  design: .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-design.md
+  checklist: .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-checklist.yaml
+  review: .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-review.md
+  qa: .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-qa.md
+  acceptance: .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-acceptance.md
+  status: pending
+- slug: public-result-resource-budgets-v2
+  roadmap_item: public-result-resource-budgets-v2
+  feature_dir: .codestable/features/2026-07-24-public-result-resource-budgets-v2
+  design: .codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-design.md
+  checklist: .codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-checklist.yaml
+  review: .codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-review.md
+  qa: .codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-qa.md
+  acceptance: .codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-acceptance.md
+  status: pending
+- slug: canonical-locate-facts-bridge
+  roadmap_item: canonical-locate-facts-bridge
+  feature_dir: .codestable/features/2026-07-24-canonical-locate-facts-bridge
+  design: .codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-design.md
+  checklist: .codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-checklist.yaml
+  review: .codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-review.md
+  qa: .codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-qa.md
+  acceptance: .codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-acceptance.md
+  status: pending
+- slug: request-snapshot-cache
+  roadmap_item: request-snapshot-cache
+  feature_dir: .codestable/features/2026-07-24-request-snapshot-cache
+  design: .codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-design.md
+  checklist: .codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-checklist.yaml
+  review: .codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-review.md
+  qa: .codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-qa.md
+  acceptance: .codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-acceptance.md
+  status: pending
+- slug: relevance-ranking-budget
+  roadmap_item: relevance-ranking-budget
+  feature_dir: .codestable/features/2026-07-24-relevance-ranking-budget
+  design: .codestable/features/2026-07-24-relevance-ranking-budget/relevance-ranking-budget-design.md
+  checklist: .codestable/features/2026-07-24-relevance-ranking-budget/relevance-ranking-budget-checklist.yaml
+  review: .codestable/features/2026-07-24-relevance-ranking-budget/relevance-ranking-budget-review.md
+  qa: .codestable/features/2026-07-24-relevance-ranking-budget/relevance-ranking-budget-qa.md
+  acceptance: .codestable/features/2026-07-24-relevance-ranking-budget/relevance-ranking-budget-acceptance.md
+  status: pending
+- slug: streaming-ripgrep
+  roadmap_item: streaming-ripgrep
+  feature_dir: .codestable/features/2026-07-24-streaming-ripgrep
+  design: .codestable/features/2026-07-24-streaming-ripgrep/streaming-ripgrep-design.md
+  checklist: .codestable/features/2026-07-24-streaming-ripgrep/streaming-ripgrep-checklist.yaml
+  review: .codestable/features/2026-07-24-streaming-ripgrep/streaming-ripgrep-review.md
+  qa: .codestable/features/2026-07-24-streaming-ripgrep/streaming-ripgrep-qa.md
+  acceptance: .codestable/features/2026-07-24-streaming-ripgrep/streaming-ripgrep-acceptance.md
+  status: pending
+- slug: input-abort-contract-v2
+  roadmap_item: input-abort-contract-v2
+  feature_dir: .codestable/features/2026-07-24-input-abort-contract-v2
+  design: .codestable/features/2026-07-24-input-abort-contract-v2/input-abort-contract-v2-design.md
+  checklist: .codestable/features/2026-07-24-input-abort-contract-v2/input-abort-contract-v2-checklist.yaml
+  review: .codestable/features/2026-07-24-input-abort-contract-v2/input-abort-contract-v2-review.md
+  qa: .codestable/features/2026-07-24-input-abort-contract-v2/input-abort-contract-v2-qa.md
+  acceptance: .codestable/features/2026-07-24-input-abort-contract-v2/input-abort-contract-v2-acceptance.md
+  status: pending
+- slug: repository-scope-policy
+  roadmap_item: repository-scope-policy
+  feature_dir: .codestable/features/2026-07-24-repository-scope-policy
+  design: .codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-design.md
+  checklist: .codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-checklist.yaml
+  review: .codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-review.md
+  qa: .codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-qa.md
+  acceptance: .codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-acceptance.md
+  status: pending
+- slug: language-capability-boundary
+  roadmap_item: language-capability-boundary
+  feature_dir: .codestable/features/2026-07-24-language-capability-boundary
+  design: .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-design.md
+  checklist: .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-checklist.yaml
+  review: .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-review.md
+  qa: .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-qa.md
+  acceptance: .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-acceptance.md
+  status: pending
+- slug: public-beta-release
+  roadmap_item: public-beta-release
+  feature_dir: .codestable/features/2026-07-24-public-beta-release
+  design: .codestable/features/2026-07-24-public-beta-release/public-beta-release-design.md
+  checklist: .codestable/features/2026-07-24-public-beta-release/public-beta-release-checklist.yaml
+  review: .codestable/features/2026-07-24-public-beta-release/public-beta-release-review.md
+  qa: .codestable/features/2026-07-24-public-beta-release/public-beta-release-qa.md
+  acceptance: .codestable/features/2026-07-24-public-beta-release/public-beta-release-acceptance.md
+  status: pending
+ledger:
+- step: dispatch-goal-driver
+  status: started
+  driver_id: "06c57bbc-6ea2-4038-a133-a77038e95a06"
+  note: host-agent goal driver dispatched after owner authorization
+- step: f1a-feature-start
+  status: started
+  feature: span-redaction-corpus-policy-v2
+  index: 1
+  note: implementationReady verified; entering cs-feat implementation
+- step: f1a-implementation
+  status: done
+  feature: span-redaction-corpus-policy-v2
+  note: S1-S5 done; scope/dod/evidence-pack passed; entering independent code review
+- step: f1a-review
+  status: done
+  feature: span-redaction-corpus-policy-v2
+  note: independent subagent review passed blocking=0
+- step: f1a-qa
+  status: done
+  feature: span-redaction-corpus-policy-v2
+  note: independent QA runner passed; core commands green
+- step: f1a-acceptance
+  status: done
+  feature: span-redaction-corpus-policy-v2
+  note: ResumeGoalAcceptance approval-report.md#goal-acceptance; index->2

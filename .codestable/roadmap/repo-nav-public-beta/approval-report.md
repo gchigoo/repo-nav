@@ -212,3 +212,5 @@ license 选择或 production cutover；这些仍需各自独立 owner authorizat
 ### Non-Automatic Actions
 
 即使批准本决策，也不自动 merge 到 `main`、不 publish、不 cutover production v2。
+
+- 2026-07-28：F5–F8 已在 goal-acceptance/goal-commits（`ge-6e44d402368a`）下本地验收并 scoped-commit 至 tip `2457a7a`。下一 feature `public-beta-release`（F9）触发 **RiskAcceptanceNeeded owner-stop**：需要独立授权覆盖 v2 projector cutover、license 选定、`private:true` 保留策略，以及任何 merge/push/tag/npm publish/GitHub Release。现有 `goal-acceptance`/`goal-commits` 不覆盖上述动作。

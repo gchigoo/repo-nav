@@ -18,7 +18,10 @@ import {
 } from '../../src/evidence/canonical/locate-projection-stage-registrar-v2.js';
 import { createV2ShadowLocateProjectorV2 } from '../../src/evidence/canonical/v2-shadow-locate-projector.js';
 import { requireTrustedSerializedLocateResultV2 } from '../../src/evidence/canonical/trusted-serialized-locate-result-v2.js';
-import { issueLocateProjectionExecutionCapabilityV2 } from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
+import {
+  issueLocateProjectionExecutionCapabilityV2,
+  requireLocateProjectionExecutionTokenV2,
+} from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
 import {
   FACT_CONTRACT_OWNER_ORDER_V2,
   FACT_CONTRACT_PREREQUISITE_ORDER_V2,
@@ -34,6 +37,15 @@ import {
   defaultMaterialization,
   defaultRequestOutcome,
 } from '../../testkit/testing/create-synthetic-locate-projection-preparation-port-v2.js';
+import {
+  assertOpaqueSnapshotProofSurfaceV2,
+  assertSnapshotTrustFinalizerInvariantV2,
+  createDistinctRecordEntryBrandsV2,
+  createOpaqueTokenV2,
+  runFinalSnapshotCheckV2,
+  type SnapshotTrustProofV2,
+} from '../../src/evidence/request-snapshot/index.js';
+import { SNAPSHOT_TRUST_MUTATIONS_OWNED_V2 } from '../../testkit/fixtures/request-snapshot-v2/snapshot-trust-mutations-v2.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
 const contractSelected = isSelected({
@@ -55,6 +67,10 @@ const realShadowSelected = isSelected({
 const syntheticShadowSelected = isSelected({
   group: 'canonical-locate-bridge',
   caseId: 'canonical-synthetic-shadow-serialization',
+});
+const snapshotTrustSelected = isSelected({
+  group: 'request-snapshot-cache',
+  caseId: 'snapshot-trust-finalizer',
 });
 
 describe.runIf(contractSelected)('F1C-CONTRACT-001 fact contract', () => {
@@ -316,6 +332,59 @@ describe.runIf(syntheticShadowSelected)(
       expect(() =>
         requireTrustedSerializedLocateResultV2(attempt.serialized, other),
       ).toThrow(/capability/i);
+    });
+  },
+);
+
+describe.runIf(snapshotTrustSelected)(
+  'F3-TRUST-001 snapshot-trust-finalizer',
+  () => {
+    it('keeps opaque proof and rejects pool-external drafts', async () => {
+      expect(SNAPSHOT_TRUST_MUTATIONS_OWNED_V2).toBe(true);
+      const brands = createDistinctRecordEntryBrandsV2();
+      expect(brands.preFinalEligible).not.toBe(brands.stableEligible);
+      expect(Object.keys(brands.preFinalEligible)).toEqual([]);
+
+      const final = await runFinalSnapshotCheckV2({
+        repositoryRoot: '/tmp/unused',
+        loadedFiles: [],
+        evidencePool: {
+          records: [],
+          preRankingPoolTruncated: false,
+          safeSelectionCollision: false,
+        },
+        eligiblePool: { records: [] },
+        gitState: 'unknown',
+        signal: new AbortController().signal,
+      });
+      assertOpaqueSnapshotProofSurfaceV2(final.proof);
+      const execution = issueLocateProjectionExecutionCapabilityV2();
+      const token = requireLocateProjectionExecutionTokenV2(execution);
+      assertSnapshotTrustFinalizerInvariantV2({
+        proof: final.proof,
+        evidence: final.evidence,
+        eligible: final.eligibleDiscovery,
+        submittedDiscoveryKeys: [],
+        execution: token,
+      });
+      expect(() =>
+        assertSnapshotTrustFinalizerInvariantV2({
+          proof: final.proof,
+          evidence: final.evidence,
+          eligible: final.eligibleDiscovery,
+          submittedDiscoveryKeys: ['not-in-pool'],
+          execution: token,
+        }),
+      ).toThrow(/invalid-facts/i);
+      expect(() =>
+        assertSnapshotTrustFinalizerInvariantV2({
+          proof: createOpaqueTokenV2<SnapshotTrustProofV2>(),
+          evidence: final.evidence,
+          eligible: final.eligibleDiscovery,
+          submittedDiscoveryKeys: [],
+          execution: token,
+        }),
+      ).toThrow(/not registered|mismatch/i);
     });
   },
 );

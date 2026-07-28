@@ -3,7 +3,7 @@ doc_type: roadmap-goal-feature
 roadmap: repo-nav-public-beta
 feature: 2026-07-24-request-snapshot-cache
 roadmap_item: request-snapshot-cache
-status: pending
+status: accepted
 ---
 
 # request-snapshot-cache Goal 执行规格

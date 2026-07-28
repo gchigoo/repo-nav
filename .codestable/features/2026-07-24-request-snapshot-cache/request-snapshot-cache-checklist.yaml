@@ -6,356 +6,356 @@ steps:
   exit_signal: 尚未启用request cache时repository reader evidence merge candidate policy及v1 fixtures全部deep exact
   verification: npm test -- --group repository-safety --group reader-limits --group reader-failures --group evidence-merge --group direct-mapping-classifier --group candidate-truth-table --group candidate-discovery --group candidate-context --group candidate-classification --group candidate-budget --group candidate-permutation
   artifacts: [safe source extraction parity, candidate enumeration and selection seam, compatibility exports, existing registry selection inventory, targeted regression logs]
-  status: pending
+  status: done
 - id: S2
   action: 建立request file cache和identity hardening、签发interned locator并分离strict expanded与legacy lanes；由single-call final selector冻结legacy result selectedCount proof且只验F3-owned pre-F5二参数backend port
   exit_signal: 同canonical target只decode一次；expanded strict raw truth且legacy保持旧语义；final selector一次且0/N proof receipt pool完整；F3 base无F5 type fixture或positive evidence依赖
   verification: npm test -- --group request-snapshot-cache --case request-file-cache-single-decode --case request-file-cache-canonical-alias --case discovery-reservation-budget-independence --case scope-pre-cap-fold --case legacy-scope-policy-pool --case verified-record-cache-preverification-reuse
   artifacts: [request snapshot factory, raw locator truth table, legacy path isolation, canonical promise cache, locator identity ledger, single-call legacy proof chain, F3-owned pre-F5 ABI baseline, expanded intent provenance, lane fallback truth, verified observation cache, counter report]
-  status: pending
+  status: done
 - id: S3
   action: 建立F3-private identity records、stable eligible-discovery与evidence双池、无payload F2 stable record/file view及public-safe等价组bounded pre-ranking pool
   exit_signal: canonical和discovery string不进入任一consumer view，classification undefined只在eligible池，aliases共享bucket object，safe collision整组处理且legacy retained seed exact
   verification: npm test -- --group request-snapshot-cache --case pre-ranking-stable-pool --case snapshot-v1-parity
   artifacts: [classified internal records, consumer-neutral token proposal enumerator, expanded and legacy lane evaluators, pre-ranking collector, legacy reservation, discriminated ranking-signal provenance table without raw values, three-budget bound report, legacy selector parity]
-  status: pending
+  status: done
 - id: S4
   action: 实现scope universe fold selector、distinct pre/post-final views、record和derived-proposal basis、F7 verifier、scope coverage count receipt、F3 neutral language carrier、双pool purge proof与contribution
   exit_signal: trust record和opaque proof闭环，四种entry/container不互换，proposal location不复用seed，outside count不误计mixed included member，neutral carrier one-shot且F3无F8 import或leader语义
   verification: npm test -- --group request-snapshot-cache --case snapshot-coverage-truth-table --case snapshot-outcome-contribution --case snapshot-mutation-purge --case snapshot-failure-and-abort-purge --case snapshot-v1-mutation-precedence --case snapshot-trust-finalizer --case producer-basis-receipts --case verified-language-consumer-carrier --case scope-coverage-basis --case snapshot-git-state --case snapshot-real-envelope
   artifacts: [scope universe and registrar, fold excluded ledger selector, selection binding, lifecycle brands, record proposal basis and verifier, scope coverage count basis, neutral language carrier cursor lifecycle, fold selection snapshot proofs, dual pools, purge ledgers, snapshot contribution, Git probe, finalizer inventory]
-  status: pending
+  status: done
 - id: S5
   action: 完成真实filesystem mutation、large synthetic、v1 Golden MCP docs、architecture与完整scope hardening
   exit_signal: mutation只删除affected evidence且v1按partial或timeout precedence，large run single-decode稳定，production仍v1并通过所有核心命令
   verification: npm run build && npm run typecheck && npm test && npm run test:golden -- --all && npm run test:mcp -- --all && npm run test:docs
   artifacts: [mutation Golden, large synthetic report, full regression logs, architecture update, scope allow manifest, full changed-path inventory, review QA acceptance]
-  status: pending
+  status: done
 checks:
 - id: C1
   item: NodeRepositoryReader保持stateless one-shot public adapter且request maps只由每次canonical execution新建的snapshot实例拥有
   source: design §1 key decisions 1 and 19 / F3-CACHE-001
-  status: pending
+  status: passed
 - id: C2
   item: S1只等价保留现有root target realpath containment open handle stat regular-file post-open containment bounded read fatal UTF-8与typed errors
   source: design §2.4 S1 / S1
-  status: pending
+  status: passed
 - id: C3
   item: canonical file key由root内真实target产生但EvidenceLocation file保留命中locator以保证v1 parity
   source: design §1 key decision 2 / F3-CACHE-001
-  status: pending
+  status: passed
 - id: C4
   item: 同canonical target的range window findMatches并发和多alias共享唯一decode promise且dispose后内容不可访问
   source: design §1 key decisions 3 and 19 / F3-CACHE-001
-  status: pending
+  status: passed
 - id: C5
   item: 每个cached view仍独立执行maxFileBytes maxExcerptBytes maxExcerptLines maxMatches和abort检查且宽cache不绕过窄limit
   source: design §1 key decision 4 / F3-CACHE-001
-  status: pending
+  status: passed
 - id: C6
   item: observation cache实例绑定root terms limits maxMatches signal且结构key覆盖file lines matchedText symbol并使用无碰撞编码
   source: design §1 key decision 5 / F3-VERIFY-001
-  status: pending
+  status: passed
 - id: C7
   item: source和reason不进入read key而在每轮merge replay重新组合，duplicate unverified failures和provenance按输入hit序列重算
   source: design §1 key decisions 5 and 6 / F3-VERIFY-001
-  status: pending
+  status: passed
 - id: C8
   item: CodeGraph preverification与最终selected merge对相同read key只计算一次observation且不重复decode
   source: design §1 key decision 6 / F3-VERIFY-001
-  status: pending
+  status: passed
 - id: C9
   item: classifier先产生携带discoveryKey canonicalFileKey unsafe draft和legacy facts的F3-private internal record而非从v1 projection反推或暴露给F2
   source: design §1 key decision 7 / F3-POOL-001
-  status: pending
+  status: passed
 - id: C10
   item: 每个decoded context只执行一次mask tokenize offset和local syntax proposal enumeration且enumerator不调用isReservedToken不读取record universe不固化reason或provenance
   source: design §1 key decision 8 / F3-POOL-001
-  status: pending
+  status: passed
 - id: C11
   item: expanded和legacy evaluator分别使用各自record universe执行reserved-token reason provenance collision和bounded merge，允许重复纯predicate但不重复read decode window或tokenize
   source: design §1 key decisions 8 and 10 / F3-POOL-001
-  status: pending
+  status: passed
 - id: C12
   item: DISCOVERY_RESERVATION_CAP_V2由executor按20乘40冻结为800且同时是expandedMaxHits和fold后reservation唯一authority，PRE_RANKING_CANDIDATE_CAP_V2固定16000，backend response selector fallback无cap字段或入参且excluded group不占cap
   source: design §1 key decision 9 / F3-POOL-001
-  status: pending
+  status: passed
 - id: C13
   item: legacy reservation只消费legacy direct records并严格复现先direct budgets再retained seeds再剩余candidate budget及selected key merge，保持全部existing v1 IDs ordering和limit facts
   source: design §1 key decisions 8 and 18 / F3-V1-001
-  status: pending
+  status: passed
 - id: C14
   item: Git probe使用SafeProcessRunner固定argv bounded output且四值mapping失败为unknown并不输出stdout stderr root revision
   source: design §1 key decision 14 / F3-GIT-001
-  status: pending
+  status: passed
 - id: C15
   item: Git state与filesystem truth正交且clean不跳过check dirty not-git unknown不自动改变consistency
   source: design snapshot truth table / F3-GIT-001
-  status: pending
+  status: passed
 - id: C16
   item: final check同时处理eligible-discovery与evidence pools，发生在classification和candidate expansion后且在任何ranking budget unmatched capability count anchor ledger legacy selection和public ID前
   source: design §1 key decision 11 / F3-SNAPSHOT-001
-  status: pending
+  status: passed
 - id: C17
   item: S2初始load比较pre和post target与handle identity，final check按canonical key排序并做同等containment identity alias复核而不读content
   source: design §1 key decision 11 / F3-MUTATION-001
-  status: pending
+  status: passed
 - id: C18
   item: size mtime ino替换消失不可读nonregular stat failure alias retarget与abort全部把对应canonical file归入changed ledger
   source: design §1 key decision 12 / F3-MUTATION-001
-  status: pending
+  status: passed
 - id: C19
   item: changed canonical file的全部alias eligible-discovery confirmed candidate records从双池一次purge且不重读降级保留补位或post-ID reorder
   source: design §1 key decisions 10 and 12 / F3-MUTATION-001
-  status: pending
+  status: passed
 - id: C20
   item: consistency stable changed unknown和filesChecked严格符合truth table且unknown不与retained draft共存
   source: design §1 key decision 13 / F3-SNAPSHOT-001
-  status: pending
+  status: passed
 - id: C21
   item: discardedEvidenceCount计pre-ranking唯一pool中purged draft条数而非hits files aliases或legacy retained条数
   source: design §1 key decisions 10 and 13 / F3-SNAPSHOT-001
-  status: pending
+  status: passed
 - id: C22
   item: abort期间尚未复核files按failure purge而已成功复核的其他files可保留且cleanup完成
   source: design §1 key decision 12 / F3-ABORT-001
-  status: pending
+  status: passed
 - id: C23
   item: SnapshotFactsV2与stable eligible-discovery和evidence双池及nested arrays冻结，finalStableEvidence使用evidence stable record exact draft refs；F7 F8 pre-final与post-final narrow views各自绑定exact lifecycle且不能与F2 evidence view互换
   source: design §1 key decision 15 / F3-TRUST-001
-  status: pending
+  status: passed
 - id: C24
   item: private WeakMap以无own-property SnapshotTrustProofV2 token索引SnapshotTrustRecordV2，opaque locator hit identity universe observation fold selector eligible evidence bucket refs均不可枚举序列化；跨模块proof不能读取stable keys changed set ledger canonical maps或selection
   source: design §1 key decision 15 / F3-TRUST-001
-  status: pending
+  status: passed
 - id: C25
   item: complete-owner finalizer拒绝handcrafted clone duplicate pool外或changed draft并保持missing-first与composer serializer零调用
   source: design §1 key decision 16 / F3-TRUST-001
-  status: pending
+  status: passed
 - id: C26
   item: F1C synthetic complete fixtures经test-only trusted factory迁移且不能手写brand或冒充real producer
   source: design §2.1 trust proof / F3-TRUST-001
-  status: pending
+  status: passed
 - id: C27
   item: real canonical success只新增snapshot owner并恰好缺ranking backend request-outcome scope capability且tool failure无envelope
   source: design §1 key decision 17 / F3-ENVELOPE-001
-  status: pending
+  status: passed
 - id: C28
   item: zero-read success生成可信unknown empty snapshot而不是placeholder stable或changed
   source: design snapshot truth table / F3-ENVELOPE-001
-  status: pending
+  status: passed
 - id: C29
   item: 无mutation无abort的v1 success no_result partial backend unavailable及legacy原有阶段abort的timeout在schema IDs order coverage MCP CLI docs全部deep exact
   source: design §1 key decision 18 / F3-V1-001
-  status: pending
+  status: passed
 - id: C30
   item: mutation与ok no_result partial backend unavailable组合为partial，与caller或deadline组合保持timeout优先，且v1不新增SNAPSHOT_CHANGED code snapshot字段或changed path
   source: design §1 key decision 18 / F3-V1-MUTATION-001
-  status: pending
+  status: passed
 - id: C31
   item: large synthetic 5-run decode count等于unique canonical files并证明preverification reuse stable hash mutation purge与temp cleanup
   source: design §3.1 F3-LARGE-001 / S5
-  status: pending
+  status: passed
 - id: C32
   item: production无跨request Map Redis disk cache第二套canonical backend orchestration第二decode content hash或Git identity，允许CodeGraph不同cap两个plans和Ripgrep每active case group一次process parse但禁止相同cap或同group重复
   source: design §3.3 reverse scope / S5
-  status: pending
+  status: passed
 - id: C33
   item: 新增unit Golden performance cases全部登记runner且unknown group和case失败
   source: design §3.2 ownership inventory / S5
-  status: pending
+  status: passed
 - id: C34
   item: F1C acceptance未done时F3 implementation admission必须block
   source: design §1 dependencies / S5
-  status: pending
+  status: passed
 - id: C35
   item: ACT-ARCH-UPDATE记录request snapshot single decode final purge trusted pool real owner与residual risk source pointers
   source: design §3.5 Required Actions / S5
-  status: pending
+  status: passed
 - id: C36
   item: ACT-SCOPE-CHECK使用check-path root和exact allow manifest对账全部staged unstaged untracked paths
   source: design §3.5 Required Actions / S5
-  status: pending
+  status: passed
 - id: C37
   item: fixed 800 cap独立于request final evidence budgets且只在scope fold后由selector-view registry应用；Ripgrep与CodeGraph在F1A safe投影前命中任何hard ceiling则expandedSafePreCap为空且incomplete，legacy仍按旧group和cap语义冻结
   source: design §1 key decision 6 / F3-DISCOVERY-001
-  status: pending
+  status: passed
 - id: C38
   item: canonical executor对primary adapter一次且只要任一view要求fallback就对fallback adapter最多一次，每lane只纳入自己decision要求的fallback hits和attempt
   source: design §1 key decision 6 / F3-DISCOVERY-001
-  status: pending
+  status: passed
 - id: C39
   item: CodeGraph legacy non-abort failure后仍执行expanded plan，expanded failure不覆盖legacy；Ripgrep frozen legacy不受后续expanded-only group failure影响，只有shared initialization failure或shared abort可停两lane
   source: design §3.1 F3-DISCOVERY-001 / S2
-  status: pending
+  status: passed
 - id: C40
   item: expanded-only direct record使token在expanded universe reserved时legacy evaluator仍按legacy universe保留对应candidate
   source: design §1 key decisions 8 and 9 / F3-POOL-001
-  status: pending
+  status: passed
 - id: C41
   item: request limits 1/0默认和20/20不改变expanded discovery输入且legacy outputs分别与旧cap deep exact
   source: design §3.1 F3-DISCOVERY-001 / S2
-  status: pending
+  status: passed
 - id: C42
   item: 超pre-ranking cap时legacy retained seed的第二及后续候选仍由独立consumer保留，同token多seed reasons按各lane旧序merge且不重复read decode window或tokenize
   source: design §1 key decisions 8 and 9 / F3-POOL-001
-  status: pending
+  status: passed
 - id: C43
   item: legacy完成后expanded-only fallback启动前或执行中caller abort和deadline都按当前v1 timeout优先并完成final-check purge dispose，不误记为no-abort deep-exact或partial
   source: design §1 key decision 18 / F3-ABORT-001
-  status: pending
+  status: passed
 - id: C44
   item: lane-local failure incomplete与pre-safe truncation显式派生expandedSafePreCap completeness，raw partial prefix不得进入scope registrar selector且不得伪造fold preRankingPoolTruncated或legacy facts
   source: design §2.1 backend lane truth table / F3-DISCOVERY-001
-  status: pending
+  status: passed
 - id: C45
   item: TrustedStableRecordViewV2只含evidence recordRef fileBucketRef draft rankingSignals；eligible consumer records只含eligibleRef fileBucketRef与owner narrow facts且不暴露identity locatorRef raw symbol，pre-final view不要求snapshot proof而post-final view必须same opaque proof
   source: design §1 key decision 20 / F3-POOL-001
-  status: pending
+  status: passed
 - id: C46
   item: final checker独占登记pre-cap universe observation fold selector selection双stable pools facts ticket与private trust record并签opaque snapshot proof；F2 F7 F8在观察各自view前拒绝raw identity错误pool clone及cross-execution混配
   source: design §1 key decisions 15 16 and 20 / F3-TRUST-001
-  status: pending
+  status: passed
 - id: C47
   item: expanded backend hit以长度前缀intent key保留origins；anchor key编码kind case和case-aware comparisonValue而projection保留首次exact normalized value，insensitive Foo foo只归一为首个Foo；任何cap前投影为只含opaque hit locator refs safeKey lines source origins的PreCapPublicSafeDiscoveryPoolV2，file-anchor range symbol identity只留F3 WeakMap且origin只过滤membership
   source: design §1 key decision 6 and §3.1 F3-DISCOVERY-001 / S2
-  status: pending
+  status: passed
 - id: C48
   item: legacy BackendHit health hits complete fallback attempt limit shape与旧cap exact且不新增expanded intent provenance字段
   source: design §2.1 expanded backend contracts and §3.1 F3-DISCOVERY-001 / S2
-  status: pending
+  status: passed
 - id: C49
   item: F2 selector签名只接收TrustedScopeFoldedSelectorViewV2 anchors maxFiles execution并通过F3 accessor读取facts；draft引用exact view token，冻结anchors selected refs reservations后在reader前经bindDiscoverySelection换取ticket和typed proof
   source: design §1 key decision 15 and §2.1 tracking contract / F3-TRUST-001 / S4
-  status: pending
+  status: passed
 - id: C50
   item: alias共享canonical target时stable records持有同一个无payloadfileBucketRef且purge outcomes一致，unrelated changed target不污染其他refs，cross-execution ref在观察前fail closed
   source: design §3.1 F3-TRUST-001 / S4
-  status: pending
+  status: passed
 - id: C51
   item: raw file symbol matchedText backend arrival order discoveryKey及origin增删排列不得改变interned locator opaque identity pre-cap group scope fold或selector membership，safe-equivalent group只能在fold与fixed cap各阶段整组处理
   source: design §1 key decisions 6 and 9 / F3-DISCOVERY-001
-  status: pending
+  status: passed
 - id: C52
   item: opaque refs与selection proof均由受控factory以无own-property冻结object加type-only phantom brand创建，通过Object.keys JSON stringify spread与property mutation均不能取得canonical locator discovery metadata或伪造trust
   source: design §1 key decision 15 / F3-TRUST-001
-  status: pending
+  status: passed
 - id: C53
   item: TrustedSnapshotRankingViewV2 anchorCompleteness只接受exact selection和fold proofs并绑定exact folded pool ticket；scope excluded或mixed和任一selected locator unobserved都直接派生对应incomplete reason
   source: design §1 key decision 20 / F3-TRUST-001
-  status: pending
+  status: passed
 - id: C54
   item: caller不得传入或替换complete boolean，backend incomplete pre-safe truncation safe collision selector deferred pre-ranking truncation均由proof派生anchor incomplete
   source: design §1 key decision 20 / F3-DISCOVERY-001 and F3-TRUST-001
-  status: pending
+  status: passed
 - id: C55
   item: internal discoveryKey仅用于merge classification mutual exclusion与proof，不参与expanded cap maxFiles evidence comparator round-robin budget或ordinal ID
   source: design §3.1 F3-TRUST-001 / S4
-  status: pending
+  status: passed
 - id: C56
   item: bindDiscoverySelection先验证exact scope fold proof和opaque selector view，再验证anchor keys selected refs reservations；reserved no-hit budget-deferred语义不变且不重复实现F2 maxFiles容量或anchor遍历算法
   source: design §1 key decision 15 and §2.1 selection binding / F3-TRUST-001
-  status: pending
+  status: passed
 - id: C57
   item: universe adapter observation fold selector selection或snapshot proof clone、identity membership hostile、reservation hostile、bind后数组替换、cross-preCap fold ticket execution graph在任何candidate record outcome completeness观察前fail closed且composer serializer调用零次
   source: design §1 key decisions 15 and 20 / F3-TRUST-001
-  status: pending
+  status: passed
 - id: C58
   item: pre-F5 expandedInternal中任何incomplete或telemetry-only raw prefix永不进入expandedSafePreCap scope universe selector或pre-ranking records，只有complete-safe full set或完整fallback可贡献opaque identity
   source: design §1 key decision 6 / F3-DISCOVERY-001
-  status: pending
+  status: passed
 - id: C59
   item: SnapshotOutcomeContributionV2从唯一strict nested Zod schema的output单向派生recursive readonly type，factory accessor由F3独占，只由same snapshot proof execution和完整ledger签发并深冻结
   source: design §1 key decision 21 / F3-OUTCOME-001
-  status: pending
+  status: passed
 - id: C60
   item: 唯一顺序为raw双lane parse interned locator opaque identity merge canonical lane universe F3 direct scope adapter atomic fold fixed cap opaque selector read verification pre-final views classification candidate双pool final check post-final views再计数；excluded不进入F3 counts
   source: design §1 key decision 21 / F3-OUTCOME-001
-  status: pending
+  status: passed
 - id: C61
   item: ledger恰好覆盖scope universe unique canonical locator refs与selected refs，verified entry按key记录positive occurrenceCount，merge groups恰好覆盖全部produced keys且refs canonical set与sum exact；missing extra ref swap count加减一零值重复key均拒绝
   source: design §1 key decision 21 / F3-OUTCOME-001
-  status: pending
+  status: passed
 - id: C62
   item: contribution不含path identity records或failure detail且clone cross-execution proof swap missing extra nested-extra错误boolean负数小数NaN Infinity超safe-integer mutation在F6 accessor读取值前fail closed
   source: design §1 key decision 21 / F3-OUTCOME-001
-  status: pending
+  status: passed
 - id: C63
   item: CodeGraph与Ripgrep raw parser和expanded factory禁止posix normalize或pre-factory separator repair；discriminated factory先拒绝所有drive-prefix absolute UNC device再按固定source flavor处理，LegacyBackendPathAdapterV1是唯一允许旧replaceAll和posix.normalize的位置
   source: design key decision 6 / F3-DISCOVERY-001
-  status: pending
+  status: passed
 - id: C64
   item: F3 registrar绑定exact canonical expanded legacy lane universe、pre-cap pool、resolved scope和execution，直接调用trusted path-only temporary或F7 adapter一次每unique locator并向opaque identities fan-out；caller无裸decisions接口且adapter看不到identity ref symbol
   source: design key decisions 15 and 21 / F3-SCOPE-FOLD-001
-  status: pending
+  status: passed
 - id: C65
   item: scope included verified record先进入pre-final eligible pool且classification undefined仍保留；consumer只能用pre-final view选择classification，final purge后post-final same-proof view只供count且先于F2 public evidence budget
   source: design key decision 22 / F3-POOL-001
-  status: pending
+  status: passed
 - id: C66
   item: raw locator input是backend native或request-anchor posix的discriminated union，非法source flavor组合不可构造；C C冒号foo、absolute、UNC device namespace在separator转换前拒绝且三平台native backslash真值表机读
   source: design raw locator and legacy dual-lane truth table / F3-DISCOVERY-001
-  status: pending
+  status: passed
 - id: C67
   item: same execution逐code-unit相同POSIX locator跨backend occurrence intern为exact同一ref，每个opaque semantic identity private record绑定exact一个locator ref；backend permutation不产生代表ref或ref排序
   source: design locator interning and private identity record / F3-SCOPE-FOLD-001
-  status: pending
+  status: passed
 - id: C68
   item: TrustedScopeFoldedSelectorViewV2 clone mapping cross-execution在readScopeFoldedSelectorFactsV2观察candidate count safe key或complete前拒绝，pre-observation spy保持零
   source: design typed selector boundary / F3-TRUST-001
-  status: pending
+  status: passed
 - id: C69
   item: SnapshotTrustProofV2对Object.keys JSON spread为空且direct property访问在类型层不可用；F6 F1C F7 F8只能提交token给owner accessor，SnapshotTrustRecordV2不出F3 private module
   source: design opaque snapshot proof / F3-TRUST-001
-  status: pending
+  status: passed
 - id: C70
   item: backend response无discoveryReservationCap且expanded request必须exact echo executor literal 800；extra or mismatched cap mutation、fallback cap authority与selector arbitrary cap均被schema或type boundary拒绝
   source: design single cap authority / F3-DISCOVERY-001
-  status: pending
+  status: passed
 - id: C71
   item: TrustedPreFinalCapabilityViewV2 records只含eligibleRef fileBucketRef并按exact ref暴露F3-private basename派生last extension与interned VerifiedLanguageContextRefV2，无POSIX segments path identity locator decoded lines accessor；post-final capability records连extension与context accessor也没有
   source: design key decision 15 / F3-TRUST-001
-  status: pending
+  status: passed
 - id: C72
   item: F3-owned admission只登记request-snapshot-baseline或neutral language-capability owner slot，carrier绑定exact pre-final view eligibleRef context consumer execution后才交付ephemeral cursor；base不import F8 type或要求mode leader promise
   source: design key decision 15 / F3-LANGUAGE-CARRIER-001
-  status: pending
+  status: passed
 - id: C73
   item: selectAndFreezeLegacyBackendHitsV1在全部legacy backend fallback裁决后只运行一次，原子冻结同一result object、selectedCount等于hits length、filesTruncated和绑定完整最终selected set顺序 normalized paths execution的TrustedLegacySelectionProofV1；0条选择合法且caller不能另签proof
   source: design key decision 6 / F3-LEGACY-POOL-001
-  status: pending
+  status: passed
 - id: C74
   item: F3只按proof exact ordinal建立LegacySelectedPathReceiptV2并seal TrustedLegacySelectedPathPoolV2，0条只接受空receipts，漏项重复换序result selectedCount filesTruncated proof execution swap均拒绝；policy-only path同strict-expanded locator才复用exact ref，否则legacy-only且不得进入expanded hit pre-cap selector reader ticket eligible pool
   source: design key decisions 6 and 15 / F3-LEGACY-POOL-001 F3-TRUST-001
-  status: pending
+  status: passed
 - id: C75
   item: EligibleDiscoveryRefV2本身不声明stable；四种record entry和pre-final scope capability及stable scope capability四种container各有distinct phantom brand，TypeScript结构赋值与runtime trust lookup都不能跨生命周期替换
   source: design key decision 15 / F3-TRUST-001
-  status: pending
+  status: passed
 - id: C76
   item: record与DerivedEvidenceProposalRefV2分别签VerifiedProducerBasisReceiptsV2；proposal private record绑定exact token location symbol provenance scope seed execution且proposal不进入stable eligible pool
   source: design key decision 15 / F3-PRODUCER-BASIS-001
-  status: pending
+  status: passed
 - id: C77
   item: requireScopeBoundProducerBasisV2接收完整receipt bundle和scope view execution，按record或proposal subject返回exact location provenance及safe term anchor symbol，seed location不能冒充derived proposal
   source: design key decision 15 / F3-PRODUCER-BASIS-001
-  status: pending
+  status: passed
 - id: C78
   item: F3 issue carrier与consume resolver绑定capability view eligibleRef context registered consumer execution且每carrier只消费一次，swap duplicate late settlement与settle后cursor读取失败；dual-mode dual-ref归F8 child gate
   source: design key decision 15 / F3-LANGUAGE-CARRIER-001
-  status: pending
+  status: passed
 - id: C79
   item: ScopeCoverageBasisV2绑定folded pool stable eligible pool snapshot fold proofs execution且只暴露globally unique excluded identity count；mixed included identity不计outside，count加减一和proof swap失败
   source: design key decision 15 / F3-SCOPE-COVERAGE-BASIS-001
-  status: pending
+  status: passed
 - id: C80
   item: F3 base source type graph core cases artifacts和acceptance不import或读取F5 F8 owned module fixture token factory positive behavior；future child replacement只作nonblocking target note
   source: design key decisions 6 and 15 / roadmap DAG
-  status: pending
+  status: passed
 - id: C81
   item: 19个F3 stable IDs与design ownership inventory 19行21个exact group case逐项deep-equal，每项具有exact fixture assertion runner manifest contract或Golden owner；每个group case只出现一次且unknown duplicate zero-run fail closed，MCP docs不登记F3 alias
   source: design §3.2 exact ownership inventory
-  status: pending
+  status: passed
 dod:
   commands:
   - id: CMD-BUILD

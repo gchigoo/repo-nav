@@ -10,7 +10,7 @@ commit_authorization: approved
 commit_authorization_ref: "approval-report.md#goal-commits"
 handoff_reason: ""
 handoff_next: ""
-current_feature_index: 5
+current_feature_index: 6
 features:
 - slug: public-output-boundary-v2
   roadmap_item: public-output-boundary-v2
@@ -65,7 +65,7 @@ features:
   review: .codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-review.md
   qa: .codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-qa.md
   acceptance: .codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-acceptance.md
-  status: pending
+  status: accepted
 - slug: relevance-ranking-budget
   roadmap_item: relevance-ranking-budget
   feature_dir: .codestable/features/2026-07-24-relevance-ranking-budget

@@ -36,10 +36,10 @@ items:
   description: 在单一canonical execution内建立legacy-compatible与expanded-v2双lane、raw locator/legacy adapter、scope-folded public-safe selector、请求级snapshot/cache与typed stable trust pool，并在公共组装前丢弃变化文件证据
   depends_on:
   - canonical-locate-facts-bridge
-  status: in-progress
+  status: done
   feature: 2026-07-24-request-snapshot-cache
   minimal_loop: false
-  notes: 同一canonical file每次请求最多解码一次；telemetry-only raw prefix不得进入safe pool；变化 消失 不可读或复核失败均丢弃受影响证据，不实现跨请求cache
+  notes: 2026-07-28 acceptance passed；request-local snapshot/decode reuse/final purge；production仍v1；Pre-F5单process双视图
 - slug: relevance-ranking-budget
   description: 在F3 trusted stable pool上实现case-aware anchor、priority-descending结构排序、collision-atomic预算与round-robin，并以唯一two-stage factory完成F1B source preflight、F1 materialization及F1C source/materialization registration
   depends_on:

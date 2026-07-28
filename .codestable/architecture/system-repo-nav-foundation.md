@@ -1,11 +1,11 @@
 ---
 doc_type: architecture
 slug: repo-nav-foundation
-scope: RepoNav 当前已落地的 production v1 公共契约、repository 安全 seams、CodeGraph-primary/ripgrep-fallback evidence engine、有界 candidate policy、状态/预算/redaction/error output guardrails、stdio MCP、debug CLI、executable docs、发布候选级 Verification Kit，以及尚未接入 production 的 v2 raw/public 输出安全边界
-summary: Production 继续由 Zod schema v1、薄 RepositoryEvidenceEngine façade、CanonicalRepositoryLocateExecutorV2、唯一 V1LocateResultProjector、stdio MCP 与 shallow debug CLI 提供；typed fact envelope / four-prerequisite admission / neutral stage registrars / finalizer / composer / shadow 为 transport-unreachable F1C seam；dormant LocateResultV2 与 PublicResultAssemblerV2 仍无 production edge，真实原子切换由 F9 独占
+scope: RepoNav 当前已落地的 production v1 公共契约、repository 安全 seams、请求级 request-snapshot cache/final-check、CodeGraph-primary/ripgrep-fallback evidence engine、有界 candidate policy、状态/预算/redaction/error output guardrails、stdio MCP、debug CLI、executable docs、发布候选级 Verification Kit，以及尚未接入 production 的 v2 raw/public 输出安全边界
+summary: Production 继续由 Zod schema v1、薄 RepositoryEvidenceEngine façade、CanonicalRepositoryLocateExecutorV2（请求级 snapshot + snapshot owner）、唯一 V1LocateResultProjector、stdio MCP 与 shallow debug CLI 提供；typed fact envelope / four-prerequisite admission / neutral stage registrars / finalizer / composer / shadow 为 transport-unreachable F1C seam；dormant LocateResultV2 与 PublicResultAssemblerV2 仍无 production edge，真实原子切换由 F9 独占
 status: current
 last_reviewed: 2026-07-28
-tags: [repo-nav, foundation, evidence, candidate-policy, output-guardrails, redaction, repository-safety, codegraph, ripgrep, fallback, mcp, stdio, cli, docs, golden, regression, schema-v2, public-assembler, no-cutover]
+tags: [repo-nav, foundation, evidence, request-snapshot, candidate-policy, output-guardrails, redaction, repository-safety, codegraph, ripgrep, fallback, mcp, stdio, cli, docs, golden, regression, schema-v2, public-assembler, no-cutover]
 depends_on: []
 implements: [source-of-truth-evidence]
 ---
@@ -238,10 +238,12 @@ flowchart LR
   `test/unit/public-result-assembler-v2.spec.ts` /
   `test/golden/public-output-v2.spec.ts` — strict family mutations、hostile corpus、
   placeholder collision、safe error/parity、determinism 与 full projection scan。
-- `src/evidence/locate-execution/canonical-locate-executor-v2.ts:CanonicalRepositoryLocateExecutorV2` — CodeGraph-primary/ripgrep-fallback locate orchestration、状态与 next actions、canonical input registration。
+- `src/evidence/locate-execution/canonical-locate-executor-v2.ts:CanonicalRepositoryLocateExecutorV2` — CodeGraph-primary/ripgrep-fallback locate orchestration、请求级 `RequestRepositorySnapshotV2` 生命周期（root resolve 后创建、finally dispose）、legacy single-call freeze selector、状态与 next actions、canonical input registration；real success envelope 恰好增加 snapshot owner。
 - `src/evidence/locate-execution/v1-locate-result-projector.ts:V1LocateResultProjector` — production-only exact legacy projection adapter（F9 删除）。
 - `src/evidence/repository-evidence-engine.ts:RepositoryEvidenceEngine` — 薄 service façade；concrete class 不再从 package barrel 导出。
 - `src/contracts/v2/locate-fact-envelope-v2.ts` / `src/evidence/canonical/*` — typed fact envelope、four-prerequisite inspector、neutral registrars、finalizer/composer/shadow；production roots runtime 不可达 shadow/composer/public schema。
+- `src/evidence/request-snapshot/` — 请求级 file cache（canonical promise / alias ledger / per-call limits）、verified observation cache、expanded/legacy discovery lane 与 fixed-800 reservation、legacy selected-path proof pool、pre-ranking dual pools、final check/purge、opaque snapshot trust proof、Git state probe、producer-basis / scope-coverage / neutral language carrier 与 snapshot outcome contribution；Nest singleton 不持 request maps。
+- `src/repository/verified-text-file-source-v2.ts:VerifiedTextFileSourceV2` — realpath→containment→open→bounded UTF-8 decode 安全内核；`NodeRepositoryReader` 与 request snapshot 共用。
 - `src/evidence/abort-source.ts:LocateAbortCoordinator` — first-writer-wins caller/deadline ownership。
 - `src/evidence/locate-status-evaluator.ts:evaluateLocateStatus` / `next-action-policy.ts:createNextActions` — final status priority 与 caller-adjustable action policy。
 - `src/evidence/result-budget-selector.ts` / `evidence-redactor.ts:redactLocateResult` — stable bounded selection、ID-after public redaction 与 cross-evidence sensitive-token propagation。
@@ -253,11 +255,11 @@ flowchart LR
 - `src/repository/ripgrep-backend.ts:RipgrepBackend` — literal JSON ripgrep adapter 与 actual submatch facts。
 - `src/evidence/discovery-record.ts:verifyAndMergeBackendHits` — current-file verification、bounded logical window 与 deterministic merge。
 - `src/evidence/direct-mapping-classifier.ts:classifyDiscoveryRecords` — layer/exclusion resolver 与 direct-mapping truth table。
-- `src/evidence/candidate-policy.ts:CANDIDATE_REASON_POLICY/applyCandidatePolicy` — candidate truth table、verified-context lexical predicates、promotion merge 与有界稳定选择。
+- `src/evidence/candidate-policy.ts` / `candidate-policy/` — candidate truth table、verified-context lexical predicates、promotion merge 与有界稳定选择；F3 enumerator/lane evaluators 复用其 consumer 表面。
 - `src/evidence/repository-evidence-engine.ts:RepositoryEvidenceEngine` — candidate-window verification、confirmed/candidate 互斥、draft 物化与 candidate limit 编排。
 - `src/evidence/evidence.module.ts:EvidenceModule` — reader/engine token assembly。
 - `src/repository/repository-backends.module.ts:RepositoryBackendsModule` — runner/CodeGraph/ripgrep/frozen backend collection assembly。
-- `src/repository/node-repository-reader.ts:NodeRepositoryReader` — canonical/bounded filesystem adapter，以及居中/clamp、12 行/4 KiB 的 `readWindow`。
+- `src/repository/node-repository-reader.ts:NodeRepositoryReader` — 无状态 one-shot canonical/bounded filesystem adapter（含居中/clamp `readWindow`）；请求级 cache 不落在此 singleton。
 - `src/repository/node-safe-process-runner.ts:NodeSafeProcessRunner` — controlled child-process/tree cleanup adapter。
 - `src/mcp/repo-nav-mcp-server.ts:createRepoNavMcpServer` — tools capability、单工具 registry、unknown guard 与 low-level call handler。
 - `src/mcp/locate-tool-schema.ts` / `locate-tool-output.ts` — JSON Schema 2020-12 public surface 与共享 parity serializer。

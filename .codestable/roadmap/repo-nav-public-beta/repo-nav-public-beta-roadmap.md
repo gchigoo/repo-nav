@@ -568,6 +568,8 @@ interface BackendExecutionOutcomeV2 {
 
 在单一canonical execution中建立legacy-compatible与expanded-v2双lane，拥有raw locator/legacy adapter、canonical scope universe/fold、pre-cap public-safe等价类selector、请求级文件快照、一次解码、CodeGraph预验证复用、增量hit验证、final purge、typed stable pool/proof-bound completeness和neutral language carrier。统一invariant是：只让同次执行、scope-folded、public-safe、snapshot-trusted的stable pool进入F2，同时保持legacy lane deep-exact。
 
+**状态（2026-07-28）**：acceptance `passed`；items.yaml `done`；production 仍 v1；Pre-F5 单 process 双视图。
+
 ### F2 · relevance-ranking-budget
 
 在F3 trusted stable pool上实现case-aware anchor intents、显式锚点预留、priority-descending结构化排序、collision-atomic budget、跨文件round-robin和unsatisfied coverage；并独占`createF2LocateProjectionStagesV2()`，把ranked refs经F1B source preflight/strict pairing、F1 single materialization与F1C source/materialization registrars转为trusted materialized core。F2 acceptance不创建F8 consumer，只冻结future importer allowlist。

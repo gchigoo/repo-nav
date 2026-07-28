@@ -24,11 +24,13 @@ import {
   type ResolvedLocateLimits,
   type SearchBackendId,
 } from '../../contracts/index.js';
-import type {
-  CanonicalLocateExecutionV2,
-  CanonicalLocateExecutorV2,
-  LocateProjectionExecutionCapabilityV2,
-  UnsafeToolErrorFactsV2,
+import {
+  createLocateFactEnvelopeBuilderV2,
+  type CanonicalLocateExecutionV2,
+  type CanonicalLocateExecutorV2,
+  type LocateProjectionExecutionCapabilityV2,
+  type SnapshotFactsV2,
+  type UnsafeToolErrorFactsV2,
 } from '../../contracts/v2/locate-fact-envelope-v2.js';
 import {
   REPOSITORY_READER,
@@ -39,7 +41,6 @@ import {
   type LocateAbortSource,
 } from '../abort-source.js';
 import {
-  applyCandidatePolicy,
   createVerifiedCandidateContext,
   materializeCandidateDraft,
 } from '../candidate-policy.js';
@@ -53,9 +54,57 @@ import {
   selectConfirmedBudget,
 } from '../result-budget-selector.js';
 import {
+  buildPreRankingStablePoolsV2,
+  CandidateTokenProposalEnumeratorV2,
+  createMultiViewBackendSearchRequestV2,
+  createRequestRepositorySnapshotV2,
+  createZeroReadSnapshotFactsV2,
+  evaluateExpandedCandidateProposalsV2,
+  LegacyCandidateReservationV1,
+  legacyMaxHitsFromPublicLimitsV2,
+  probeRepositoryGitStateV2,
+  projectAndScopeFoldExpandedHitsV2,
+  registerDualLaneExecutionReceiptV2,
+  searchBackendMultiViewV2,
+  selectAndFreezeLegacyBackendHitsV1,
+  VerifiedDiscoveryObservationCacheV2,
+  type RequestRepositorySnapshotV2,
+} from '../request-snapshot/index.js';
+import {
+  applyMutationStatusPrecedenceV2,
+  buildPreRankingPoolInputsFromLegacyEvidenceV2,
+  purgeLegacyEvidenceByChangedKeysV2,
+} from '../request-snapshot/executor-snapshot-bridge-v2.js';
+import { NodeRepositoryReader } from '../../repository/node-repository-reader.js';
+import { NodeSafeProcessRunner } from '../../repository/node-safe-process-runner.js';
+import {
   registerCanonicalLocateExecutionInputV2,
   requireLocateProjectionExecutionTokenV2,
 } from './locate-projection-execution-capability-v2.js';
+
+/**
+ * Production Nest 注入的是精确 NodeRepositoryReader；测试 double / 子类仍走注入 reader，
+ * 避免 request snapshot 的 VerifiedTextFileSource 绕过 readRange/readWindow 覆写。
+ */
+function shouldUseRequestSnapshotReader(
+  reader: RepositoryReader,
+): reader is NodeRepositoryReader {
+  return reader.constructor === NodeRepositoryReader;
+}
+
+/** 测试 seam：final check 前触发（mutation precedence fixture）。 */
+let beforeFinalSnapshotCheckForTestV2:
+  | (() => void | Promise<void>)
+  | undefined;
+
+/**
+ * 仅测试：在 executor final check 前注入副作用。
+ */
+export function setBeforeFinalSnapshotCheckForTestV2(
+  hook: (() => void | Promise<void>) | undefined,
+): void {
+  beforeFinalSnapshotCheckForTestV2 = hook;
+}
 
 const CLASSIFICATION_MAX_LINES = 12;
 const CLASSIFICATION_MAX_BYTES = 4 * 1024;
@@ -70,27 +119,6 @@ interface TimeoutResultOptions {
   readonly limitsReached?: readonly LimitReasonCode[];
   readonly exclusionSummary?: LocateSuccessEvidence['coverage']['exclusionSummary'];
   readonly fallbackChecked?: boolean;
-}
-
-function compareText(left: string, right: string): number {
-  return left === right ? 0 : left < right ? -1 : 1;
-}
-
-function compareBackendHit(
-  left: Parameters<typeof verifyAndMergeBackendHits>[0]['hits'][number],
-  right: Parameters<typeof verifyAndMergeBackendHits>[0]['hits'][number],
-): number {
-  return (
-    compareText(left.file, right.file) ||
-    (left.lines?.[0] ?? Number.MAX_SAFE_INTEGER) -
-      (right.lines?.[0] ?? Number.MAX_SAFE_INTEGER) ||
-    (left.lines?.[1] ?? Number.MAX_SAFE_INTEGER) -
-      (right.lines?.[1] ?? Number.MAX_SAFE_INTEGER) ||
-    compareText(left.symbol ?? '', right.symbol ?? '') ||
-    compareText(left.matchedText ?? '', right.matchedText ?? '') ||
-    compareText(left.source, right.source) ||
-    compareText(left.reasonCodes.join('\u0000'), right.reasonCodes.join('\u0000'))
-  );
 }
 
 function verificationTerms(
@@ -172,27 +200,6 @@ function indexFreshnessFor(
   return health.possibleStaleIndex === true ? 'possibly-stale' : 'unknown';
 }
 
-function selectBackendHits(
-  results: readonly BackendSearchResult[],
-  maxFiles: number,
-): {
-  readonly hits: readonly BackendSearchResult['hits'][number][];
-  readonly filesTruncated: boolean;
-} {
-  const hits: BackendSearchResult['hits'][number][] = [];
-  const files = new Set<string>();
-  let filesTruncated = false;
-  for (const hit of results.flatMap((result) => result.hits).sort(compareBackendHit)) {
-    if (!files.has(hit.file) && files.size >= maxFiles) {
-      filesTruncated = true;
-      continue;
-    }
-    files.add(hit.file);
-    hits.push(hit);
-  }
-  return Object.freeze({ hits: Object.freeze(hits), filesTruncated });
-}
-
 function decideToolError(error: unknown): UnsafeToolErrorFactsV2 {
   if (error instanceof RepositoryAccessError) {
     if (error.code === 'INVALID_REPOSITORY') {
@@ -222,6 +229,7 @@ export class CanonicalRepositoryLocateExecutorV2
   private terminalSuccess(
     legacy: LocateResult,
     projectionExecution: LocateProjectionExecutionCapabilityV2,
+    snapshotFacts: SnapshotFactsV2 = createZeroReadSnapshotFactsV2(),
   ): CanonicalLocateExecutionV2 {
     if (!legacy.ok) {
       return this.terminalFailure(
@@ -230,13 +238,15 @@ export class CanonicalRepositoryLocateExecutorV2
       );
     }
     const execution = requireLocateProjectionExecutionTokenV2(projectionExecution);
+    const builder = createLocateFactEnvelopeBuilderV2(
+      legacy.evidence.repositoryRoot,
+      legacy.evidence.normalizedTerms,
+    );
+    // F3：real success 恰好增加 snapshot owner，仍缺 ranking/backend/request-outcome/scope/capability
+    builder.add('snapshot', snapshotFacts);
     const input: CanonicalLocateExecutionV2 = Object.freeze({
       ok: true as const,
-      envelope: Object.freeze({
-        repositoryRoot: legacy.evidence.repositoryRoot,
-        normalizedTerms: legacy.evidence.normalizedTerms,
-        fragments: Object.freeze({}),
-      }),
+      envelope: builder.freeze(),
       legacyV1Projection: legacy,
     });
     registerCanonicalLocateExecutionInputV2(
@@ -245,6 +255,118 @@ export class CanonicalRepositoryLocateExecutorV2
       execution,
     );
     return input;
+  }
+
+  /**
+   * 有成功 decode 时跑 git probe + pre-ranking pool + final check/purge，
+   * 并把真实 SnapshotFacts 传入 terminalSuccess；零 decode 才走 zero-read。
+   */
+  private async terminalSuccessWithSnapshot(
+    legacy: LocateResult,
+    projectionExecution: LocateProjectionExecutionCapabilityV2,
+    options: {
+      readonly requestSnapshot: RequestRepositorySnapshotV2 | undefined;
+      readonly signal: AbortSignal;
+      readonly discoveryRecords?: Parameters<
+        typeof buildPreRankingPoolInputsFromLegacyEvidenceV2
+      >[0]['discoveryRecords'];
+      readonly confirmed?: LocateSuccessEvidence['confirmed'];
+      readonly candidates?: LocateSuccessEvidence['candidates'];
+      /** Expanded-only drafts：仅进 pre-ranking pool，不改 v1 candidates。 */
+      readonly expandedPoolCandidates?: LocateSuccessEvidence['candidates'];
+      readonly limits?: ResolvedLocateLimits;
+      readonly abortSource?: LocateAbortSource;
+    },
+  ): Promise<CanonicalLocateExecutionV2> {
+    const snapshot = options.requestSnapshot;
+    if (
+      snapshot === undefined ||
+      snapshot.getDecodeInvocationCount() === 0 ||
+      !legacy.ok
+    ) {
+      return this.terminalSuccess(
+        legacy,
+        projectionExecution,
+        createZeroReadSnapshotFactsV2(),
+      );
+    }
+
+    await beforeFinalSnapshotCheckForTestV2?.();
+
+    const gitState = await probeRepositoryGitStateV2(
+      legacy.evidence.repositoryRoot,
+      new NodeSafeProcessRunner(),
+      options.signal,
+    );
+
+    const confirmed = options.confirmed ?? legacy.evidence.confirmed;
+    const candidates = options.candidates ?? legacy.evidence.candidates;
+    const discoveryRecords = options.discoveryRecords ?? [];
+    const legacyKeys = new Set(
+      [...confirmed, ...candidates].map((item) =>
+        createDiscoveryKey(item.location),
+      ),
+    );
+    const expandedOnlyForPool = (options.expandedPoolCandidates ?? []).filter(
+      (item) => !legacyKeys.has(createDiscoveryKey(item.location)),
+    );
+    const poolInputs = buildPreRankingPoolInputsFromLegacyEvidenceV2({
+      discoveryRecords,
+      confirmed,
+      candidates: Object.freeze([...candidates, ...expandedOnlyForPool]),
+      canonicalFileKeyFor: (locator) => snapshot.canonicalFileKeyFor(locator),
+    });
+    const pools = buildPreRankingStablePoolsV2(poolInputs);
+    const finalPools = await snapshot.finalCheck(
+      options.signal,
+      pools.evidence,
+      pools.eligible,
+      gitState,
+    );
+
+    const purgedConfirmed = purgeLegacyEvidenceByChangedKeysV2(
+      confirmed,
+      finalPools.changedCanonicalKeys,
+      (locator) => snapshot.canonicalFileKeyFor(locator),
+    );
+    const purgedCandidates = purgeLegacyEvidenceByChangedKeysV2(
+      candidates,
+      finalPools.changedCanonicalKeys,
+      (locator) => snapshot.canonicalFileKeyFor(locator),
+    );
+
+    const status = applyMutationStatusPrecedenceV2(
+      legacy.evidence.status,
+      finalPools.facts.coverage.consistency,
+    );
+    const limits = options.limits;
+    const nextActions =
+      status === legacy.evidence.status || limits === undefined
+        ? legacy.evidence.nextActions
+        : createNextActions({
+            status,
+            hasCandidates: purgedCandidates.length > 0,
+            limitsReached: legacy.evidence.coverage.limitsReached,
+            abortSource: options.abortSource ?? 'none',
+            limits,
+          });
+
+    const adjusted: LocateResult = redactLocateResult({
+      ok: true,
+      evidence: {
+        ...legacy.evidence,
+        status,
+        confirmed: [...purgedConfirmed],
+        candidates: [...purgedCandidates],
+        nextActions,
+      },
+    });
+
+    return this.terminalSuccess(
+      adjusted,
+      projectionExecution,
+      finalPools.facts,
+    );
   }
 
   private terminalFailure(
@@ -274,7 +396,8 @@ export class CanonicalRepositoryLocateExecutorV2
     context: LocateExecutionContext,
     projectionExecution: LocateProjectionExecutionCapabilityV2,
   ): Promise<CanonicalLocateExecutionV2> {
-    requireLocateProjectionExecutionTokenV2(projectionExecution);
+    const executionToken =
+      requireLocateProjectionExecutionTokenV2(projectionExecution);
     const limits = resolveLocateLimits(request.limits);
     const mode = request.termCase ?? 'smart';
     const normalizedTerms = normalizeSearchTerms(request.terms, mode);
@@ -299,13 +422,40 @@ export class CanonicalRepositoryLocateExecutorV2
     deadline.unref();
 
     let repositoryRoot = request.repoPath;
+    let requestSnapshot: RequestRepositorySnapshotV2 | undefined;
+    let observationCache: VerifiedDiscoveryObservationCacheV2 | undefined;
+    const verificationLimits = Object.freeze({
+      maxFileBytes: DEFAULT_MAX_FILE_BYTES,
+      maxExcerptBytes: CLASSIFICATION_MAX_BYTES,
+      maxExcerptLines: CLASSIFICATION_MAX_LINES,
+    });
+    const maxMatchesPerHit = Math.max(
+      1,
+      limits.maxConfirmed + limits.maxCandidates,
+    );
     try {
       repositoryRoot = await this.reader.resolveRoot(
         request.repoPath,
         abortCoordinator.signal,
       );
+      // 请求级 snapshot：仅精确 NodeRepositoryReader 启用；finally dispose，不进 Nest singleton
+      let requestReader: RepositoryReader = this.reader;
+      if (shouldUseRequestSnapshotReader(this.reader)) {
+        requestSnapshot = createRequestRepositorySnapshotV2({
+          repositoryRoot,
+          decodeMaxFileBytes: DEFAULT_MAX_FILE_BYTES,
+        });
+        requestReader = requestSnapshot;
+        observationCache = new VerifiedDiscoveryObservationCacheV2({
+          repositoryRoot,
+          terms: termsForVerification,
+          limits: verificationLimits,
+          maxMatches: maxMatchesPerHit,
+          signal: abortCoordinator.signal,
+        });
+      }
       if (abortCoordinator.signal.aborted) {
-        return this.terminalSuccess(
+        return await this.terminalSuccessWithSnapshot(
           this.timeoutResult(
             repositoryRoot,
             normalizedTerms,
@@ -313,6 +463,12 @@ export class CanonicalRepositoryLocateExecutorV2
             limits,
           ),
           projectionExecution,
+          {
+            requestSnapshot,
+            signal: abortCoordinator.signal,
+            limits,
+            abortSource: abortCoordinator.source,
+          },
         );
       }
 
@@ -321,34 +477,47 @@ export class CanonicalRepositoryLocateExecutorV2
       );
       const ripgrep = this.backends.find((backend) => backend.id === 'ripgrep');
       if (codegraph === undefined && ripgrep === undefined) {
-        return this.terminalSuccess(
+        return await this.terminalSuccessWithSnapshot(
           this.backendUnavailableResult(repositoryRoot, normalizedTerms),
           projectionExecution,
+          {
+            requestSnapshot,
+            signal: abortCoordinator.signal,
+            limits,
+            abortSource: abortCoordinator.source,
+          },
         );
       }
 
-      const maximumHits =
-        limits.maxFiles * Math.max(1, limits.maxConfirmed + limits.maxCandidates);
-      const backendRequest = Object.freeze({
-        repositoryRoot,
-        terms: normalizedTerms,
-        anchors,
-        negativeTerms,
-        layers: request.layers ?? [],
-        maxHits: maximumHits,
-      });
+      // multi-view：expandedMaxHits=800 与 legacyMaxHits 均被 searchBackendMultiViewV2 消费
+      const multiView = createMultiViewBackendSearchRequestV2(
+        {
+          repositoryRoot,
+          terms: normalizedTerms,
+          anchors,
+          negativeTerms,
+          layers: request.layers ?? [],
+        },
+        legacyMaxHitsFromPublicLimitsV2(limits),
+      );
       let codegraphResult: BackendSearchResult | undefined;
       let ripgrepResult: BackendSearchResult | undefined;
+      const expandedBackendResults: BackendSearchResult[] = [];
+      let lastSharedSearchMaxHits = multiView.expandedMaxHits as number;
       let skipFallback = false;
       let fallbackChecked = false;
 
       if (codegraph !== undefined) {
-        codegraphResult = await codegraph.search(
-          backendRequest,
+        const codegraphLanes = await searchBackendMultiViewV2(
+          codegraph,
+          multiView,
           abortCoordinator.signal,
         );
+        codegraphResult = codegraphLanes.legacy;
+        expandedBackendResults.push(codegraphLanes.expanded);
+        lastSharedSearchMaxHits = codegraphLanes.sharedSearchMaxHits as number;
         if (abortCoordinator.signal.aborted) {
-          return this.terminalSuccess(
+          return await this.terminalSuccessWithSnapshot(
           this.timeoutResult(
             repositoryRoot,
             normalizedTerms,
@@ -366,6 +535,12 @@ export class CanonicalRepositoryLocateExecutorV2
             },
           ),
           projectionExecution,
+          {
+            requestSnapshot,
+            signal: abortCoordinator.signal,
+            limits,
+            abortSource: abortCoordinator.source,
+          },
         );
         }
         if (
@@ -374,25 +549,22 @@ export class CanonicalRepositoryLocateExecutorV2
           codegraphResult.canSkipFallbackIfVerified === true &&
           codegraphResult.hits.length > 0
         ) {
-          const primarySelection = selectBackendHits(
+          const primarySelection = selectAndFreezeLegacyBackendHitsV1(
             [codegraphResult],
             limits.maxFiles,
-          );
+            executionToken,
+          ).result;
           const primaryMerged = await verifyAndMergeBackendHits({
             repositoryRoot,
             hits: primarySelection.hits,
             terms: termsForVerification,
-            reader: this.reader,
-            limits: {
-              maxFileBytes: DEFAULT_MAX_FILE_BYTES,
-              maxExcerptBytes: CLASSIFICATION_MAX_BYTES,
-              maxExcerptLines: CLASSIFICATION_MAX_LINES,
-            },
-            maxMatchesPerHit: Math.max(
-              1,
-              limits.maxConfirmed + limits.maxCandidates,
-            ),
+            reader: requestReader,
+            limits: verificationLimits,
+            maxMatchesPerHit,
             signal: abortCoordinator.signal,
+            ...(observationCache === undefined
+              ? {}
+              : { observationCache }),
           });
           const primaryClassified = classifyDiscoveryRecords(
             primaryMerged.records,
@@ -438,7 +610,7 @@ export class CanonicalRepositoryLocateExecutorV2
             if (primaryCandidates.truncated) {
               timeoutLimits.push('MAX_CANDIDATES_REACHED');
             }
-            return this.terminalSuccess(
+            return await this.terminalSuccessWithSnapshot(
           this.timeoutResult(
               repositoryRoot,
               normalizedTerms,
@@ -460,6 +632,15 @@ export class CanonicalRepositoryLocateExecutorV2
               },
             ),
           projectionExecution,
+          {
+            requestSnapshot,
+            signal: abortCoordinator.signal,
+            discoveryRecords: primaryMerged.records,
+            confirmed: primaryConfirmed.selected,
+            candidates: primaryCandidates.selected,
+            limits,
+            abortSource: abortCoordinator.source,
+          },
         );
           }
           skipFallback =
@@ -475,7 +656,7 @@ export class CanonicalRepositoryLocateExecutorV2
             );
         }
         if (abortCoordinator.signal.aborted) {
-          return this.terminalSuccess(
+          return await this.terminalSuccessWithSnapshot(
           this.timeoutResult(
             repositoryRoot,
             normalizedTerms,
@@ -493,36 +674,54 @@ export class CanonicalRepositoryLocateExecutorV2
             },
           ),
           projectionExecution,
+          {
+            requestSnapshot,
+            signal: abortCoordinator.signal,
+            limits,
+            abortSource: abortCoordinator.source,
+          },
         );
         }
       }
 
       if (!skipFallback && ripgrep !== undefined) {
         fallbackChecked = codegraphResult !== undefined;
-        ripgrepResult = await ripgrep.search(
-          backendRequest,
+        const ripgrepLanes = await searchBackendMultiViewV2(
+          ripgrep,
+          multiView,
           abortCoordinator.signal,
         );
+        ripgrepResult = ripgrepLanes.legacy;
+        expandedBackendResults.push(ripgrepLanes.expanded);
+        lastSharedSearchMaxHits = ripgrepLanes.sharedSearchMaxHits as number;
       }
 
       const backendResults = [codegraphResult, ripgrepResult].filter(
         (result): result is BackendSearchResult => result !== undefined,
       );
-      const selected = selectBackendHits(backendResults, limits.maxFiles);
+      const selected = selectAndFreezeLegacyBackendHitsV1(
+        backendResults,
+        limits.maxFiles,
+        executionToken,
+      ).result;
       const filesTruncated = selected.filesTruncated;
+
+      // Expanded lane：raw → safe pre-cap → temporary allow-all scope fold（不影响 legacy）
+      const expandedFold = projectAndScopeFoldExpandedHitsV2({
+        expandedResults: expandedBackendResults,
+        execution: executionToken,
+        layerHint: request.layers?.[0] ?? 'server',
+      });
 
       const merged = await verifyAndMergeBackendHits({
         repositoryRoot,
         hits: selected.hits,
         terms: termsForVerification,
-        reader: this.reader,
-        limits: {
-          maxFileBytes: DEFAULT_MAX_FILE_BYTES,
-          maxExcerptBytes: CLASSIFICATION_MAX_BYTES,
-          maxExcerptLines: CLASSIFICATION_MAX_LINES,
-        },
-        maxMatchesPerHit: Math.max(1, limits.maxConfirmed + limits.maxCandidates),
+        reader: requestReader,
+        limits: verificationLimits,
+        maxMatchesPerHit,
         signal: abortCoordinator.signal,
+        ...(observationCache === undefined ? {} : { observationCache }),
       });
       const initialExclusions: Partial<Record<ExclusionReasonCode, number>> = {};
       if (merged.duplicateLocations > 0) {
@@ -565,7 +764,7 @@ export class CanonicalRepositoryLocateExecutorV2
         retainedSeedKeys.has(candidate.discoveryKey),
       )) {
         try {
-          const window = await this.reader.readWindow(
+          const window = await requestReader.readWindow(
             repositoryRoot,
             record.location.file,
             record.focusLines,
@@ -595,7 +794,9 @@ export class CanonicalRepositoryLocateExecutorV2
           throw error;
         }
       }
-      const candidatePolicy = applyCandidatePolicy({
+      // Legacy candidate：LegacyCandidateReservationV1 严格复现 v1 applyCandidatePolicy
+      const legacyReservation = new LegacyCandidateReservationV1();
+      const candidatePolicy = legacyReservation.reserve({
         records: merged.records,
         contexts: candidateContexts,
         maxCandidates: Math.max(
@@ -604,6 +805,36 @@ export class CanonicalRepositoryLocateExecutorV2
         ),
         signal: abortCoordinator.signal,
       });
+
+      // Expanded candidate：同一 enumerator 一次枚举；expanded universe 评估，不抑制 legacy
+      const tokenEnumerator = new CandidateTokenProposalEnumeratorV2();
+      const expandedProposals = Object.freeze(
+        candidateContexts.flatMap((context) => [
+          ...tokenEnumerator.enumerate(context),
+        ]),
+      );
+      const expandedCandidateDrafts = evaluateExpandedCandidateProposalsV2({
+        proposals: expandedProposals,
+        expandedRecords: merged.records,
+        reasonFor: () =>
+          Object.freeze(['SAME_SCOPE_SIMILAR_IDENTIFIER' as const]),
+      });
+      const expandedPoolCandidates = expandedCandidateDrafts.map(
+        materializeCandidateDraft,
+      );
+
+      registerDualLaneExecutionReceiptV2(executionToken, {
+        sharedSearchMaxHits: lastSharedSearchMaxHits,
+        expandedMaxHits: multiView.expandedMaxHits,
+        legacyMaxHits: multiView.legacyMaxHits,
+        scopeFoldInvoked: expandedFold.scopeFoldInvoked,
+        scopeFoldCandidateCount: expandedFold.facts.candidates.length,
+        scopeFoldFilesTruncated: expandedFold.facts.filesTruncated,
+        usedLegacyCandidateReservation: true,
+        expandedProposalCount: expandedProposals.length,
+        expandedEvaluatedDraftCount: expandedCandidateDrafts.length,
+      });
+
       const candidateSelection = selectCandidateBudget(
         [
           ...existingCandidates,
@@ -706,7 +937,7 @@ export class CanonicalRepositoryLocateExecutorV2
               ),
             ]),
       ]);
-      return this.terminalSuccess(
+      return await this.terminalSuccessWithSnapshot(
           redactLocateResult({
         ok: true,
         evidence: {
@@ -728,13 +959,23 @@ export class CanonicalRepositoryLocateExecutorV2
         },
       }),
           projectionExecution,
+          {
+            requestSnapshot,
+            signal: abortCoordinator.signal,
+            discoveryRecords: merged.records,
+            confirmed,
+            candidates,
+            expandedPoolCandidates,
+            limits,
+            abortSource: abortCoordinator.source,
+          },
         );
     } catch (error: unknown) {
       if (
         (error instanceof RepositoryAccessError && error.code === 'ABORTED') ||
         abortCoordinator.signal.aborted
       ) {
-        return this.terminalSuccess(
+        return await this.terminalSuccessWithSnapshot(
           this.timeoutResult(
           repositoryRoot,
           normalizedTerms,
@@ -742,10 +983,18 @@ export class CanonicalRepositoryLocateExecutorV2
           limits,
         ),
           projectionExecution,
+          {
+            requestSnapshot,
+            signal: abortCoordinator.signal,
+            limits,
+            abortSource: abortCoordinator.source,
+          },
         );
       }
       return this.terminalFailure(decideToolError(error), projectionExecution);
     } finally {
+      observationCache?.dispose();
+      requestSnapshot?.dispose();
       clearTimeout(deadline);
       context.signal.removeEventListener('abort', abortFromCaller);
     }

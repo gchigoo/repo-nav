@@ -28,6 +28,12 @@ import {
   runFinalSnapshotCheckV2,
   type SnapshotTrustProofV2,
 } from '../../../src/evidence/request-snapshot/final-snapshot-check-v2.js';
+import { projectExpandedSafePreCapPoolV2 } from '../../../src/evidence/request-snapshot/discovery-lane-universe-v2.js';
+import {
+  readScopeFoldedSafePoolProofV2,
+  scopeFoldSafeCandidatePoolV2,
+} from '../../../src/evidence/request-snapshot/scope-folded-discovery-selector-v2.js';
+import { createScopeCoverageBasisV2 } from '../../../src/evidence/request-snapshot/scope-coverage-basis-v2.js';
 import {
   createBackendExecutionContextV2,
   issueBackendExecutionTraceForHarnessV2,
@@ -36,6 +42,11 @@ import { createProcessOpaqueTokenV2 } from '../../../src/process/opaque-token-v2
 import { NodeSafeProcessRunner } from '../../../src/repository/node-safe-process-runner.js';
 import { issueTrustedFallbackDecisionV2 } from '../../../src/evidence/request-outcome/trusted-fallback-decision-v2.js';
 import type { RequestOutcomeAggregationInputV2 } from '../../../src/evidence/request-outcome/request-outcome-aggregator-v2.js';
+import { resolveRepositoryScopeV1 } from '../../../src/evidence/scope/resolve-repository-scope-v1.js';
+import {
+  buildScopeCoverageV1,
+  requireScopeCoverageFactsV1,
+} from '../../../src/evidence/scope/scope-coverage-v1.js';
 
 export interface AggregationHarnessV2 {
   readonly execution: LocateExecutionTokenV2;
@@ -161,6 +172,36 @@ export async function buildAggregationHarnessV2(options: {
     execution,
   );
 
+  const preCap = projectExpandedSafePreCapPoolV2([], true, execution);
+  const foldedView = scopeFoldSafeCandidatePoolV2(preCap, [], execution);
+  const foldProof = readScopeFoldedSafePoolProofV2(foldedView, execution);
+  const resolvedScope = resolveRepositoryScopeV1(undefined);
+  const coverageBasis = createScopeCoverageBasisV2({
+    excludedLocatorRefs: [],
+    mixedIncludedLocatorRefs: [],
+    stableEligiblePool: registered.eligibleDiscovery,
+    snapshotProof,
+    foldProof,
+    execution,
+  });
+  const scopeFacts = buildScopeCoverageV1(
+    registered.eligibleDiscovery,
+    snapshotProof,
+    foldProof,
+    coverageBasis,
+    resolvedScope,
+    execution,
+  );
+  const scopeView = requireScopeCoverageFactsV1(
+    scopeFacts,
+    registered.eligibleDiscovery,
+    snapshotProof,
+    foldProof,
+    coverageBasis,
+    resolvedScope,
+    execution,
+  );
+
   const abortCoordinator = LocateAbortCoordinatorV2.create(
     new AbortController().signal,
     options.limits?.timeoutMs ?? DEFAULT_LIMITS.timeoutMs,
@@ -192,7 +233,13 @@ export async function buildAggregationHarnessV2(options: {
     contributions: Object.freeze([
       summary.contribution,
       snapshotContribution,
+      scopeView.contribution,
     ] as const),
+    scopeProof: scopeView.proof,
+    expectedEligiblePool: registered.eligibleDiscovery,
+    expectedFoldProof: foldProof,
+    expectedCoverageBasis: coverageBasis,
+    expectedResolvedScope: resolvedScope,
   });
 
   return Object.freeze({

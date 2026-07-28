@@ -71,6 +71,7 @@ export const PLATFORM_CONTRACT_IDS_V1 = [
   'F6-INPUT-001',
   'F6-ABORT-001',
   'F6-LATCH-001',
+  'F7-SCOPE-001',
 ] as const;
 
 export type PlatformContractIdV1 =
@@ -535,6 +536,22 @@ const BASE_BINDINGS: readonly PlatformCaseBindingV1<PlatformContractIdV1>[] =
       requiredEvidenceHashIds: Object.freeze([]),
       fixture: 'testkit/fixtures/request-outcome-v2/platform-finalization-v2.ts',
       assertionOwner: 'test/unit/canonical-locate-finalization-v2.spec.ts',
+    }),
+    Object.freeze({
+      contractId: 'F7-SCOPE-001',
+      surface: 'unit',
+      group: 'repository-scope-policy',
+      executableCaseId: 'platform-path-flavor-and-priority',
+      applicableOs: ALL_OS,
+      requiredAssertionIds: Object.freeze([
+        'backend-native-path-flavor',
+        'scope-priority',
+        'caller-backslash-rejected',
+        'drive-relative-rejected',
+      ]),
+      requiredEvidenceHashIds: Object.freeze([]),
+      fixture: 'testkit/fixtures/scope-v1/path-source-matrix-v1.ts',
+      assertionOwner: 'test/unit/scope-policy-platform.spec.ts',
     }),
   ]);
 

@@ -1,0 +1,19 @@
+# F7 repository-scope-policy implementation scope
+.codestable/features/2026-07-24-repository-scope-policy
+.codestable/roadmap/repo-nav-public-beta
+.codestable/architecture/system-repo-nav-foundation.md
+src/evidence/scope/
+src/evidence/locate-execution/
+src/evidence/direct-mapping-classifier.ts
+src/evidence/request-snapshot/
+src/evidence/request-outcome/
+src/evidence/candidate-policy.ts
+src/evidence/ranking/
+src/contracts/
+test/unit/
+test/golden/
+testkit/fixtures/scope-v1/
+testkit/fixtures/request-outcome-v2/
+testkit/runners/runner-registry.ts
+testkit/contracts/platform-contract.ts
+testkit/manifests/

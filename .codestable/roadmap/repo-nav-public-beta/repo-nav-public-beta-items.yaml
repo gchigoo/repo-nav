@@ -97,11 +97,11 @@ items:
     confirmed candidate 共用的 scope decision
   depends_on:
   - input-abort-contract-v2
-  status: in-progress
+  status: done
   feature: 2026-07-24-repository-scope-policy
   minimal_loop: false
   notes: test 优先于 docs 再优先于 production prefix segment；test docs 即使显式请求仍保持 fail-closed，不直接提升为
-    confirmed
+    confirmed；acceptance 2026-07-28 passed；远程六格 F7 marker deferred
 - slug: language-capability-boundary
   description: 引入TypeScript JavaScript SQL与unsupported fallback adapters，并以唯一ready
     provider执行four-prerequisite admission、F2两段、F6 aggregation、F1C fresh complete-envelope

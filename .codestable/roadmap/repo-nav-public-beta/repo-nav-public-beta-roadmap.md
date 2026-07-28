@@ -596,6 +596,8 @@ interface BackendExecutionOutcomeV2 {
 
 统一 basename/extension/segment/prefix layer mapping 及冲突优先级、test/docs 显式请求和 candidate scope decision。
 
+**状态（2026-07-28）**：acceptance `passed`；items.yaml `done`；architecture 已回写 path-only scope policy / F3 fold+adapter / two-base-port materializer / coverage mount；REV-007..010 与远程六格 F7 marker 为 residual。
+
 ### F8 · language-capability-boundary
 
 引入TypeScript/JavaScript、SQL与unsupported fallback adapters，公开semantic capability和降级原因；作为最后required owner，F8还独占internal ready provider、zero-argument outer factory与七个private wrappers，exact一次取得F2 two-stage factory和两个F1C runtime acquisitions，形成首个complete real-v2 shadow。F9只消费F8 accepted token/interface，不导入stage owner。

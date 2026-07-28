@@ -1,5 +1,3 @@
-import { extname, posix } from 'node:path';
-
 import {
   comparePublicEvidence,
   createEvidenceId,
@@ -12,6 +10,11 @@ import {
 } from '../contracts/index.js';
 import type { DiscoveryRecord } from './discovery-record.js';
 import { secondaryBackendCandidateReasons } from './candidate-policy.js';
+import {
+  legacyResolveRepositoryLayerV1,
+  resolveRepositoryLayerV1,
+  resolveRepositoryScopeV1,
+} from './scope/index.js';
 
 export interface ClassificationContext {
   readonly anchors: readonly NormalizedLocateAnchor[];
@@ -42,23 +45,6 @@ type Classification =
       readonly canonicalSymbol?: string;
     };
 
-const TEST_SEGMENTS = new Set([
-  'test',
-  'tests',
-  '__tests__',
-  'spec',
-  'specs',
-  'fixtures',
-  '__fixtures__',
-]);
-const DOCS_SEGMENTS = new Set(['docs', 'documentation', 'examples']);
-const DOCS_EXTENSIONS = new Set(['.md', '.mdx', '.rst', '.adoc']);
-const TOP_LEVEL_LAYERS = new Set<RepoLayer>([
-  'client',
-  'server',
-  'db',
-  'config',
-]);
 const MAX_CLASSIFICATION_LINES = 12;
 const MAX_CLASSIFICATION_BYTES = 4 * 1024;
 
@@ -83,28 +69,17 @@ function containsTerm(excerpt: string, term: NormalizedSearchTerm): boolean {
   );
 }
 
+/**
+ * Compatible export：repo-scope-v1 layer classification。
+ * S1 characterization 另见 `legacyResolveRepositoryLayerV1`。
+ */
 export function resolveRepositoryLayer(file: string): RepoLayer {
-  const normalized = posix.normalize(file.replaceAll('\\', '/'));
-  const segments = normalized.split('/').map((segment) => segment.toLowerCase());
-  const basename = segments.at(-1) ?? '';
-  if (
-    segments.some((segment) => TEST_SEGMENTS.has(segment)) ||
-    basename.includes('.spec.') ||
-    basename.includes('.test.')
-  ) {
-    return 'test';
-  }
-  if (
-    segments.some((segment) => DOCS_SEGMENTS.has(segment)) ||
-    DOCS_EXTENSIONS.has(extname(basename).toLowerCase())
-  ) {
-    return 'docs';
-  }
-  const topLevel = segments[0] as RepoLayer | undefined;
-  return topLevel !== undefined && TOP_LEVEL_LAYERS.has(topLevel)
-    ? topLevel
-    : 'unknown';
+  return resolveRepositoryLayerV1(file);
 }
+
+/** @deprecated S1 characterization only — frozen pre-policy semantics. */
+export const resolveRepositoryLayerLegacyForCharacterization =
+  legacyResolveRepositoryLayerV1;
 
 export function maskNonCode(excerpt: string): string {
   let state:
@@ -685,17 +660,16 @@ export function classifyDiscoveryRecords(
     }
 
     const layer = resolveRepositoryLayer(record.location.file);
+    const resolvedScope = resolveRepositoryScopeV1(context.layers);
+    const included = resolvedScope.effective.includes(layer);
     const isTestOrDocs = layer === 'test' || layer === 'docs';
-    const layerRequested = context.layers.includes(layer);
-    if (
-      (isTestOrDocs && !layerRequested) ||
-      (context.layers.length > 0 && !layerRequested)
-    ) {
+    if (!included) {
       addExclusion(exclusionSummary, 'OUTSIDE_LAYER_HINT');
       continue;
     }
 
     recordsClassified += 1;
+    // 显式 test/docs = candidate-only hard ceiling
     const classification = classifyRecord(
       record,
       context,

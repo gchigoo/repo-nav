@@ -71,6 +71,7 @@ import {
   LegacyCandidateReservationV1,
   legacyMaxHitsFromPublicLimitsV2,
   probeRepositoryGitStateV2,
+  buildStableEligibleScopeRecordsFromObservationV2,
   projectAndScopeFoldExpandedHitsV2,
   registerDualLaneExecutionReceiptV2,
   searchBackendMultiViewV2,
@@ -78,7 +79,15 @@ import {
   VerifiedDiscoveryObservationCacheV2,
   type BoundSafeDiscoverySelectionV2,
   type RequestRepositorySnapshotV2,
+  type TrustedScopeEligibilityObservationV2,
+  type TrustedScopeFoldedSelectorViewV2,
 } from '../request-snapshot/index.js';
+import {
+  buildExecutionScopeCoverageMountV1,
+  classifyDiscoveryRecordsThroughScopeBoundProducersV2,
+} from '../scope/index.js';
+import type { RepoLayer } from '../../contracts/index.js';
+import type { LocateFactPayloadsV2 } from '../../contracts/v2/locate-fact-envelope-v2.js';
 import {
   applyMutationStatusPrecedenceV2,
   buildPreRankingPoolInputsFromLegacyEvidenceV2,
@@ -241,6 +250,7 @@ export class CanonicalRepositoryLocateExecutorV2
     projectionExecution: LocateProjectionExecutionCapabilityV2,
     snapshotFacts: SnapshotFactsV2 = createZeroReadSnapshotFactsV2(),
     rankingFacts?: RankedEvidenceFactsV2,
+    scopeFragment?: LocateFactPayloadsV2['scope'],
   ): CanonicalLocateExecutionV2 {
     if (!legacy.ok) {
       return this.terminalFailure(
@@ -253,10 +263,13 @@ export class CanonicalRepositoryLocateExecutorV2
       legacy.evidence.repositoryRoot,
       legacy.evidence.normalizedTerms,
     );
-    // F3/F2：real success 增加 snapshot；有 ranking 时再登记 ranking（仍缺 backend/request-outcome/scope/capability）
+    // F3/F2/F7：real success 登记 snapshot；有 ranking 时登记 ranking；F7 登记 scope（仍缺 capability）
     builder.add('snapshot', snapshotFacts);
     if (rankingFacts !== undefined) {
       builder.add('ranking', rankingFacts);
+    }
+    if (scopeFragment !== undefined) {
+      builder.add('scope', scopeFragment);
     }
     const input: CanonicalLocateExecutionV2 = Object.freeze({
       ok: true as const,
@@ -297,18 +310,35 @@ export class CanonicalRepositoryLocateExecutorV2
       readonly termCase?: TermCaseMode;
       /** read 前已 bind 的 discovery selection；ranking 必须复用同一 token。 */
       readonly discoverySelection?: BoundSafeDiscoverySelectionV2;
+      /** Expanded fold view：scope coverage 复用同一 fold proof。 */
+      readonly foldedView?: TrustedScopeFoldedSelectorViewV2;
+      /** Same-execution scope observation：post-final matched bind 权威源。 */
+      readonly scopeObservation?: TrustedScopeEligibilityObservationV2;
+      readonly requestedLayers?: readonly RepoLayer[];
     },
   ): Promise<CanonicalLocateExecutionV2> {
+    const execution = requireLocateProjectionExecutionTokenV2(
+      projectionExecution,
+    );
     const snapshot = options.requestSnapshot;
     if (
       snapshot === undefined ||
       snapshot.getDecodeInvocationCount() === 0 ||
       !legacy.ok
     ) {
+      const scopeMount = await buildExecutionScopeCoverageMountV1({
+        execution,
+        requestedLayers: options.requestedLayers,
+        ...(options.foldedView === undefined
+          ? {}
+          : { foldedView: options.foldedView }),
+      });
       return this.terminalSuccess(
         legacy,
         projectionExecution,
         createZeroReadSnapshotFactsV2(),
+        undefined,
+        scopeMount.fragmentValue,
       );
     }
 
@@ -397,9 +427,6 @@ export class CanonicalRepositoryLocateExecutorV2
     // F2：final purge 后对 trusted pool 排序；必须复用 read 前 bound selection
     let rankingFacts: RankedEvidenceFactsV2 | undefined;
     if (options.discoverySelection !== undefined) {
-      const execution = requireLocateProjectionExecutionTokenV2(
-        projectionExecution,
-      );
       const intents = normalizeAnchorIntentsV2(
         options.rawAnchors ?? [],
         options.termCase ?? 'smart',
@@ -429,11 +456,31 @@ export class CanonicalRepositoryLocateExecutorV2
       ).fragment.value;
     }
 
+    const stableScopeRecords =
+      options.scopeObservation === undefined
+        ? Object.freeze([])
+        : buildStableEligibleScopeRecordsFromObservationV2({
+            retainedEligible: finalPools.retainedEligible,
+            observation: options.scopeObservation,
+            execution,
+          });
+    const scopeMount = await buildExecutionScopeCoverageMountV1({
+      execution,
+      requestedLayers: options.requestedLayers,
+      ...(options.foldedView === undefined
+        ? {}
+        : { foldedView: options.foldedView }),
+      eligiblePool: finalPools.eligibleDiscovery,
+      snapshotProof: finalPools.proof,
+      stableScopeRecords,
+    });
+
     return this.terminalSuccess(
       adjusted,
       projectionExecution,
       finalPools.facts,
       rankingFacts,
+      scopeMount.fragmentValue,
     );
   }
 
@@ -525,7 +572,10 @@ export class CanonicalRepositoryLocateExecutorV2
             signal: abortCoordinator.signal,
             limits,
             abortSource: abortCoordinator.peekSource(),
-          abortCoordinator,
+            abortCoordinator,
+            ...(request.layers === undefined
+              ? {}
+              : { requestedLayers: request.layers }),
           },
         );
       }
@@ -543,7 +593,10 @@ export class CanonicalRepositoryLocateExecutorV2
             signal: abortCoordinator.signal,
             limits,
             abortSource: abortCoordinator.peekSource(),
-          abortCoordinator,
+            abortCoordinator,
+            ...(request.layers === undefined
+              ? {}
+              : { requestedLayers: request.layers }),
           },
         );
       }
@@ -607,7 +660,10 @@ export class CanonicalRepositoryLocateExecutorV2
             signal: abortCoordinator.signal,
             limits,
             abortSource: abortCoordinator.peekSource(),
-          abortCoordinator,
+            abortCoordinator,
+            ...(request.layers === undefined
+              ? {}
+              : { requestedLayers: request.layers }),
           },
         );
         }
@@ -748,7 +804,10 @@ export class CanonicalRepositoryLocateExecutorV2
             signal: abortCoordinator.signal,
             limits,
             abortSource: abortCoordinator.peekSource(),
-          abortCoordinator,
+            abortCoordinator,
+            ...(request.layers === undefined
+              ? {}
+              : { requestedLayers: request.layers }),
           },
         );
         }
@@ -778,7 +837,7 @@ export class CanonicalRepositoryLocateExecutorV2
       ).result;
       const filesTruncated = selected.filesTruncated;
 
-      // Expanded lane：raw → safe pre-cap → temporary allow-all scope fold（不影响 legacy）
+      // Expanded lane：raw → safe pre-cap → trusted F7 scope observation → fold（不影响 legacy）
       // F2：read 前 selector 需要 matchedAnchorKeys；按 intent 与 safe file/symbol 对齐
       const rankingIntents = normalizeAnchorIntentsV2(
         request.anchors ?? [],
@@ -788,6 +847,9 @@ export class CanonicalRepositoryLocateExecutorV2
         expandedResults: expandedBackendResults,
         execution: executionToken,
         layerHint: request.layers?.[0] ?? 'server',
+        ...(request.layers === undefined
+          ? {}
+          : { requestedLayers: request.layers }),
         resolveMatchedAnchorKeys: (safeFile, safeSymbol) => {
           const keys: string[] = [];
           const fileCmp = safeFile.toLocaleLowerCase('und');
@@ -814,6 +876,8 @@ export class CanonicalRepositoryLocateExecutorV2
           return Object.freeze(keys);
         },
       });
+      const scopeObservation: TrustedScopeEligibilityObservationV2 =
+        expandedFold.observation;
       // F2 discovery reservation：任何 reader verify 之前 bind ticket/proof
       const discoverySelectionDraft = new DiscoveryHitSelectorV2().select(
         expandedFold.foldedView,
@@ -843,16 +907,20 @@ export class CanonicalRepositoryLocateExecutorV2
       if (merged.unverifiedLocations > 0) {
         initialExclusions.UNVERIFIED_FILE_CONTENT = merged.unverifiedLocations;
       }
-      const classified = classifyDiscoveryRecords(
-        merged.records,
-        {
+      const classified = classifyDiscoveryRecordsThroughScopeBoundProducersV2({
+        records: merged.records,
+        context: {
           anchors,
           layers: request.layers ?? [],
           negativeTerms,
           primaryAttempted: codegraphResult !== undefined,
         },
+        execution: executionToken,
+        observation: scopeObservation,
+        foldedView: expandedFold.foldedView,
+        boundSelection: discoverySelection,
         initialExclusions,
-      );
+      });
       const confirmedSelection = selectConfirmedBudget(
         classified.confirmed,
         limits.maxConfirmed,
@@ -1085,6 +1153,11 @@ export class CanonicalRepositoryLocateExecutorV2
             rawAnchors: request.anchors ?? [],
             termCase: mode,
             discoverySelection,
+            foldedView: expandedFold.foldedView,
+            scopeObservation,
+            ...(request.layers === undefined
+              ? {}
+              : { requestedLayers: request.layers }),
           },
         );
     } catch (error: unknown) {
@@ -1105,7 +1178,10 @@ export class CanonicalRepositoryLocateExecutorV2
             signal: abortCoordinator.signal,
             limits,
             abortSource: abortCoordinator.peekSource(),
-          abortCoordinator,
+            abortCoordinator,
+            ...(request.layers === undefined
+              ? {}
+              : { requestedLayers: request.layers }),
           },
         );
       }

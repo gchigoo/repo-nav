@@ -384,7 +384,7 @@ describe.runIf(snapshotV1ParitySelected)(
 describe.runIf(realEnvelopeSelected)(
   'F3-ENVELOPE-001 snapshot-real-envelope',
   () => {
-    it('adds only snapshot owner on real success and keeps tool failure envelope-less', async () => {
+    it('adds snapshot+scope owners on real success and keeps tool failure envelope-less', async () => {
       expect(REAL_ENVELOPE_OWNED_V2).toBe(true);
       const backend = new CountingBackend();
       const reader = new CountingReader();
@@ -402,13 +402,17 @@ describe.runIf(realEnvelopeSelected)(
       if (!success.ok) {
         throw new Error('expected success');
       }
-      expect(Object.keys(success.envelope.fragments)).toEqual(['snapshot']);
+      // F7：real success 登记 scope；CountingReader 无 decode 故无 ranking；仍缺 capability
+      expect(Object.keys(success.envelope.fragments).sort()).toEqual(
+        ['scope', 'snapshot'].sort(),
+      );
       expect(success.envelope.fragments.snapshot?.owner).toBe('snapshot');
+      expect(success.envelope.fragments.scope?.owner).toBe('scope');
       expect(success.envelope.fragments.snapshot?.value.coverage.consistency).toBe(
         'unknown',
       );
       for (const owner of LOCATE_FACT_OWNER_ORDER_V2) {
-        if (owner === 'snapshot') continue;
+        if (owner === 'snapshot' || owner === 'scope') continue;
         expect(
           Object.prototype.hasOwnProperty.call(
             success.envelope.fragments,

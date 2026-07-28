@@ -3,7 +3,7 @@ doc_type: roadmap-goal-feature
 roadmap: repo-nav-public-beta
 feature: 2026-07-24-repository-scope-policy
 roadmap_item: repository-scope-policy
-status: implementing
+status: accepted
 ---
 
 # repository-scope-policy Goal 执行规格

@@ -31,6 +31,8 @@ import {
   CandidateFixtureBackend,
   candidateFixtureRoot,
 } from '../../testkit/fixtures/candidate-policy/candidate-fixture-backend.js';
+import { resolveRepositoryScopeV1 } from '../../src/evidence/scope/index.js';
+import { CANDIDATE_CONTEXTS_V1 } from '../../testkit/fixtures/scope-v1/candidate-contexts-v1.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
 const POLICY_EXCERPT = [
@@ -933,3 +935,56 @@ describe.runIf(selected('candidate-permutation', 'candidate-permutation'))(
     });
   },
 );
+
+describe.runIf(
+  isSelected({
+    group: 'repository-scope-policy',
+    caseId: 'candidate-pool',
+  }),
+)('F7-CANDIDATE-001 candidate-pool', () => {
+  it('excludes default test/docs neighbors and keeps explicit candidate-only', () => {
+    const defaultScope = resolveRepositoryScopeV1([
+      ...CANDIDATE_CONTEXTS_V1.defaultLayers,
+    ]);
+    expect(defaultScope.effective).not.toContain('test');
+    expect(defaultScope.effective).not.toContain('docs');
+
+    const explicit = resolveRepositoryScopeV1([
+      ...CANDIDATE_CONTEXTS_V1.explicitTestDocs,
+    ]);
+    expect(explicit.effective).toEqual(['test', 'docs']);
+    expect(
+      classifyDiscoveryRecords(
+        [
+          {
+            discoveryKey: createDiscoveryKey({
+              file: CANDIDATE_CONTEXTS_V1.explicitCandidateNeighbor,
+              lines: [1, 1],
+              excerpt: 'targetField = row.source_field;',
+            }),
+            location: {
+              file: CANDIDATE_CONTEXTS_V1.explicitCandidateNeighbor,
+              lines: [1, 1],
+              excerpt: 'targetField = row.source_field;',
+            },
+            discoveredBy: ['ripgrep'],
+            operations: ['RIPGREP_SEARCH', 'FILESYSTEM_READ_RANGE'],
+            discoveryReasonCodes: ['LITERAL_TERM_HIT'],
+            matchedTerms: [
+              { value: 'targetField', caseSensitive: false },
+              { value: 'row.source_field', caseSensitive: false },
+            ],
+            focusLines: [1, 1],
+            focusExcerpt: 'targetField = row.source_field;',
+            canonicalSymbols: [],
+          },
+        ],
+        {
+          anchors: [],
+          layers: ['test', 'docs'],
+          negativeTerms: [],
+        },
+      ).confirmed,
+    ).toEqual([]);
+  });
+});

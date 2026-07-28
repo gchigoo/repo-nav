@@ -1,6 +1,10 @@
-import type { BackendHit, BackendSearchResult } from '../../contracts/index.js';
+import type { BackendHit, BackendSearchResult, RepoLayer } from '../../contracts/index.js';
 import type { LocateExecutionTokenV2 } from '../../contracts/v2/locate-fact-envelope-v2.js';
 import { redactPublicText } from '../evidence-redactor.js';
+import {
+  createRepositoryScopePolicyV1,
+  resolveRepositoryScopeV1,
+} from '../scope/index.js';
 import {
   bindRawDiscoveryLocatorV2,
   projectExpandedSafePreCapPoolV2,
@@ -14,10 +18,14 @@ import {
   type ScopeFoldedSelectorFactsViewV2,
   type TrustedScopeFoldedSelectorViewV2,
 } from './scope-folded-discovery-selector-v2.js';
+import {
+  createTrustedRepositoryScopePolicyAdapterV1,
+  observeTrustedScopeEligibilityV2,
+} from './trusted-scope-policy-adapter-v2.js';
 
 /**
  * 临时 current-scope adapter：全部合法 locator 记为 included/allowed。
- * F7 后续替换真实 scope adapter；决策 fan-out API 形状保持不变。
+ * 保留给既有 F3 fold unit；production 走 trusted observation。
  */
 export function createTemporaryAllowAllScopeDecisionsV2(
   candidates: readonly PublicSafeExpandedCandidateV2[],
@@ -38,19 +46,17 @@ export function createTemporaryAllowAllScopeDecisionsV2(
 }
 
 function toSafePublicFieldV2(raw: string): string {
-  // 复用现网 redactor；safe key 不得携带未脱敏 raw
   return redactPublicText(raw).value;
 }
 
 /**
- * 将 expanded lane raw hits 绑定 → public-safe pre-cap → scope fold（固定 800）。
- * fold 截断/排除不得改写调用方持有的 legacy 结果。
+ * 将 expanded lane raw hits 绑定 → public-safe pre-cap → F7 scope observation → fold（固定 800）。
  */
 export function projectAndScopeFoldExpandedHitsV2(input: {
   readonly expandedResults: readonly BackendSearchResult[];
   readonly execution: LocateExecutionTokenV2;
   readonly layerHint: string;
-  /** 可选：按 safe file/symbol 附加 matchedAnchorKeys（read 前 selector 用）。 */
+  readonly requestedLayers?: readonly RepoLayer[];
   readonly resolveMatchedAnchorKeys?: (
     safeFile: string,
     safeSymbol: string,
@@ -58,6 +64,8 @@ export function projectAndScopeFoldExpandedHitsV2(input: {
 }): {
   readonly foldedView: TrustedScopeFoldedSelectorViewV2;
   readonly facts: ScopeFoldedSelectorFactsViewV2;
+  readonly observation: ReturnType<typeof observeTrustedScopeEligibilityV2>;
+  readonly resolvedScope: ReturnType<typeof resolveRepositoryScopeV1>;
   readonly preCapCandidateCount: number;
   readonly scopeFoldInvoked: true;
 } {
@@ -111,19 +119,28 @@ export function projectAndScopeFoldExpandedHitsV2(input: {
     complete,
     input.execution,
   );
-  const decisions = createTemporaryAllowAllScopeDecisionsV2(
-    preCap.candidates,
-    input.layerHint,
+  const resolvedScope = resolveRepositoryScopeV1(input.requestedLayers);
+  const adapter = createTrustedRepositoryScopePolicyAdapterV1(
+    createRepositoryScopePolicyV1(),
+    input.execution,
   );
+  const observation = observeTrustedScopeEligibilityV2({
+    adapter,
+    preCapPool: preCap,
+    resolvedScope,
+    execution: input.execution,
+  });
   const foldedView = scopeFoldSafeCandidatePoolV2(
     preCap,
-    decisions,
+    observation,
     input.execution,
   );
   const facts = readScopeFoldedSelectorFactsV2(foldedView, input.execution);
   return Object.freeze({
     foldedView,
     facts,
+    observation,
+    resolvedScope,
     preCapCandidateCount: preCap.candidates.length,
     scopeFoldInvoked: true as const,
   });

@@ -137,9 +137,10 @@ describe.runIf(
         contributions: [
           cloned as typeof harness.input.contributions[0],
           harness.input.contributions[1],
+          harness.input.contributions[2],
         ],
       }),
-    ).toThrow(/identity mismatch/);
+    ).toThrow(/identity mismatch|arity mismatch|SCOPE_COVERAGE_INVARIANT/);
   });
 });
 

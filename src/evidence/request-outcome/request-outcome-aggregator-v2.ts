@@ -29,9 +29,19 @@ import {
   requireEvidenceRankingOutcomeV2,
   type EvidenceRankingOutcomeV2,
 } from '../ranking/evidence-ranking-outcome-v2.js';
-import type { SnapshotTrustProofV2 } from '../request-snapshot/final-snapshot-check-v2.js';
+import type {
+  SnapshotTrustProofV2,
+  TrustedStableEligibleDiscoveryPoolV2,
+} from '../request-snapshot/final-snapshot-check-v2.js';
 import type { SnapshotOutcomeContributionV2 } from '../request-snapshot/snapshot-outcome-contribution-v2.js';
+import type { ScopeFoldedSafePoolProofV2 } from '../request-snapshot/scope-folded-discovery-selector-v2.js';
+import type { ScopeCoverageBasisV2 } from '../request-snapshot/scope-coverage-basis-v2.js';
 import { createOpaqueTokenV2 } from '../request-snapshot/opaque-token-v2.js';
+import type { ResolvedRepositoryScopeV1 } from '../scope/resolve-repository-scope-v1.js';
+import type {
+  ScopeCoverageProofV1,
+  ScopeOutcomeContributionV2,
+} from '../scope/scope-coverage-v1.js';
 import { deriveLocateStatusFromFactsV2, type LocateStatusV2 } from './locate-status-v2.js';
 import { createNextActionsV2 } from './next-action-policy-v2.js';
 import { requireRequestOutcomeContributionsV2 } from './request-outcome-contribution-registry-v2.js';
@@ -58,7 +68,13 @@ export interface RequestOutcomeAggregationInputV2 {
   readonly contributions: readonly [
     PublicMaterializationContributionV2,
     SnapshotOutcomeContributionV2,
+    ScopeOutcomeContributionV2,
   ];
+  readonly scopeProof: ScopeCoverageProofV1;
+  readonly expectedEligiblePool: TrustedStableEligibleDiscoveryPoolV2;
+  readonly expectedFoldProof: ScopeFoldedSafePoolProofV2;
+  readonly expectedCoverageBasis: ScopeCoverageBasisV2;
+  readonly expectedResolvedScope: ResolvedRepositoryScopeV1;
 }
 
 export interface TrustedRequestOutcomeAggregationV2 {
@@ -151,6 +167,11 @@ export function aggregateRequestOutcomeV2(
     materializationContribution: materializationSummary.contribution,
     snapshotProof: input.snapshotProof,
     execution: input.execution,
+    scopeProof: input.scopeProof,
+    expectedEligiblePool: input.expectedEligiblePool,
+    expectedFoldProof: input.expectedFoldProof,
+    expectedCoverageBasis: input.expectedCoverageBasis,
+    expectedResolvedScope: input.expectedResolvedScope,
   });
   const abortSource = requireFinalizedAbortDecisionV2(
     input.abortDecision,
@@ -227,7 +248,7 @@ export function aggregateRequestOutcomeV2(
   > = {
     NEGATIVE_TERM_MATCH:
       snapshotContribution.exclusions.negativeTermMatchCount,
-    OUTSIDE_LAYER_HINT: 0,
+    OUTSIDE_LAYER_HINT: contributions[2].outsideLayerHintCount,
     DUPLICATE_LOCATION: snapshotContribution.exclusions.duplicateLocationCount,
     UNVERIFIED_FILE_CONTENT:
       snapshotContribution.exclusions.unverifiedFileContentCount,

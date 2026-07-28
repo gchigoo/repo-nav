@@ -8,6 +8,10 @@ import type {
   PublicSafeRankingKeyV2,
 } from './discovery-lane-universe-v2.js';
 import { createOpaqueTokenV2 } from './opaque-token-v2.js';
+import {
+  requireTrustedScopeEligibilityObservationV2,
+  type TrustedScopeEligibilityObservationV2,
+} from './trusted-scope-policy-adapter-v2.js';
 
 declare const SCOPE_FOLDED_SAFE_POOL_PROOF_V2: unique symbol;
 export type ScopeFoldedSafePoolProofV2 = Readonly<object> & {
@@ -86,11 +90,7 @@ function safeKeyTuple(candidate: PublicSafeExpandedCandidateV2): string {
   ].join('\u0000');
 }
 
-/**
- * 对 complete-safe pre-cap pool 做 scope fold，再应用固定 800 cap。
- * excluded/mixed group 不占 cap；safe 等价组原子纳入或排除。
- */
-export function scopeFoldSafeCandidatePoolV2(
+function foldWithDecisionsV2(
   preCapPool: PreCapPublicSafeDiscoveryPoolV2,
   decisions: readonly ScopeFoldCandidateDecisionV2[],
   execution: LocateExecutionTokenV2,
@@ -155,7 +155,7 @@ export function scopeFoldSafeCandidatePoolV2(
       continue;
     }
     if (!allIncluded) {
-      // mixed：整组不进 selector，记 collision；included 成员不计 outside
+      // included/excluded mixed：整组排除；只计 excluded identities 进 outside
       safeSelectionCollision = true;
       for (const candidate of group) {
         const decision = decisionByRef.get(candidate.locatorRef)!;
@@ -165,6 +165,14 @@ export function scopeFoldSafeCandidatePoolV2(
           );
         }
       }
+      continue;
+    }
+    const confirmations = new Set(
+      membership.map((decision) => decision.confirmation),
+    );
+    if (confirmations.size > 1) {
+      // allowed/candidate-only mixed：整组排除，outside=0，强制 collision
+      safeSelectionCollision = true;
       continue;
     }
     eligibleGroups.push(group);
@@ -195,7 +203,6 @@ export function scopeFoldSafeCandidatePoolV2(
     }
   }
 
-  // excluded 全局唯一
   const seenExcluded = new Set<DiscoveryLocatorRefV2>();
   const uniqueExcluded: ScopeExcludedDiscoveryLedgerEntryV2[] = [];
   for (const entry of excludedLedger) {
@@ -220,6 +227,48 @@ export function scopeFoldSafeCandidatePoolV2(
     Object.freeze({ facts, proof, execution, preCapPool }),
   );
   return view;
+}
+
+/**
+ * 对 complete-safe pre-cap pool 做 scope fold，再应用固定 800 cap。
+ * 兼容测试入口：直接传 decisions（F3 observation 路径见 overload）。
+ */
+export function scopeFoldSafeCandidatePoolV2(
+  preCapPool: PreCapPublicSafeDiscoveryPoolV2,
+  decisionsOrObservation:
+    | readonly ScopeFoldCandidateDecisionV2[]
+    | TrustedScopeEligibilityObservationV2,
+  execution: LocateExecutionTokenV2,
+): TrustedScopeFoldedSelectorViewV2 {
+  if (Array.isArray(decisionsOrObservation)) {
+    return foldWithDecisionsV2(
+      preCapPool,
+      decisionsOrObservation,
+      execution,
+    );
+  }
+  const observed = requireTrustedScopeEligibilityObservationV2(
+    decisionsOrObservation as TrustedScopeEligibilityObservationV2,
+    execution,
+  );
+  if (observed.preCapPool !== preCapPool) {
+    throw new TypeError('scope observation pre-cap pool mismatch');
+  }
+  return foldWithDecisionsV2(preCapPool, observed.decisions, execution);
+}
+
+/**
+ * 读取 fold proof（同 execution）。
+ */
+export function readScopeFoldedSafePoolProofV2(
+  view: TrustedScopeFoldedSelectorViewV2,
+  execution: LocateExecutionTokenV2,
+): ScopeFoldedSafePoolProofV2 {
+  const record = foldedSelectorRecords.get(view);
+  if (record === undefined || record.execution !== execution) {
+    throw new TypeError('scope folded selector view is not trusted');
+  }
+  return record.proof;
 }
 
 /**

@@ -184,9 +184,73 @@ export const PLATFORM_CASE_OWNER_REGISTRATION: Readonly<
   ]),
   'golden/input-abort-contract-v2/large-request-outcome-permutation':
     Object.freeze(['test/golden/large-synthetic-repository.spec.ts']),
+  'golden/repository-scope-policy/v1-compatibility': Object.freeze([
+    'test/golden/repository-scope-policy.spec.ts',
+  ]),
+  'golden/repository-scope-policy/large-scope-permutation': Object.freeze([
+    'test/golden/repository-scope-policy.spec.ts',
+  ]),
   'mcp/input-abort-contract-v2/mcp-input-and-cancel': Object.freeze([
     'test/mcp/request-cancellation-v2.spec.ts',
   ]),
+  'unit/repository-scope-policy/move-only-characterization': Object.freeze([
+    'test/unit/direct-mapping-classifier.spec.ts',
+  ]),
+  'unit/repository-scope-policy/path-comparison': Object.freeze([
+    'test/unit/repository-scope-policy.spec.ts',
+  ]),
+  'unit/repository-scope-policy/test-priority': Object.freeze([
+    'test/unit/repository-scope-policy.spec.ts',
+  ]),
+  'unit/repository-scope-policy/docs-priority': Object.freeze([
+    'test/unit/repository-scope-policy.spec.ts',
+  ]),
+  'unit/repository-scope-policy/explicit-prefix-priority': Object.freeze([
+    'test/unit/repository-scope-policy.spec.ts',
+  ]),
+  'unit/repository-scope-policy/ordinary-segment-priority': Object.freeze([
+    'test/unit/repository-scope-policy.spec.ts',
+  ]),
+  'unit/repository-scope-policy/request-scope': Object.freeze([
+    'test/unit/repository-scope-policy.spec.ts',
+  ]),
+  'unit/repository-scope-policy/priority': Object.freeze([
+    'test/unit/repository-scope-policy.spec.ts',
+  ]),
+  'unit/repository-scope-policy/explicit-test-docs': Object.freeze([
+    'test/unit/direct-mapping-classifier.spec.ts',
+  ]),
+  'unit/repository-scope-policy/pre-budget-selection': Object.freeze([
+    'test/unit/repository-scope-selection.spec.ts',
+  ]),
+  'unit/repository-scope-policy/safe-key-collision': Object.freeze([
+    'test/unit/repository-scope-selection.spec.ts',
+  ]),
+  'unit/repository-scope-policy/filter-counts': Object.freeze([
+    'test/unit/repository-scope-integration.spec.ts',
+  ]),
+  'unit/repository-scope-policy/unmatched-stable-pool': Object.freeze([
+    'test/unit/repository-scope-integration.spec.ts',
+  ]),
+  'unit/repository-scope-policy/candidate-pool': Object.freeze([
+    'test/unit/candidate-policy.spec.ts',
+  ]),
+  'unit/repository-scope-policy/scope-bound-evidence-materializer-v2':
+    Object.freeze(['test/unit/scope-bound-evidence-materializer-v2.spec.ts']),
+  'unit/repository-scope-policy/trust-proof': Object.freeze([
+    'test/unit/repository-scope-trust.spec.ts',
+  ]),
+  'unit/repository-scope-policy/real-owner-envelope': Object.freeze([
+    'test/unit/repository-scope-trust.spec.ts',
+  ]),
+  'unit/repository-scope-policy/v1-compatibility': Object.freeze([
+    'test/unit/repository-scope-trust.spec.ts',
+  ]),
+  'unit/repository-scope-policy/large-scope-permutation': Object.freeze([
+    'test/unit/repository-scope-trust.spec.ts',
+  ]),
+  'unit/repository-scope-policy/platform-path-flavor-and-priority':
+    Object.freeze(['test/unit/scope-policy-platform.spec.ts']),
 });
 
 export const RUNNER_GROUP_ALIASES: Readonly<
@@ -257,6 +321,7 @@ export const RUNNER_SELECTIONS: Readonly<
       'cross-platform-baseline',
       'streaming-ripgrep',
       'input-abort-contract-v2',
+      'repository-scope-policy',
     ]),
     cases: new Set([
       'runner-smoke',
@@ -424,6 +489,25 @@ export const RUNNER_SELECTIONS: Readonly<
       'outcome-proof',
       'v1-compatibility',
       'mcp-input-and-cancel',
+      'move-only-characterization',
+      'path-comparison',
+      'test-priority',
+      'docs-priority',
+      'explicit-prefix-priority',
+      'ordinary-segment-priority',
+      'request-scope',
+      'priority',
+      'explicit-test-docs',
+      'pre-budget-selection',
+      'safe-key-collision',
+      'filter-counts',
+      'unmatched-stable-pool',
+      'candidate-pool',
+      'scope-bound-evidence-materializer-v2',
+      'trust-proof',
+      'real-owner-envelope',
+      'large-scope-permutation',
+      'platform-path-flavor-and-priority',
     ]),
   }),
   golden: Object.freeze({
@@ -448,6 +532,7 @@ export const RUNNER_SELECTIONS: Readonly<
       'relevance-ranking-budget',
       'streaming-ripgrep',
       'input-abort-contract-v2',
+      'repository-scope-policy',
     ]),
     cases: new Set([
       'runner-smoke',
@@ -459,6 +544,7 @@ export const RUNNER_SELECTIONS: Readonly<
       'large-repository-request-cache',
       'large-streaming-ripgrep',
       'large-request-outcome-permutation',
+      'large-scope-permutation',
       'v1-compatibility',
       'manifest-schema',
       'evaluator-smoke',

@@ -17,6 +17,8 @@ export {
 } from './next-action-policy-v2.js';
 export {
   requireRequestOutcomeContributionsV2,
+  REQUEST_OUTCOME_CONTRIBUTION_OWNER_ORDER_V2,
+  type RequestOutcomeAggregationContributionTupleV2,
   type RequestOutcomeContributionTupleV2,
 } from './request-outcome-contribution-registry-v2.js';
 export {

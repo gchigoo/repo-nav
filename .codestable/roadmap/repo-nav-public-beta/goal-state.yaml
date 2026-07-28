@@ -10,7 +10,7 @@ commit_authorization: approved
 commit_authorization_ref: "approval-report.md#goal-commits"
 handoff_reason: ""
 handoff_next: ""
-current_feature_index: 9
+current_feature_index: 10
 features:
 - slug: public-output-boundary-v2
   roadmap_item: public-output-boundary-v2
@@ -101,7 +101,7 @@ features:
   review: .codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-review.md
   qa: .codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-qa.md
   acceptance: .codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-acceptance.md
-  status: implementing
+  status: accepted
 - slug: language-capability-boundary
   roadmap_item: language-capability-boundary
   feature_dir: .codestable/features/2026-07-24-language-capability-boundary
@@ -258,3 +258,23 @@ ledger:
   feature: input-abort-contract-v2
   index: 8
   note: impl/review(r4)/QA(r3)/accept complete; ResumeGoalAcceptance approval-report.md#goal-acceptance; checks passed; index->9
+- step: f7-feature-start
+  status: started
+  feature: repository-scope-policy
+  index: 9
+  note: next pending feature after F6 accept
+- step: f7-implementation
+  status: done
+  feature: repository-scope-policy
+  index: 9
+  note: S1-S5 done; review round3 passed blocking=0
+- step: f7-qa
+  status: done
+  feature: repository-scope-policy
+  index: 9
+  note: independent QA passed; must-run green; Material delta golden group registered
+- step: f7-acceptance
+  status: done
+  feature: repository-scope-policy
+  index: 9
+  note: ResumeGoalAcceptance approval-report.md#goal-acceptance; checks passed; index->10

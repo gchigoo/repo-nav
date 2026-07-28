@@ -58,6 +58,7 @@ export {
 } from './discovery-lane-universe-v2.js';
 export {
   readScopeFoldedSelectorFactsV2,
+  readScopeFoldedSafePoolProofV2,
   scopeFoldSafeCandidatePoolV2,
   type ScopeEligibilityDecisionV2,
   type ScopeExcludedDiscoveryLedgerEntryV2,
@@ -66,6 +67,16 @@ export {
   type ScopeFoldedSelectorFactsViewV2,
   type TrustedScopeFoldedSelectorViewV2,
 } from './scope-folded-discovery-selector-v2.js';
+export {
+  registerTrustedScopePolicyAdapterV2,
+  createTrustedRepositoryScopePolicyAdapterV1,
+  observeTrustedScopeEligibilityV2,
+  requireTrustedScopeEligibilityObservationV2,
+  readObservedScopeDecisionV2,
+  type TrustedScopePolicyAdapterV2,
+  type TrustedScopeEligibilityObservationV2,
+  type ScopePolicyAdapterCallbackV2,
+} from './trusted-scope-policy-adapter-v2.js';
 export { createOpaqueTokenV2 } from './opaque-token-v2.js';
 export {
   buildPreRankingStablePoolsV2,
@@ -142,6 +153,21 @@ export {
   type ScopeCoverageBasisV2,
   type ScopeCoverageBasisViewV2,
 } from './scope-coverage-basis-v2.js';
+export {
+  requirePreFinalScopeClassificationViewV2,
+  requireLegacyScopeClassificationViewV2,
+  requireStableEligibleScopeViewV2,
+  bindStableEligibleScopeDecisionsV2,
+  bindEmptyStableEligibleScopeDecisionsV2,
+  buildStableEligibleScopeRecordsFromObservationV2,
+  createTrustedPreFinalScopeClassificationViewV2,
+  createTrustedPreFinalScopeClassificationViewForTestV2,
+  readStableEligibleMatchedLayersV2,
+  type TrustedPreFinalScopeClassificationViewV2,
+  type TrustedLegacyScopeClassificationViewV2,
+  type TrustedStableEligibleScopeViewV2,
+  type TrustedStableScopeRecordViewV2,
+} from './scope-classification-views-v2.js';
 export {
   consumeVerifiedLanguageContextV2,
   createVerifiedLanguageConsumerAdmissionV2,

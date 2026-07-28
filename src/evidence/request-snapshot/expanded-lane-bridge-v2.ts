@@ -12,6 +12,7 @@ import {
   scopeFoldSafeCandidatePoolV2,
   type ScopeFoldCandidateDecisionV2,
   type ScopeFoldedSelectorFactsViewV2,
+  type TrustedScopeFoldedSelectorViewV2,
 } from './scope-folded-discovery-selector-v2.js';
 
 /**
@@ -49,7 +50,13 @@ export function projectAndScopeFoldExpandedHitsV2(input: {
   readonly expandedResults: readonly BackendSearchResult[];
   readonly execution: LocateExecutionTokenV2;
   readonly layerHint: string;
+  /** 可选：按 safe file/symbol 附加 matchedAnchorKeys（read 前 selector 用）。 */
+  readonly resolveMatchedAnchorKeys?: (
+    safeFile: string,
+    safeSymbol: string,
+  ) => readonly string[];
 }): {
+  readonly foldedView: TrustedScopeFoldedSelectorViewV2;
   readonly facts: ScopeFoldedSelectorFactsViewV2;
   readonly preCapCandidateCount: number;
   readonly scopeFoldInvoked: true;
@@ -82,14 +89,19 @@ export function projectAndScopeFoldExpandedHitsV2(input: {
       continue;
     }
     const [lineStart, lineEnd] = hit.lines ?? [1, 1];
+    const safeFile = toSafePublicFieldV2(hit.file);
+    const safeSymbol = toSafePublicFieldV2(hit.symbol ?? '');
+    const matchedAnchorKeys =
+      input.resolveMatchedAnchorKeys?.(safeFile, safeSymbol) ?? [];
     safeInputs.push(
       Object.freeze({
         locatorRef,
-        safeFile: toSafePublicFieldV2(hit.file),
-        safeSymbol: toSafePublicFieldV2(hit.symbol ?? ''),
+        safeFile,
+        safeSymbol,
         lineStart,
         lineEnd,
         source: hit.source,
+        matchedAnchorKeys: Object.freeze([...matchedAnchorKeys]),
       }),
     );
   }
@@ -110,6 +122,7 @@ export function projectAndScopeFoldExpandedHitsV2(input: {
   );
   const facts = readScopeFoldedSelectorFactsV2(foldedView, input.execution);
   return Object.freeze({
+    foldedView,
     facts,
     preCapCandidateCount: preCap.candidates.length,
     scopeFoldInvoked: true as const,

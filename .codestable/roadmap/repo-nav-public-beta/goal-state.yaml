@@ -10,7 +10,7 @@ commit_authorization: approved
 commit_authorization_ref: "approval-report.md#goal-commits"
 handoff_reason: ""
 handoff_next: ""
-current_feature_index: 6
+current_feature_index: 7
 features:
 - slug: public-output-boundary-v2
   roadmap_item: public-output-boundary-v2
@@ -74,7 +74,7 @@ features:
   review: .codestable/features/2026-07-24-relevance-ranking-budget/relevance-ranking-budget-review.md
   qa: .codestable/features/2026-07-24-relevance-ranking-budget/relevance-ranking-budget-qa.md
   acceptance: .codestable/features/2026-07-24-relevance-ranking-budget/relevance-ranking-budget-acceptance.md
-  status: pending
+  status: accepted
 - slug: streaming-ripgrep
   roadmap_item: streaming-ripgrep
   feature_dir: .codestable/features/2026-07-24-streaming-ripgrep
@@ -198,3 +198,32 @@ ledger:
   status: done
   feature: canonical-locate-facts-bridge
   note: impl/review/QA/accept complete; index->5
+- step: f3-feature-loop
+  status: done
+  feature: request-snapshot-cache
+  note: impl/review/QA/accept complete; index->6
+- step: f2-implementation
+  status: done
+  feature: relevance-ranking-budget
+  index: 6
+  note: S1-S5 done; scope/dod/evidence-pack passed
+- step: f2-review
+  status: done
+  feature: relevance-ranking-budget
+  index: 6
+  note: round2 passed blocking=0 (r3); REV-001..004 closed after review-fix
+- step: f2-qa
+  status: done
+  feature: relevance-ranking-budget
+  index: 6
+  note: independent QA passed
+- step: f2-acceptance
+  status: done
+  feature: relevance-ranking-budget
+  index: 6
+  note: ResumeGoalAcceptance; checks passed; index->7
+- step: f2-scoped-commit
+  status: started
+  feature: relevance-ranking-budget
+  index: 6
+  note: goal-commits authorized; committing F2 accept

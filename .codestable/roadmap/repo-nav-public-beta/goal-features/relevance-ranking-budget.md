@@ -3,7 +3,7 @@ doc_type: roadmap-goal-feature
 roadmap: repo-nav-public-beta
 feature: 2026-07-24-relevance-ranking-budget
 roadmap_item: relevance-ranking-budget
-status: pending
+status: accepted
 ---
 
 # relevance-ranking-budget Goal 执行规格

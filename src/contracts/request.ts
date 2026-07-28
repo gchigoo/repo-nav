@@ -211,6 +211,8 @@ export function normalizeLocateAnchors(
   anchors: readonly LocateAnchor[],
   mode: TermCaseMode = 'smart',
 ): readonly NormalizedLocateAnchor[] {
+  // F2：value projection 来自 normalizeAnchorIntentsV2（保留首次 index / comparison split）
+  // 此处保持行为等价：insensitive Foo/foo 只保留首个 display value。
   const seen = new Set<string>();
   const normalized: NormalizedLocateAnchor[] = [];
 
@@ -222,7 +224,10 @@ export function normalizeLocateAnchors(
         : literalValue;
     const caseSensitive =
       anchor.kind === 'file' ? true : isCaseSensitive(value, mode);
-    const key = `${anchor.kind}\u0000${comparisonKey(value, caseSensitive)}`;
+    const comparison = caseSensitive
+      ? value
+      : value.toLocaleLowerCase('und');
+    const key = `${anchor.kind}\u0000${comparison}`;
     if (!seen.has(key)) {
       seen.add(key);
       normalized.push(

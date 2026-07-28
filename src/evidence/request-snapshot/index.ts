@@ -178,3 +178,18 @@ export {
   readDualLaneExecutionReceiptV2,
   type DualLaneExecutionReceiptV2,
 } from './dual-lane-execution-receipt-v2.js';
+
+export {
+  bindDiscoverySelectionV2,
+  requireBoundDiscoverySelectionV2,
+  readBoundSelectionProofV2,
+  type BoundSafeDiscoverySelectionV2,
+  type SafeDiscoverySelectionDraftV2,
+  type SafeDiscoverySelectionProofV2,
+} from './discovery-selection-binding-v2.js';
+export {
+  lookupTrustedSnapshotRankingViewV2,
+  requireTrustedSnapshotRankingViewV2,
+  anchorCompletenessV2,
+  type TrustedSnapshotRankingViewV2,
+} from './trusted-snapshot-ranking-view-v2.js';

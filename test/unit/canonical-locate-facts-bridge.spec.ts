@@ -218,12 +218,29 @@ describe.runIf(seamSelected)(
   'F1C-MATERIALIZATION-SEAM-001 materialization seam',
   () => {
     it('keeps F1C src free of F3/F2/F6 business owner imports', () => {
-      const roots = [
-        resolve('src/evidence/canonical'),
-        resolve('src/evidence/locate-execution'),
-        resolve('src/contracts/v2/locate-fact-envelope-v2.ts'),
-      ];
-      const forbidden = [
+      const collect = (path: string): string[] => {
+        if (path.endsWith('.ts')) {
+          return [readFileSync(path, 'utf8')];
+        }
+        const sources: string[] = [];
+        const visit = (current: string): void => {
+          for (const entry of readdirSync(current, { withFileTypes: true })) {
+            const full = resolve(current, entry.name);
+            if (entry.isDirectory()) visit(full);
+            else if (entry.name.endsWith('.ts')) {
+              sources.push(readFileSync(full, 'utf8'));
+            }
+          }
+        };
+        visit(path);
+        return sources;
+      };
+      // canonical / envelope：仍禁止 F2/F3/F6 owner 字面量
+      const canonicalJoined = [
+        ...collect(resolve('src/evidence/canonical')),
+        ...collect(resolve('src/contracts/v2/locate-fact-envelope-v2.ts')),
+      ].join('\n');
+      for (const marker of [
         'EvidenceRankingOutcomeV2',
         'SnapshotTrustProofV2',
         'TrustedMaterializedEvidenceCoreV2',
@@ -231,26 +248,22 @@ describe.runIf(seamSelected)(
         'f2-locate-projection-stages-v2',
         'relevance-ranking-budget',
         'request-snapshot-cache',
-      ];
-      const sources: string[] = [];
-      const visit = (path: string): void => {
-        const entries = readdirSync(path, { withFileTypes: true });
-        for (const entry of entries) {
-          const full = resolve(path, entry.name);
-          if (entry.isDirectory()) visit(full);
-          else if (entry.name.endsWith('.ts')) {
-            sources.push(readFileSync(full, 'utf8'));
-          }
-        }
-      };
-      for (const root of roots) {
-        const statPath = root.endsWith('.ts') ? null : root;
-        if (statPath === null) sources.push(readFileSync(root, 'utf8'));
-        else visit(statPath);
+      ]) {
+        expect(canonicalJoined.includes(marker), marker).toBe(false);
       }
-      const joined = sources.join('\n');
-      for (const marker of forbidden) {
-        expect(joined.includes(marker), marker).toBe(false);
+      // locate-execution：F2 可接线 ranking outcome；仍禁 public-output stages / F6
+      const locateJoined = collect(
+        resolve('src/evidence/locate-execution'),
+      ).join('\n');
+      for (const marker of [
+        'SnapshotTrustProofV2',
+        'TrustedMaterializedEvidenceCoreV2',
+        'TrustedRequestOutcomeAggregationV2',
+        'f2-locate-projection-stages-v2',
+        'relevance-ranking-budget',
+        'request-snapshot-cache',
+      ]) {
+        expect(locateJoined.includes(marker), `locate:${marker}`).toBe(false);
       }
     });
 

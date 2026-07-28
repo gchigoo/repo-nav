@@ -9,15 +9,15 @@ export const NO_CUTOVER_PRODUCTION_ROOTS_V2 = Object.freeze([
   'tools/cli/execute.ts',
 ] as const);
 
-/** F1C/F2/F6 markers remain forbidden; F1B budget modules are in scope. */
+/**
+ * F1B public-output 仍禁止未接入 owner / feature slug 泄漏。
+ * F2 已准入：LocateExecutionTokenV2、F1 materializer core 类型、source schema。
+ */
 export const FORBIDDEN_FUTURE_MODULE_MARKERS_V2 = Object.freeze([
   'public-output-boundary-v2',
   'relevance-ranking-budget',
   'request-outcome',
-  'LocateExecutionTokenV2',
-  'TrustedMaterializedEvidenceCoreV2',
   'canonical-locate-facts-bridge',
-  'UnsafePublicMaterializationSourceV2Schema',
 ] as const);
 
 export const PUBLIC_OUTPUT_SOURCE_ROOT_V2 =

@@ -29,9 +29,15 @@ import {
   type CanonicalLocateExecutionV2,
   type CanonicalLocateExecutorV2,
   type LocateProjectionExecutionCapabilityV2,
+  type RankedEvidenceFactsV2,
   type SnapshotFactsV2,
   type UnsafeToolErrorFactsV2,
 } from '../../contracts/v2/locate-fact-envelope-v2.js';
+import { DiscoveryHitSelectorV2 } from '../ranking/discovery-hit-selector-v2.js';
+import { EvidenceRankerV2 } from '../ranking/evidence-ranker-v2.js';
+import { normalizeAnchorIntentsV2 } from '../ranking/anchor-intent-normalizer-v2.js';
+import { requireEvidenceRankingOutcomeV2 } from '../ranking/evidence-ranking-outcome-v2.js';
+import type { LocateAnchor, TermCaseMode } from '../../contracts/request.js';
 import {
   REPOSITORY_READER,
   REPOSITORY_SEARCH_BACKENDS,
@@ -68,6 +74,7 @@ import {
   searchBackendMultiViewV2,
   selectAndFreezeLegacyBackendHitsV1,
   VerifiedDiscoveryObservationCacheV2,
+  type BoundSafeDiscoverySelectionV2,
   type RequestRepositorySnapshotV2,
 } from '../request-snapshot/index.js';
 import {
@@ -230,6 +237,7 @@ export class CanonicalRepositoryLocateExecutorV2
     legacy: LocateResult,
     projectionExecution: LocateProjectionExecutionCapabilityV2,
     snapshotFacts: SnapshotFactsV2 = createZeroReadSnapshotFactsV2(),
+    rankingFacts?: RankedEvidenceFactsV2,
   ): CanonicalLocateExecutionV2 {
     if (!legacy.ok) {
       return this.terminalFailure(
@@ -242,8 +250,11 @@ export class CanonicalRepositoryLocateExecutorV2
       legacy.evidence.repositoryRoot,
       legacy.evidence.normalizedTerms,
     );
-    // F3：real success 恰好增加 snapshot owner，仍缺 ranking/backend/request-outcome/scope/capability
+    // F3/F2：real success 增加 snapshot；有 ranking 时再登记 ranking（仍缺 backend/request-outcome/scope/capability）
     builder.add('snapshot', snapshotFacts);
+    if (rankingFacts !== undefined) {
+      builder.add('ranking', rankingFacts);
+    }
     const input: CanonicalLocateExecutionV2 = Object.freeze({
       ok: true as const,
       envelope: builder.freeze(),
@@ -276,6 +287,10 @@ export class CanonicalRepositoryLocateExecutorV2
       readonly expandedPoolCandidates?: LocateSuccessEvidence['candidates'];
       readonly limits?: ResolvedLocateLimits;
       readonly abortSource?: LocateAbortSource;
+      readonly rawAnchors?: readonly LocateAnchor[];
+      readonly termCase?: TermCaseMode;
+      /** read 前已 bind 的 discovery selection；ranking 必须复用同一 token。 */
+      readonly discoverySelection?: BoundSafeDiscoverySelectionV2;
     },
   ): Promise<CanonicalLocateExecutionV2> {
     const snapshot = options.requestSnapshot;
@@ -362,10 +377,46 @@ export class CanonicalRepositoryLocateExecutorV2
       },
     });
 
+    // F2：final purge 后对 trusted pool 排序；必须复用 read 前 bound selection
+    let rankingFacts: RankedEvidenceFactsV2 | undefined;
+    if (options.discoverySelection !== undefined) {
+      const execution = requireLocateProjectionExecutionTokenV2(
+        projectionExecution,
+      );
+      const intents = normalizeAnchorIntentsV2(
+        options.rawAnchors ?? [],
+        options.termCase ?? 'smart',
+      );
+      const outcome = new EvidenceRankerV2().rank({
+        finalPools,
+        pool: finalPools.evidence,
+        snapshotFacts: finalPools.facts,
+        snapshotProof: finalPools.proof,
+        normalizedTerms: legacy.evidence.normalizedTerms,
+        anchorIntents: intents,
+        limits: {
+          maxFiles: options.limits?.maxFiles ?? 20,
+          maxConfirmed: options.limits?.maxConfirmed ?? 20,
+          maxCandidates: options.limits?.maxCandidates ?? 20,
+        },
+        discoverySelection: options.discoverySelection,
+        execution,
+        preRankingPoolTruncated: pools.evidence.preRankingPoolTruncated,
+      });
+      // F2 stages 登记仅限 direct harness；executor 不得 import public-output。
+      // trust / invariant 失败 fail-closed（不静默吞掉）。
+      rankingFacts = requireEvidenceRankingOutcomeV2(
+        outcome,
+        finalPools.proof,
+        execution,
+      ).fragment.value;
+    }
+
     return this.terminalSuccess(
       adjusted,
       projectionExecution,
       finalPools.facts,
+      rankingFacts,
     );
   }
 
@@ -707,11 +758,52 @@ export class CanonicalRepositoryLocateExecutorV2
       const filesTruncated = selected.filesTruncated;
 
       // Expanded lane：raw → safe pre-cap → temporary allow-all scope fold（不影响 legacy）
+      // F2：read 前 selector 需要 matchedAnchorKeys；按 intent 与 safe file/symbol 对齐
+      const rankingIntents = normalizeAnchorIntentsV2(
+        request.anchors ?? [],
+        mode,
+      );
       const expandedFold = projectAndScopeFoldExpandedHitsV2({
         expandedResults: expandedBackendResults,
         execution: executionToken,
         layerHint: request.layers?.[0] ?? 'server',
+        resolveMatchedAnchorKeys: (safeFile, safeSymbol) => {
+          const keys: string[] = [];
+          const fileCmp = safeFile.toLocaleLowerCase('und');
+          const symbolCmp = safeSymbol.toLocaleLowerCase('und');
+          for (const intent of rankingIntents) {
+            const value = intent.caseSensitive
+              ? intent.value
+              : intent.comparisonValue;
+            if (intent.kind === 'file') {
+              const target = intent.caseSensitive
+                ? safeFile
+                : fileCmp;
+              if (target === value) {
+                keys.push(intent.canonicalKey);
+              }
+            } else if (
+              intent.kind === 'symbol' &&
+              safeSymbol.length > 0 &&
+              (intent.caseSensitive ? safeSymbol : symbolCmp) === value
+            ) {
+              keys.push(intent.canonicalKey);
+            }
+          }
+          return Object.freeze(keys);
+        },
       });
+      // F2 discovery reservation：任何 reader verify 之前 bind ticket/proof
+      const discoverySelectionDraft = new DiscoveryHitSelectorV2().select(
+        expandedFold.foldedView,
+        rankingIntents,
+        limits.maxFiles,
+        executionToken,
+      );
+      const discoverySelection = new DiscoveryHitSelectorV2().bind(
+        discoverySelectionDraft,
+        executionToken,
+      ).bound;
 
       const merged = await verifyAndMergeBackendHits({
         repositoryRoot,
@@ -968,6 +1060,9 @@ export class CanonicalRepositoryLocateExecutorV2
             expandedPoolCandidates,
             limits,
             abortSource: abortCoordinator.source,
+            rawAnchors: request.anchors ?? [],
+            termCase: mode,
+            discoverySelection,
           },
         );
     } catch (error: unknown) {

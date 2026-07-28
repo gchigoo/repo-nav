@@ -223,7 +223,13 @@ ledger:
   index: 6
   note: ResumeGoalAcceptance; checks passed; index->7
 - step: f2-scoped-commit
-  status: started
+  status: done
   feature: relevance-ranking-budget
   index: 6
-  note: goal-commits authorized; committing F2 accept
+  commit: f21cc0c
+  note: goal-commits authorized; working tree clean after F2
+- step: f5-feature-start
+  status: started
+  feature: streaming-ripgrep
+  index: 7
+  note: next pending feature after F2 accept

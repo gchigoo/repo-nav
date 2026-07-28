@@ -101,7 +101,7 @@ features:
   review: .codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-review.md
   qa: .codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-qa.md
   acceptance: .codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-acceptance.md
-  status: pending
+  status: implementing
 - slug: language-capability-boundary
   roadmap_item: language-capability-boundary
   feature_dir: .codestable/features/2026-07-24-language-capability-boundary

@@ -185,12 +185,16 @@ license 选择或 production cutover；这些仍需各自独立 owner authorizat
 `cross-platform-ci-baseline` 本地 S1–S4 后按协议 handoff：S5 核心路径需要 GitHub 远程证据，
 而既有 `goal-commits` 不覆盖 push / PR / ruleset。
 
-### Current Facts
+### Current Facts（更新 2026-07-28）
 
-- goal-state：`status: handoff`，`current_feature_index: 2`，F4=`implementing`
+- goal-state：已清 handoff，`status: active`，`current_feature_index: 2`，F4=`implementing`（待 review/QA/accept）
 - F1A accepted commit：`9c125e2`
-- F4 本地实现仍在工作树（未 scoped-commit）；缺口说明：
-  `.codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-remote-evidence-gap.md`
+- F4 远程证据已齐：
+  - 同 run 绿：https://github.com/gchigoo/repo-nav/actions/runs/30323465951（SHA `865fcf0`）
+  - ruleset：`main-cross-platform-required` id `19864943`，required=`cross-platform-required`
+  - 负向 PR：https://github.com/gchigoo/repo-nav/pull/1（`mergeStateStatus=BLOCKED`，已关闭）
+  - feature PR：https://github.com/gchigoo/repo-nav/pull/2
+  - 产物：`.codestable/features/2026-07-24-cross-platform-ci-baseline/remote-evidence/`
 
 ### Options
 

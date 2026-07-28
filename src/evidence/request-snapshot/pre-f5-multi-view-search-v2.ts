@@ -2,10 +2,16 @@ import type {
   BackendSearchResult,
   RepositorySearchBackend,
 } from '../../contracts/index.js';
+import type { LocateExecutionTokenV2 } from '../../contracts/v2/locate-fact-envelope-v2.js';
+import type {
+  BackendExecutionContextV2,
+  TrustedBackendDiscoveryHandoffV2,
+} from '../../contracts/v2/backend-execution-outcome-v2.js';
+import { requireBackendDiscoveryHandoffForF3V2 } from '../../process/backend-execution-context-v2.js';
 import type { MultiViewBackendSearchRequestV2 } from './discovery-reservation-v2.js';
 
 /**
- * 单次 backend search 派生的 legacy / expanded 双视图（无 F5 类型）。
+ * 单次 backend search 派生的 legacy / expanded 双视图。
  */
 export interface PreF5MultiViewLaneResultsV2 {
   readonly legacy: BackendSearchResult;
@@ -14,6 +20,26 @@ export interface PreF5MultiViewLaneResultsV2 {
   readonly sharedSearchMaxHits: number;
   readonly expandedMaxHits: number;
   readonly legacyMaxHits: number;
+  readonly handoff?: TrustedBackendDiscoveryHandoffV2;
+}
+
+interface F5SearchViewsBackend {
+  readonly id: RepositorySearchBackend['id'];
+  searchViews(
+    request: MultiViewBackendSearchRequestV2,
+    signal: AbortSignal,
+    backendExecutionContext: BackendExecutionContextV2,
+    execution: LocateExecutionTokenV2,
+  ): Promise<TrustedBackendDiscoveryHandoffV2>;
+}
+
+function hasSearchViews(
+  backend: RepositorySearchBackend,
+): backend is RepositorySearchBackend & F5SearchViewsBackend {
+  return (
+    'searchViews' in backend &&
+    typeof (backend as F5SearchViewsBackend).searchViews === 'function'
+  );
 }
 
 /**
@@ -67,11 +93,52 @@ export async function searchBackendMultiViewV2(
   backend: RepositorySearchBackend,
   multiView: MultiViewBackendSearchRequestV2,
   signal: AbortSignal,
+  backendExecutionContext?: BackendExecutionContextV2,
+  execution?: LocateExecutionTokenV2,
 ): Promise<PreF5MultiViewLaneResultsV2> {
   const sharedSearchMaxHits = resolveSharedSearchMaxHitsV2(
     multiView.legacyMaxHits,
     multiView.expandedMaxHits,
   );
+
+  if (
+    backendExecutionContext !== undefined &&
+    execution !== undefined &&
+    hasSearchViews(backend)
+  ) {
+    const handoff = await backend.searchViews(
+      multiView,
+      signal,
+      backendExecutionContext,
+      execution,
+    );
+    const view = requireBackendDiscoveryHandoffForF3V2(
+      handoff,
+      backend.id,
+      multiView,
+      backendExecutionContext,
+      execution,
+    );
+    const expanded: BackendSearchResult = Object.freeze({
+      health: view.expandedHealth,
+      hits: Object.freeze(
+        view.kind === 'started'
+          ? view.completeSafeHits.map((entry) => entry.hit)
+          : [],
+      ),
+      complete: view.expandedComplete,
+      canSkipFallbackIfVerified: view.canSkipFallbackIfVerified,
+    });
+    return Object.freeze({
+      legacy: view.legacy,
+      expanded,
+      sharedSearchMaxHits,
+      expandedMaxHits: multiView.expandedMaxHits,
+      legacyMaxHits: multiView.legacyMaxHits,
+      handoff,
+    });
+  }
+
   const shared = await backend.search(
     Object.freeze({
       ...multiView.base,

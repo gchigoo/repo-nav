@@ -584,6 +584,8 @@ interface BackendExecutionOutcomeV2 {
 
 修正 stdout/stderr N+1 上限语义，增加流式 JSON line consumer、maxHits 提前停止和 bounded attempt telemetry，并输出统一 `BackendExecutionOutcomeV2`。不完整 raw prefix 不进入 evidence；只有完成的 backend/fallback safe set 可进入 F3/F2。本 item 只拥有 process/backend termination facts 与进程树清理，不决定 request-level status、abortSource、limits 或 nextActions。
 
+**状态（2026-07-28）**：acceptance `passed`；items.yaml `done`；architecture 已回写 kernel/stream/context/F3 handoff/F6 no-hits seam；远程六格 F5 marker 为 residual。
+
 ### F6 · input-abort-contract-v2
 
 把`question`改为可选说明文本，拆分filesystem path normalization，并从F5 trusted trace的public-neutral `BackendAttemptV2[]`唯一聚合backend/request-outcome fragments、strategy、abort、status、limits与nextActions；F8把trusted aggregation的exact status注册到F1C。finalization latch前caller/deadline first-writer-wins，caller派生`cancelled`，deadline才派生`timeout`。

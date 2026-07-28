@@ -1,11 +1,11 @@
 ---
 doc_type: architecture
 slug: repo-nav-foundation
-scope: RepoNav 当前已落地的 production v1 公共契约、repository 安全 seams、请求级 request-snapshot cache/final-check、CodeGraph-primary/ripgrep-fallback evidence engine、有界 candidate policy、状态/预算/redaction/error output guardrails、stdio MCP、debug CLI、executable docs、发布候选级 Verification Kit，以及尚未接入 production 的 v2 raw/public 输出安全边界
-summary: Production 继续由 Zod schema v1、薄 RepositoryEvidenceEngine façade、CanonicalRepositoryLocateExecutorV2（请求级 snapshot + snapshot owner）、唯一 V1LocateResultProjector、stdio MCP 与 shallow debug CLI 提供；typed fact envelope / four-prerequisite admission / neutral stage registrars / finalizer / composer / shadow 为 transport-unreachable F1C seam；dormant LocateResultV2 与 PublicResultAssemblerV2 仍无 production edge，真实原子切换由 F9 独占
+scope: RepoNav 当前已落地的 production v1 公共契约、repository 安全 seams、单一 safe-process kernel（N+1 + streaming）、ripgrep multi-view stream、请求级 BackendExecutionContext/physical start authority、F3 trusted handoff 与 F6 no-hits telemetry seam、请求级 request-snapshot cache/final-check、CodeGraph-primary/ripgrep-fallback evidence engine、有界 candidate policy、状态/预算/redaction/error output guardrails、stdio MCP、debug CLI、executable docs、发布候选级 Verification Kit，以及尚未接入 production 的 v2 raw/public 输出安全边界
+summary: Production 继续由 Zod schema v1、薄 RepositoryEvidenceEngine façade、CanonicalRepositoryLocateExecutorV2（请求级 snapshot + snapshot owner）、唯一 V1LocateResultProjector、stdio MCP 与 shallow debug CLI 提供；F5 已落地单一 SafeProcessExecutionKernelV2、ripgrep-stream multi-view、BackendExecutionContextV2/physical executor 与 F3 complete-safe handoff，并向 F6 暴露 no-retainedHits telemetry seam；typed fact envelope / four-prerequisite admission / neutral stage registrars / finalizer / composer / shadow 为 transport-unreachable F1C seam；dormant LocateResultV2 与 PublicResultAssemblerV2 仍无 production edge，真实原子切换由 F9 独占
 status: current
 last_reviewed: 2026-07-28
-tags: [repo-nav, foundation, evidence, request-snapshot, candidate-policy, output-guardrails, redaction, repository-safety, codegraph, ripgrep, fallback, mcp, stdio, cli, docs, golden, regression, schema-v2, public-assembler, no-cutover]
+tags: [repo-nav, foundation, evidence, request-snapshot, candidate-policy, output-guardrails, redaction, repository-safety, codegraph, ripgrep, streaming, safe-process, backend-execution, fallback, mcp, stdio, cli, docs, golden, regression, schema-v2, public-assembler, no-cutover]
 depends_on: []
 implements: [source-of-truth-evidence]
 ---
@@ -29,7 +29,10 @@ implements: [source-of-truth-evidence]
 - **Lifecycle probe**：独立于 LocateResult 的真实 Nest/MCP/process-tree 测试；通过 context marker 与 direct/descendant PID 观察 shutdown，并在 fault/timeout/nonzero 后统一清理。
 - **Performance signal**：固定 1,000-file synthetic corpus 的 blocking correctness/hash/cleanup 与 non-blocking environment-aware timing trend；不是生产 SLA。
 - **RepositoryReader**：production filesystem seam；只接受 realpath 后的 repository root 与 normalized root-relative POSIX file path，返回 typed failures。
-- **SafeProcessRunner**：production child-process seam；只接受 executable/argv/cwd/explicit env 与固定 budgets，强制 `shell:false`、stdio capture 和有界 tree cleanup。
+- **SafeProcessRunner**：production child-process seam；`NodeSafeProcessRunner` 的 buffered `run` 与 `runStreaming` 均委托唯一 `SafeProcessExecutionKernelV2`（spawn/listener/timer/N+1/tree cleanup/settle-once）；exact-N 不终止，观察 N+1 sentinel 才 limit；强制 `shell:false` 与显式 env/budgets。
+- **BackendExecutionContextV2**：canonical 每 request 唯一创建的 request-scoped physical-start authority；登记 exact request AbortSignal、backend-bound executor、ordinal registry、seal 与 expanded logical reducer；F3/backend 不得 bare runner 旁路 start。
+- **TrustedBackendDiscoveryHandoffV2**：F5→F3 opaque handoff；仅 complete-safe expanded set 可贡献 membership；telemetry-only / early-stop 的 `completeSafeHits` 为空。
+- **BackendExecutionTelemetryViewV2**：F5→F6 no-hits seam；逐 union member 投影去除 `retainedHits`/`selectionEligibility` 后的 public-neutral attempt telemetry；F6 不重解 stdout、不读 retained hits。
 - **MCP Surface**：`McpModule`、low-level MCP server handlers 与 `McpStdioHost` 组成的本地协议边界；只暴露 `repo_nav_locate`，不启动 HTTP listener。
 - **Output parity**：每个 tool success/error 先通过 `LocateToolOutputSchema` 自校验，再由同一 serializer 同时生成 `structuredContent` 和 JSON text；解析后必须严格等值。
 - **McpStdioHost**：stdio transport owner；只连接一次，跟踪 in-flight locate，合并 request/host caller signals，并提供幂等、best-effort close；request deadline 由 Evidence Engine 独占。
@@ -85,6 +88,14 @@ flowchart LR
   CodeGraph --> Planner["CodeGraphQueryPlan"]
   CodeGraph --> Process["NodeSafeProcessRunner"]
   Ripgrep --> Process["NodeSafeProcessRunner"]
+  Process --> Kernel["SafeProcessExecutionKernelV2"]
+  Ripgrep --> Stream["ripgrep-stream multi-view"]
+  Ripgrep --> Ctx["BackendExecutionContextV2"]
+  Ctx --> Executor["BackendPhysicalAttemptExecutorV2"]
+  Executor --> Process
+  Ctx --> Handoff["TrustedBackendDiscoveryHandoffV2"]
+  Handoff --> F3Snap["F3 dual-lane handoff"]
+  Ctx --> Trace["F6 no-hits telemetry"]
   Engine --> CodeGraph
   Engine --> Ripgrep
   Engine --> Reader
@@ -130,12 +141,14 @@ flowchart LR
 - `EvidenceModule` 绑定 `CanonicalRepositoryLocateExecutorV2`、唯一 `V1LocateResultProjector`，并以 `useExisting` 把薄 `RepositoryEvidenceEngine` façade 暴露为 `REPOSITORY_EVIDENCE_SERVICE`；shadow/preparation/composer 不进 providers/exports。
 - `RepositoryBackendsModule` 提供 `NodeSafeProcessRunner`、`CodeGraphBackend` 与 `RipgrepBackend`，并通过 factory 输出有序、冻结的 `[codegraph, ripgrep]` backend collection；binary missing 不移除 provider。
 - `CodeGraphBackend` 只解析 `status --json` 与 `query --json` stdout；probe 记录 binary/index/version/freshness capability，query planner 为 symbol/identifier entries 生成稳定单参数 invocation 并共享 total `maxHits`。required fields malformed 时 fail closed，additional fields forward-compatible。
-- `RipgrepBackend` 按 term/anchor case metadata 组成 fixed-string search seeds，通过 `SafeProcessRunner` 执行 `rg --fixed-strings --json`；每个 actual submatch symbol 形成独立、稳定排序的 discovery fact。
+- `RipgrepBackend.searchViews`（multi-view / expanded 生产路径）经 request-scoped `BackendExecutionContextV2`：availability preparation → `BackendPhysicalAttemptExecutorV2.startStreaming`（`kind:'ripgrep-group'`）→ `RipgrepJsonLineConsumerV2` + `MultiViewAccumulatorV2` 流式解析 `rg --fixed-strings --json`；legacy 与 expanded 为同 parse 独立 lanes；outcome facts 优先绑 `ripgrep-group`。v1 `probe`/`search` 仍走 buffered `processRunner.run`（非 multi-view 残留路径）。
+- `NodeSafeProcessRunner` 的 buffered `run` 与 `runStreaming` 均委托唯一 `SafeProcessExecutionKernelV2`：stdout/stderr exact-N 成功、观察 N+1 才 limit；同步 consumer finalizer；tree cleanup / settle-once；无第二套 process lifecycle SM。
+- `BackendExecutionContextV2` 每 canonical request 创建一次并贯穿 F3 与 backend；seal 后 late-start 失败；expanded logical reducer 只接 registry closed-set；F3 仅经 `TrustedBackendDiscoveryHandoffV2` / `requireBackendDiscoveryHandoffForF3V2` 消费 complete-safe hits；F6 只消费 no-retainedHits `BackendExecutionTelemetryViewV2`（F5 不创建 public backend/request-outcome owner）。
 - `verifyAndMergeBackendHits` 重新读取当前文件，构造不超过 12 行/4 KiB 的 logical window，核对当前命中后按 discovery key 合并全部 provenance/reasons/operations/terms/canonical symbols；fatal path error 继续上抛。
 - `classifyDiscoveryRecords` 先处理 negative/layer exclusions，再以轻量 lexical masking 区分 code、comments、strings、regex 与 SQL quoted/comment regions；同一 merged record 只分类一次。
 - `applyCandidatePolicy` 在 direct classification 后读取 engine 验证的 candidate windows，以同 statement/container 的 alias neighbor、同 entity sibling 与同 brace scope 的 segment similarity 发现局部线索；六类 reason/role/promotion 与 selection priority 由单一常量表定义。
 - `CanonicalRepositoryLocateExecutorV2` 固定执行 normalize → CodeGraph primary search/pre-verification → conservative skip-or-ripgrep fallback → current-file verification/merge → classify once → candidate-window verification → bounded candidate policy → public ID/stable selection → final status/coverage/next actions → redaction，并登记 request-local projection capability/internal token/exact canonical input；`RepositoryEvidenceEngine` 只 issue capability、调用 executor 一次并交给 v1 projector。ID/order 永远早于 public text mutation。
-- `NodeRepositoryReader` 与 `NodeSafeProcessRunner` 继续承担 canonical containment、bounded read、controlled env/stdout/stderr 和有界 child-tree cleanup。
+- `NodeRepositoryReader` 继续承担 canonical containment 与 bounded read；`NodeSafeProcessRunner` 经唯一 kernel 承担 controlled env/stdout/stderr 与有界 child-tree cleanup（含 streaming）。
 - `McpModule` 注入 `REPOSITORY_EVIDENCE_SERVICE`，以 low-level SDK list/call handlers 暴露单一只读工具；unknown tool 和 protocol-invalid envelope 留在 SDK JSON-RPC error boundary。
 - `LocateRequestSchema` 手工解析 envelope-valid arguments；serializer 对 service result 再应用 redaction/safe error policy，把 success、recoverable status 与四类 typed application error 映射为自校验、无 stack/path/raw stderr 的 parity output。
 - `McpStdioHost` 只合并 SDK request 与 host shutdown 为 caller abort，整轮 request deadline 唯一由 Evidence Engine 的 `LocateAbortCoordinator` 持有；`McpShutdownCoordinator` 在 EOF、平台 signal、transport/parser failure 或 bootstrap failure时按 host → Nest context 的顺序 best-effort 清理。
@@ -195,7 +208,9 @@ flowchart LR
   由 strict schemas + hostile mutation 双重拥有。
 - Backend 只产 discovery facts；public evidence 必须由当前文件核验和统一 classifier 产生。
 - 顺序固定为 verify → discovery merge → classify once → primary role → ID → sort，禁止先分类再合并或以 ranking 推断 confirmed。
-- Ripgrep 使用 literal fixed-string argv 与 per-seed case mode，不经 shell；JSON parser只读取结构化 match/submatch字段。
+- Ripgrep 使用 literal fixed-string argv 与 per-seed case mode，不经 shell；multi-view 生产路径流式解析 structured match/submatch，不经全量 buffered `search` 桥。
+- Process N+1 与 streaming consumer 契约由唯一 kernel 拥有；incomplete/telemetry-only expanded 不得进入 F3 complete-safe membership 或 public evidence；F6 只读 no-hits telemetry seam。
+- Physical start 权威在 `BackendExecutionContextV2` + executor；canonical 外不得创建 context；CodeGraph/v1 ripgrep bare `processRunner.run` 仍为非 multi-view 残留。
 - Direct mapping truth table是封闭支持集，轻量 recognizer不宣称 AST/framework 等价；未知语法保持 candidate/excluded。
 - 同一 location 的多个 canonical symbols 是独立发现事实，merge 后全部保留；classifier按可证明 role priority选择 primary，而不是在 backend 或预算阶段丢失事实。
 - Candidate public ID 只在 derived location/discovery key 确定后由 engine 生成；policy draft 不持有 public ID，也不能复用或改变 seed ID。
@@ -254,7 +269,11 @@ flowchart LR
 - `src/repository/codegraph-backend.ts:CodeGraphBackend` — structured probe/query、health mapping、shared budget 与 fail-closed result。
 - `src/repository/codegraph-query-planner.ts:createCodeGraphQueryPlan` — stable entries、unsupported dimensions 与 conservative skip contract。
 - `src/repository/codegraph-json.ts` / `codegraph-command.ts` — version-compatible JSON parser 与 shell-free Windows/POSIX invocation resolver。
-- `src/repository/ripgrep-backend.ts:RipgrepBackend` — literal JSON ripgrep adapter 与 actual submatch facts。
+- `src/process/safe-process-execution-kernel-v2.ts` / `bounded-byte-collector-v2.ts` / `primary-termination-trigger-reducer-v2.ts` / `settlement-verdict-v2.ts` / `buffered-compatibility-projection-v2.ts` — 唯一 child lifecycle/N+1 owner、buffered 兼容投影与 settlement precedence。
+- `src/process/backend-execution-context-v2.ts` / `backend-physical-attempt-executor-v2.ts` — request-scoped context、physical start/result authority、availability preparation 与 seal/reducer 入口。
+- `src/repository/ripgrep-stream/` — line framer、protocol FSM、JSON line consumer、multi-view accumulator（staging commit/discard、early-stop telemetry）。
+- `src/contracts/v2/backend-execution-outcome-v2.ts` — strict outcome schema、opaque validated token、F3 trusted handoff 与 F6 no-hits telemetry accessor；package root 不 re-export。
+- `src/repository/ripgrep-backend.ts:RipgrepBackend` — multi-view `searchViews` 流式 JSON adapter；v1 `probe`/`search` 仍 buffered bare runner。
 - `src/evidence/discovery-record.ts:verifyAndMergeBackendHits` — current-file verification、bounded logical window 与 deterministic merge。
 - `src/evidence/direct-mapping-classifier.ts:classifyDiscoveryRecords` — layer/exclusion resolver 与 direct-mapping truth table。
 - `src/evidence/candidate-policy.ts` / `candidate-policy/` — candidate truth table、verified-context lexical predicates、promotion merge 与有界稳定选择；F3 enumerator/lane evaluators 复用其 consumer 表面。
@@ -262,7 +281,7 @@ flowchart LR
 - `src/evidence/evidence.module.ts:EvidenceModule` — reader/engine token assembly。
 - `src/repository/repository-backends.module.ts:RepositoryBackendsModule` — runner/CodeGraph/ripgrep/frozen backend collection assembly。
 - `src/repository/node-repository-reader.ts:NodeRepositoryReader` — 无状态 one-shot canonical/bounded filesystem adapter（含居中/clamp `readWindow`）；请求级 cache 不落在此 singleton。
-- `src/repository/node-safe-process-runner.ts:NodeSafeProcessRunner` — controlled child-process/tree cleanup adapter。
+- `src/repository/node-safe-process-runner.ts:NodeSafeProcessRunner` — thin adapter；buffered/streaming 均委托 `SafeProcessExecutionKernelV2`。
 - `src/mcp/repo-nav-mcp-server.ts:createRepoNavMcpServer` — tools capability、单工具 registry、unknown guard 与 low-level call handler。
 - `src/mcp/locate-tool-schema.ts` / `locate-tool-output.ts` — JSON Schema 2020-12 public surface 与共享 parity serializer。
 - `src/mcp/mcp-stdio-host.ts:McpStdioHost` — connect-once、tracked calls、merged cancellation 与幂等 close。
@@ -304,6 +323,9 @@ flowchart LR
 - Candidate recognizer同样不是 AST：angle/type、SQL quoted region 与 12 行/4 KiB 边界采用保守 lexical fail-closed，复杂表达式或窗口外容器可能少召回。
 - focus 与 candidate window 是两次本地读取；focus slice 改变会阻断，但仅周边内容并发变化仍可能来自第二次快照。
 - `RipgrepBackend` 进程预算固定 10 秒，而 request timeout 上限为 30 秒；状态/abort已有自动化证据，超过 10 秒的真实慢仓库墙钟路径尚未实测。
+- F5 multi-view / streaming 已绿；CodeGraph 与 Ripgrep v1 `probe`/`search` 仍 bare runner，expanded locate 若走这些路径则物理 start 不进 F5 registry/trace。
+- `createBackendExecutionContextV2` 的 preparation port 参数当前未注入使用（executor 内联 availability）；cwd identity 敌意语料仍弱。
+- F5 platform markers 本地 `test:platform` 已绿；远程六格同 revision marker evidence 尚未归档。
 - Reparse swap TOCTOU无法由当前 Node API完全消除；只支持本机稳定 filesystem，不声称对抗恶意并发 mutation。
 - Windows `rg 15.1.0`、路径与 process-tree已有真实 QA；POSIX detached group/negative PID、其他 rg minor version尚未在本轮实机执行。
 - Windows ADS、真实 unreadable/special device缺少稳定跨权限 fixture。
@@ -341,6 +363,7 @@ flowchart LR
 
 ## 8. 变更日志
 
+- 2026-07-28：F5 `streaming-ripgrep` acceptance 回填单一 `SafeProcessExecutionKernelV2`（N+1）、`ripgrep-stream` multi-view、`BackendExecutionContextV2`/physical executor、F3 trusted handoff 与 F6 no-hits telemetry seam；production 仍 v1；CodeGraph/v1 bare runner 与远程六格 marker 记为已知残留。
 - 2026-07-23：F1 acceptance 回填 dormant `LocateResultV2` raw/public strict
   boundary、字段级 `SensitiveValuePolicyV2`、单一 `PublicResultAssemblerV2`、
   response-local ordinal ID 与 no-cutover invariant；production 仍保持 v1，

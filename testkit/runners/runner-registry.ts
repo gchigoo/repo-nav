@@ -27,12 +27,10 @@ export const PLATFORM_CASE_OWNER_REGISTRATION: Readonly<
   'unit/cross-platform-baseline/process-timeout-tree-cleanup': Object.freeze([
     'test/unit/cross-platform-platform.spec.ts',
   ]),
-  'unit/cross-platform-baseline/process-stdout-current-boundary': Object.freeze([
-    'test/unit/cross-platform-platform.spec.ts',
-  ]),
-  'unit/cross-platform-baseline/process-stderr-current-boundary': Object.freeze([
-    'test/unit/cross-platform-platform.spec.ts',
-  ]),
+  'unit/cross-platform-baseline/process-stdout-n-plus-one-boundary':
+    Object.freeze(['test/unit/cross-platform-platform.spec.ts']),
+  'unit/cross-platform-baseline/process-stderr-n-plus-one-boundary':
+    Object.freeze(['test/unit/cross-platform-platform.spec.ts']),
   'unit/cross-platform-baseline/process-cleanup-invariant-fault': Object.freeze([
     'test/unit/cross-platform-platform.spec.ts',
   ]),
@@ -53,6 +51,71 @@ export const PLATFORM_CASE_OWNER_REGISTRATION: Readonly<
   ]),
   'unit/cross-platform-ci-contract/synthetic-extension-protocol': Object.freeze([
     'test/unit/cross-platform-ci-contract.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/process-n-plus-one-boundary': Object.freeze([
+    'test/unit/safe-process-streaming-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/process-terminal-races': Object.freeze([
+    'test/unit/safe-process-streaming-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/consumer-progress-contract': Object.freeze([
+    'test/unit/safe-process-streaming-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/buffered-compatibility-projection': Object.freeze([
+    'test/unit/safe-process-streaming-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/stream-consumer-finalizer-and-process-exit':
+    Object.freeze(['test/unit/safe-process-streaming-v2.spec.ts']),
+  'unit/streaming-ripgrep/stream-consumer-progress-and-boundary': Object.freeze([
+    'test/unit/safe-process-streaming-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/json-line-partitions': Object.freeze([
+    'test/unit/ripgrep-json-line-consumer-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/json-line-invalid': Object.freeze([
+    'test/unit/ripgrep-json-line-consumer-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/protocol-fsm-and-offsets': Object.freeze([
+    'test/unit/ripgrep-json-line-consumer-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/ripgrep-json-stream-protocol': Object.freeze([
+    'test/unit/ripgrep-json-line-consumer-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/max-hits-groups': Object.freeze([
+    'test/unit/ripgrep-streaming-backend-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/multi-view-cap-and-order': Object.freeze([
+    'test/unit/ripgrep-streaming-backend-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/exit-outcome-table': Object.freeze([
+    'test/unit/ripgrep-streaming-backend-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/outcome-schema': Object.freeze([
+    'test/unit/backend-execution-outcome-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/codegraph-outcome-trace': Object.freeze([
+    'test/unit/backend-execution-trace-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/physical-start-authority': Object.freeze([
+    'test/unit/backend-physical-attempt-executor-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/eligibility-gate': Object.freeze([
+    'test/unit/canonical-locate-execution.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/v1-parity-and-trace': Object.freeze([
+    'test/unit/canonical-locate-execution.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/backend-trace-closure': Object.freeze([
+    'test/unit/backend-execution-trace-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/real-cleanup': Object.freeze([
+    'test/unit/process-cleanup.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/ripgrep-early-stop-tree-cleanup': Object.freeze([
+    'test/unit/process-cleanup.spec.ts',
+  ]),
+  'golden/streaming-ripgrep/large-streaming-ripgrep': Object.freeze([
+    'test/golden/large-streaming-ripgrep.spec.ts',
   ]),
 });
 
@@ -122,6 +185,7 @@ export const RUNNER_SELECTIONS: Readonly<
       'relevance-ranking-budget',
       'cross-platform-ci-contract',
       'cross-platform-baseline',
+      'streaming-ripgrep',
     ]),
     cases: new Set([
       'runner-smoke',
@@ -208,8 +272,8 @@ export const RUNNER_SELECTIONS: Readonly<
       'repository-path-error-redaction',
       'process-caller-abort-tree-cleanup',
       'process-timeout-tree-cleanup',
-      'process-stdout-current-boundary',
-      'process-stderr-current-boundary',
+      'process-stdout-n-plus-one-boundary',
+      'process-stderr-n-plus-one-boundary',
       'process-cleanup-invariant-fault',
       'anchor-intent-normalization',
       'discovery-anchor-file-reservation',
@@ -246,6 +310,27 @@ export const RUNNER_SELECTIONS: Readonly<
       'snapshot-git-state',
       'snapshot-real-envelope',
       'executor-dual-lane-wiring',
+      'process-n-plus-one-boundary',
+      'process-terminal-races',
+      'consumer-progress-contract',
+      'buffered-compatibility-projection',
+      'stream-consumer-finalizer-and-process-exit',
+      'stream-consumer-progress-and-boundary',
+      'json-line-partitions',
+      'json-line-invalid',
+      'protocol-fsm-and-offsets',
+      'ripgrep-json-stream-protocol',
+      'max-hits-groups',
+      'multi-view-cap-and-order',
+      'exit-outcome-table',
+      'outcome-schema',
+      'codegraph-outcome-trace',
+      'physical-start-authority',
+      'eligibility-gate',
+      'v1-parity-and-trace',
+      'backend-trace-closure',
+      'real-cleanup',
+      'ripgrep-early-stop-tree-cleanup',
     ]),
   }),
   golden: Object.freeze({
@@ -268,6 +353,7 @@ export const RUNNER_SELECTIONS: Readonly<
       'canonical-locate-bridge',
       'request-snapshot-cache',
       'relevance-ranking-budget',
+      'streaming-ripgrep',
     ]),
     cases: new Set([
       'runner-smoke',
@@ -277,6 +363,7 @@ export const RUNNER_SELECTIONS: Readonly<
       'multi-anchor-round-robin',
       'large-ranking-permutation',
       'large-repository-request-cache',
+      'large-streaming-ripgrep',
       'manifest-schema',
       'evaluator-smoke',
       'source-field-mapping',

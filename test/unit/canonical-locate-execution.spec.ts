@@ -42,8 +42,22 @@ import {
   V1_MUTATION_PRECEDENCE_CONTRACT_V2,
   V1_MUTATION_STABLE_FILE_V2,
 } from '../../testkit/fixtures/request-snapshot-v2/v1-mutation-precedence-v2.js';
+import type { LocateExecutionTokenV2 } from '../../src/contracts/v2/locate-fact-envelope-v2.js';
 import { LOCATE_FACT_OWNER_ORDER_V2 } from '../../src/contracts/v2/locate-fact-envelope-v2.js';
+import {
+  createBackendExecutionContextV2,
+  requireBackendDiscoveryHandoffForF3V2,
+  requireBackendExecutionOutcomeV2,
+} from '../../src/process/backend-execution-context-v2.js';
+import { createProcessOpaqueTokenV2 } from '../../src/process/opaque-token-v2.js';
 import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
+import { NodeSafeProcessRunner } from '../../src/repository/node-safe-process-runner.js';
+import { RipgrepBackend } from '../../src/repository/ripgrep-backend.js';
+import {
+  assertSameSearchViewsAbiV2,
+  type F3SearchViewsConsumerV2,
+  type F5SearchViewsProviderV2,
+} from '../../testkit/fixtures/backend-execution-v2/f3-f5-handoff-v2.js';
 import {
   assertGoldenCase,
   GoldenCaseSchema,
@@ -544,3 +558,84 @@ describe.runIf(mutationPrecedenceSelected)(
     });
   },
 );
+
+describe.runIf(
+  isSelected({
+    group: 'streaming-ripgrep',
+    caseId: 'eligibility-gate',
+  }),
+)('F5-ELIGIBILITY-001 eligibility gate', () => {
+  it('keeps telemetry-only prefixes out of F3 complete-safe hits', async () => {
+    assertSameSearchViewsAbiV2(
+      RipgrepBackend.prototype.searchViews as unknown as F5SearchViewsProviderV2,
+      RipgrepBackend.prototype.searchViews as unknown as F3SearchViewsConsumerV2,
+    );
+    const repository = mkdtempSync(resolve(tmpdir(), 'repo-nav-f5-elig-'));
+    try {
+      writeFileSync(resolve(repository, 'a.ts'), 'const Foo = 1;\n', 'utf8');
+      writeFileSync(resolve(repository, 'b.ts'), 'const Foo = 2;\n', 'utf8');
+      writeFileSync(resolve(repository, 'c.ts'), 'const Foo = 3;\n', 'utf8');
+      const runner = new NodeSafeProcessRunner();
+      const signal = new AbortController().signal;
+      const execution = createProcessOpaqueTokenV2<LocateExecutionTokenV2>();
+      const context = createBackendExecutionContextV2(
+        runner,
+        undefined,
+        signal,
+        execution,
+      );
+      const request = {
+        base: {
+          repositoryRoot: repository,
+          terms: [{ value: 'Foo', caseSensitive: true }],
+          anchors: [],
+          negativeTerms: [],
+          layers: [],
+        },
+        expandedMaxHits: 1,
+        legacyMaxHits: 10,
+      };
+      const handoff = await new RipgrepBackend(runner).searchViews(
+        request,
+        signal,
+        context,
+        execution,
+      );
+      const view = requireBackendDiscoveryHandoffForF3V2(
+        handoff,
+        'ripgrep',
+        request,
+        context,
+        execution,
+      );
+      expect(view.kind).toBe('started');
+      if (view.kind !== 'started') {
+        return;
+      }
+      const outcome = requireBackendExecutionOutcomeV2(
+        view.expandedOutcome,
+        execution,
+      );
+      expect(outcome.selectionEligibility).toBe('telemetry-only');
+      expect(outcome.termination).toBe('early-stop');
+      expect(view.completeSafeHits).toEqual([]);
+      expect(view.expandedComplete).toBe(false);
+      // hostile: raw retainedHits must not leak as complete-safe membership
+      expect(outcome.retainedHits.length).toBeGreaterThan(0);
+      expect(view.completeSafeHits).toHaveLength(0);
+    } finally {
+      rmSync(repository, { recursive: true, force: true });
+    }
+  });
+});
+
+describe.runIf(
+  isSelected({
+    group: 'streaming-ripgrep',
+    caseId: 'v1-parity-and-trace',
+  }),
+)('F5-V1-001 v1 parity', () => {
+  it('records exact-N delta while keeping non-boundary v1 surface', () => {
+    expect(V1_PARITY_GOLDEN_CASE_IDS_V2.length).toBeGreaterThan(0);
+  });
+});

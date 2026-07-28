@@ -457,30 +457,30 @@ describe.runIf(
 describe.runIf(
   isSelected({
     group: 'cross-platform-baseline',
-    caseId: 'process-stdout-current-boundary',
+    caseId: 'process-stdout-n-plus-one-boundary',
   }),
-)('F4-PROC-003 stdout current boundary', () => {
-  it('keeps N-1 success and exact-N stdout-limit baseline', async () => {
+)('F4-PROC-003 stdout N+1 boundary', () => {
+  it('keeps exact-N success and N+1 stdout-limit', async () => {
     const cwd = mkdtempSync(resolve(tmpdir(), 'repo-nav-f4-stdout-'));
     const pidFileLimit = resolve(cwd, 'limit.json');
     let inventory: ProcessInventory | undefined;
     try {
       const success = await new NodeSafeProcessRunner().run(
-        helperRequest(cwd, 'output', ['stdout', '1023'], {
+        helperRequest(cwd, 'output', ['stdout', '1024'], {
           maxStdoutBytes: 1024,
         }),
         new AbortController().signal,
       );
       expect(success.ok).toBe(true);
-      expect(success.stdout).toHaveLength(1023);
-      recordPlatformAssertionMarker('F4-PROC-003', 'n-minus-one-success');
+      expect(success.stdout).toHaveLength(1024);
+      recordPlatformAssertionMarker('F4-PROC-003', 'exact-n-success');
 
       const limited = await new NodeSafeProcessRunner().run(
         treeRequest(
           cwd,
           pidFileLimit,
           { maxStdoutBytes: 1024 },
-          ['stdout', '1024'],
+          ['stdout', '1025'],
         ),
         new AbortController().signal,
       );
@@ -489,7 +489,7 @@ describe.runIf(
       expectTermination(limited, 'stdout-limit');
       expect(limited.stdout).toHaveLength(1024);
       await expectInventoryStopped(inventory);
-      recordPlatformAssertionMarker('F4-PROC-003', 'exact-n-limit');
+      recordPlatformAssertionMarker('F4-PROC-003', 'n-plus-one-limit');
       recordPlatformAssertionMarker('F4-PROC-003', 'owned-tree-dead');
     } finally {
       forceCleanup(inventory);
@@ -501,30 +501,30 @@ describe.runIf(
 describe.runIf(
   isSelected({
     group: 'cross-platform-baseline',
-    caseId: 'process-stderr-current-boundary',
+    caseId: 'process-stderr-n-plus-one-boundary',
   }),
-)('F4-PROC-004 stderr current boundary', () => {
-  it('keeps N-1 success and exact-N stderr-limit baseline', async () => {
+)('F4-PROC-004 stderr N+1 boundary', () => {
+  it('keeps exact-N success and N+1 stderr-limit', async () => {
     const cwd = mkdtempSync(resolve(tmpdir(), 'repo-nav-f4-stderr-'));
     const pidFileLimit = resolve(cwd, 'limit.json');
     let inventory: ProcessInventory | undefined;
     try {
       const success = await new NodeSafeProcessRunner().run(
-        helperRequest(cwd, 'output', ['stderr', '1023'], {
+        helperRequest(cwd, 'output', ['stderr', '1024'], {
           maxStderrBytes: 1024,
         }),
         new AbortController().signal,
       );
       expect(success.ok).toBe(true);
-      expect(success.stderr).toHaveLength(1023);
-      recordPlatformAssertionMarker('F4-PROC-004', 'n-minus-one-success');
+      expect(success.stderr).toHaveLength(1024);
+      recordPlatformAssertionMarker('F4-PROC-004', 'exact-n-success');
 
       const limited = await new NodeSafeProcessRunner().run(
         treeRequest(
           cwd,
           pidFileLimit,
           { maxStderrBytes: 1024 },
-          ['stderr', '1024'],
+          ['stderr', '1025'],
         ),
         new AbortController().signal,
       );
@@ -533,7 +533,7 @@ describe.runIf(
       expectTermination(limited, 'stderr-limit');
       expect(limited.stderr).toHaveLength(1024);
       await expectInventoryStopped(inventory);
-      recordPlatformAssertionMarker('F4-PROC-004', 'exact-n-limit');
+      recordPlatformAssertionMarker('F4-PROC-004', 'n-plus-one-limit');
       recordPlatformAssertionMarker('F4-PROC-004', 'owned-tree-dead');
     } finally {
       forceCleanup(inventory);

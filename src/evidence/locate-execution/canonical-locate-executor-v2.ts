@@ -82,6 +82,7 @@ import {
   buildPreRankingPoolInputsFromLegacyEvidenceV2,
   purgeLegacyEvidenceByChangedKeysV2,
 } from '../request-snapshot/executor-snapshot-bridge-v2.js';
+import { createBackendExecutionContextV2 } from '../../process/backend-execution-context-v2.js';
 import { NodeRepositoryReader } from '../../repository/node-repository-reader.js';
 import { NodeSafeProcessRunner } from '../../repository/node-safe-process-runner.js';
 import {
@@ -551,6 +552,12 @@ export class CanonicalRepositoryLocateExecutorV2
         },
         legacyMaxHitsFromPublicLimitsV2(limits),
       );
+      const backendExecutionContext = createBackendExecutionContextV2(
+        new NodeSafeProcessRunner(),
+        undefined,
+        abortCoordinator.signal,
+        executionToken,
+      );
       let codegraphResult: BackendSearchResult | undefined;
       let ripgrepResult: BackendSearchResult | undefined;
       const expandedBackendResults: BackendSearchResult[] = [];
@@ -563,6 +570,8 @@ export class CanonicalRepositoryLocateExecutorV2
           codegraph,
           multiView,
           abortCoordinator.signal,
+          backendExecutionContext,
+          executionToken,
         );
         codegraphResult = codegraphLanes.legacy;
         expandedBackendResults.push(codegraphLanes.expanded);
@@ -741,6 +750,8 @@ export class CanonicalRepositoryLocateExecutorV2
           ripgrep,
           multiView,
           abortCoordinator.signal,
+          backendExecutionContext,
+          executionToken,
         );
         ripgrepResult = ripgrepLanes.legacy;
         expandedBackendResults.push(ripgrepLanes.expanded);

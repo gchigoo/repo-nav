@@ -77,13 +77,11 @@ items:
   depends_on:
   - cross-platform-ci-baseline
   - relevance-ranking-budget
-  status: in-progress
+  status: done
   feature: 2026-07-24-streaming-ripgrep
   minimal_loop: false
-  notes: 只拥有 backend/process 的 termination facts 与清理；incomplete raw prefix 不进入 F3
-    safe pool F2 selector或public evidence，只有完整 backend或fallback safe set可选；证明 maxHits
-    output cap process timeout abort signal nonzero exit 的 outcome，不聚合 request abortSource
-    status limits nextActions
+  notes: 2026-07-28 acceptance passed；单一 kernel N+1 + ripgrep-stream multi-view + F3
+    handoff/F6 no-hits seam；CodeGraph/v1 bare runner 与远程六格 F5 marker 为 residual
 - slug: input-abort-contract-v2
   description: 将question定义为可选说明文本，拆分filesystem path normalization，并以direct integration
     seam聚合backend/request-outcome/status/proof；real envelope mount由F8唯一完成

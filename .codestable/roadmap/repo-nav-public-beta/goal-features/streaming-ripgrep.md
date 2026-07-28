@@ -3,7 +3,7 @@ doc_type: roadmap-goal-feature
 roadmap: repo-nav-public-beta
 feature: 2026-07-24-streaming-ripgrep
 roadmap_item: streaming-ripgrep
-status: pending
+status: implementing
 ---
 
 # streaming-ripgrep Goal 执行规格

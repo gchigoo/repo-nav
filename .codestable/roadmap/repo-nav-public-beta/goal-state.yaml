@@ -83,7 +83,7 @@ features:
   review: .codestable/features/2026-07-24-streaming-ripgrep/streaming-ripgrep-review.md
   qa: .codestable/features/2026-07-24-streaming-ripgrep/streaming-ripgrep-qa.md
   acceptance: .codestable/features/2026-07-24-streaming-ripgrep/streaming-ripgrep-acceptance.md
-  status: pending
+  status: implementing
 - slug: input-abort-contract-v2
   roadmap_item: input-abort-contract-v2
   feature_dir: .codestable/features/2026-07-24-input-abort-contract-v2

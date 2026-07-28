@@ -3,7 +3,7 @@ doc_type: roadmap-goal-feature
 roadmap: repo-nav-public-beta
 feature: 2026-07-24-language-capability-boundary
 roadmap_item: language-capability-boundary
-status: pending
+status: implementing
 ---
 
 # language-capability-boundary Goal 执行规格

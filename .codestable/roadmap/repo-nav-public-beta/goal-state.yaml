@@ -110,7 +110,7 @@ features:
   review: .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-review.md
   qa: .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-qa.md
   acceptance: .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-acceptance.md
-  status: pending
+  status: implementing
 - slug: public-beta-release
   roadmap_item: public-beta-release
   feature_dir: .codestable/features/2026-07-24-public-beta-release

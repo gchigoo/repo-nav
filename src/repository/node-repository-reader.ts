@@ -355,18 +355,20 @@ export class NodeRepositoryReader implements RepositoryReader {
   }
 
   private validateRelativeFile(relativeFile: string): string {
+    const absoluteInput =
+      posix.isAbsolute(relativeFile) || isAbsolute(relativeFile);
     if (
       relativeFile.length === 0 ||
       relativeFile.includes('\\') ||
-      posix.isAbsolute(relativeFile) ||
-      isAbsolute(relativeFile) ||
+      absoluteInput ||
       posix.normalize(relativeFile) !== relativeFile ||
       relativeFile === '..' ||
       relativeFile.startsWith('../')
     ) {
+      // Absolute inputs must not reappear on typed errors (F4-PATH-004).
       throw new RepositoryAccessError(
         'INVALID_RELATIVE_PATH',
-        relativeFile.length === 0 ? undefined : relativeFile,
+        absoluteInput || relativeFile.length === 0 ? undefined : relativeFile,
       );
     }
     return relativeFile;

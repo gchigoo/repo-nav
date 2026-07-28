@@ -65,6 +65,21 @@ jobs:
         name: Install
         run: npm ci
 
+      - name: Install host tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOOLS="${RUNNER_TEMP}/repo-nav-host-tools"
+          mkdir -p "$TOOLS"
+          npm install --prefix "$TOOLS" --no-save --no-package-lock --no-fund --no-audit \
+            @vscode/ripgrep@1.15.9 \
+            @colbymchenry/codegraph@1.1.6
+          echo "$TOOLS/node_modules/.bin" >> "$GITHUB_PATH"
+          echo "$TOOLS/node_modules/@vscode/ripgrep/bin" >> "$GITHUB_PATH"
+          export PATH="$TOOLS/node_modules/.bin:$TOOLS/node_modules/@vscode/ripgrep/bin:$PATH"
+          rg --version
+          codegraph --version
+
       - id: runtime
         name: Runtime probe
         run: node --import tsx tools/ci/run-platform-contracts.mjs --runtime-probe --cell ${{ matrix.cellId }}

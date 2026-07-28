@@ -117,6 +117,76 @@ export const PLATFORM_CASE_OWNER_REGISTRATION: Readonly<
   'golden/streaming-ripgrep/large-streaming-ripgrep': Object.freeze([
     'test/golden/large-streaming-ripgrep.spec.ts',
   ]),
+  'unit/input-abort-contract-v2/repository-path-input': Object.freeze([
+    'test/unit/locate-request-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/file-anchor-input': Object.freeze([
+    'test/unit/locate-request-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/semantic-input': Object.freeze([
+    'test/unit/locate-request-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/question-non-interference': Object.freeze([
+    'test/unit/locate-request-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/raw-budget': Object.freeze([
+    'test/unit/locate-request-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/platform-input-boundary': Object.freeze([
+    'test/unit/locate-request-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/cli-input-contract': Object.freeze([
+    'test/unit/cli-input-contract-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/abort-first-writer': Object.freeze([
+    'test/unit/locate-abort-coordinator-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/platform-abort-first-writer': Object.freeze([
+    'test/unit/locate-abort-coordinator-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/finalization-latch': Object.freeze([
+    'test/unit/canonical-locate-finalization-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/platform-finalization-latch': Object.freeze([
+    'test/unit/canonical-locate-finalization-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/backend-attempt-aggregation': Object.freeze([
+    'test/unit/request-outcome-aggregator-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/index-observation-matrix': Object.freeze([
+    'test/unit/request-outcome-aggregator-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/strategy-completeness': Object.freeze([
+    'test/unit/request-outcome-aggregator-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/contribution-trust': Object.freeze([
+    'test/unit/request-outcome-aggregator-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/public-materialization-order': Object.freeze([
+    'test/unit/request-outcome-aggregator-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/status-priority': Object.freeze([
+    'test/unit/request-outcome-aggregator-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/next-action-policy': Object.freeze([
+    'test/unit/request-outcome-aggregator-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/aggregator-owner-direct-integration':
+    Object.freeze(['test/unit/request-outcome-aggregator-v2.spec.ts']),
+  'unit/input-abort-contract-v2/outcome-proof': Object.freeze([
+    'test/unit/canonical-locate-facts-bridge.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/v1-compatibility': Object.freeze([
+    'test/unit/canonical-locate-execution.spec.ts',
+  ]),
+  'golden/input-abort-contract-v2/v1-compatibility': Object.freeze([
+    'test/golden/input-abort-contract-v2.spec.ts',
+  ]),
+  'golden/input-abort-contract-v2/large-request-outcome-permutation':
+    Object.freeze(['test/golden/large-synthetic-repository.spec.ts']),
+  'mcp/input-abort-contract-v2/mcp-input-and-cancel': Object.freeze([
+    'test/mcp/request-cancellation-v2.spec.ts',
+  ]),
 });
 
 export const RUNNER_GROUP_ALIASES: Readonly<
@@ -186,6 +256,7 @@ export const RUNNER_SELECTIONS: Readonly<
       'cross-platform-ci-contract',
       'cross-platform-baseline',
       'streaming-ripgrep',
+      'input-abort-contract-v2',
     ]),
     cases: new Set([
       'runner-smoke',
@@ -331,6 +402,28 @@ export const RUNNER_SELECTIONS: Readonly<
       'backend-trace-closure',
       'real-cleanup',
       'ripgrep-early-stop-tree-cleanup',
+      'repository-path-input',
+      'file-anchor-input',
+      'semantic-input',
+      'question-non-interference',
+      'raw-budget',
+      'platform-input-boundary',
+      'cli-input-contract',
+      'abort-first-writer',
+      'platform-abort-first-writer',
+      'finalization-latch',
+      'platform-finalization-latch',
+      'backend-attempt-aggregation',
+      'index-observation-matrix',
+      'strategy-completeness',
+      'contribution-trust',
+      'public-materialization-order',
+      'status-priority',
+      'next-action-policy',
+      'aggregator-owner-direct-integration',
+      'outcome-proof',
+      'v1-compatibility',
+      'mcp-input-and-cancel',
     ]),
   }),
   golden: Object.freeze({
@@ -354,6 +447,7 @@ export const RUNNER_SELECTIONS: Readonly<
       'request-snapshot-cache',
       'relevance-ranking-budget',
       'streaming-ripgrep',
+      'input-abort-contract-v2',
     ]),
     cases: new Set([
       'runner-smoke',
@@ -364,6 +458,8 @@ export const RUNNER_SELECTIONS: Readonly<
       'large-ranking-permutation',
       'large-repository-request-cache',
       'large-streaming-ripgrep',
+      'large-request-outcome-permutation',
+      'v1-compatibility',
       'manifest-schema',
       'evaluator-smoke',
       'source-field-mapping',
@@ -407,10 +503,17 @@ export const RUNNER_SELECTIONS: Readonly<
     ]),
   }),
   mcp: Object.freeze({
-    groups: new Set(['runner-smoke', 'mcp-surface', 'protocol', 'lifecycle']),
+    groups: new Set([
+      'runner-smoke',
+      'mcp-surface',
+      'protocol',
+      'lifecycle',
+      'input-abort-contract-v2',
+    ]),
     cases: new Set([
       'runner-smoke',
       'lifecycle-manifest-schema',
+      'mcp-input-and-cancel',
       'initialize-tools-capability',
       'tool-list-schema',
       'single-tool-readonly',

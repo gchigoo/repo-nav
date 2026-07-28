@@ -124,7 +124,9 @@ export async function executeCli(
       let result;
       let serviceThrew = false;
       try {
-        result = await service.locate(command.request, { signal });
+        result = await service.locate(command.request, {
+          callerSignal: signal,
+        });
       } catch {
         serviceThrew = true;
         result = internalLocateError();

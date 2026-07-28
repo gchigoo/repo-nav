@@ -778,3 +778,38 @@ export function signBackendExecutionOutcomeForFactsV2(
     retainedHits: deepFreezeHits(shape.retainedHits),
   }) as BackendExecutionOutcomeV2;
 }
+
+/**
+ * F6/testkit harness：直接签发 public-neutral telemetry trace（不经 physical start）。
+ * production path 不得调用。
+ */
+export function issueBackendExecutionTraceForHarnessV2(input: {
+  readonly execution: LocateExecutionTokenV2;
+  readonly context: BackendExecutionContextV2;
+  readonly outcomes: readonly BackendExecutionOutcomeV2[];
+  readonly codegraphIndexObservation: CodeGraphIndexObservationV2;
+}): BackendExecutionTraceV2 {
+  requireContext(input.context, input.execution);
+  const seen = new Set<string>();
+  for (const outcome of input.outcomes) {
+    validateOutcomeShape(outcome);
+    if (seen.has(outcome.backend)) {
+      throw new TypeError('duplicate-backend-outcome');
+    }
+    seen.add(outcome.backend);
+  }
+  const view: BackendExecutionTraceViewV2 = Object.freeze({
+    outcomes: Object.freeze(input.outcomes.map((outcome) => toTelemetry(outcome))),
+    firstExpandedStartOrdinals: Object.freeze(
+      input.outcomes.map((_, index) => index + 1),
+    ),
+    codegraphIndexObservation: input.codegraphIndexObservation,
+  });
+  const token = createProcessOpaqueTokenV2<BackendExecutionTraceV2>();
+  tracePrivate.set(token, {
+    view,
+    execution: input.execution,
+    context: input.context,
+  });
+  return token;
+}

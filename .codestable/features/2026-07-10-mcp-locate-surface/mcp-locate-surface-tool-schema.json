@@ -12,12 +12,12 @@
         "repoPath": {
           "type": "string",
           "minLength": 1,
-          "description": "repoPath must remain non-empty after NFKC normalization and trimming; runtime validation limits it to 4096 UTF-8 bytes."
+          "description": "repoPath is a raw filesystem string preserved without NFKC/trim; runtime validation rejects NUL and values over 4096 UTF-8 bytes."
         },
         "question": {
           "type": "string",
           "minLength": 1,
-          "description": "question must remain non-empty after NFKC normalization and trimming; runtime validation limits it to 4096 UTF-8 bytes."
+          "description": "Optional display-only question; when present must remain non-empty after NFKC/trim (max 4096 UTF-8 bytes). Omitted question does not affect search plan."
         },
         "terms": {
           "readOnly": true,
@@ -44,7 +44,6 @@
           "maxItems": 16,
           "type": "array",
           "items": {
-            "readOnly": true,
             "type": "object",
             "properties": {
               "kind": {
@@ -68,7 +67,7 @@
               "value"
             ],
             "additionalProperties": false,
-            "$comment": "Runtime validation additionally rejects absolute and repository-escaping file anchor values."
+            "$comment": "Runtime validation rejects file-anchor backslashes, absolute paths, and repository escape; file values are preserved exactly."
           }
         },
         "layers": {
@@ -130,7 +129,6 @@
       },
       "required": [
         "repoPath",
-        "question",
         "terms"
       ],
       "additionalProperties": false,

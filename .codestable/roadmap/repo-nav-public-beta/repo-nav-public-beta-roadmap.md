@@ -590,6 +590,8 @@ interface BackendExecutionOutcomeV2 {
 
 把`question`改为可选说明文本，拆分filesystem path normalization，并从F5 trusted trace的public-neutral `BackendAttemptV2[]`唯一聚合backend/request-outcome fragments、strategy、abort、status、limits与nextActions；F8把trusted aggregation的exact status注册到F1C。finalization latch前caller/deadline first-writer-wins，caller派生`cancelled`，deadline才派生`timeout`。
 
+**状态（2026-07-28）**：acceptance `passed`；items.yaml `done`；architecture 已回写 raw guard / abort latch / RequestOutcomeAggregatorV2 direct seam / F8-only mount / importer=0；REV-003/013 与远程六格为 residual。
+
 ### F7 · repository-scope-policy
 
 统一 basename/extension/segment/prefix layer mapping 及冲突优先级、test/docs 显式请求和 candidate scope decision。

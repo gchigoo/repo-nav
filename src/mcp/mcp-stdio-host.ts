@@ -4,10 +4,10 @@ import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import {
-  LocateRequestSchema,
   type LocateRequest,
   type RepositoryEvidenceService,
 } from '../contracts/index.js';
+import { safeParseLocateRequestV2 } from '../contracts/locate-request-parse-v2.js';
 import { REPOSITORY_EVIDENCE_SERVICE } from '../runtime/tokens.js';
 import {
   internalLocateError,
@@ -125,7 +125,7 @@ export class NodeMcpStdioHost implements McpStdioHost, OnModuleDestroy {
     if (this.state === 'closing' || this.state === 'closed') {
       return serializeLocateToolOutput(internalLocateError());
     }
-    const parsed = LocateRequestSchema.safeParse(argumentsValue);
+    const parsed = safeParseLocateRequestV2(argumentsValue);
     if (!parsed.success) {
       return serializeLocateToolOutput(
         invalidLocateInput(this.requiresAdditionalTerm(argumentsValue)),
@@ -160,8 +160,9 @@ export class NodeMcpStdioHost implements McpStdioHost, OnModuleDestroy {
       abort();
     }
     try {
+      // SDK cancel 与 host shutdown 均映射为 callerSignal
       const result = await this.evidenceService.locate(request, {
-        signal: tracked.controller.signal,
+        callerSignal: tracked.controller.signal,
       });
       return serializeLocateToolOutput(result);
     } catch {

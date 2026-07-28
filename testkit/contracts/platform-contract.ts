@@ -68,6 +68,9 @@ export const PLATFORM_CONTRACT_IDS_V1 = [
   'F5-PROC-003',
   'F5-RG-001',
   'F5-CLEANUP-001',
+  'F6-INPUT-001',
+  'F6-ABORT-001',
+  'F6-LATCH-001',
 ] as const;
 
 export type PlatformContractIdV1 =
@@ -487,6 +490,51 @@ const BASE_BINDINGS: readonly PlatformCaseBindingV1<PlatformContractIdV1>[] =
       requiredEvidenceHashIds: Object.freeze([]),
       fixture: 'testkit/fixtures/process-v2/process-tree-writer-v2.ts',
       assertionOwner: 'test/unit/process-cleanup.spec.ts',
+    }),
+    Object.freeze({
+      contractId: 'F6-INPUT-001',
+      surface: 'unit',
+      group: 'input-abort-contract-v2',
+      executableCaseId: 'platform-input-boundary',
+      applicableOs: ALL_OS,
+      requiredAssertionIds: Object.freeze([
+        'repo-path-code-units',
+        'file-anchor-backslash-rejected',
+        'raw-budget-boundary',
+      ]),
+      requiredEvidenceHashIds: Object.freeze([]),
+      fixture: 'testkit/fixtures/input-v2/platform-input-v2.ts',
+      assertionOwner: 'test/unit/locate-request-v2.spec.ts',
+    }),
+    Object.freeze({
+      contractId: 'F6-ABORT-001',
+      surface: 'unit',
+      group: 'input-abort-contract-v2',
+      executableCaseId: 'platform-abort-first-writer',
+      applicableOs: ALL_OS,
+      requiredAssertionIds: Object.freeze([
+        'caller-first-writer',
+        'deadline-first-writer',
+        'local-timeout-not-abort-source',
+      ]),
+      requiredEvidenceHashIds: Object.freeze([]),
+      fixture: 'testkit/fixtures/request-outcome-v2/platform-abort-v2.ts',
+      assertionOwner: 'test/unit/locate-abort-coordinator-v2.spec.ts',
+    }),
+    Object.freeze({
+      contractId: 'F6-LATCH-001',
+      surface: 'unit',
+      group: 'input-abort-contract-v2',
+      executableCaseId: 'platform-finalization-latch',
+      applicableOs: ALL_OS,
+      requiredAssertionIds: Object.freeze([
+        'before-close-observed',
+        'after-close-ignored',
+        'no-timer-listener-leak',
+      ]),
+      requiredEvidenceHashIds: Object.freeze([]),
+      fixture: 'testkit/fixtures/request-outcome-v2/platform-finalization-v2.ts',
+      assertionOwner: 'test/unit/canonical-locate-finalization-v2.spec.ts',
     }),
   ]);
 

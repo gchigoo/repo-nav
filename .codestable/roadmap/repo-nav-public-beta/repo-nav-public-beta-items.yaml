@@ -87,11 +87,11 @@ items:
     seam聚合backend/request-outcome/status/proof；real envelope mount由F8唯一完成
   depends_on:
   - streaming-ripgrep
-  status: in-progress
+  status: done
   feature: 2026-07-24-input-abort-contract-v2
   minimal_loop: false
-  notes: F6 acceptance不声称real owner mount且production F2 core accessor与F1C registrar
-    importer均为0；F8 future wrapper是唯一production bridge；其余input abort语义不变
+  notes: 2026-07-28 acceptance passed；raw guard + abort latch + RequestOutcomeAggregatorV2
+    direct seam；production F2 core accessor importer=0；F8-only mount；REV-003/013 与远程六格为 residual
 - slug: repository-scope-policy
   description: 统一 basename extension nested segment prefix 及冲突优先级、显式 test docs 请求以及
     confirmed candidate 共用的 scope decision

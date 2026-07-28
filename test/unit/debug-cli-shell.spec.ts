@@ -50,7 +50,8 @@ describe.runIf(isSelected({ group: 'debug-cli-shell', caseId: 'debug-cli-shell' 
 
   it.each([
     [['unknown'], 'Expected the debug command.'],
-    [['debug', 'locate', '--repo', '.'], 'Missing required option --question.'],
+    // F6: --question is optional; missing --term fails at locate-request parse (still pre-bootstrap).
+    [['debug', 'locate', '--repo', '.'], 'Invalid locate request: Locate input field terms below minimum count.'],
     [['debug', 'probe', '--wrong', '.'], 'Unknown probe option'],
   ] as const)('maps invalid arguments to exit 2 before bootstrap', async (args, message) => {
     const fixture = dependencies(new Map());

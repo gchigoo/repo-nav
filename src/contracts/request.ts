@@ -1,5 +1,4 @@
 import { Buffer } from 'node:buffer';
-import { posix, win32 } from 'node:path';
 
 import { z } from 'zod';
 
@@ -11,43 +10,22 @@ import {
   REPO_LAYERS,
   TERM_CASE_MODES,
 } from './constants.js';
+import {
+  assertRawFileAnchorValueV2,
+  assertRawRepoPathV2,
+} from './v2/filesystem-input.js';
+import {
+  optionalQuestionSchemaV2,
+  semanticNormalizedStringV2,
+  semanticTermArrayV2,
+} from './v2/semantic-input.js';
 
 const utf8Length = (value: string): number => Buffer.byteLength(value, 'utf8');
 
-const normalizedString = (
-  label: string,
-  maximumBytes: number,
-) =>
-  z
-    .string()
-    .transform((value) => value.normalize('NFKC').trim())
-    .pipe(
-      z
-        .string()
-        .min(1, `${label} must not be empty.`)
-        .refine(
-          (value) => utf8Length(value) <= maximumBytes,
-          `${label} exceeds ${maximumBytes} UTF-8 bytes.`,
-        ),
-    );
+/** @deprecated 语义字段请用 semanticNormalizedStringV2；保留兼容 export。 */
+const normalizedString = semanticNormalizedStringV2;
 
-const termArray = (minimumItems: number) =>
-  z
-    .array(normalizedString('search term', 128))
-    .min(minimumItems)
-    .max(16)
-    .superRefine((terms, context) => {
-      const totalBytes = terms.reduce(
-        (total, term) => total + utf8Length(term),
-        0,
-      );
-      if (totalBytes > 1024) {
-        context.addIssue({
-          code: 'custom',
-          message: 'Search terms exceed 1024 UTF-8 bytes in total.',
-        });
-      }
-    });
+const termArray = semanticTermArrayV2;
 
 export const RepoLayerSchema = z.enum(REPO_LAYERS);
 export type RepoLayer = z.infer<typeof RepoLayerSchema>;
@@ -58,46 +36,72 @@ export type AnchorKind = z.infer<typeof AnchorKindSchema>;
 export const TermCaseModeSchema = z.enum(TERM_CASE_MODES);
 export type TermCaseMode = z.infer<typeof TermCaseModeSchema>;
 
-function normalizeFileAnchorValue(value: string): string {
-  const slashValue = value.replaceAll('\\', '/');
-  if (
-    posix.isAbsolute(slashValue) ||
-    win32.isAbsolute(value) ||
-    /^[A-Za-z]:/u.test(value)
-  ) {
-    throw new Error('File anchor must be repository-root relative.');
-  }
-
-  const normalized = posix.normalize(slashValue);
-  if (
-    normalized === '.' ||
-    normalized === '..' ||
-    normalized.startsWith('../')
-  ) {
-    throw new Error('File anchor escapes the repository root.');
-  }
-  return normalized;
-}
-
-export const LocateAnchorSchema = z
-  .strictObject({
-    kind: AnchorKindSchema,
-    value: normalizedString('anchor value', 512),
-  })
-  .readonly()
-  .superRefine((anchor, context) => {
-    if (anchor.kind !== 'file') {
-      return;
-    }
+const rawRepoPathSchema = z
+  .string()
+  .superRefine((value, context) => {
     try {
-      normalizeFileAnchorValue(anchor.value);
+      assertRawRepoPathV2(value);
     } catch (error: unknown) {
       context.addIssue({
         code: 'custom',
         message: error instanceof Error ? error.message : String(error),
-        path: ['value'],
       });
     }
+  });
+
+const rawFileAnchorValueSchema = z
+  .string()
+  .superRefine((value, context) => {
+    try {
+      assertRawFileAnchorValueV2(value);
+    } catch (error: unknown) {
+      context.addIssue({
+        code: 'custom',
+        message: error instanceof Error ? error.message : String(error),
+        path: [],
+      });
+    }
+  });
+
+export const LocateAnchorSchema = z
+  .strictObject({
+    kind: AnchorKindSchema,
+    value: z.string().min(1),
+  })
+  .transform((anchor, context) => {
+    if (anchor.kind === 'file') {
+      const fileResult = rawFileAnchorValueSchema.safeParse(anchor.value);
+      if (!fileResult.success) {
+        context.addIssue({
+          code: 'custom',
+          message:
+            fileResult.error.issues[0]?.message ??
+            'File anchor must be repository-root relative.',
+          path: ['value'],
+        });
+        return z.NEVER;
+      }
+      return Object.freeze({
+        kind: 'file' as const,
+        value: fileResult.data,
+      });
+    }
+    const semantic = normalizedString('anchor value', 512).safeParse(
+      anchor.value,
+    );
+    if (!semantic.success) {
+      context.addIssue({
+        code: 'custom',
+        message:
+          semantic.error.issues[0]?.message ?? 'anchor value is invalid.',
+        path: ['value'],
+      });
+      return z.NEVER;
+    }
+    return Object.freeze({
+      kind: anchor.kind,
+      value: semantic.data,
+    });
   });
 export type LocateAnchor = z.infer<typeof LocateAnchorSchema>;
 
@@ -151,10 +155,14 @@ export type NormalizedLocateAnchor = z.infer<
   typeof NormalizedLocateAnchorSchema
 >;
 
+/**
+ * Locate request schema（filesystem / semantic 分离）。
+ * 完整 raw guard 在 parseLocateRequestV2 入口执行；本 schema 仍含严格字段校验。
+ */
 export const LocateRequestSchema = z
   .strictObject({
-    repoPath: normalizedString('repoPath', 4096),
-    question: normalizedString('question', 4096),
+    repoPath: rawRepoPathSchema,
+    question: optionalQuestionSchemaV2,
     terms: termArray(1).readonly(),
     termCase: TermCaseModeSchema.optional(),
     anchors: z.array(LocateAnchorSchema).max(16).readonly().optional(),
@@ -164,6 +172,7 @@ export const LocateRequestSchema = z
   })
   .readonly()
   .superRefine((request, context) => {
+    // schema 层保留粗字节上限；精确 compact JSON 由 raw guard 负责
     if (utf8Length(JSON.stringify(request)) > LOCATE_INPUT_MAX_BYTES) {
       context.addIssue({
         code: 'custom',
@@ -211,19 +220,28 @@ export function normalizeLocateAnchors(
   anchors: readonly LocateAnchor[],
   mode: TermCaseMode = 'smart',
 ): readonly NormalizedLocateAnchor[] {
-  // F2：value projection 来自 normalizeAnchorIntentsV2（保留首次 index / comparison split）
-  // 此处保持行为等价：insensitive Foo/foo 只保留首个 display value。
+  // F6：file anchor exact preserve；non-file 继续 NFKC/trim/smart-case
   const seen = new Set<string>();
   const normalized: NormalizedLocateAnchor[] = [];
 
   for (const anchor of anchors) {
-    const literalValue = anchor.value.normalize('NFKC').trim();
-    const value =
-      anchor.kind === 'file'
-        ? normalizeFileAnchorValue(literalValue)
-        : literalValue;
-    const caseSensitive =
-      anchor.kind === 'file' ? true : isCaseSensitive(value, mode);
+    if (anchor.kind === 'file') {
+      assertRawFileAnchorValueV2(anchor.value);
+      const key = `file\u0000${anchor.value}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        normalized.push(
+          Object.freeze({
+            kind: 'file',
+            value: anchor.value,
+            caseSensitive: true,
+          }),
+        );
+      }
+      continue;
+    }
+    const value = anchor.value.normalize('NFKC').trim();
+    const caseSensitive = isCaseSensitive(value, mode);
     const comparison = caseSensitive
       ? value
       : value.toLocaleLowerCase('und');
@@ -247,3 +265,5 @@ export function resolveLocateLimits(limits?: LocateLimits): ResolvedLocateLimits
     timeoutMs: limits?.timeoutMs ?? DEFAULT_LOCATE_LIMITS.timeoutMs,
   });
 }
+
+export type { SearchPlanInputV2 } from './v2/semantic-input.js';

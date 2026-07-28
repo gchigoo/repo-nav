@@ -1,8 +1,8 @@
 ---
 doc_type: architecture
 slug: repo-nav-foundation
-scope: RepoNav 当前已落地的 production v1 公共契约、repository 安全 seams、单一 safe-process kernel（N+1 + streaming）、ripgrep multi-view stream、请求级 BackendExecutionContext/physical start authority、F3 trusted handoff 与 F6 no-hits telemetry seam、请求级 request-snapshot cache/final-check、CodeGraph-primary/ripgrep-fallback evidence engine、有界 candidate policy、状态/预算/redaction/error output guardrails、stdio MCP、debug CLI、executable docs、发布候选级 Verification Kit，以及尚未接入 production 的 v2 raw/public 输出安全边界
-summary: Production 继续由 Zod schema v1、薄 RepositoryEvidenceEngine façade、CanonicalRepositoryLocateExecutorV2（请求级 snapshot + snapshot owner）、唯一 V1LocateResultProjector、stdio MCP 与 shallow debug CLI 提供；F5 已落地单一 SafeProcessExecutionKernelV2、ripgrep-stream multi-view、BackendExecutionContextV2/physical executor 与 F3 complete-safe handoff，并向 F6 暴露 no-retainedHits telemetry seam；typed fact envelope / four-prerequisite admission / neutral stage registrars / finalizer / composer / shadow 为 transport-unreachable F1C seam；dormant LocateResultV2 与 PublicResultAssemblerV2 仍无 production edge，真实原子切换由 F9 独占
+scope: RepoNav 当前已落地的 production v1 公共契约、repository 安全 seams、单一 safe-process kernel（N+1 + streaming）、ripgrep multi-view stream、请求级 BackendExecutionContext/physical start authority、F3 trusted handoff 与 F6 no-hits telemetry seam、F6 raw request guard / abort latch / RequestOutcomeAggregatorV2 direct seam（F8-only production mount；F2 core accessor importer=0）、请求级 request-snapshot cache/final-check、CodeGraph-primary/ripgrep-fallback evidence engine、有界 candidate policy、状态/预算/redaction/error output guardrails、stdio MCP、debug CLI、executable docs、发布候选级 Verification Kit，以及尚未接入 production 的 v2 raw/public 输出安全边界
+summary: Production 继续由 Zod schema v1、薄 RepositoryEvidenceEngine façade、CanonicalRepositoryLocateExecutorV2（请求级 snapshot + snapshot owner）、唯一 V1LocateResultProjector、stdio MCP 与 shallow debug CLI 提供；F5 已落地单一 SafeProcessExecutionKernelV2、ripgrep-stream multi-view、BackendExecutionContextV2/physical executor 与 F3 complete-safe handoff；F6 已落地 raw guard、closeable abort/finalization latch 与 RequestOutcomeAggregatorV2 direct integration seam（production F2 core accessor importer=0；real envelope mount 由 F8 独占）；typed fact envelope / four-prerequisite admission / neutral stage registrars / finalizer / composer / shadow 为 transport-unreachable F1C seam；dormant LocateResultV2 与 PublicResultAssemblerV2 仍无 production edge，真实原子切换由 F9 独占
 status: current
 last_reviewed: 2026-07-28
 tags: [repo-nav, foundation, evidence, request-snapshot, candidate-policy, output-guardrails, redaction, repository-safety, codegraph, ripgrep, streaming, safe-process, backend-execution, fallback, mcp, stdio, cli, docs, golden, regression, schema-v2, public-assembler, no-cutover]
@@ -36,7 +36,10 @@ implements: [source-of-truth-evidence]
 - **MCP Surface**：`McpModule`、low-level MCP server handlers 与 `McpStdioHost` 组成的本地协议边界；只暴露 `repo_nav_locate`，不启动 HTTP listener。
 - **Output parity**：每个 tool success/error 先通过 `LocateToolOutputSchema` 自校验，再由同一 serializer 同时生成 `structuredContent` 和 JSON text；解析后必须严格等值。
 - **McpStdioHost**：stdio transport owner；只连接一次，跟踪 in-flight locate，合并 request/host caller signals，并提供幂等、best-effort close；request deadline 由 Evidence Engine 独占。
-- **LocateAbortCoordinator**：Evidence Engine 内 first-writer-wins 的 composed abort owner；锁定 caller 或 internal deadline 的首次来源，后到事件不能改写 status/next-action。
+- **LocateAbortCoordinator**：Evidence Engine 内 first-writer-wins 的 composed abort owner；锁定 caller 或 internal deadline 的首次来源，后到事件不能改写 status/next-action；closeable，close 时冻结 source 并清 timer/listener。
+- **Finalization latch**：最后一次 await（F3 snapshot finalCheck）之后、同步 purge/rank/budget/aggregate/finalize 之前的 close 屏障；close 后 abort 不改当前 response。
+- **LocateRequestRawGuardV2**：raw JSON descriptor 先读 root/terms/negativeTerms/anchors/layers 长度，layers 7/8 在 poison element 前拒绝，再接 F1B compact JSON 与 strict Zod；filesystem path 与 semantic 归一化分离，`question` optional 且不进 plan/rank/ID。
+- **RequestOutcomeAggregatorV2**：F6 request-outcome owner direct seam；消费 F5 no-hits telemetry、F2 verified core contribution 与 F3 snapshot contribution，派生 backend/request-outcome/status/proof；acceptance 仅 direct harness，production mount 由 F8 独占。
 - **Finalization policies**：`LocateStatusEvaluator`、`ResultBudgetSelector`、`NextActionPolicy` 与 `EvidenceRedactor` 组成的纯策略边界；只治理已核验结果，不改变 backend query 或 candidate recall。
 - **Safe public error policy**：按四个 tool error code 固定 message/recoverable/action 白名单；application、MCP structured/text 与 `isError` 共用。
 - **Debug CLI**：`tools/cli` 下的本地 shallow adapter；locate 复用 application/output policy，probe 只读 infrastructure health，golden 复用 Verification Kit，不拥有新的业务语义。
@@ -144,6 +147,7 @@ flowchart LR
 - `RipgrepBackend.searchViews`（multi-view / expanded 生产路径）经 request-scoped `BackendExecutionContextV2`：availability preparation → `BackendPhysicalAttemptExecutorV2.startStreaming`（`kind:'ripgrep-group'`）→ `RipgrepJsonLineConsumerV2` + `MultiViewAccumulatorV2` 流式解析 `rg --fixed-strings --json`；legacy 与 expanded 为同 parse 独立 lanes；outcome facts 优先绑 `ripgrep-group`。v1 `probe`/`search` 仍走 buffered `processRunner.run`（非 multi-view 残留路径）。
 - `NodeSafeProcessRunner` 的 buffered `run` 与 `runStreaming` 均委托唯一 `SafeProcessExecutionKernelV2`：stdout/stderr exact-N 成功、观察 N+1 才 limit；同步 consumer finalizer；tree cleanup / settle-once；无第二套 process lifecycle SM。
 - `BackendExecutionContextV2` 每 canonical request 创建一次并贯穿 F3 与 backend；seal 后 late-start 失败；expanded logical reducer 只接 registry closed-set；F3 仅经 `TrustedBackendDiscoveryHandoffV2` / `requireBackendDiscoveryHandoffForF3V2` 消费 complete-safe hits；F6 只消费 no-retainedHits `BackendExecutionTelemetryViewV2`（F5 不创建 public backend/request-outcome owner）。
+- F6 `LocateRequestRawGuardV2` + v2 parse seam 在 MCP/CLI 入口执行 raw/filesystem/semantic 分离与 optional `question`；`LocateAbortCoordinator` + finalization latch 拥有 caller/deadline first-writer 与 close 后冻结；`RequestOutcomeAggregatorV2` 在 direct harness 聚合 backend/request-outcome/status/proof，production 不导入 F2 core accessor（importer=0），real envelope mount 留给 F8。
 - `verifyAndMergeBackendHits` 重新读取当前文件，构造不超过 12 行/4 KiB 的 logical window，核对当前命中后按 discovery key 合并全部 provenance/reasons/operations/terms/canonical symbols；fatal path error 继续上抛。
 - `classifyDiscoveryRecords` 先处理 negative/layer exclusions，再以轻量 lexical masking 区分 code、comments、strings、regex 与 SQL quoted/comment regions；同一 merged record 只分类一次。
 - `applyCandidatePolicy` 在 direct classification 后读取 engine 验证的 candidate windows，以同 statement/container 的 alias neighbor、同 entity sibling 与同 brace scope 的 segment similarity 发现局部线索；六类 reason/role/promotion 与 selection priority 由单一常量表定义。
@@ -211,6 +215,7 @@ flowchart LR
 - Ripgrep 使用 literal fixed-string argv 与 per-seed case mode，不经 shell；multi-view 生产路径流式解析 structured match/submatch，不经全量 buffered `search` 桥。
 - Process N+1 与 streaming consumer 契约由唯一 kernel 拥有；incomplete/telemetry-only expanded 不得进入 F3 complete-safe membership 或 public evidence；F6 只读 no-hits telemetry seam。
 - Physical start 权威在 `BackendExecutionContextV2` + executor；canonical 外不得创建 context；CodeGraph/v1 ripgrep bare `processRunner.run` 仍为非 multi-view 残留。
+- F6 request-outcome ownership：raw guard → abort latch → `RequestOutcomeAggregatorV2` direct seam 为唯一 status/proof aggregator；production F2 core accessor 与 F1C aggregation registrar importer 保持 0；F8 是唯一 production bridge。
 - Direct mapping truth table是封闭支持集，轻量 recognizer不宣称 AST/framework 等价；未知语法保持 candidate/excluded。
 - 同一 location 的多个 canonical symbols 是独立发现事实，merge 后全部保留；classifier按可证明 role priority选择 primary，而不是在 backend 或预算阶段丢失事实。
 - Candidate public ID 只在 derived location/discovery key 确定后由 engine 生成；policy draft 不持有 public ID，也不能复用或改变 seed ID。
@@ -261,7 +266,11 @@ flowchart LR
 - `src/evidence/ranking/` — F2 dormant ranking：`DiscoveryHitSelectorV2`（read 前 F3 opaque folded view reservation）、`EvidenceRankerV2`（purge 后 trusted pool + structured public-safe ordering / MatchPriority / round-robin / unsatisfied ledger）、opaque `EvidenceRankingOutcomeV2` 与 F6 fragment-budget / F8 retained-ref accessors；ranking 不 import `public-output`。
 - `src/evidence/public-output/f2-locate-projection-stages-v2.ts` / `materialized-evidence-core-v2.ts` — F2 zero-arg `createSource`/`materialize`（无 aggregate）与 F1 `materializePublicEvidenceV2` single materializer；direct harness only；production importer count 对 core/retained accessors 为 0；F9 前 package 不导出。
 - `src/repository/verified-text-file-source-v2.ts:VerifiedTextFileSourceV2` — realpath→containment→open→bounded UTF-8 decode 安全内核；`NodeRepositoryReader` 与 request snapshot 共用。
-- `src/evidence/abort-source.ts:LocateAbortCoordinator` — first-writer-wins caller/deadline ownership。
+- `src/evidence/abort-source.ts:LocateAbortCoordinator` — first-writer-wins caller/deadline ownership；closeable freeze/cleanup。
+- `src/evidence/locate-execution/canonical-locate-finalization-v2.ts` — finalization latch（last await 后同步 finalize 屏障）。
+- `src/evidence/request-outcome/locate-request-raw-guard-v2.ts` / `src/contracts/locate-request-parse-v2.ts` — raw descriptor guard、filesystem/semantic 分离、optional question。
+- `src/evidence/request-outcome/request-outcome-aggregator-v2.ts:RequestOutcomeAggregatorV2` — backend/request-outcome/status/proof direct seam；production F2 core accessor importer=0；F8-only mount。
+- `src/evidence/request-outcome/locate-status-v2.ts` / `next-action-policy-v2.ts` — v2 status priority 与 next-action truth table（aggregator 下游）。
 - `src/evidence/locate-status-evaluator.ts:evaluateLocateStatus` / `next-action-policy.ts:createNextActions` — final status priority 与 caller-adjustable action policy。
 - `src/evidence/result-budget-selector.ts` / `evidence-redactor.ts:redactLocateResult` — stable bounded selection、ID-after public redaction 与 cross-evidence sensitive-token propagation。
 - `src/contracts/public-errors.ts` / `src/mcp/locate-tool-output.ts` — safe error code/action policy 与 structured/text/isError parity serializer。
@@ -326,6 +335,8 @@ flowchart LR
 - F5 multi-view / streaming 已绿；CodeGraph 与 Ripgrep v1 `probe`/`search` 仍 bare runner，expanded locate 若走这些路径则物理 start 不进 F5 registry/trace。
 - `createBackendExecutionContextV2` 的 preparation port 参数当前未注入使用（executor 内联 availability）；cwd identity 敌意语料仍弱。
 - F5 platform markers 本地 `test:platform` 已绿；远程六格同 revision marker evidence 尚未归档。
+- F6 `RequestOutcomeAggregatorV2` 仅 direct harness 证明；production real envelope mount 由 F8 独占；F2 core accessor production importer=0。
+- F6 question metamorphic 深度仍偏 terms 层（REV-003）；F6-ABORT/LATCH platform case 行为覆盖偏软（REV-013，sibling unit 已证）；远程六格 F6 marker 若未归档则 deferred。
 - Reparse swap TOCTOU无法由当前 Node API完全消除；只支持本机稳定 filesystem，不声称对抗恶意并发 mutation。
 - Windows `rg 15.1.0`、路径与 process-tree已有真实 QA；POSIX detached group/negative PID、其他 rg minor version尚未在本轮实机执行。
 - Windows ADS、真实 unreadable/special device缺少稳定跨权限 fixture。
@@ -363,6 +374,7 @@ flowchart LR
 
 ## 8. 变更日志
 
+- 2026-07-28：F6 `input-abort-contract-v2` acceptance 回填 raw request guard、abort/finalization latch、`RequestOutcomeAggregatorV2` direct seam、F8-only production mount 与 F2 core accessor importer=0；production 仍 v1；REV-003/013 与远程六格 F6 marker 记为残留。
 - 2026-07-28：F5 `streaming-ripgrep` acceptance 回填单一 `SafeProcessExecutionKernelV2`（N+1）、`ripgrep-stream` multi-view、`BackendExecutionContextV2`/physical executor、F3 trusted handoff 与 F6 no-hits telemetry seam；production 仍 v1；CodeGraph/v1 bare runner 与远程六格 marker 记为已知残留。
 - 2026-07-23：F1 acceptance 回填 dormant `LocateResultV2` raw/public strict
   boundary、字段级 `SensitiveValuePolicyV2`、单一 `PublicResultAssemblerV2`、

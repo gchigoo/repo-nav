@@ -1039,7 +1039,7 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
         { ...raw.evidence.coverage, abortSource: 'caller' },
         1,
       ),
-    ).toBe('timeout');
+    ).toBe('cancelled');
     expect(
       deriveLocateStatusV2(
         { ...raw.evidence.coverage, strategyComplete: false },

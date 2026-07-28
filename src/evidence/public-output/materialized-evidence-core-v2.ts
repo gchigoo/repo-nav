@@ -266,3 +266,29 @@ export function readTrustedMaterializedEvidenceCoreV2(
   }
   return record;
 }
+
+export interface TrustedMaterializedEvidenceSummaryV2 {
+  readonly contribution: PublicMaterializationContributionV2;
+  readonly evidenceCount: number;
+  readonly locationRedacted: boolean;
+  readonly hasCandidates: boolean;
+}
+
+/**
+ * F6 窄读：仅 contribution 身份与计数；不暴露 source proof / 不重验 F1 accessor。
+ */
+export function readTrustedMaterializedEvidenceSummaryV2(
+  core: TrustedMaterializedEvidenceCoreV2,
+  expectedExecution: LocateExecutionTokenV2,
+): TrustedMaterializedEvidenceSummaryV2 {
+  const record = coreRecords.get(core);
+  if (record === undefined || record.execution !== expectedExecution) {
+    throw new TypeError('materialized evidence core is not trusted');
+  }
+  return Object.freeze({
+    contribution: record.contribution,
+    evidenceCount: record.confirmed.length + record.candidates.length,
+    locationRedacted: record.contribution.locationRedacted,
+    hasCandidates: record.candidates.length > 0,
+  });
+}

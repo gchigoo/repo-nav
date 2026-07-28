@@ -1,9 +1,19 @@
+import { createHash } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { aggregateRequestOutcomeV2 } from '../../src/evidence/request-outcome/request-outcome-aggregator-v2.js';
+import {
+  COMPLETE_RIPGREP_V2,
+  EARLY_STOP_RIPGREP_V2,
+  UNAVAILABLE_CODEGRAPH_V2,
+} from '../../testkit/fixtures/request-outcome-v2/backend-outcomes-v2.js';
+import { buildAggregationHarnessV2 } from '../../testkit/fixtures/request-outcome-v2/build-aggregation-harness-v2.js';
+import { LARGE_REQUEST_OUTCOME_PERMUTATION_V2 } from '../../testkit/fixtures/request-outcome-v2/large-request-outcome-permutation-v2.js';
+import type { SnapshotObservationLedgerEntryInputV2 } from '../../src/evidence/request-snapshot/snapshot-outcome-contribution-v2.js';
 import {
   runLargeSyntheticPerformance,
   writeSyntheticPerformanceReport,
@@ -44,4 +54,107 @@ describe.runIf(isSelected(identity))('large synthetic repository', () => {
     },
     120_000,
   );
+});
+
+describe.runIf(
+  isSelected({
+    group: 'input-abort-contract-v2',
+    caseId: 'large-request-outcome-permutation',
+  }),
+)('F6-LARGE-001 large-request-outcome-permutation', () => {
+  it('keeps bounded aggregator hash stable across five ledger permutations', async () => {
+    const { maxAnchors, maxExclusionLedgerRows, raceRepetitions } =
+      LARGE_REQUEST_OUTCOME_PERMUTATION_V2;
+
+    const baseLedger: SnapshotObservationLedgerEntryInputV2[] = Array.from(
+      { length: maxExclusionLedgerRows },
+      (_, index) =>
+        Object.freeze({
+          selected: true,
+          scopeIncluded: true,
+          maxFileBytesReached: index % 8 === 0,
+          maxExcerptBytesReached: index % 8 === 1,
+          negativeExcluded: index % 3 === 0,
+          duplicateExtraCount: index % 5,
+          unverifiedOrdinary: index % 4 === 0,
+        }),
+    );
+
+    const unsatisfiedAnchors = Array.from({ length: maxAnchors }, (_, index) =>
+      Object.freeze({
+        requestIndex: index,
+        kind: (['symbol', 'file', 'table', 'route', 'term'] as const)[
+          index % 5
+        ]!,
+        satisfaction: 'none' as const,
+        reason: 'NOT_FOUND' as const,
+      }),
+    );
+
+    const hashes: string[] = [];
+    for (let round = 0; round < raceRepetitions; round += 1) {
+      const ledger = [...baseLedger].sort(() => (round % 2 === 0 ? 1 : -1));
+      const anchors = [...unsatisfiedAnchors].sort(() =>
+        round % 2 === 0 ? -1 : 1,
+      );
+      const harness = await buildAggregationHarnessV2({
+        outcomes: [UNAVAILABLE_CODEGRAPH_V2, EARLY_STOP_RIPGREP_V2],
+        fallback: {
+          checked: true,
+          required: true,
+          completeEquivalentFallback: false,
+        },
+        snapshotChangedCount: 7,
+        locationRedactedTerm: 'SECRET',
+        ledger,
+        unsatisfiedAnchors: anchors,
+        budgetFacts: {
+          maxFilesReached: true,
+          maxConfirmedReached: true,
+          maxCandidatesReached: true,
+          preRankingPoolTruncated: true,
+          safeSelectorCollision: false,
+          safeOrderingCollision: false,
+        },
+        limits: {
+          maxFiles: 20,
+          maxConfirmed: 20,
+          maxCandidates: 20,
+          timeoutMs: 30_000,
+        },
+      });
+      const aggregated = aggregateRequestOutcomeV2(harness.input);
+      expect(aggregated.backend.value.outcomes.length).toBeLessThanOrEqual(2);
+      expect(aggregated.backend.value.outcomes).toHaveLength(2);
+      expect(
+        Object.keys(aggregated.requestOutcome.value.exclusionSummary).length,
+      ).toBeGreaterThan(0);
+      const canonical = {
+        statusV2: aggregated.statusV2,
+        backend: aggregated.backend.value,
+        requestOutcome: aggregated.requestOutcome.value,
+      };
+      hashes.push(
+        createHash('sha256').update(JSON.stringify(canonical)).digest('hex'),
+      );
+    }
+
+    expect(hashes).toHaveLength(raceRepetitions);
+    expect(new Set(hashes).size).toBe(1);
+    // prove the case is not a no-op against a trivial complete-only input
+    const trivial = await buildAggregationHarnessV2({
+      outcomes: [COMPLETE_RIPGREP_V2],
+    });
+    const trivialAggregated = aggregateRequestOutcomeV2(trivial.input);
+    const trivialHash = createHash('sha256')
+      .update(
+        JSON.stringify({
+          statusV2: trivialAggregated.statusV2,
+          backend: trivialAggregated.backend.value,
+          requestOutcome: trivialAggregated.requestOutcome.value,
+        }),
+      )
+      .digest('hex');
+    expect(hashes[0]).not.toBe(trivialHash);
+  });
 });

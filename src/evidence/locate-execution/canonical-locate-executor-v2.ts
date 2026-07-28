@@ -15,6 +15,7 @@ import {
   type ExclusionReasonCode,
   type LimitReasonCode,
   type LocateExecutionContext,
+  requireCallerSignal,
   type LocateRequest,
   type LocateResult,
   type NormalizedLocateAnchor,
@@ -43,9 +44,10 @@ import {
   REPOSITORY_SEARCH_BACKENDS,
 } from '../../runtime/tokens.js';
 import {
-  LocateAbortCoordinator,
+  LocateAbortCoordinatorV2,
   type LocateAbortSource,
 } from '../abort-source.js';
+import { closeAndFinalizeLocateSynchronouslyV2 } from './canonical-locate-finalization-v2.js';
 import {
   createVerifiedCandidateContext,
   materializeCandidateDraft,
@@ -288,6 +290,9 @@ export class CanonicalRepositoryLocateExecutorV2
       readonly expandedPoolCandidates?: LocateSuccessEvidence['candidates'];
       readonly limits?: ResolvedLocateLimits;
       readonly abortSource?: LocateAbortSource;
+      readonly abortCoordinator?: ReturnType<
+        typeof LocateAbortCoordinatorV2.create
+      >;
       readonly rawAnchors?: readonly LocateAnchor[];
       readonly termCase?: TermCaseMode;
       /** read 前已 bind 的 discovery selection；ranking 必须复用同一 token。 */
@@ -333,6 +338,7 @@ export class CanonicalRepositoryLocateExecutorV2
       canonicalFileKeyFor: (locator) => snapshot.canonicalFileKeyFor(locator),
     });
     const pools = buildPreRankingStablePoolsV2(poolInputs);
+    // 最后一次 await：F3 finalCheck；随后关闭 latch 并同步 finalize
     const finalPools = await snapshot.finalCheck(
       options.signal,
       pools.evidence,
@@ -340,43 +346,53 @@ export class CanonicalRepositoryLocateExecutorV2
       gitState,
     );
 
-    const purgedConfirmed = purgeLegacyEvidenceByChangedKeysV2(
-      confirmed,
-      finalPools.changedCanonicalKeys,
-      (locator) => snapshot.canonicalFileKeyFor(locator),
-    );
-    const purgedCandidates = purgeLegacyEvidenceByChangedKeysV2(
-      candidates,
-      finalPools.changedCanonicalKeys,
-      (locator) => snapshot.canonicalFileKeyFor(locator),
-    );
+    const finalizeSync = (abortSource: LocateAbortSource) => {
+      const purgedConfirmed = purgeLegacyEvidenceByChangedKeysV2(
+        confirmed,
+        finalPools.changedCanonicalKeys,
+        (locator) => snapshot.canonicalFileKeyFor(locator),
+      );
+      const purgedCandidates = purgeLegacyEvidenceByChangedKeysV2(
+        candidates,
+        finalPools.changedCanonicalKeys,
+        (locator) => snapshot.canonicalFileKeyFor(locator),
+      );
 
-    const status = applyMutationStatusPrecedenceV2(
-      legacy.evidence.status,
-      finalPools.facts.coverage.consistency,
-    );
-    const limits = options.limits;
-    const nextActions =
-      status === legacy.evidence.status || limits === undefined
-        ? legacy.evidence.nextActions
-        : createNextActions({
-            status,
-            hasCandidates: purgedCandidates.length > 0,
-            limitsReached: legacy.evidence.coverage.limitsReached,
-            abortSource: options.abortSource ?? 'none',
-            limits,
-          });
+      const status = applyMutationStatusPrecedenceV2(
+        legacy.evidence.status,
+        finalPools.facts.coverage.consistency,
+      );
+      const limits = options.limits;
+      const nextActions =
+        status === legacy.evidence.status || limits === undefined
+          ? legacy.evidence.nextActions
+          : createNextActions({
+              status,
+              hasCandidates: purgedCandidates.length > 0,
+              limitsReached: legacy.evidence.coverage.limitsReached,
+              abortSource,
+              limits,
+            });
 
-    const adjusted: LocateResult = redactLocateResult({
-      ok: true,
-      evidence: {
-        ...legacy.evidence,
-        status,
-        confirmed: [...purgedConfirmed],
-        candidates: [...purgedCandidates],
-        nextActions,
-      },
-    });
+      return redactLocateResult({
+        ok: true,
+        evidence: {
+          ...legacy.evidence,
+          status,
+          confirmed: [...purgedConfirmed],
+          candidates: [...purgedCandidates],
+          nextActions,
+        },
+      }) as LocateResult;
+    };
+
+    const adjusted: LocateResult =
+      options.abortCoordinator === undefined
+        ? finalizeSync(options.abortSource ?? 'none')
+        : closeAndFinalizeLocateSynchronouslyV2(
+            options.abortCoordinator,
+            ({ abortSource }) => finalizeSync(abortSource),
+          );
 
     // F2：final purge 后对 trusted pool 排序；必须复用 read 前 bound selection
     let rankingFacts: RankedEvidenceFactsV2 | undefined;
@@ -456,22 +472,11 @@ export class CanonicalRepositoryLocateExecutorV2
     const anchors = normalizeLocateAnchors(request.anchors ?? [], mode);
     const termsForVerification = verificationTerms(normalizedTerms, anchors);
     const negativeTerms = normalizeSearchTerms(request.negativeTerms ?? [], mode);
-    const abortCoordinator = new LocateAbortCoordinator();
-    const abortFromCaller = (): void => {
-      abortCoordinator.abort('caller', context.signal.reason);
-    };
-    if (context.signal.aborted) {
-      abortFromCaller();
-    } else {
-      context.signal.addEventListener('abort', abortFromCaller, { once: true });
-    }
-    const deadline = setTimeout(() => {
-      abortCoordinator.abort(
-        'deadline',
-        new Error('Repository evidence deadline reached.'),
-      );
-    }, limits.timeoutMs);
-    deadline.unref();
+    const callerSignal = requireCallerSignal(context);
+    const abortCoordinator = LocateAbortCoordinatorV2.create(
+      callerSignal,
+      limits.timeoutMs,
+    );
 
     let repositoryRoot = request.repoPath;
     let requestSnapshot: RequestRepositorySnapshotV2 | undefined;
@@ -511,7 +516,7 @@ export class CanonicalRepositoryLocateExecutorV2
           this.timeoutResult(
             repositoryRoot,
             normalizedTerms,
-            abortCoordinator.source,
+            abortCoordinator.peekSource(),
             limits,
           ),
           projectionExecution,
@@ -519,7 +524,8 @@ export class CanonicalRepositoryLocateExecutorV2
             requestSnapshot,
             signal: abortCoordinator.signal,
             limits,
-            abortSource: abortCoordinator.source,
+            abortSource: abortCoordinator.peekSource(),
+          abortCoordinator,
           },
         );
       }
@@ -536,7 +542,8 @@ export class CanonicalRepositoryLocateExecutorV2
             requestSnapshot,
             signal: abortCoordinator.signal,
             limits,
-            abortSource: abortCoordinator.source,
+            abortSource: abortCoordinator.peekSource(),
+          abortCoordinator,
           },
         );
       }
@@ -581,7 +588,7 @@ export class CanonicalRepositoryLocateExecutorV2
           this.timeoutResult(
             repositoryRoot,
             normalizedTerms,
-            abortCoordinator.source,
+            abortCoordinator.peekSource(),
             limits,
             {
               attempts: [
@@ -599,7 +606,8 @@ export class CanonicalRepositoryLocateExecutorV2
             requestSnapshot,
             signal: abortCoordinator.signal,
             limits,
-            abortSource: abortCoordinator.source,
+            abortSource: abortCoordinator.peekSource(),
+          abortCoordinator,
           },
         );
         }
@@ -674,7 +682,7 @@ export class CanonicalRepositoryLocateExecutorV2
           this.timeoutResult(
               repositoryRoot,
               normalizedTerms,
-              abortCoordinator.source,
+              abortCoordinator.peekSource(),
               limits,
               {
                 attempts: [
@@ -699,7 +707,8 @@ export class CanonicalRepositoryLocateExecutorV2
             confirmed: primaryConfirmed.selected,
             candidates: primaryCandidates.selected,
             limits,
-            abortSource: abortCoordinator.source,
+            abortSource: abortCoordinator.peekSource(),
+          abortCoordinator,
           },
         );
           }
@@ -720,7 +729,7 @@ export class CanonicalRepositoryLocateExecutorV2
           this.timeoutResult(
             repositoryRoot,
             normalizedTerms,
-            abortCoordinator.source,
+            abortCoordinator.peekSource(),
             limits,
             {
               attempts: [
@@ -738,7 +747,8 @@ export class CanonicalRepositoryLocateExecutorV2
             requestSnapshot,
             signal: abortCoordinator.signal,
             limits,
-            abortSource: abortCoordinator.source,
+            abortSource: abortCoordinator.peekSource(),
+          abortCoordinator,
           },
         );
         }
@@ -994,7 +1004,7 @@ export class CanonicalRepositoryLocateExecutorV2
         limitReasons.push('MAX_CANDIDATES_REACHED');
       }
       if (
-        abortCoordinator.source !== 'none' ||
+        abortCoordinator.peekSource() !== 'none' ||
         merged.aborted ||
         abortCoordinator.signal.aborted
       ) {
@@ -1006,7 +1016,7 @@ export class CanonicalRepositoryLocateExecutorV2
         reasonCode: 'RIPGREP_UNAVAILABLE' as const,
       };
       const status = evaluateLocateStatus({
-        abortSource: abortCoordinator.source,
+        abortSource: abortCoordinator.peekSource(),
         finalBackendHealth: finalHealth,
         strategyComplete: strategyComplete === true,
         evidenceCount: confirmed.length + candidates.length,
@@ -1016,7 +1026,7 @@ export class CanonicalRepositoryLocateExecutorV2
         status,
         hasCandidates: candidates.length > 0,
         limitsReached,
-        abortSource: abortCoordinator.source,
+        abortSource: abortCoordinator.peekSource(),
         limits,
         initializeCodeGraph: codegraphResult?.health.state === 'missing',
       });
@@ -1070,7 +1080,8 @@ export class CanonicalRepositoryLocateExecutorV2
             candidates,
             expandedPoolCandidates,
             limits,
-            abortSource: abortCoordinator.source,
+            abortSource: abortCoordinator.peekSource(),
+            abortCoordinator,
             rawAnchors: request.anchors ?? [],
             termCase: mode,
             discoverySelection,
@@ -1085,7 +1096,7 @@ export class CanonicalRepositoryLocateExecutorV2
           this.timeoutResult(
           repositoryRoot,
           normalizedTerms,
-          abortCoordinator.source,
+          abortCoordinator.peekSource(),
           limits,
         ),
           projectionExecution,
@@ -1093,7 +1104,8 @@ export class CanonicalRepositoryLocateExecutorV2
             requestSnapshot,
             signal: abortCoordinator.signal,
             limits,
-            abortSource: abortCoordinator.source,
+            abortSource: abortCoordinator.peekSource(),
+          abortCoordinator,
           },
         );
       }
@@ -1101,8 +1113,7 @@ export class CanonicalRepositoryLocateExecutorV2
     } finally {
       observationCache?.dispose();
       requestSnapshot?.dispose();
-      clearTimeout(deadline);
-      context.signal.removeEventListener('abort', abortFromCaller);
+      abortCoordinator.dispose();
     }
   }
 

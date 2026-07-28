@@ -42,6 +42,13 @@ import {
   V1_MUTATION_PRECEDENCE_CONTRACT_V2,
   V1_MUTATION_STABLE_FILE_V2,
 } from '../../testkit/fixtures/request-snapshot-v2/v1-mutation-precedence-v2.js';
+import {
+  createEmptyCanonicalSuccessInputV2,
+  createFourPrerequisiteCanonicalInputV2,
+} from '../../testkit/fixtures/canonical-locate-bridge-v2/four-prerequisite-base-v2.js';
+import { V1_COMPATIBILITY_CASES_V2 } from '../../testkit/fixtures/request-outcome-v2/v1-compatibility-v2.js';
+import { buildAggregationHarnessV2 } from '../../testkit/fixtures/request-outcome-v2/build-aggregation-harness-v2.js';
+import { aggregateRequestOutcomeV2 } from '../../src/evidence/request-outcome/request-outcome-aggregator-v2.js';
 import type { LocateExecutionTokenV2 } from '../../src/contracts/v2/locate-fact-envelope-v2.js';
 import { LOCATE_FACT_OWNER_ORDER_V2 } from '../../src/contracts/v2/locate-fact-envelope-v2.js';
 import {
@@ -64,6 +71,7 @@ import {
   type GoldenObservation,
   type GoldenSuccessCase,
 } from '../../testkit/contracts/index.js';
+import { assertV1ShadowFailClosedV2 } from '../../testkit/testing/assert-v1-shadow-fail-closed-v2.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
 const repositoryRoot = resolve(import.meta.dirname, '..', '..');
@@ -637,5 +645,95 @@ describe.runIf(
 )('F5-V1-001 v1 parity', () => {
   it('records exact-N delta while keeping non-boundary v1 surface', () => {
     expect(V1_PARITY_GOLDEN_CASE_IDS_V2.length).toBeGreaterThan(0);
+  });
+});
+
+describe.runIf(
+  isSelected({
+    group: 'input-abort-contract-v2',
+    caseId: 'v1-compatibility',
+  }),
+)('F6-V1-001 v1-compatibility', () => {
+  it('keeps same-run exact legacy reference when each v2 shadow class fails', async () => {
+    expect(V1_COMPATIBILITY_CASES_V2).toEqual(
+      expect.arrayContaining([
+        'shadow-fail-closed',
+        'exact-legacy-reference',
+        'caller-legacy-timeout',
+        'deep-exact-non-boundary',
+      ]),
+    );
+
+    const four = createFourPrerequisiteCanonicalInputV2();
+    const empty = createEmptyCanonicalSuccessInputV2();
+    assertV1ShadowFailClosedV2({
+      input: four.input,
+      capability: four.capability,
+      finalizerInput: {
+        input: empty.input,
+        capability: empty.capability,
+      },
+    });
+
+    // deep-exact non-boundary: real executor success surface
+    const harness = createCanonicalLocateEngineHarnessV2(
+      [new CountingBackend()],
+      new CountingReader(),
+    );
+    const capability = issueLocateProjectionExecutionCapabilityV2();
+    const executed = await harness.executor.execute(
+      baseRequest,
+      { signal: new AbortController().signal },
+      capability,
+    );
+    const projected = harness.projector.project(executed, capability);
+    expect(projected).toBe(executed.legacyV1Projection);
+    expect(projected).toEqual(executed.legacyV1Projection);
+    if (!executed.ok) {
+      throw new Error('expected non-boundary success execution');
+    }
+    expect(projected.ok).toBe(true);
+    if (!projected.ok) {
+      throw new Error('expected legacy success');
+    }
+    expect(projected.evidence.schemaVersion).toBe('1.0');
+
+    // caller legacy timeout must not pollute v2 fragment
+    const aborted = new AbortController();
+    aborted.abort();
+    const timeoutCapability = issueLocateProjectionExecutionCapabilityV2();
+    const timeoutInput = await harness.executor.execute(
+      baseRequest,
+      { signal: aborted.signal },
+      timeoutCapability,
+    );
+    const timeoutProjected = new V1LocateResultProjector().project(
+      timeoutInput,
+      timeoutCapability,
+    );
+    expect(timeoutProjected).toBe(timeoutInput.legacyV1Projection);
+    expect(timeoutProjected.ok).toBe(true);
+    if (!timeoutProjected.ok) {
+      throw new Error('expected legacy timeout success envelope');
+    }
+    expect(timeoutProjected.evidence.status).toBe('timeout');
+    expect(timeoutProjected.evidence.coverage.limitsReached).toContain(
+      'TIMEOUT_REACHED',
+    );
+
+    const callerHarness = await buildAggregationHarnessV2({
+      abortBeforeClose: 'caller',
+    });
+    const aggregated = aggregateRequestOutcomeV2(callerHarness.input);
+    expect(aggregated.statusV2).toBe('cancelled');
+    expect(aggregated.requestOutcome.value.abortSource).toBe('caller');
+    expect(aggregated.requestOutcome.value.limitsReached).not.toContain(
+      'TIMEOUT_REACHED',
+    );
+
+    const { countF2CoreAccessorProductionImportersV2 } = await import(
+      '../../src/evidence/public-output/f2-locate-projection-stages-v2.js'
+    );
+    expect(countF2CoreAccessorProductionImportersV2()).toBe(0);
   });
 });

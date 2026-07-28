@@ -1,5 +1,6 @@
 import {
   normalizeSearchTerms,
+  requireCallerSignal,
   type LocateExecutionContext,
   type LocateRequest,
   type LocateResult,
@@ -37,9 +38,10 @@ function requestedStatus(question: string): LocateStatus {
 }
 
 function successResult(request: LocateRequest): LocateResult {
-  const status = requestedStatus(request.question);
-  const sourceMapping = request.question === 'source-field-mapping';
-  const redactionOutput = request.question === 'redaction-output-parity';
+  const question = request.question ?? '';
+  const status = requestedStatus(question);
+  const sourceMapping = question === 'source-field-mapping';
+  const redactionOutput = question === 'redaction-output-parity';
   return {
     ok: true,
     evidence: {
@@ -176,12 +178,12 @@ export class FixtureEvidenceService implements RepositoryEvidenceService {
     request: LocateRequest,
     context: LocateExecutionContext,
   ): Promise<LocateResult> {
-    if (request.question === 'redaction-output-parity') {
+    if ((request.question ?? '') === 'redaction-output-parity') {
       writeScrubbedDiagnostic(
         'token=rawDiagnosticSecret C:\\private\\repo\\secret.ts stan.guo@mail.ru',
       );
     }
-    if (request.question === 'candidate-minimal-loop') {
+    if ((request.question ?? '') === 'candidate-minimal-loop') {
       const engine = createCanonicalLocateEngineHarnessV2([new CandidateFixtureBackend()],
         new NodeRepositoryReader(),
       ).service;
@@ -196,19 +198,21 @@ export class FixtureEvidenceService implements RepositoryEvidenceService {
         context,
       );
     }
-    if (request.question === 'throw:INTERNAL_ERROR') {
+    if ((request.question ?? '') === 'throw:INTERNAL_ERROR') {
       throw new Error(
         'Unsafe internal failure C:\\private\\repo\\secret.ts\n    at fixture (raw stderr)',
       );
     }
-    if (request.question === 'wait-for-cancellation') {
+    const callerSignal = requireCallerSignal(context);
+    const question = request.question ?? '';
+    if (question === 'wait-for-cancellation') {
       process.stderr.write('MCP_FIXTURE_STARTED\n');
       await new Promise<void>((resolve) => {
-        if (context.signal.aborted) {
+        if (callerSignal.aborted) {
           resolve();
           return;
         }
-        context.signal.addEventListener('abort', () => resolve(), {
+        callerSignal.addEventListener('abort', () => resolve(), {
           once: true,
         });
       });
@@ -222,8 +226,8 @@ export class FixtureEvidenceService implements RepositoryEvidenceService {
         },
       };
     }
-    const errorCode = request.question.startsWith('error:')
-      ? request.question.slice('error:'.length)
+    const errorCode = question.startsWith('error:')
+      ? question.slice('error:'.length)
       : '';
     const failure = errorResult(errorCode);
     return failure ?? successResult(request);

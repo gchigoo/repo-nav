@@ -77,7 +77,8 @@ describe.runIf(isSelected(identity))('schema v1 contracts', () => {
       terms: ['ｈｃｐ＿ｉｄ', 'HcpId', 'hcp_id', '[literal].'],
     });
 
-    expect(parsed.repoPath).toBe('C:\\code');
+    // F6：repoPath exact preserve（含首尾空格），不再 NFKC/trim
+    expect(parsed.repoPath).toBe(' C:\\code ');
     expect(
       normalizeSearchTerms(parsed.terms, parsed.termCase ?? 'smart'),
     ).toEqual([
@@ -87,13 +88,11 @@ describe.runIf(isSelected(identity))('schema v1 contracts', () => {
     ]);
   });
 
-  it('canonicalizes only file anchors and preserves other literals', () => {
+  it('preserves legal file anchors exactly and keeps non-file literals', () => {
     const anchors = LocateRequestSchema.parse({
       ...validRequest,
       anchors: [
-        { kind: 'file', value: 'src\\folder/./Mapping.ts' },
-        { kind: 'file', value: 'src//folder/Mapping.ts' },
-        { kind: 'file', value: 'src/folder/../Other.ts' },
+        { kind: 'file', value: 'src/folder/Mapping.ts' },
         { kind: 'symbol', value: 'map\\Hcp' },
       ],
     }).anchors;
@@ -104,25 +103,27 @@ describe.runIf(isSelected(identity))('schema v1 contracts', () => {
         value: 'src/folder/Mapping.ts',
         caseSensitive: true,
       },
-      { kind: 'file', value: 'src/Other.ts', caseSensitive: true },
       { kind: 'symbol', value: 'map\\Hcp', caseSensitive: true },
     ]);
   });
 
-  it.each(['../x.ts', '/abs.ts', 'C:\\abs.ts', '\\\\server\\share\\x.ts'])(
-    'rejects non-relative file anchor %s',
-    (value) => {
-      expect(
-        LocateRequestSchema.safeParse({
-          ...validRequest,
-          anchors: [{ kind: 'file', value }],
-        }).success,
-      ).toBe(false);
-      expect(() =>
-        normalizeLocateAnchors([{ kind: 'file', value }]),
-      ).toThrow();
-    },
-  );
+  it.each([
+    '../x.ts',
+    '/abs.ts',
+    'C:\\abs.ts',
+    '\\\\server\\share\\x.ts',
+    'src\\folder/Mapping.ts',
+    'src/folder/../Other.ts',
+    'src//folder/Mapping.ts',
+  ])('rejects illegal file anchor %s', (value) => {
+    expect(
+      LocateRequestSchema.safeParse({
+        ...validRequest,
+        anchors: [{ kind: 'file', value }],
+      }).success,
+    ).toBe(false);
+    expect(() => normalizeLocateAnchors([{ kind: 'file', value }])).toThrow();
+  });
 
   it('enforces item, aggregate, field, range, and strict-object budgets', () => {
     expect(LocateRequestSchema.safeParse({ ...validRequest, terms: [] }).success)

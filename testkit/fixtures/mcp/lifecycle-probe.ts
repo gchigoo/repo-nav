@@ -5,11 +5,12 @@ import { resolve } from 'node:path';
 import { Test } from '@nestjs/testing';
 
 import { AppModule } from '../../../src/app/app.module.js';
-import type {
-  LocateExecutionContext,
-  LocateRequest,
-  LocateResult,
-  RepositoryEvidenceService,
+import {
+  requireCallerSignal,
+  type LocateExecutionContext,
+  type LocateRequest,
+  type LocateResult,
+  type RepositoryEvidenceService,
 } from '../../../src/contracts/index.js';
 import type { McpStdioHost } from '../../../src/mcp/mcp-stdio-host.js';
 import { NodeSafeProcessRunner } from '../../../src/repository/node-safe-process-runner.js';
@@ -81,12 +82,13 @@ class ProbeEvidenceService implements RepositoryEvidenceService {
         },
       );
       leaked.unref();
+      const callerSignal = requireCallerSignal(context);
       await new Promise<void>((resolveAbort) => {
-        if (context.signal.aborted) {
+        if (callerSignal.aborted) {
           resolveAbort();
           return;
         }
-        context.signal.addEventListener('abort', () => resolveAbort(), {
+        callerSignal.addEventListener('abort', () => resolveAbort(), {
           once: true,
         });
       });
@@ -110,7 +112,7 @@ class ProbeEvidenceService implements RepositoryEvidenceService {
         maxStderrBytes: 1_024,
         terminateGraceMs: 100,
       },
-      context.signal,
+      requireCallerSignal(context),
     );
     return {
       ok: false,

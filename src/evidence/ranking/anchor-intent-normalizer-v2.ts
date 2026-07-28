@@ -1,5 +1,4 @@
 import { Buffer } from 'node:buffer';
-import { posix, win32 } from 'node:path';
 
 import type {
   AnchorKind,
@@ -7,6 +6,7 @@ import type {
   NormalizedLocateAnchor,
   TermCaseMode,
 } from '../../contracts/request.js';
+import { assertRawFileAnchorValueV2 } from '../../contracts/v2/filesystem-input.js';
 
 /**
  * 保留首次 requestIndex 的内部 anchor intent。
@@ -20,24 +20,10 @@ export interface NormalizedAnchorIntentV2 {
   readonly canonicalKey: string;
 }
 
+/** F6：file anchor exact preserve；拒绝反斜杠/绝对/逃逸。 */
 function normalizeFileAnchorValue(value: string): string {
-  const slashValue = value.replaceAll('\\', '/');
-  if (
-    posix.isAbsolute(slashValue) ||
-    win32.isAbsolute(value) ||
-    /^[A-Za-z]:/u.test(value)
-  ) {
-    throw new Error('File anchor must be repository-root relative.');
-  }
-  const normalized = posix.normalize(slashValue);
-  if (
-    normalized === '.' ||
-    normalized === '..' ||
-    normalized.startsWith('../')
-  ) {
-    throw new Error('File anchor escapes the repository root.');
-  }
-  return normalized;
+  assertRawFileAnchorValueV2(value);
+  return value;
 }
 
 function isCaseSensitive(value: string, mode: TermCaseMode): boolean {
@@ -81,11 +67,10 @@ export function normalizeAnchorIntentsV2(
   const intents: NormalizedAnchorIntentV2[] = [];
   for (let requestIndex = 0; requestIndex < anchors.length; requestIndex += 1) {
     const anchor = anchors[requestIndex]!;
-    const literalValue = anchor.value.normalize('NFKC').trim();
     const value =
       anchor.kind === 'file'
-        ? normalizeFileAnchorValue(literalValue)
-        : literalValue;
+        ? normalizeFileAnchorValue(anchor.value)
+        : anchor.value.normalize('NFKC').trim();
     const caseSensitive =
       anchor.kind === 'file' ? true : isCaseSensitive(value, mode);
     const comparisonValue = caseSensitive

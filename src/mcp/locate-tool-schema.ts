@@ -24,13 +24,18 @@ function describeRuntimeString(
   schema: unknown,
   label: string,
   maximumUtf8Bytes: number,
+  mode: 'semantic' | 'filesystem' = 'semantic',
 ): JsonSchemaObject {
+  const description =
+    mode === 'filesystem'
+      ? `${label} is a raw filesystem string preserved without NFKC/trim; ` +
+        `runtime validation rejects NUL and values over ${maximumUtf8Bytes} UTF-8 bytes.`
+      : `${label} must remain non-empty after NFKC normalization and trimming; ` +
+        `runtime validation limits it to ${maximumUtf8Bytes} UTF-8 bytes.`;
   return {
     ...expectSchemaObject(schema, label),
     minLength: 1,
-    description:
-      `${label} must remain non-empty after NFKC normalization and trimming; ` +
-      `runtime validation limits it to ${maximumUtf8Bytes} UTF-8 bytes.`,
+    description,
   };
 }
 
@@ -59,8 +64,18 @@ function addLocateRuntimeConstraintAnnotations(
       'Runtime Zod validation additionally enforces a serialized input UTF-8 byte budget and cross-field refinements.',
     properties: {
       ...properties,
-      repoPath: describeRuntimeString(properties.repoPath, 'repoPath', 4096),
-      question: describeRuntimeString(properties.question, 'question', 4096),
+      repoPath: describeRuntimeString(
+        properties.repoPath,
+        'repoPath',
+        4096,
+        'filesystem',
+      ),
+      question: {
+        ...describeRuntimeString(properties.question, 'question', 4096),
+        description:
+          'Optional display-only question; when present must remain non-empty after NFKC/trim ' +
+          '(max 4096 UTF-8 bytes). Omitted question does not affect search plan.',
+      },
       terms: {
         ...terms,
         $comment:
@@ -82,7 +97,7 @@ function addLocateRuntimeConstraintAnnotations(
         items: {
           ...anchorItems,
           $comment:
-            'Runtime validation additionally rejects absolute and repository-escaping file anchor values.',
+            'Runtime validation rejects file-anchor backslashes, absolute paths, and repository escape; file values are preserved exactly.',
           properties: {
             ...anchorProperties,
             value: describeRuntimeString(

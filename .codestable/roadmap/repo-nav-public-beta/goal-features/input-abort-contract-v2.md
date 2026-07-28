@@ -3,7 +3,7 @@ doc_type: roadmap-goal-feature
 roadmap: repo-nav-public-beta
 feature: 2026-07-24-input-abort-contract-v2
 roadmap_item: input-abort-contract-v2
-status: implementing
+status: accepted
 ---
 
 # input-abort-contract-v2 Goal 执行规格

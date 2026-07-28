@@ -123,9 +123,13 @@ describe.runIf(selected('tool-list-schema'))('MCP tool schemas', () => {
     expect(validator({ ...validRequest, repoPath: '' })).toBe(false);
     expect(validator({ ...validRequest, terms: [''] })).toBe(false);
     expect(REPO_NAV_LOCATE_INPUT_SCHEMA.$comment).toContain('UTF-8 byte budget');
+    // F6：repoPath 保留空白 code units；空串仍拒绝
+    expect(
+      LocateRequestSchema.safeParse({ ...validRequest, repoPath: '' }).success,
+    ).toBe(false);
     expect(
       LocateRequestSchema.safeParse({ ...validRequest, repoPath: '   ' }).success,
-    ).toBe(false);
+    ).toBe(true);
     expect(
       LocateRequestSchema.safeParse({
         ...validRequest,

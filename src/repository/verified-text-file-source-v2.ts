@@ -44,7 +44,9 @@ export class VerifiedTextFileSourceV2 {
   ): Promise<string> {
     this.assertNotAborted(signal);
     try {
-      const repositoryRoot = await realpath(repoPath);
+      // F6：相对路径以 process cwd resolve；保留 raw code units，不 trim/NFKC
+      const absoluteRepoPath = resolve(process.cwd(), repoPath);
+      const repositoryRoot = await realpath(absoluteRepoPath);
       this.assertNotAborted(signal);
       const rootStat = await stat(repositoryRoot);
       this.assertNotAborted(signal);

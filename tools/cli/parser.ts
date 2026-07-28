@@ -1,10 +1,10 @@
 import {
-  LocateRequestSchema,
   type LocateAnchor,
   type LocateRequest,
   type RepoLayer,
   type TermCaseMode,
 } from '../../src/contracts/index.js';
+import { safeParseLocateRequestV2 } from '../../src/contracts/locate-request-parse-v2.js';
 
 export const CLI_HELP = `repo-nav debug <command> [options]
 
@@ -15,10 +15,12 @@ Commands:
 
 Use "repo-nav debug <command> --help" for command details.`;
 
-const LOCATE_HELP = `repo-nav debug locate --repo <path> --question <text> --term <term> [options]
+const LOCATE_HELP = `repo-nav debug locate --repo <path> --term <term> [options]
   --request <json>              Supply the complete locate request as JSON
+  --question <text>             Optional display-only question (does not affect search plan)
   --term <term>                 Repeatable search term
   --anchor <kind:value>         Repeatable file, symbol, route, table, or config anchor
+                                (file anchors reject backslashes; POSIX relative only)
   --layer <layer>               Repeatable server, client, docs, tests, config, or any layer
   --negative-term <term>        Repeatable exclusion term
   --term-case <mode>            smart, sensitive, or insensitive
@@ -121,9 +123,10 @@ function parseLocate(args: readonly string[]): ParsedCliCommand {
       maxCandidates: integer(flags, '--max-candidates'),
       timeoutMs: integer(flags, '--timeout-ms'),
     };
+    const question = one(flags, '--question');
     raw = {
       repoPath: required(flags, '--repo'),
-      question: required(flags, '--question'),
+      ...(question === undefined ? {} : { question }),
       terms: flags.values.get('--term') ?? [],
       ...(one(flags, '--term-case') === undefined ? {} : { termCase: one(flags, '--term-case') as TermCaseMode }),
       ...(flags.values.has('--anchor') ? { anchors: flags.values.get('--anchor')?.map(parseAnchor) } : {}),
@@ -134,9 +137,9 @@ function parseLocate(args: readonly string[]): ParsedCliCommand {
       }),
     };
   }
-  const parsed = LocateRequestSchema.safeParse(raw);
+  const parsed = safeParseLocateRequestV2(raw);
   if (!parsed.success) {
-    throw new CliUsageError(`Invalid locate request: ${parsed.error.issues[0]?.message ?? 'validation failed'}.`);
+    throw new CliUsageError(`Invalid locate request: ${parsed.error.message}`);
   }
   return { kind: 'locate', request: parsed.data };
 }

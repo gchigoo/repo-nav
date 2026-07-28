@@ -14,6 +14,7 @@ export const LOCATE_STATUSES_V2 = Object.freeze([
   'no_result',
   'backend_unavailable',
   'timeout',
+  'cancelled',
 ] as const);
 export const REPO_LAYERS_V2 = Object.freeze([
   'client',
@@ -996,7 +997,11 @@ export function deriveLocateStatusV2(
   coverage: CoverageReportV2 | FinalizedUnsafeCoverageReportV2,
   retainedEvidenceCount: number,
 ): z.infer<typeof LocateStatusV2Schema> {
-  if (coverage.abortSource !== 'none') {
+  // F6：caller→cancelled；deadline→timeout；backend local abort 不经 abortSource
+  if (coverage.abortSource === 'caller') {
+    return 'cancelled';
+  }
+  if (coverage.abortSource === 'deadline') {
     return 'timeout';
   }
   if (
@@ -1013,6 +1018,10 @@ export function deriveLocateStatusV2(
   if (
     !coverage.strategyComplete ||
     coverage.degradations.length > 0 ||
+    coverage.backends.some(
+      (attempt) =>
+        attempt.status === 'used' && attempt.completion === 'incomplete',
+    ) ||
     coverage.unsatisfiedAnchors.some(
       (anchor) =>
         anchor.reason === 'BUDGET_EXCEEDED' ||

@@ -68,6 +68,10 @@ const contributionPrivate = new WeakMap<
   SnapshotOutcomeContributionTokenV2,
   ContributionPrivateV2
 >();
+const contributionByValue = new WeakMap<
+  SnapshotOutcomeContributionV2,
+  ContributionPrivateV2
+>();
 
 export interface SnapshotObservationLedgerEntryInputV2 {
   readonly selected: boolean;
@@ -136,26 +140,34 @@ export function createSnapshotOutcomeContributionV2(input: {
   });
 
   const token = createOpaqueTokenV2<SnapshotOutcomeContributionTokenV2>();
-  contributionPrivate.set(
-    token,
-    Object.freeze({
-      contribution,
-      proof: input.snapshotProof,
-      execution: input.execution,
-    }),
-  );
+  const privateRecord = Object.freeze({
+    contribution,
+    proof: input.snapshotProof,
+    execution: input.execution,
+  });
+  contributionPrivate.set(token, privateRecord);
+  contributionByValue.set(contribution, privateRecord);
   return token;
 }
 
 /**
  * F6 accessor：same proof/execution 才可读值。
+ * 接受 token 或已签发 contribution 对象身份。
  */
 export function requireSnapshotOutcomeContributionV2(
-  token: SnapshotOutcomeContributionTokenV2,
+  tokenOrContribution:
+    | SnapshotOutcomeContributionTokenV2
+    | SnapshotOutcomeContributionV2,
   expectedProof: SnapshotTrustProofV2,
   expectedExecution: LocateExecutionTokenV2,
 ): SnapshotOutcomeContributionV2 {
-  const record = contributionPrivate.get(token);
+  const record =
+    contributionPrivate.get(
+      tokenOrContribution as SnapshotOutcomeContributionTokenV2,
+    ) ??
+    contributionByValue.get(
+      tokenOrContribution as SnapshotOutcomeContributionV2,
+    );
   if (
     record === undefined ||
     record.proof !== expectedProof ||

@@ -81,9 +81,30 @@ export const BackendSearchResultSchema = z
   .readonly();
 export type BackendSearchResult = z.infer<typeof BackendSearchResultSchema>;
 
+/**
+ * Locate 执行上下文。F6：callerSignal 显式命名；signal 为兼容别名。
+ */
 export interface LocateExecutionContext {
-  readonly signal: AbortSignal;
+  readonly callerSignal?: AbortSignal;
+  readonly signal?: AbortSignal;
 }
+
+/**
+ * 解析 caller abort signal；优先 callerSignal，兼容旧 signal 字段。
+ */
+export function requireCallerSignal(
+  context: LocateExecutionContext,
+): AbortSignal {
+  const signal = context.callerSignal ?? context.signal;
+  if (signal === undefined) {
+    throw new TypeError('LocateExecutionContext requires callerSignal');
+  }
+  return signal;
+}
+
+export type LocateExecutionContextV2 = {
+  readonly callerSignal: AbortSignal;
+};
 
 export interface RepositoryEvidenceService {
   locate(

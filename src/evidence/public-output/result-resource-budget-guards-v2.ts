@@ -7,6 +7,7 @@ import {
   LOCATE_RESULT_RESOURCE_BUDGETS_V2,
   utf8ByteLengthV2,
 } from '../../contracts/v2/locate-result-resource-budget-contract-v2.js';
+import { guardCompactJsonDataV2 as guardCompactJsonDataCoreV2 } from '../../contracts/v2/compact-json-guard-v2.js';
 import type { LocateResultV2 } from '../../contracts/v2/locate-result-v2.js';
 import {
   BINARY_OR_OVERSIZED_PLACEHOLDER_V2,
@@ -349,31 +350,14 @@ function countRecord(value: object, state: CounterState): boolean {
 
 /**
  * Parameterized abort-at-N+1 compact JSON UTF-8 guard (internal forward ABI).
- * Callers only observe pass/fail stage; counter state is private.
+ * 实现下沉到 contracts leaf；此处保持 F1B 返回类型。
  */
 export function guardCompactJsonDataV2(
   input: unknown,
   maxUtf8Bytes: number,
 ): ResourceBudgetCheckV2 {
-  if (
-    typeof maxUtf8Bytes !== 'number' ||
-    !Number.isSafeInteger(maxUtf8Bytes) ||
-    maxUtf8Bytes <= 0
-  ) {
-    return fail('raw-json');
-  }
-  if (input === undefined) {
-    return fail('raw-json');
-  }
-  const state: CounterState = {
-    bytes: 0,
-    max: maxUtf8Bytes,
-    stack: new Set<object>(),
-  };
-  if (!countCompactJsonData(input, state)) {
-    return fail('raw-json');
-  }
-  return OK;
+  const result = guardCompactJsonDataCoreV2(input, maxUtf8Bytes);
+  return result.ok ? OK : fail('raw-json');
 }
 
 function readOwnDataValue(

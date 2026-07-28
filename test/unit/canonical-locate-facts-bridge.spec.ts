@@ -46,6 +46,16 @@ import {
   type SnapshotTrustProofV2,
 } from '../../src/evidence/request-snapshot/index.js';
 import { SNAPSHOT_TRUST_MUTATIONS_OWNED_V2 } from '../../testkit/fixtures/request-snapshot-v2/snapshot-trust-mutations-v2.js';
+import {
+  LocateAbortCoordinatorV2,
+  requireFinalizedAbortDecisionV2,
+} from '../../src/evidence/abort-source.js';
+import {
+  aggregateRequestOutcomeV2,
+  requireRequestOutcomeAggregationProofV2,
+} from '../../src/evidence/request-outcome/request-outcome-aggregator-v2.js';
+import { buildAggregationHarnessV2 } from '../../testkit/fixtures/request-outcome-v2/build-aggregation-harness-v2.js';
+import { OUTCOME_PROOF_MUTATIONS_V2 } from '../../testkit/fixtures/request-outcome-v2/outcome-proof-mutations-v2.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
 const contractSelected = isSelected({
@@ -401,3 +411,30 @@ describe.runIf(snapshotTrustSelected)(
     });
   },
 );
+
+describe.runIf(
+  isSelected({
+    group: 'input-abort-contract-v2',
+    caseId: 'outcome-proof',
+  }),
+)('F6-TRUST-001 outcome-proof', () => {
+  it('rejects forged close tokens and cross-execution proof reads', async () => {
+    expect(OUTCOME_PROOF_MUTATIONS_V2).toContain('forged-close-token');
+    const harness = await buildAggregationHarnessV2({});
+    const forged = createOpaqueTokenV2();
+    expect(() =>
+      requireFinalizedAbortDecisionV2(
+        forged as never,
+        harness.abortCoordinator,
+      ),
+    ).toThrow(/not trusted/);
+    const aggregated = aggregateRequestOutcomeV2(harness.input);
+    expect(() =>
+      requireRequestOutcomeAggregationProofV2(
+        aggregated.proof,
+        createOpaqueTokenV2() as never,
+      ),
+    ).toThrow(/not trusted/);
+    void LocateAbortCoordinatorV2;
+  });
+});

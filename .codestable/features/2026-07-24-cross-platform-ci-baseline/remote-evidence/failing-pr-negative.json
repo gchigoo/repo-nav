@@ -1,0 +1,16 @@
+{
+  "evidence_kind": "F4-REMOTE-001 failing-PR negative",
+  "pr": "https://github.com/gchigoo/repo-nav/pull/1",
+  "pr_state": "closed",
+  "head_branch": "f4-ci-negative-evidence",
+  "head_sha": "d3003f701d75e8c5b90dbe960856b7b1685c2500",
+  "workflow_run_id": 30323840048,
+  "workflow_run_url": "https://github.com/gchigoo/repo-nav/actions/runs/30323840048",
+  "aggregate_conclusion": "FAILURE",
+  "mergeable": "MERGEABLE",
+  "mergeStateStatus": "BLOCKED",
+  "required_check": "cross-platform-required",
+  "ruleset_id": 19864943,
+  "ruleset_name": "main-cross-platform-required",
+  "merge_queue": "disabled (no merge_queue rules present)"
+}

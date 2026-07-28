@@ -20,10 +20,10 @@ items:
   description: 为 raw contract、corpus、公共字段和完整序列化响应建立数量与 UTF-8 字节硬上限，并对 N/N+1 和超限 fail-closed 行为提供回归证据
   depends_on:
   - span-redaction-corpus-policy-v2
-  status: in-progress
+  status: done
   feature: 2026-07-24-public-result-resource-budgets-v2
   minimal_loop: true
-  notes: raw 计数和字段上限必须在递归 corpus 扫描前生效；公共字段在脱敏后复核，总响应超限返回固定安全 INTERNAL_ERROR
+  notes: 2026-07-28 acceptance passed；raw/corpus/public/serialized N/N+1 fail-closed；dormant assembler 已接线；minimal_loop 关闭
 - slug: canonical-locate-facts-bridge
   description: 建立typed partial fact envelope、four-prerequisite admission token、source/materialization registrars、aggregation fresh-completion registrar、只消费completion token的finalizer、v1 adapter与不可达transport的v2 shadow
   depends_on:

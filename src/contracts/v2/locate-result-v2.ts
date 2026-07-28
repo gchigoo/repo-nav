@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+import {
+  LOCATE_RESULT_RESOURCE_BUDGETS_V2,
+  isUtf8ByteLengthAtMostV2,
+  utf8ByteLengthV2,
+} from './locate-result-resource-budget-contract-v2.js';
+
+const BUDGETS_V2 = LOCATE_RESULT_RESOURCE_BUDGETS_V2;
+
 export const LOCATE_STATUSES_V2 = Object.freeze([
   'ok',
   'partial',
@@ -182,7 +190,17 @@ const EvidenceLinesV2Schema = z
 
 const NormalizedSearchTermV2Schema = z
   .strictObject({
-    value: z.string().min(1),
+    value: z
+      .string()
+      .min(1)
+      .refine(
+        (value) =>
+          isUtf8ByteLengthAtMostV2(
+            value,
+            BUDGETS_V2.normalizedTerms.maxItemUtf8Bytes,
+          ),
+        { message: 'Normalized term exceeds UTF-8 byte budget.' },
+      ),
     caseSensitive: z.boolean(),
   })
   .readonly();
@@ -219,9 +237,20 @@ function containsPublicReplacement(value: string): boolean {
 
 const PublicSearchTermV2Schema = z
   .strictObject({
-    value: z.string().min(1).refine(isSafePublicText, {
-      message: 'Public search terms must be display-safe.',
-    }),
+    value: z
+      .string()
+      .min(1)
+      .refine(isSafePublicText, {
+        message: 'Public search terms must be display-safe.',
+      })
+      .refine(
+        (value) =>
+          isUtf8ByteLengthAtMostV2(
+            value,
+            BUDGETS_V2.public.maxTermUtf8Bytes,
+          ),
+        { message: 'Public search term exceeds UTF-8 byte budget.' },
+      ),
     caseSensitive: z.boolean(),
     redaction: FieldRedactionV2Schema.optional(),
   })
@@ -282,10 +311,40 @@ const UnsafeEvidenceLocationV2Schema = z
       .refine(isNormalizedRepositoryLocator, {
         message:
           'Raw evidence file must be a normalized repository-relative POSIX locator.',
-      }),
-    symbol: z.string().min(1).optional(),
+      })
+      .refine(
+        (value) =>
+          isUtf8ByteLengthAtMostV2(
+            value,
+            BUDGETS_V2.raw.maxFileUtf8Bytes,
+          ) &&
+          value.split('/').length <= BUDGETS_V2.raw.maxPathSegments,
+        { message: 'Raw evidence file exceeds path byte/segment budget.' },
+      ),
+    symbol: z
+      .string()
+      .min(1)
+      .refine(
+        (value) =>
+          isUtf8ByteLengthAtMostV2(
+            value,
+            BUDGETS_V2.raw.maxSymbolUtf8Bytes,
+          ),
+        { message: 'Raw evidence symbol exceeds UTF-8 byte budget.' },
+      )
+      .optional(),
     lines: EvidenceLinesV2Schema,
-    excerpt: z.string().min(1),
+    excerpt: z
+      .string()
+      .min(1)
+      .refine(
+        (value) =>
+          isUtf8ByteLengthAtMostV2(
+            value,
+            BUDGETS_V2.raw.maxExcerptUtf8Bytes,
+          ),
+        { message: 'Raw evidence excerpt exceeds UTF-8 byte budget.' },
+      ),
   })
   .readonly();
 
@@ -298,7 +357,17 @@ const RedactedFieldV2Schema = z
 
 const EvidenceLocationV2Schema = z
   .strictObject({
-    file: z.string().min(1),
+    file: z
+      .string()
+      .min(1)
+      .refine(
+        (value) =>
+          isUtf8ByteLengthAtMostV2(
+            value,
+            BUDGETS_V2.public.maxFileUtf8Bytes,
+          ),
+        { message: 'Public file exceeds UTF-8 byte budget.' },
+      ),
     resolvable: z.boolean(),
     symbol: z
       .string()
@@ -306,12 +375,31 @@ const EvidenceLocationV2Schema = z
       .refine(isSafePublicText, {
         message: 'Public symbols must be display-safe.',
       })
+      .refine(
+        (value) =>
+          isUtf8ByteLengthAtMostV2(
+            value,
+            BUDGETS_V2.public.maxSymbolUtf8Bytes,
+          ),
+        { message: 'Public symbol exceeds UTF-8 byte budget.' },
+      )
       .optional(),
     lines: EvidenceLinesV2Schema,
-    excerpt: z.string().min(1).refine(isSafePublicExcerpt, {
-      message:
-        'Public excerpts may contain canonical LF/TAB but no other display controls.',
-    }),
+    excerpt: z
+      .string()
+      .min(1)
+      .refine(isSafePublicExcerpt, {
+        message:
+          'Public excerpts may contain canonical LF/TAB but no other display controls.',
+      })
+      .refine(
+        (value) =>
+          isUtf8ByteLengthAtMostV2(
+            value,
+            BUDGETS_V2.public.maxExcerptUtf8Bytes,
+          ),
+        { message: 'Public excerpt exceeds UTF-8 byte budget.' },
+      ),
     redaction: z
       .strictObject({
         applied: z.literal(true),
@@ -613,7 +701,10 @@ const CapabilityCoverageV2Schema = z
 
 const UnsatisfiedAnchorV2Schema = z
   .strictObject({
-    requestIndex: z.int().nonnegative(),
+    requestIndex: z
+      .int()
+      .nonnegative()
+      .max(BUDGETS_V2.coverage.maxUnsatisfiedAnchorRequestIndex),
     kind: AnchorKindV2Schema,
     satisfaction: z.enum(['candidate', 'none']),
     reason: z.enum(['BUDGET_EXCEEDED', 'NOT_FOUND', 'UNVERIFIED']),
@@ -643,7 +734,10 @@ const createCoverageReportV2Schema = <
 ) =>
   z
     .strictObject({
-      backends: z.array(BackendAttemptV2Schema).readonly(),
+      backends: z
+        .array(BackendAttemptV2Schema)
+        .max(BUDGETS_V2.coverage.maxBackends)
+        .readonly(),
       strategyComplete: z.boolean(),
       fallbackChecked: z.boolean(),
       indexState: z.enum([
@@ -662,7 +756,10 @@ const createCoverageReportV2Schema = <
       degradations: canonicalArray(degradationValues),
       exclusionSummary: exclusionSummaryV2Schema,
       abortSource: z.enum(['none', 'caller', 'deadline']),
-      unsatisfiedAnchors: z.array(UnsatisfiedAnchorV2Schema).readonly(),
+      unsatisfiedAnchors: z
+        .array(UnsatisfiedAnchorV2Schema)
+        .max(BUDGETS_V2.coverage.maxUnsatisfiedAnchors)
+        .readonly(),
       snapshot: RepositorySnapshotCoverageV2Schema,
       scope: ScopeCoverageV2Schema,
       capabilities: CapabilityCoverageV2Schema,
@@ -929,15 +1026,43 @@ export function deriveLocateStatusV2(
 
 const FinalizedUnsafeEvidencePackV2Schema = z
   .strictObject({
-    normalizedTerms: z.array(NormalizedSearchTermV2Schema).min(1).readonly(),
-    confirmed: z.array(unsafeConfirmedEvidenceV2Schema).readonly(),
-    candidates: z.array(unsafeCandidateEvidenceV2Schema).readonly(),
+    normalizedTerms: z
+      .array(NormalizedSearchTermV2Schema)
+      .min(1)
+      .max(BUDGETS_V2.normalizedTerms.maxItems)
+      .readonly(),
+    confirmed: z
+      .array(unsafeConfirmedEvidenceV2Schema)
+      .max(BUDGETS_V2.evidence.maxConfirmed)
+      .readonly(),
+    candidates: z
+      .array(unsafeCandidateEvidenceV2Schema)
+      .max(BUDGETS_V2.evidence.maxCandidates)
+      .readonly(),
     coverage: FinalizedUnsafeCoverageReportV2Schema,
     nextActions: uniqueArray(NextActionCodeV2Schema),
   })
   .readonly()
   .superRefine((pack, context) => {
     const evidenceCount = pack.confirmed.length + pack.candidates.length;
+    if (evidenceCount > BUDGETS_V2.evidence.maxTotal) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Total evidence exceeds budget.',
+        path: ['confirmed'],
+      });
+    }
+    let termTotalBytes = 0;
+    for (const term of pack.normalizedTerms) {
+      termTotalBytes += utf8ByteLengthV2(term.value);
+    }
+    if (termTotalBytes > BUDGETS_V2.normalizedTerms.maxTotalUtf8Bytes) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Normalized terms exceed total UTF-8 byte budget.',
+        path: ['normalizedTerms'],
+      });
+    }
     const retainedFileCount = new Set(
       [...pack.confirmed, ...pack.candidates].map(
         (evidence) => evidence.location.file,
@@ -1044,9 +1169,19 @@ const EvidencePackV2Schema = z
     schemaVersion: z.literal('2.0'),
     status: LocateStatusV2Schema,
     repositoryRef: z.literal('local-repository'),
-    normalizedTerms: z.array(PublicSearchTermV2Schema).min(1).readonly(),
-    confirmed: z.array(ConfirmedEvidenceV2Schema).readonly(),
-    candidates: z.array(CandidateEvidenceV2Schema).readonly(),
+    normalizedTerms: z
+      .array(PublicSearchTermV2Schema)
+      .min(1)
+      .max(BUDGETS_V2.normalizedTerms.maxItems)
+      .readonly(),
+    confirmed: z
+      .array(ConfirmedEvidenceV2Schema)
+      .max(BUDGETS_V2.evidence.maxConfirmed)
+      .readonly(),
+    candidates: z
+      .array(CandidateEvidenceV2Schema)
+      .max(BUDGETS_V2.evidence.maxCandidates)
+      .readonly(),
     coverage: CoverageReportV2Schema,
     nextActions: canonicalArray(NEXT_ACTION_CODES_V2),
   })

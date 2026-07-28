@@ -556,6 +556,8 @@ interface BackendExecutionOutcomeV2 {
 
 **修订后的最小安全闭环**：F1B 完成时，F1 assembler + F1A span policy + F1B resource guard 共同形成可独立验证且不会切换 production v1 的 dormant public-boundary 闭环；因此 items.yaml 的唯一 `minimal_loop=true` 位于 F1B。
 
+**状态（2026-07-28）**：acceptance `passed`；items.yaml `done`；minimal_loop 关闭。
+
 ### F1C · canonical-locate-facts-bridge
 
 把真实执行管线的 terminal facts 收敛进 owner-fragment envelope；现有 production 继续经 v1 projector 输出，同一 envelope 可由 test-only shadow harness 验证已完成的 v2 fragments。required-owner finalizer 禁止用假值补齐缺失事实；F8 才产生首个完整真实 v2 shadow result，F9 只切换 projector edge。

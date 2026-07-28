@@ -13,6 +13,12 @@ import {
   type RepoNavToolErrorV2,
 } from '../../contracts/v2/locate-result-v2.js';
 import {
+  applyPublicFieldBudgetV2,
+  guardSensitiveCorpusBudgetV2,
+  guardSerializedPublicResultBudgetV2,
+  preflightUnsafePublicMaterializationSourceBudgetV2,
+} from './result-resource-budget-guards-v2.js';
+import {
   collectSensitiveCorpusV2,
   redactPublicFieldForSourceV2,
   type PublicFieldRedactionV2,
@@ -95,26 +101,30 @@ function assembleLocationV2(
   location: UnsafeConfirmedV2['location'],
   corpus: SensitiveCorpusV2,
 ): EvidenceLocationV2 {
-  const file = redactPublicFieldForSourceV2(
-    source,
-    location.file,
+  const file = applyPublicFieldBudgetV2(
     'file',
-    corpus,
+    redactPublicFieldForSourceV2(source, location.file, 'file', corpus),
   );
   const symbol =
     location.symbol === undefined
       ? undefined
-      : redactPublicFieldForSourceV2(
-          source,
-          location.symbol,
+      : applyPublicFieldBudgetV2(
           'symbol',
-          corpus,
+          redactPublicFieldForSourceV2(
+            source,
+            location.symbol,
+            'symbol',
+            corpus,
+          ),
         );
-  const excerpt = redactPublicFieldForSourceV2(
-    source,
-    location.excerpt,
+  const excerpt = applyPublicFieldBudgetV2(
     'excerpt',
-    corpus,
+    redactPublicFieldForSourceV2(
+      source,
+      location.excerpt,
+      'excerpt',
+      corpus,
+    ),
   );
   const fields = [
     fieldMetadata('file', file),
@@ -149,11 +159,9 @@ function publicTermV2(
   term: UnsafeSuccessV2['evidence']['normalizedTerms'][number],
   corpus: SensitiveCorpusV2,
 ): PublicSearchTermV2 {
-  const redaction = redactPublicFieldForSourceV2(
-    source,
-    term.value,
+  const redaction = applyPublicFieldBudgetV2(
     'term',
-    corpus,
+    redactPublicFieldForSourceV2(source, term.value, 'term', corpus),
   );
   return {
     value: redaction.value,
@@ -219,6 +227,10 @@ function canonicalNextActions(
 
 function assembleSuccessV2(input: UnsafeSuccessV2): LocateResultV2 {
   const corpus = collectSensitiveCorpusV2(input);
+  const corpusBudget = guardSensitiveCorpusBudgetV2(corpus);
+  if (!corpusBudget.ok) {
+    return createSafeErrorResultV2('INTERNAL_ERROR');
+  }
   const normalizedTerms = input.evidence.normalizedTerms.map((term) =>
     publicTermV2(input, term, corpus),
   );
@@ -244,7 +256,7 @@ function assembleSuccessV2(input: UnsafeSuccessV2): LocateResultV2 {
     coverage,
     confirmed.length + candidates.length,
   );
-  return LocateResultV2Schema.parse({
+  const parsed = LocateResultV2Schema.safeParse({
     ok: true,
     evidence: {
       schemaVersion: '2.0',
@@ -257,12 +269,29 @@ function assembleSuccessV2(input: UnsafeSuccessV2): LocateResultV2 {
       nextActions: canonicalNextActions(input.evidence.nextActions),
     },
   });
+  if (!parsed.success) {
+    return createSafeErrorResultV2('INTERNAL_ERROR');
+  }
+  const serialized = guardSerializedPublicResultBudgetV2(parsed.data);
+  if (!serialized.ok) {
+    return createSafeErrorResultV2('INTERNAL_ERROR');
+  }
+  return parsed.data;
 }
 
+/**
+ * Dormant v2 public assembler with F1B resource-budget guards.
+ * Accepts runtime unknown so shallow preflight can reject hostile shapes.
+ */
 export function assemblePublicLocateResultV2(
-  input: FinalizedUnsafeLocateResultV2,
+  input: unknown,
 ): LocateResultV2 {
   try {
+    const preflight =
+      preflightUnsafePublicMaterializationSourceBudgetV2(input);
+    if (!preflight.ok) {
+      return createSafeErrorResultV2('INTERNAL_ERROR');
+    }
     const parsed = FinalizedUnsafeLocateResultV2Schema.safeParse(input);
     if (!parsed.success) {
       return createSafeErrorResultV2('INTERNAL_ERROR');

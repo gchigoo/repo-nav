@@ -58,7 +58,7 @@ describe.runIf(selected)('public output v2 no-cutover import inventory', () => {
     ).toEqual([]);
   });
 
-  it('F1A-NOCUTOVER-001 keeps public-output free of F1B/F1C/F2/F6 markers', () => {
+  it('F1B-NOCUTOVER-001 keeps public-output free of F1C/F2/F6 markers', () => {
     const repositoryRoot = resolve(import.meta.dirname, '..', '..');
     const directory = resolve(repositoryRoot, PUBLIC_OUTPUT_SOURCE_ROOT_V2);
     const sources = readdirSync(directory)

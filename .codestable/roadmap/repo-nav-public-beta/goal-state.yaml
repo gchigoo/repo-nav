@@ -10,7 +10,7 @@ commit_authorization: approved
 commit_authorization_ref: "approval-report.md#goal-commits"
 handoff_reason: ""
 handoff_next: ""
-current_feature_index: 3
+current_feature_index: 4
 features:
 - slug: public-output-boundary-v2
   roadmap_item: public-output-boundary-v2
@@ -47,7 +47,7 @@ features:
   review: .codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-review.md
   qa: .codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-qa.md
   acceptance: .codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-acceptance.md
-  status: pending
+  status: accepted
 - slug: canonical-locate-facts-bridge
   roadmap_item: canonical-locate-facts-bridge
   feature_dir: .codestable/features/2026-07-24-canonical-locate-facts-bridge
@@ -185,3 +185,12 @@ ledger:
   status: done
   feature: cross-platform-ci-baseline
   note: ResumeGoalAcceptance; S5 closed; index->3
+- step: f4-scoped-commit
+  status: done
+  feature: cross-platform-ci-baseline
+  commit: 67d0de9
+  note: goal-commits authorized; working tree clean
+- step: f1b-feature-loop
+  status: done
+  feature: public-result-resource-budgets-v2
+  note: impl/review/QA/accept complete; index->4

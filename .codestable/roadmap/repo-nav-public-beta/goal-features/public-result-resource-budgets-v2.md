@@ -3,7 +3,7 @@ doc_type: roadmap-goal-feature
 roadmap: repo-nav-public-beta
 feature: 2026-07-24-public-result-resource-budgets-v2
 roadmap_item: public-result-resource-budgets-v2
-status: pending
+status: accepted
 ---
 
 # public-result-resource-budgets-v2 Goal 执行规格

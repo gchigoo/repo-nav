@@ -18,7 +18,7 @@ import {
   preflightUnsafePublicMaterializationSourceBudgetV2,
 } from '../../src/evidence/public-output/result-resource-budget-guards-v2.js';
 import { projectSyntheticLocateResultV2 } from '../../src/evidence/public-output/synthetic-locate-projection-v2.js';
-import { RepositoryEvidenceEngine } from '../../src/evidence/repository-evidence-engine.js';
+import { createCanonicalLocateEngineHarnessV2 } from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
 import type {
   BackendHealth,
@@ -532,10 +532,9 @@ describe.runIf(legacySelected)('F1B resource-budget-legacy-isolation', () => {
           };
         }
       }
-      const engine = new RepositoryEvidenceEngine(
-        [new StubBackend()],
+      const engine = createCanonicalLocateEngineHarnessV2([new StubBackend()],
         new NodeRepositoryReader(),
-      );
+      ).service;
       const request = {
         repoPath: dir,
         question: 'Find mapping',

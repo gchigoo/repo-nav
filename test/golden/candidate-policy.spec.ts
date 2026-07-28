@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 
-import { RepositoryEvidenceEngine } from '../../src/evidence/repository-evidence-engine.js';
+import { createCanonicalLocateEngineHarnessV2 } from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
 import {
   assertGoldenCase,
@@ -55,10 +55,9 @@ function loadCase(caseId: (typeof CASE_IDS)[number]): GoldenSuccessCase {
 }
 
 async function observe(goldenCase: GoldenSuccessCase): Promise<GoldenObservation> {
-  const engine = new RepositoryEvidenceEngine(
-    [new CandidateFixtureBackend()],
+  const engine = createCanonicalLocateEngineHarnessV2([new CandidateFixtureBackend()],
     new NodeRepositoryReader(),
-  );
+  ).service;
   const result = await engine.locate(goldenCase.request, {
     signal: new AbortController().signal,
   });

@@ -13,7 +13,7 @@ import {
   type RepositoryReadLimits,
   type RepositorySearchBackend,
 } from '../../src/contracts/index.js';
-import { RepositoryEvidenceEngine } from '../../src/evidence/repository-evidence-engine.js';
+import { createCanonicalLocateEngineHarnessV2 } from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import { OVERSIZED_CONTENT_PLACEHOLDER } from '../../src/evidence/evidence-redactor.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
@@ -119,10 +119,9 @@ async function locate(
   locateRequest: LocateRequest,
   failure?: 'MAX_FILE_BYTES_REACHED' | 'MAX_EXCERPT_BYTES_REACHED',
 ) {
-  return await new RepositoryEvidenceEngine(
-    [new GuardrailBackend(hits)],
+  return await createCanonicalLocateEngineHarnessV2([new GuardrailBackend(hits)],
     new GuardrailReader(excerpts, failure),
-  ).locate(locateRequest, { signal: new AbortController().signal });
+  ).service.locate(locateRequest, { signal: new AbortController().signal });
 }
 
 async function locateUnreadable(
@@ -131,10 +130,9 @@ async function locateUnreadable(
   locateRequest: LocateRequest,
   failure: 'BINARY_FILE',
 ) {
-  return await new RepositoryEvidenceEngine(
-    [new GuardrailBackend(hits)],
+  return await createCanonicalLocateEngineHarnessV2([new GuardrailBackend(hits)],
     new GuardrailReader(excerpts, failure),
-  ).locate(locateRequest, { signal: new AbortController().signal });
+  ).service.locate(locateRequest, { signal: new AbortController().signal });
 }
 
 describe.runIf(

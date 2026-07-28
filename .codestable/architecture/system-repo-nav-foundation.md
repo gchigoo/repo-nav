@@ -2,9 +2,9 @@
 doc_type: architecture
 slug: repo-nav-foundation
 scope: RepoNav 当前已落地的 production v1 公共契约、repository 安全 seams、CodeGraph-primary/ripgrep-fallback evidence engine、有界 candidate policy、状态/预算/redaction/error output guardrails、stdio MCP、debug CLI、executable docs、发布候选级 Verification Kit，以及尚未接入 production 的 v2 raw/public 输出安全边界
-summary: Production 继续由 Zod schema v1、RepositoryEvidenceEngine、stdio MCP 与 shallow debug CLI 提供；独立的 dormant LocateResultV2 strict contract、字段级 SensitiveValuePolicyV2 和 PublicResultAssemblerV2 已通过 synthetic test seam 落地，但 package/service/MCP/CLI/docs 仍无 v2 edge，真实原子切换由 public-beta F9 独占
+summary: Production 继续由 Zod schema v1、薄 RepositoryEvidenceEngine façade、CanonicalRepositoryLocateExecutorV2、唯一 V1LocateResultProjector、stdio MCP 与 shallow debug CLI 提供；typed fact envelope / four-prerequisite admission / neutral stage registrars / finalizer / composer / shadow 为 transport-unreachable F1C seam；dormant LocateResultV2 与 PublicResultAssemblerV2 仍无 production edge，真实原子切换由 F9 独占
 status: current
-last_reviewed: 2026-07-23
+last_reviewed: 2026-07-28
 tags: [repo-nav, foundation, evidence, candidate-policy, output-guardrails, redaction, repository-safety, codegraph, ripgrep, fallback, mcp, stdio, cli, docs, golden, regression, schema-v2, public-assembler, no-cutover]
 depends_on: []
 implements: [source-of-truth-evidence]
@@ -14,7 +14,7 @@ implements: [source-of-truth-evidence]
 
 ## 0. 术语
 
-- **EvidencePack**：`LocateResult.ok=true` 时返回的版本化 production 证据容器；当前由 `RepositoryEvidenceEngine` 编排 CodeGraph primary 与 ripgrep fallback 生成。
+- **EvidencePack**：`LocateResult.ok=true` 时返回的版本化 production 证据容器；当前由 `CanonicalRepositoryLocateExecutorV2` 编排 CodeGraph primary 与 ripgrep fallback，经 `V1LocateResultProjector` 原样返回。
 - **Discovery hit**：`CodeGraphBackend` 或 `RipgrepBackend` 产生的未核验 file/symbol/line/reason fact；它不能直接成为 public evidence。
 - **CodeGraph probe**：只执行 `codegraph status --json` 的 capability/index 观察；不会初始化、更新或删除目标仓库 index。
 - **CodeGraph query plan**：把 explicit symbol anchors 与 identifier-like terms 变成稳定的单 search invocations，声明 unsupported dimensions、共享 total `maxHits` 与保守 completeness。
@@ -127,14 +127,14 @@ flowchart LR
   raw/public strict contract、字段策略、assembler 和 synthetic projection；图中没有
   指向 production App/Evidence/MCP/CLI/docs 的 edge，且 package barrels 不导出这些
   modules。
-- `EvidenceModule` 以 `useExisting` 分别把 `NodeRepositoryReader` 和 `RepositoryEvidenceEngine` 暴露为 `REPOSITORY_READER`、`REPOSITORY_EVIDENCE_SERVICE`。
+- `EvidenceModule` 绑定 `CanonicalRepositoryLocateExecutorV2`、唯一 `V1LocateResultProjector`，并以 `useExisting` 把薄 `RepositoryEvidenceEngine` façade 暴露为 `REPOSITORY_EVIDENCE_SERVICE`；shadow/preparation/composer 不进 providers/exports。
 - `RepositoryBackendsModule` 提供 `NodeSafeProcessRunner`、`CodeGraphBackend` 与 `RipgrepBackend`，并通过 factory 输出有序、冻结的 `[codegraph, ripgrep]` backend collection；binary missing 不移除 provider。
 - `CodeGraphBackend` 只解析 `status --json` 与 `query --json` stdout；probe 记录 binary/index/version/freshness capability，query planner 为 symbol/identifier entries 生成稳定单参数 invocation 并共享 total `maxHits`。required fields malformed 时 fail closed，additional fields forward-compatible。
 - `RipgrepBackend` 按 term/anchor case metadata 组成 fixed-string search seeds，通过 `SafeProcessRunner` 执行 `rg --fixed-strings --json`；每个 actual submatch symbol 形成独立、稳定排序的 discovery fact。
 - `verifyAndMergeBackendHits` 重新读取当前文件，构造不超过 12 行/4 KiB 的 logical window，核对当前命中后按 discovery key 合并全部 provenance/reasons/operations/terms/canonical symbols；fatal path error 继续上抛。
 - `classifyDiscoveryRecords` 先处理 negative/layer exclusions，再以轻量 lexical masking 区分 code、comments、strings、regex 与 SQL quoted/comment regions；同一 merged record 只分类一次。
 - `applyCandidatePolicy` 在 direct classification 后读取 engine 验证的 candidate windows，以同 statement/container 的 alias neighbor、同 entity sibling 与同 brace scope 的 segment similarity 发现局部线索；六类 reason/role/promotion 与 selection priority 由单一常量表定义。
-- `RepositoryEvidenceEngine` 固定执行 normalize → CodeGraph primary search/pre-verification → conservative skip-or-ripgrep fallback → current-file verification/merge → classify once → candidate-window verification → bounded candidate policy → public ID/stable selection → final status/coverage/next actions → redaction；ID/order 永远早于 public text mutation。
+- `CanonicalRepositoryLocateExecutorV2` 固定执行 normalize → CodeGraph primary search/pre-verification → conservative skip-or-ripgrep fallback → current-file verification/merge → classify once → candidate-window verification → bounded candidate policy → public ID/stable selection → final status/coverage/next actions → redaction，并登记 request-local projection capability/internal token/exact canonical input；`RepositoryEvidenceEngine` 只 issue capability、调用 executor 一次并交给 v1 projector。ID/order 永远早于 public text mutation。
 - `NodeRepositoryReader` 与 `NodeSafeProcessRunner` 继续承担 canonical containment、bounded read、controlled env/stdout/stderr 和有界 child-tree cleanup。
 - `McpModule` 注入 `REPOSITORY_EVIDENCE_SERVICE`，以 low-level SDK list/call handlers 暴露单一只读工具；unknown tool 和 protocol-invalid envelope 留在 SDK JSON-RPC error boundary。
 - `LocateRequestSchema` 手工解析 envelope-valid arguments；serializer 对 service result 再应用 redaction/safe error policy，把 success、recoverable status 与四类 typed application error 映射为自校验、无 stack/path/raw stderr 的 parity output。
@@ -238,7 +238,10 @@ flowchart LR
   `test/unit/public-result-assembler-v2.spec.ts` /
   `test/golden/public-output-v2.spec.ts` — strict family mutations、hostile corpus、
   placeholder collision、safe error/parity、determinism 与 full projection scan。
-- `src/evidence/repository-evidence-engine.ts:RepositoryEvidenceEngine` — CodeGraph-primary/ripgrep-fallback locate orchestration、状态与 next actions。
+- `src/evidence/locate-execution/canonical-locate-executor-v2.ts:CanonicalRepositoryLocateExecutorV2` — CodeGraph-primary/ripgrep-fallback locate orchestration、状态与 next actions、canonical input registration。
+- `src/evidence/locate-execution/v1-locate-result-projector.ts:V1LocateResultProjector` — production-only exact legacy projection adapter（F9 删除）。
+- `src/evidence/repository-evidence-engine.ts:RepositoryEvidenceEngine` — 薄 service façade；concrete class 不再从 package barrel 导出。
+- `src/contracts/v2/locate-fact-envelope-v2.ts` / `src/evidence/canonical/*` — typed fact envelope、four-prerequisite inspector、neutral registrars、finalizer/composer/shadow；production roots runtime 不可达 shadow/composer/public schema。
 - `src/evidence/abort-source.ts:LocateAbortCoordinator` — first-writer-wins caller/deadline ownership。
 - `src/evidence/locate-status-evaluator.ts:evaluateLocateStatus` / `next-action-policy.ts:createNextActions` — final status priority 与 caller-adjustable action policy。
 - `src/evidence/result-budget-selector.ts` / `evidence-redactor.ts:redactLocateResult` — stable bounded selection、ID-after public redaction 与 cross-evidence sensitive-token propagation。

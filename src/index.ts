@@ -8,7 +8,6 @@ export * from './repository/codegraph-command.js';
 export * from './repository/codegraph-json.js';
 export * from './repository/codegraph-query-planner.js';
 export * from './repository/node-safe-process-runner.js';
-export * from './evidence/repository-evidence-engine.js';
 export * from './evidence/candidate-policy.js';
 export * from './evidence/evidence-redactor.js';
 export * from './evidence/locate-status-evaluator.js';

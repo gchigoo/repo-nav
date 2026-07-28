@@ -3,7 +3,7 @@ doc_type: roadmap-goal-feature
 roadmap: repo-nav-public-beta
 feature: 2026-07-24-canonical-locate-facts-bridge
 roadmap_item: canonical-locate-facts-bridge
-status: pending
+status: accepted
 ---
 
 # canonical-locate-facts-bridge Goal 执行规格

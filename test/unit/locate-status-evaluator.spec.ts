@@ -14,7 +14,7 @@ import {
   type RepositorySearchBackend,
 } from '../../src/contracts/index.js';
 import { LocateAbortCoordinator } from '../../src/evidence/abort-source.js';
-import { RepositoryEvidenceEngine } from '../../src/evidence/repository-evidence-engine.js';
+import { createCanonicalLocateEngineHarnessV2 } from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
 import {
   evaluateLocateStatus,
@@ -260,10 +260,9 @@ describe.runIf(
       }
     }
 
-    const result = await new RepositoryEvidenceEngine(
-      [new DeadlineBackend()],
+    const result = await createCanonicalLocateEngineHarnessV2([new DeadlineBackend()],
       new NodeRepositoryReader(),
-    ).locate(
+    ).service.locate(
       {
         repoPath: '.',
         question: 'Wait for the engine deadline.',
@@ -303,10 +302,9 @@ describe.runIf(
       }
     }
 
-    const result = await new RepositoryEvidenceEngine(
-      [new FixedTimeoutBackend()],
+    const result = await createCanonicalLocateEngineHarnessV2([new FixedTimeoutBackend()],
       new NodeRepositoryReader(),
-    ).locate(
+    ).service.locate(
       {
         repoPath: '.',
         question: 'Backend process timed out independently.',
@@ -422,10 +420,9 @@ for (const [caseId, interruption, timeoutMs] of [
     () => {
       it('retains verification completed before the abort', async () => {
         const callerController = new AbortController();
-        const result = await new RepositoryEvidenceEngine(
-          [new MultiHitCodeGraphBackend()],
+        const result = await createCanonicalLocateEngineHarnessV2([new MultiHitCodeGraphBackend()],
           new InterruptingReader(interruption, callerController),
-        ).locate(
+        ).service.locate(
           {
             repoPath: 'D:/fixture/repository',
             question: 'Preserve completed verification.',

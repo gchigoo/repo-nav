@@ -14,7 +14,7 @@ import type {
   RepositorySearchBackend,
 } from '../../src/contracts/index.js';
 import { RepositoryAccessError } from '../../src/contracts/index.js';
-import { RepositoryEvidenceEngine } from '../../src/evidence/repository-evidence-engine.js';
+import { createCanonicalLocateEngineHarnessV2 } from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
 import { NodeSafeProcessRunner } from '../../src/repository/node-safe-process-runner.js';
 import { RipgrepBackend } from '../../src/repository/ripgrep-backend.js';
@@ -161,10 +161,9 @@ async function observe(
   goldenCase: GoldenSuccessCase,
   result: BackendSearchResult,
 ): Promise<GoldenObservation> {
-  const service = new RepositoryEvidenceEngine(
-    [new FixtureBackend(result)],
+  const service = createCanonicalLocateEngineHarnessV2([new FixtureBackend(result)],
     new NodeRepositoryReader(),
-  );
+  ).service;
   const locateResult = await service.locate(goldenCase.request, {
     signal: new AbortController().signal,
   });
@@ -250,10 +249,9 @@ describe.runIf(isSelected(baselineIdentity))('text engine verified metadata', ()
         terms: ['targetField'],
         anchors: [{ kind, value: 'row.source_field' }],
       };
-      const service = new RepositoryEvidenceEngine(
-        [new FixtureBackend(backendResult('text-engine-baseline'))],
+      const service = createCanonicalLocateEngineHarnessV2([new FixtureBackend(backendResult('text-engine-baseline'))],
         new NodeRepositoryReader(),
-      );
+      ).service;
       const result = await service.locate(request, {
         signal: new AbortController().signal,
       });
@@ -287,10 +285,9 @@ describe.runIf(isSelected(baselineIdentity))('text engine verified metadata', ()
       ],
       complete: true,
     });
-    const service = new RepositoryEvidenceEngine(
-      [backend],
+    const service = createCanonicalLocateEngineHarnessV2([backend],
       new NodeRepositoryReader(),
-    );
+    ).service;
     const result = await service.locate(loadCase('text-engine-baseline').request, {
       signal: new AbortController().signal,
     });
@@ -306,10 +303,9 @@ describe.runIf(isSelected(baselineIdentity))('text engine verified metadata', ()
         throw new RepositoryAccessError('INVALID_REPOSITORY');
       }
     }
-    const service = new RepositoryEvidenceEngine(
-      [new FixtureBackend(backendResult('text-engine-baseline'))],
+    const service = createCanonicalLocateEngineHarnessV2([new FixtureBackend(backendResult('text-engine-baseline'))],
       new InvalidatingReader(),
-    );
+    ).service;
     const result = await service.locate(loadCase('text-engine-baseline').request, {
       signal: new AbortController().signal,
     });
@@ -320,10 +316,9 @@ describe.runIf(isSelected(baselineIdentity))('text engine verified metadata', ()
   });
 
   it('confirms a multiline mapping through the real ripgrep-to-reader chain', async () => {
-    const service = new RepositoryEvidenceEngine(
-      [new RipgrepBackend(new NodeSafeProcessRunner())],
+    const service = createCanonicalLocateEngineHarnessV2([new RipgrepBackend(new NodeSafeProcessRunner())],
       new NodeRepositoryReader(),
-    );
+    ).service;
     const result = await service.locate(
       {
         ...loadCase('text-engine-baseline').request,
@@ -404,10 +399,9 @@ describe.runIf(isSelected(baselineIdentity))('text engine verified metadata', ()
   });
 
   it('keeps multiple canonical symbol facts stable across anchor permutations', async () => {
-    const service = new RepositoryEvidenceEngine(
-      [new RipgrepBackend(new NodeSafeProcessRunner())],
+    const service = createCanonicalLocateEngineHarnessV2([new RipgrepBackend(new NodeSafeProcessRunner())],
       new NodeRepositoryReader(),
-    );
+    ).service;
     const locate = async (
       symbols: readonly ['Alpha', 'Zeta'] | readonly ['Zeta', 'Alpha'],
       limits?: LocateRequest['limits'],
@@ -522,7 +516,7 @@ describe.runIf(isSelected(timeoutIdentity))('text engine partial timeout evidenc
       ],
       complete: true,
     });
-    const service = new RepositoryEvidenceEngine([backend], new AbortingReader());
+    const service = createCanonicalLocateEngineHarnessV2([backend], new AbortingReader()).service;
     const result = await service.locate(loadCase('text-engine-baseline').request, {
       signal: caller.signal,
     });

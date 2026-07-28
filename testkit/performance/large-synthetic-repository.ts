@@ -20,8 +20,9 @@ import {
   LocateRequestSchema,
   LocateStatusSchema,
   type LocateResult,
+  type RepositoryEvidenceService,
 } from '../../src/contracts/index.js';
-import { RepositoryEvidenceEngine } from '../../src/evidence/repository-evidence-engine.js';
+import { createCanonicalLocateEngineHarnessV2 } from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
 import { NodeSafeProcessRunner } from '../../src/repository/node-safe-process-runner.js';
 import { RipgrepBackend } from '../../src/repository/ripgrep-backend.js';
@@ -270,7 +271,7 @@ interface MeasuredObservation {
 }
 
 async function measureLocate(
-  service: RepositoryEvidenceEngine,
+  service: RepositoryEvidenceService,
   request: z.infer<typeof LocateRequestSchema>,
 ): Promise<MeasuredObservation> {
   let peakRssBytes = process.memoryUsage().rss;
@@ -339,10 +340,9 @@ export async function runLargeSyntheticPerformance(
     ...manifest.request,
     repoPath: generated.root,
   });
-  const service = new RepositoryEvidenceEngine(
-    [new RipgrepBackend(new NodeSafeProcessRunner())],
+  const service = createCanonicalLocateEngineHarnessV2([new RipgrepBackend(new NodeSafeProcessRunner())],
     new NodeRepositoryReader(),
-  );
+  ).service;
   await measureLocate(service, request);
 
   const observations: MeasuredObservation[] = [];

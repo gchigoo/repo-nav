@@ -6,208 +6,208 @@ steps:
   exit_signal: prerequisite与final canonical order、typed absence、duplicate tag invalid、registrar exact signature和F2前两段 F8 aggregation-wrapper test-only importer inventory、four-prerequisite synthetic经aggregation补齐complete、registration identity value status generated-owner class order input internal-token stage-order mutation通过，两个factory各exact调用一次并返回窄接口实例，F1C src无F3 F2 F6 business owner import或default real provider，缺任一snapshot ranking scope capability或base预置backend request-outcome时三个stage callback三个registrar与composer均零调用，aggregation exact add后finalizer只读private complete token
   verification: npm test -- --group canonical-locate-bridge --case canonical-fact-contract --case canonical-required-owner-finalizer --case canonical-materialization-seam
   artifacts: [fact contract, owner and payload inventory, envelope builder, neutral preparation port and opaque tokens, exact stage registrar ABI and importer inventory, identity-value class-order registration matrix, test-only synthetic provider, no downstream business owner import graph, missing-owner callback and registrar zero-call report, required-owner finalizer and zero-argument runtime factory, materialized composer and zero-argument runtime factory, complete and partial fixtures, runner registry entries]
-  status: pending
+  status: done
 - id: S2
   action: 建立F1C-owned request-local projection capability和internal LocateExecutionTokenV2、capability-token-input issuer registry及requireCanonicalLocateExecutionTokenV2，并将现有RepositoryEvidenceEngine执行体迁入接收issued capability的单一canonical executor
   exit_signal: executor在owner work前取得issuer绑定的internal token并在每个terminal return前只登记一次exact canonical input，counting backend reader只执行一次，success failure abort cleanup和三种term case通过，input capability token clone swap stale cross-execution在任何canonical input或token值暴露前失败；本步不构造v1或shadow projector
   verification: npm test -- --group canonical-locate-bridge --case canonical-single-execution --case canonical-term-case-parity
   artifacts: [projection capability and internal execution token, issuer registry and accessor, canonical executor, same-run error map, three-mode term table, terminal registration inventory, single-execution counter report]
-  status: pending
+  status: done
 - id: S3
   action: 复用S2 issuer registry与exact project input capability ABI，建立v1 projector、薄service facade、唯一production DI binding并迁移直接constructor tests到testkit harness
   exit_signal: facade每次typed调用只issue一对无own-property capability token并把capability传给executor projector，projector经S2 accessor恢复same token并返回同一legacy对象，S2三种term-mode terminal outputs经projector时normalize helper调用为0，Nest graph只有v1 binding，package declaration无private bridge且现有v1 unit Golden无行为漂移
   verification: npm run build && npm test -- --group canonical-locate-bridge --case canonical-v1-projector-parity --case canonical-di-wiring --case canonical-package-declaration-boundary
   artifacts: [v1 projector, service facade, EvidenceModule wiring, engine test harness, constructor migration inventory, DI inventory, package root and declaration inventory]
-  status: pending
+  status: done
 - id: S4
   action: 复用S1 test-only synthetic provider，建立test-only shadow attempt与harness、strict schema layer、capability-bound success和fixed-safe-error trusted serialization seam及AST runtime reachability gate
   exit_signal: real execution缺prerequisite或error时无publicResult且三个preparation callback三个registrar和composer schema serializer零调用，synthetic从four-prerequisite base以same input internal token经三个registrar逐stage并由aggregation补齐backend request-outcome后让finalizer composer schema serializer各一次，四code error仅返回opaque token，同capability accessor才暴露exact bytes；同一issued capability只执行一次executor后调用v1与shadow，backend reader verify counters不再增加，各v2 stage失败不改变v1 exact object
   verification: npm test -- --group canonical-locate-bridge --case canonical-real-shadow-no-cutover --case canonical-synthetic-shadow-serialization --case canonical-safe-error-serialization --case canonical-v1-shadow-isolation --case canonical-transport-reachability
   artifacts: [shadow projector and harness, reused synthetic provider evidence, success and fixed-safe-error serialization tokens, four-code action budget capability hostile matrix, one-execution v1-shadow counter report, each-stage v2 failure and v1 identity report, runtime and type-only import graphs, mutation fixture, no-cutover report]
-  status: pending
+  status: done
 - id: S5
   action: 完成v1 dedicated/full Golden MCP docs回归、architecture更新与完整scope hardening
   exit_signal: production schema仍为1.0，full suites通过且architecture scope case registry全部闭环
   verification: npm run build && npm run typecheck && npm test && npm run test:golden -- --all && npm run test:mcp -- --all && npm run test:docs
   artifacts: [dedicated bridge Golden, aggregate command logs, architecture update, scope allow manifest, full changed-path inventory, review QA acceptance]
-  status: pending
+  status: done
 checks:
 - id: C1
   item: LOCATE_FACT_OWNER_ORDER_V2严格等于snapshot ranking backend request-outcome scope capability且唯一
   source: design §1 key decision 6 / F1C-CONTRACT-001
-  status: pending
+  status: passed
 - id: C2
   item: F1C real success fragments为frozen empty map且不得用空值默认值或unknown表示owner已完成
   source: design §1 key decision 3 / F1C-CONTRACT-001
-  status: pending
+  status: passed
 - id: C3
   item: owner builder拒绝duplicate和key tag mismatch且不能last-write-wins
   source: design §1 key decision 5 / F1C-CONTRACT-001
-  status: pending
+  status: passed
 - id: C4
   item: createRequiredOwnerFinalizerV2与createMaterializedLocateResultComposerV2均为zero-argument deep-internal factory并各返回窄接口实例；pre-stage inspector只按snapshot ranking scope capability以Object.hasOwn计算absence并拒绝预置backend request-outcome，finalizer只从completion-bearing aggregation registry读取fresh complete envelope并按六owner canonical order检查；任一失败不调用later stage；S1 case不构造schema或serializer
   source: design §1 key decision 6 / F1C-FINALIZER-001
-  status: pending
+  status: passed
 - id: C5
   item: four-prerequisite own-present后undefined unknown extra symbol key错tag、预置backend request-outcome、neutral registration identity value status generated-fragment class order及stage input internal-token order矛盾统一invalid-facts；第三registrar exact add两owner后finalizer对六owner final completeness再次fail closed，public strict schema矛盾只由S4 serialization case验证
   source: design §2.2 / F1C-FINALIZER-001 / F1C-SYNTHETIC-SHADOW-001
-  status: pending
+  status: passed
 - id: C6
   item: synthetic complete fixture明确标注test-only且不计为任何real producer或shadow readiness证据
   source: design §1 assumptions / F1C-SYNTHETIC-SHADOW-001
-  status: pending
+  status: passed
 - id: C7
   item: issuer为每次executor invocation只签发一对F1C projection capability及internal token，executor以同capability只执行一次且无retry或old-engine fallback；本case不构造projector
   source: design §1 key decision 1 / F1C-SINGLE-EXEC-001 / S2
-  status: pending
+  status: passed
 - id: C8
   item: issuer registry把capability internal token与executor返回的exact canonical input绑定，exact input capability只恢复same token，input capability token clone swap stale cross-execution在任何canonical input或token值暴露前失败
   source: design §3.1 F1C-SINGLE-EXEC-001 / S2
-  status: pending
+  status: passed
 - id: C9
   item: success no_result partial timeout backend unavailable invalid root的v1结果与迁移前deep exact
   source: design §3.1 F1C-V1-PARITY-001 / S3
-  status: pending
+  status: passed
 - id: C10
   item: v1 projector原样返回legacyV1Projection同一对象且不clone parse redact normalize；S2三种term-mode terminal outputs经projector时normalize helper spy严格为0
   source: design §1 key decision 4 / F1C-V1-PARITY-001 / S3
-  status: pending
+  status: passed
 - id: C11
   item: canonical error code action先裁决再同源构造unsafe v2 facts与legacy v1 failure且不反解析message
   source: design §1 key decision 2 / F1C-V1-PARITY-001
-  status: pending
+  status: passed
 - id: C12
   item: sensitive insensitive smart下executor对positive只normalize一次且canonical envelope与same-run legacy payload共享exact arrays，negative与anchors各独立normalize一次且backend request逐项exact；本case不构造projector
   source: design §3.1 F1C-TERM-CASE-001 / S2
-  status: pending
+  status: passed
 - id: C13
   item: canonical failure没有envelope且shadow返回execution-error无publicResult和detail
   source: design §2.2 / F1C-REAL-SHADOW-001
-  status: pending
+  status: passed
 - id: C14
   item: real F1C success shadow恰好缺snapshot ranking scope capability四个pre-stage prerequisite并且neutral preparation三个callback、三个stage registrar及composer schema serializer调用次数均为零
   source: design §3.1 F1C-REAL-SHADOW-001 / S4
-  status: pending
+  status: passed
 - id: C15
   item: synthetic valid以same canonical input internal token先从snapshot ranking scope capability base取得opaque prerequisite token，再依次经三个production registrar签source materialization aggregation；第三registrar接收{identity,statusV2,backend,requestOutcome}并以fresh builder exact add后两owner、冻结private complete envelope，finalizer不得读取原始input envelope；identity只作pairing provenance且ID只由class与array index生成；composer exact copy已登记value backend status，并调用finalizer composer schema serializer各一次；preseed duplicate missing clone swap wrong-capability status矛盾不得泄露任何facts或bytes
   source: design §3.1 F1C-SYNTHETIC-SHADOW-001 / S4
-  status: pending
+  status: passed
 - id: C16
   item: finalizer projectors不修改execution envelope fragment或value且mutation probe通过
   source: design §2.2 / S1 S4
-  status: pending
+  status: passed
 - id: C17
   item: EvidenceModule唯一production projector binding为V1LocateResultProjector且shadow不在providers exports
   source: design §1 key decision 9 / F1C-DI-001
-  status: pending
+  status: passed
 - id: C18
   item: REPOSITORY_EVIDENCE_SERVICE仍绑定RepositoryEvidenceEngine且public port返回LocateResult v1
   source: design §2.3 mounting points / F1C-DI-001
-  status: pending
+  status: passed
 - id: C19
   item: 所有直接constructor tests经同一testkit harness迁移并保留原case ID和assertions
   source: design §1 key decision 11 / S3
-  status: pending
+  status: passed
 - id: C20
   item: runtime import graph使用TypeScript AST区分type-only static mixed export与dynamic imports
   source: design §1 key decision 10 / F1C-REACHABILITY-001
-  status: pending
+  status: passed
 - id: C21
   item: src main executable index create-application-context AppModule EvidenceModule service McpModule host output server和debug CLI实际roots不能runtime到达shadow neutral preparation port materialized composer serializer或v2 public schema
   source: design §3.1 F1C-REACHABILITY-001 / S4
-  status: pending
+  status: passed
 - id: C22
   item: deliberate service到shadow到materialized composer mutation返回完整forbidden path且internal fact type-only edge不误报
   source: design §3.1 F1C-REACHABILITY-001 / S4
-  status: pending
+  status: passed
 - id: C23
   item: package contracts barrels不exportconcrete RepositoryEvidenceEngine private executor projector tokens fact contract finalizer shadow类型class或第二transport surface
   source: design §2.3 mounting points / S3 S4
-  status: pending
+  status: passed
 - id: C24
   item: production不新增v2 flag第二MCP tool第二service token或双写response
   source: design §3.3 reverse scope / S4 S5
-  status: pending
+  status: passed
 - id: C25
   item: v1 schemaVersion status IDs errors redaction ordering structured text CLI snapshots无未批准漂移
   source: design §3.1 F1C-V1-GOLDEN-001 / S5
-  status: pending
+  status: passed
 - id: C26
   item: 新增unit Golden cases全部登记runner且unknown case失败
   source: design §3.2 ownership inventory / S1 S5
-  status: pending
+  status: passed
 - id: C27
   item: F1A F1B implementation acceptance未done时F1C implementation admission必须block
   source: design §1 assumptions / S5
-  status: pending
+  status: passed
 - id: C28
   item: ACT-ARCH-UPDATE更新engine executor projector DI与no-cutover current-state及source pointers
   source: design §3.5 Required Actions / S5
-  status: pending
+  status: passed
 - id: C29
   item: ACT-SCOPE-CHECK使用check-path root并以exact allow manifest对账全部staged unstaged untracked paths
   source: design §3.5 Required Actions / S5
-  status: pending
+  status: passed
 - id: C30
   item: 不实现或填造snapshot ranking backend request-outcome scope capability真实fragment
   source: design §1 explicit non-goals / S1 S5
-  status: pending
+  status: passed
 - id: C31
   item: F9删除legacyV1Projection和v1 projector的生命周期在代码注释与acceptance artifact可追踪但不提前删除
   source: design §1 key decision 12 / S3 S5
-  status: pending
+  status: passed
 - id: C32
   item: materialized composer只经TrustedFinalizedLocateFactsV2 private registry读取complete owner与registered neutral materialization aggregation，按confirmed后candidate冻结数组index把registration value分配ID ordinal且identity只作pairing provenance等值不参与membership comparator顺序或ID内容；F5 accessor在F6 owner边界前逐union member移除retainedHits selectionEligibility，F6只构造public-neutral BackendAttemptV2数组；composer exact复制该数组与registered statusV2，不得接收或strip internal outcome，也不得读取legacyV1Projection repositoryRoot raw draft finalStableEvidence作为public字段
   source: design §2.1 complete composition / S1
-  status: pending
+  status: passed
 - id: C33
   item: F3前synthetic shared-reference pool不冒充stable identity proof且F3 F2 cross invariant保持dependency-gated
   source: design §2.1 finalizer invariant ownership / S1 S5
-  status: pending
+  status: passed
 - id: C34
   item: executor projector与projection capability tokens只位于未被package barrel导出的private locate-execution token module，trusted serialization token只位于canonical private module，runtime tokens文件不新增它们
   source: design §2.1 private token boundary / S2 S3 S4
-  status: pending
+  status: passed
 - id: C35
   item: CompleteLocateFactEnvelopeV2使用required mapped type保持owner tag value关联；pre-stage inspector只签four-prerequisite opaque token，aggregation registrar从该token恢复base并exact add backend request-outcome后冻结new complete envelope，finalizer只能经aggregation token registry收窄
   source: design §2.1 fact contract and precedence / S1
-  status: pending
+  status: passed
 - id: C36
   item: src index移除RepositoryEvidenceEngine export且build后的dist index declaration闭包不引用任何private bridge token或type
   source: design §1 key decision 13 / F1C-PACKAGE-001 / S3
-  status: pending
+  status: passed
 - id: C37
   item: LocateProjectionPreparationPortV2 createSource必须接受TrustedLocateProjectionPrerequisitesV2并按source materialization aggregation顺序返回opaque tokens；三个registrar exact由src/evidence/canonical/locate-projection-stage-registrar-v2.ts拥有，source materialization runtime import只允许F2 stage与test synthetic、aggregation只允许F8 accepted-orchestrator exact wrapper与test synthetic；F1C src不import F3 F2 F6 business accessor，handwritten prerequisite complete envelope skip reorder duplicate registration clone和cross-execution token在facts暴露前拒绝
   source: design §1 key decision 6 and F1C-MATERIALIZATION-SEAM-001 / S1
-  status: pending
+  status: passed
 - id: C38
   item: test-only synthetic provider必须复用三个production registrar且只证明neutral stage provenance，不得计为F1A F2 F6 real integration；F1A single materializer F1B guards与F2 source的真实接线由F2拥有，F8只exact-once取得F2 factory并在aggregation wrapper经F6 proof后调用第三registrar，除该wrapper外不得直接import registrar
   source: design §1 key decision 6 and F1C-MATERIALIZATION-SEAM-001 / S1
-  status: pending
+  status: passed
 - id: C39
   item: source registration view只含冻结opaque identity，materialization view严格只含PublicSearchTerm及按class分开的identity和无ID public value，aggregation view严格只含冻结opaque identity LocateStatus statusV2与public-neutral backend requestOutcome；registrar绑定same prerequisite input execution并创建private complete envelope，clone swap cross-execution status fragment矛盾失败；materialized composer只合并finalizer registry中的neutral views与owner facts，不得反射identity、接收或strip internal outcome、重建corpus、redact或derive status
   source: design §2.1 complete composition and §3.3 reverse scope / S1 S4
-  status: pending
+  status: passed
 - id: C40
   item: 同一个issued capability只执行一次executor后依次调用v1与shadow，backend search reader verify counters在两次projection前后不增加；source materialization aggregation owner-finalization composition schema serialization每一类v2 failure都不改变same-run legacyV1Projection exact引用
   source: design F1C-V1-SHADOW-ISOLATION-001 / S4
-  status: pending
+  status: passed
 - id: C41
   item: F3 F2 F5 F6 F7 F8业务真值只由对应owner accessor验证返回，F1C仅提交expected proofs execution检查完整性并组合，不重算capability tuple count adapter mapping或其他owner事实
   source: design key decision 7 / F8-TRUST-001
-  status: pending
+  status: passed
 - id: C42
   item: F1C neutral projection capability internal token registry与trusted serialization seam不import F8；projector exact ABI为project input execution，v1与F8先以requireCanonicalLocateExecutionTokenV2恢复same token，F9不得import该internal accessor且只能把issuer前移并消费F8 accepted success或F1C fixed-safe error factory与共同serialized accessor，不得另造token mapper或serializer
   source: design key decision 14 / F1C-SINGLE-EXEC-001 / F1C-SYNTHETIC-SHADOW-001 / F1C-SAFE-ERROR-SERIALIZATION-001
-  status: pending
+  status: passed
 - id: C43
   item: createTrustedSerializedPublicToolErrorV2只接受四个public code与INVALID_INPUT专属可选ADD_TERM，拒绝raw message path exception stage caller value和其他code action组合；factory及F1B serializer各一次并用same capability opaque token经共同accessor返回exact value compact JSON bytes
   source: design key decision 14 / F1C-SAFE-ERROR-SERIALIZATION-001 / S4
-  status: pending
+  status: passed
 - id: C44
   item: 14个F1C stable ID各自只登记一次且fixture assertion runner manifest contract owner与design exact path deep-equal，禁止same spec existing fixture或抽象owner，unknown duplicate zero-run case fail closed
   source: design stable case ownership inventory / S1 S4 S5
-  status: pending
+  status: passed
 dod:
   commands:
   - id: CMD-BUILD

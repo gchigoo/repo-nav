@@ -562,6 +562,8 @@ interface BackendExecutionOutcomeV2 {
 
 把真实执行管线的 terminal facts 收敛进 owner-fragment envelope；现有 production 继续经 v1 projector 输出，同一 envelope 可由 test-only shadow harness 验证已完成的 v2 fragments。required-owner finalizer 禁止用假值补齐缺失事实；F8 才产生首个完整真实 v2 shadow result，F9 只切换 projector edge。
 
+**状态（2026-07-28）**：acceptance `passed`；items.yaml `done`；production 仍 v1。
+
 ### F3 · request-snapshot-cache
 
 在单一canonical execution中建立legacy-compatible与expanded-v2双lane，拥有raw locator/legacy adapter、canonical scope universe/fold、pre-cap public-safe等价类selector、请求级文件快照、一次解码、CodeGraph预验证复用、增量hit验证、final purge、typed stable pool/proof-bound completeness和neutral language carrier。统一invariant是：只让同次执行、scope-folded、public-safe、snapshot-trusted的stable pool进入F2，同时保持legacy lane deep-exact。

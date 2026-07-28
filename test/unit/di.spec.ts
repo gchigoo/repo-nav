@@ -14,6 +14,12 @@ import {
   type RepositoryReadLimits,
   type RepositorySearchBackend,
 } from '../../src/contracts/index.js';
+import { CanonicalRepositoryLocateExecutorV2 } from '../../src/evidence/locate-execution/canonical-locate-executor-v2.js';
+import {
+  CANONICAL_LOCATE_EXECUTOR_V2,
+  LOCATE_RESULT_PROJECTOR,
+} from '../../src/evidence/locate-execution/locate-execution.tokens.js';
+import { V1LocateResultProjector } from '../../src/evidence/locate-execution/v1-locate-result-projector.js';
 import { RepositoryEvidenceEngine } from '../../src/evidence/repository-evidence-engine.js';
 import { NodeMcpStdioHost } from '../../src/mcp/mcp-stdio-host.js';
 import { CodeGraphBackend } from '../../src/repository/codegraph-backend.js';
@@ -28,6 +34,10 @@ import { createRepoNavTestingModule } from '../../testkit/create-testing-module.
 import { isSelected } from '../../testkit/testing/selection.js';
 
 const identity = { group: 'di', caseId: 'di-assembly' } as const;
+const diWiringIdentity = {
+  group: 'canonical-locate-bridge',
+  caseId: 'canonical-di-wiring',
+} as const;
 const request = LocateRequestSchema.parse({
   repoPath: 'C:/fixture',
   question: 'Where is hcp_id mapped?',
@@ -160,3 +170,26 @@ describe.runIf(isSelected(identity))('NestJS standalone DI assembly', () => {
     await expect(testingModule.close()).resolves.toBeUndefined();
   });
 });
+
+describe.runIf(isSelected(diWiringIdentity))(
+  'F1C-DI-001 canonical DI wiring',
+  () => {
+    it('binds only v1 projector and keeps service on RepositoryEvidenceEngine', async () => {
+      const application = await createRepoNavApplicationContext();
+      try {
+        const service = application.get(REPOSITORY_EVIDENCE_SERVICE);
+        const executor = application.get(CANONICAL_LOCATE_EXECUTOR_V2);
+        const projector = application.get(LOCATE_RESULT_PROJECTOR);
+        expect(service).toBeInstanceOf(RepositoryEvidenceEngine);
+        expect(executor).toBeInstanceOf(CanonicalRepositoryLocateExecutorV2);
+        expect(projector).toBeInstanceOf(V1LocateResultProjector);
+        const providerNames = Object.getOwnPropertyNames(
+          Object.getPrototypeOf(application),
+        ).join(',');
+        expect(providerNames).not.toMatch(/Shadow/u);
+      } finally {
+        await application.close();
+      }
+    });
+  },
+);

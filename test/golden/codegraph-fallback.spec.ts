@@ -9,7 +9,7 @@ import type {
   BackendSearchResult,
   LocateResult,
 } from '../../src/contracts/index.js';
-import { RepositoryEvidenceEngine } from '../../src/evidence/repository-evidence-engine.js';
+import { createCanonicalLocateEngineHarnessV2 } from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
 import {
   assertGoldenCase,
@@ -204,10 +204,9 @@ async function runCase(caseId: CaseId): Promise<TransitionRun> {
       : undefined,
   );
   const ripgrep = new CodeGraphTransitionBackend('ripgrep', ripgrepResult);
-  const resultValue: LocateResult = await new RepositoryEvidenceEngine(
-    [codegraph, ripgrep],
+  const resultValue: LocateResult = await createCanonicalLocateEngineHarnessV2([codegraph, ripgrep],
     new NodeRepositoryReader(),
-  ).locate(goldenCase.request, { signal: caller.signal });
+  ).service.locate(goldenCase.request, { signal: caller.signal });
   return {
     codegraph,
     ripgrep,
@@ -335,10 +334,9 @@ describe.runIf(
       ],
     };
 
-    const located = await new RepositoryEvidenceEngine(
-      [codegraph, ripgrep],
+    const located = await createCanonicalLocateEngineHarnessV2([codegraph, ripgrep],
       new NodeRepositoryReader(),
-    ).locate(request, { signal: new AbortController().signal });
+    ).service.locate(request, { signal: new AbortController().signal });
 
     expect(located.ok).toBe(true);
     if (!located.ok) {

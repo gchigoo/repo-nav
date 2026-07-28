@@ -7,7 +7,9 @@ import { readdirSync, readFileSync } from 'node:fs';
 import {
   buildTypeScriptImportGraph,
   findForbiddenReachability,
+  isForbiddenCanonicalBridgeRuntimeEdge,
 } from '../../testkit/contracts/public-output-v2-import-inventory.js';
+import { CANONICAL_NO_CUTOVER_PRODUCTION_ROOTS_V2 } from '../../testkit/fixtures/canonical-locate-bridge-v2/runtime-reachability-v2.js';
 import {
   FORBIDDEN_FUTURE_MODULE_MARKERS_V2,
   NO_CUTOVER_PRODUCTION_ROOTS_V2,
@@ -18,6 +20,10 @@ import { isSelected } from '../../testkit/testing/selection.js';
 const selected = isSelected({
   group: 'public-output-v2',
   caseId: 'no-cutover-import-inventory',
+});
+const reachabilitySelected = isSelected({
+  group: 'canonical-locate-bridge',
+  caseId: 'canonical-transport-reachability',
 });
 
 describe.runIf(selected)('public output v2 no-cutover import inventory', () => {
@@ -52,7 +58,7 @@ describe.runIf(selected)('public output v2 no-cutover import inventory', () => {
         graph,
         NO_CUTOVER_PRODUCTION_ROOTS_V2,
         (file) =>
-          file.includes('/contracts/v2/') ||
+          file === 'src/contracts/v2/locate-result-v2.ts' ||
           file.includes('/evidence/public-output/'),
       ),
     ).toEqual([]);
@@ -70,3 +76,51 @@ describe.runIf(selected)('public output v2 no-cutover import inventory', () => {
     }
   });
 });
+
+describe.runIf(reachabilitySelected)(
+  'F1C-REACHABILITY-001 transport reachability',
+  () => {
+    it('keeps production roots free of shadow/composer/schema runtime edges', () => {
+      const repositoryRoot = resolve(import.meta.dirname, '..', '..');
+      const graph = buildTypeScriptImportGraph(repositoryRoot);
+      expect(
+        findForbiddenReachability(
+          graph,
+          CANONICAL_NO_CUTOVER_PRODUCTION_ROOTS_V2,
+          isForbiddenCanonicalBridgeRuntimeEdge,
+        ),
+      ).toEqual([]);
+    });
+
+    it('detects deliberate service→shadow→composer mutation path', () => {
+      const graph = new Map<string, readonly string[]>([
+        [
+          'src/evidence/repository-evidence-engine.ts',
+          ['src/evidence/canonical/v2-shadow-locate-projector.ts'],
+        ],
+        [
+          'src/evidence/canonical/v2-shadow-locate-projector.ts',
+          [
+            'src/evidence/canonical/materialized-locate-result-composer-v2.ts',
+          ],
+        ],
+        [
+          'src/evidence/canonical/materialized-locate-result-composer-v2.ts',
+          [],
+        ],
+      ]);
+      expect(
+        findForbiddenReachability(
+          graph,
+          ['src/evidence/repository-evidence-engine.ts'],
+          isForbiddenCanonicalBridgeRuntimeEdge,
+        ),
+      ).toEqual([
+        [
+          'src/evidence/repository-evidence-engine.ts',
+          'src/evidence/canonical/v2-shadow-locate-projector.ts',
+        ],
+      ]);
+    });
+  },
+);

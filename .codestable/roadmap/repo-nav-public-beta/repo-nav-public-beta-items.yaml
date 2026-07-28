@@ -28,10 +28,10 @@ items:
   description: 建立typed partial fact envelope、four-prerequisite admission token、source/materialization registrars、aggregation fresh-completion registrar、只消费completion token的finalizer、v1 adapter与不可达transport的v2 shadow
   depends_on:
   - public-result-resource-budgets-v2
-  status: in-progress
+  status: done
   feature: 2026-07-24-canonical-locate-facts-bridge
   minimal_loop: false
-  notes: pre-stage只要求snapshot ranking scope capability并拒绝预置backend request-outcome；aggregation exact补齐后两owner并冻结new complete envelope，finalizer不得读取old partial envelope；production仍v1
+  notes: 2026-07-28 acceptance passed；production仍v1；test-only v2 shadow；four-prerequisite admission + completion-token finalizer
 - slug: request-snapshot-cache
   description: 在单一canonical execution内建立legacy-compatible与expanded-v2双lane、raw locator/legacy adapter、scope-folded public-safe selector、请求级snapshot/cache与typed stable trust pool，并在公共组装前丢弃变化文件证据
   depends_on:

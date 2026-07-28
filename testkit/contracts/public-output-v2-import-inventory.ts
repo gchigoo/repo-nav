@@ -10,6 +10,7 @@ import {
   resolve,
   sep,
 } from 'node:path';
+import ts from 'typescript';
 
 export type TypeScriptImportGraph = ReadonlyMap<
   string,
@@ -63,20 +64,70 @@ function resolveLocalImport(
     : posixRelative(repositoryRoot, target);
 }
 
-function localSpecifiers(source: string): readonly string[] {
+function runtimeLocalSpecifiers(source: string, fileName: string): readonly string[] {
   const specifiers: string[] = [];
-  const staticImport =
-    /(?:import|export)\s+(?:type\s+)?(?:[^'"]*?\s+from\s+)?['"](\.[^'"]+)['"]/gu;
-  const dynamicImport = /import\s*\(\s*['"](\.[^'"]+)['"]\s*\)/gu;
-  for (const pattern of [staticImport, dynamicImport]) {
-    for (const match of source.matchAll(pattern)) {
-      const specifier = match[1];
-      if (specifier !== undefined) specifiers.push(specifier);
+  const sourceFile = ts.createSourceFile(
+    fileName,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  );
+  const visit = (node: ts.Node): void => {
+    if (ts.isImportDeclaration(node)) {
+      if (node.importClause?.isTypeOnly === true) {
+        return;
+      }
+      const module = node.moduleSpecifier;
+      if (ts.isStringLiteral(module) && module.text.startsWith('.')) {
+        const clause = node.importClause;
+        if (
+          clause?.namedBindings &&
+          ts.isNamedImports(clause.namedBindings) &&
+          clause.namedBindings.elements.length > 0 &&
+          clause.namedBindings.elements.every((element) => element.isTypeOnly)
+        ) {
+          // import { type X } from './y' with no value bindings
+          if (clause.name === undefined) {
+            return;
+          }
+        }
+        specifiers.push(module.text);
+      }
+      return;
     }
-  }
+    if (ts.isExportDeclaration(node)) {
+      if (node.isTypeOnly) {
+        return;
+      }
+      const module = node.moduleSpecifier;
+      if (
+        module !== undefined &&
+        ts.isStringLiteral(module) &&
+        module.text.startsWith('.')
+      ) {
+        specifiers.push(module.text);
+      }
+      return;
+    }
+    if (
+      ts.isCallExpression(node) &&
+      node.expression.kind === ts.SyntaxKind.ImportKeyword &&
+      node.arguments[0] !== undefined &&
+      ts.isStringLiteral(node.arguments[0]) &&
+      node.arguments[0].text.startsWith('.')
+    ) {
+      specifiers.push(node.arguments[0].text);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
   return specifiers;
 }
 
+/**
+ * Build a runtime-only TypeScript import graph using the compiler AST.
+ */
 export function buildTypeScriptImportGraph(
   repositoryRoot: string,
 ): TypeScriptImportGraph {
@@ -86,8 +137,9 @@ export function buildTypeScriptImportGraph(
   ];
   const graph = new Map<string, readonly string[]>();
   for (const file of files) {
-    const dependencies = localSpecifiers(
+    const dependencies = runtimeLocalSpecifiers(
       readFileSync(file, 'utf8'),
+      file,
     )
       .map((specifier) =>
         resolveLocalImport(repositoryRoot, file, specifier),
@@ -127,4 +179,13 @@ export function findForbiddenReachability(
     visit(root, [], new Set<string>());
   }
   return Object.freeze(findings);
+}
+
+/** F1C dangerous runtime modules that must stay unreachable from production roots. */
+export function isForbiddenCanonicalBridgeRuntimeEdge(file: string): boolean {
+  return (
+    file === 'src/contracts/v2/locate-result-v2.ts' ||
+    file.includes('/evidence/public-output/') ||
+    file.includes('/evidence/canonical/')
+  );
 }

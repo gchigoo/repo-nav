@@ -6,7 +6,7 @@ import {
   type LocateStatus,
   type RepositoryEvidenceService,
 } from '../../../src/contracts/index.js';
-import { RepositoryEvidenceEngine } from '../../../src/evidence/repository-evidence-engine.js';
+import { createCanonicalLocateEngineHarnessV2 } from '../../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import { NodeRepositoryReader } from '../../../src/repository/node-repository-reader.js';
 import { writeScrubbedDiagnostic } from '../../../src/mcp/diagnostic-scrubber.js';
 import {
@@ -182,10 +182,9 @@ export class FixtureEvidenceService implements RepositoryEvidenceService {
       );
     }
     if (request.question === 'candidate-minimal-loop') {
-      const engine = new RepositoryEvidenceEngine(
-        [new CandidateFixtureBackend()],
+      const engine = createCanonicalLocateEngineHarnessV2([new CandidateFixtureBackend()],
         new NodeRepositoryReader(),
-      );
+      ).service;
       return await engine.locate(
         {
           ...request,

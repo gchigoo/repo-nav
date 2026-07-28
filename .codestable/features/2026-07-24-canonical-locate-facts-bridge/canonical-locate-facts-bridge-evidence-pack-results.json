@@ -1,0 +1,40 @@
+{
+  "gate_id": "evidence-pack",
+  "stage": "implementation.before_review",
+  "status": "passed",
+  "blocking": [],
+  "warnings": [],
+  "evidence": [
+    {
+      "out": ".codestable\\features\\2026-07-24-canonical-locate-facts-bridge\\canonical-locate-facts-bridge-evidence-pack.md",
+      "providers": {
+        "archguard": {
+          "status": "unavailable",
+          "reason": "archguard binary not found on PATH",
+          "warnings": []
+        },
+        "meta_cc": {
+          "status": "unavailable",
+          "reason": "meta-cc summary not found; realtime session collection is out of scope",
+          "warnings": []
+        }
+      }
+    }
+  ],
+  "providers": {},
+  "feature": "2026-07-24-canonical-locate-facts-bridge",
+  "inputs": {
+    "design": ".codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-design.md",
+    "checklist": ".codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-checklist.yaml",
+    "out": ".codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-evidence-pack.md",
+    "dod_results": ".codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-dod-results.json",
+    "gate_results": ".codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-gate-results.json"
+  },
+  "input_digests": {
+    "design": "a44dbbc504a73a378d25f2e5a7124ac72de7cefe8ee9be794ab4f60a6f3993d8",
+    "checklist": "ddbeba09ba2c6194f34589a549003b658ab6e8db02f8996f2d01ec97031bdea4",
+    "dod_results": "d501971cbb7f372cf834fd866e4f92dcd93834ffa39498559ccb45222871ee59",
+    "gate_results": "7aab6289f03294eda879622c9c0f53d7f88efa62c36a28d3d5fb25e2b9768443",
+    "out": "09a4f5270898f37c3832330991b17e6002a622326f454b35dea7f3bd7f8a211f"
+  }
+}

@@ -10,7 +10,7 @@ commit_authorization: approved
 commit_authorization_ref: "approval-report.md#goal-commits"
 handoff_reason: ""
 handoff_next: ""
-current_feature_index: 4
+current_feature_index: 5
 features:
 - slug: public-output-boundary-v2
   roadmap_item: public-output-boundary-v2
@@ -56,7 +56,7 @@ features:
   review: .codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-review.md
   qa: .codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-qa.md
   acceptance: .codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-acceptance.md
-  status: pending
+  status: accepted
 - slug: request-snapshot-cache
   roadmap_item: request-snapshot-cache
   feature_dir: .codestable/features/2026-07-24-request-snapshot-cache
@@ -194,3 +194,7 @@ ledger:
   status: done
   feature: public-result-resource-budgets-v2
   note: impl/review/QA/accept complete; index->4
+- step: f1c-feature-loop
+  status: done
+  feature: canonical-locate-facts-bridge
+  note: impl/review/QA/accept complete; index->5

@@ -21,6 +21,7 @@ import {
   type McpLifecycleCase,
   type McpLifecycleProbeAudit,
 } from '../../testkit/contracts/index.js';
+import { recordPlatformAssertionMarker } from '../../testkit/testing/platform-contract.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
 const manifestDirectory = resolve(
@@ -397,6 +398,10 @@ describe.runIf(
       expect(observation.contextClosed).toBe(true);
       expect(observation.childrenCleaned).toBe(true);
       writeLifecycleReport('shutdown-cleanup-probe', observation);
+      recordPlatformAssertionMarker(
+        'F4-MCP-002',
+        'real-close-and-tree-cleanup',
+      );
     },
     10_000,
   );
@@ -409,6 +414,7 @@ describe.runIf(
           lifecycleCase,
         ),
       ).rejects.toThrow(/contextClosed/iu);
+      recordPlatformAssertionMarker('F4-MCP-002', 'missing-close-negative');
     },
     10_000,
   );
@@ -421,6 +427,7 @@ describe.runIf(
           lifecycleCase,
         ),
       ).rejects.toThrow(/childrenCleaned/iu);
+      recordPlatformAssertionMarker('F4-MCP-002', 'live-descendant-negative');
     },
     10_000,
   );
@@ -441,6 +448,7 @@ describe.runIf(
         }),
       ).rejects.toThrow(/exceeded/iu);
       expectProbeAuditCleaned(audit);
+      recordPlatformAssertionMarker('F4-MCP-002', 'timeout-cleanup');
     },
     10_000,
   );
@@ -458,6 +466,7 @@ describe.runIf(
         }).run(lifecycleCase),
       ).rejects.toThrow(/exit code 7/iu);
       expectProbeAuditCleaned(audit);
+      recordPlatformAssertionMarker('F4-MCP-002', 'nonzero-cleanup');
     },
     10_000,
   );

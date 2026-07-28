@@ -5,6 +5,57 @@ export interface RunnerSelectionRegistry {
   readonly cases: ReadonlySet<string>;
 }
 
+/**
+ * Exact owner-file registration for platform contract surface/group/case tuples.
+ * Paths are repository-relative POSIX paths.
+ */
+export const PLATFORM_CASE_OWNER_REGISTRATION: Readonly<
+  Record<string, readonly string[]>
+> = Object.freeze({
+  'unit/cross-platform-baseline/repository-path-invalid-input': Object.freeze([
+    'test/unit/cross-platform-platform.spec.ts',
+  ]),
+  'unit/cross-platform-baseline/repository-path-posix-symlink-escape':
+    Object.freeze(['test/unit/cross-platform-platform.spec.ts']),
+  'unit/cross-platform-baseline/repository-path-windows-reparse-escape':
+    Object.freeze(['test/unit/cross-platform-platform.spec.ts']),
+  'unit/cross-platform-baseline/repository-path-error-redaction': Object.freeze([
+    'test/unit/cross-platform-platform.spec.ts',
+  ]),
+  'unit/cross-platform-baseline/process-caller-abort-tree-cleanup':
+    Object.freeze(['test/unit/cross-platform-platform.spec.ts']),
+  'unit/cross-platform-baseline/process-timeout-tree-cleanup': Object.freeze([
+    'test/unit/cross-platform-platform.spec.ts',
+  ]),
+  'unit/cross-platform-baseline/process-stdout-current-boundary': Object.freeze([
+    'test/unit/cross-platform-platform.spec.ts',
+  ]),
+  'unit/cross-platform-baseline/process-stderr-current-boundary': Object.freeze([
+    'test/unit/cross-platform-platform.spec.ts',
+  ]),
+  'unit/cross-platform-baseline/process-cleanup-invariant-fault': Object.freeze([
+    'test/unit/cross-platform-platform.spec.ts',
+  ]),
+  'mcp/mcp-surface/request-cancellation-cleanup': Object.freeze([
+    'test/mcp/request-cancellation.spec.ts',
+  ]),
+  'mcp/lifecycle/shutdown-cleanup-probe': Object.freeze([
+    'test/mcp/lifecycle-contract.spec.ts',
+  ]),
+  'unit/cross-platform-ci-contract/workflow-matrix-contract': Object.freeze([
+    'test/unit/cross-platform-ci-contract.spec.ts',
+  ]),
+  'unit/cross-platform-ci-contract/runtime-cell-contract': Object.freeze([
+    'test/unit/cross-platform-ci-contract.spec.ts',
+  ]),
+  'unit/cross-platform-ci-contract/safe-platform-report': Object.freeze([
+    'test/unit/platform-evidence-report.spec.ts',
+  ]),
+  'unit/cross-platform-ci-contract/synthetic-extension-protocol': Object.freeze([
+    'test/unit/cross-platform-ci-contract.spec.ts',
+  ]),
+});
+
 export const RUNNER_GROUP_ALIASES: Readonly<
   Record<RunnerSurface, Readonly<Record<string, readonly string[]>>>
 > = Object.freeze({
@@ -66,6 +117,8 @@ export const RUNNER_SELECTIONS: Readonly<
       'debug-cli-probe',
       'debug-cli-golden',
       'public-output-v2',
+      'cross-platform-ci-contract',
+      'cross-platform-baseline',
     ]),
     cases: new Set([
       'runner-smoke',
@@ -120,6 +173,19 @@ export const RUNNER_SELECTIONS: Readonly<
       'safe-errors',
       'synthetic-parity',
       'no-cutover-import-inventory',
+      'workflow-matrix-contract',
+      'runtime-cell-contract',
+      'safe-platform-report',
+      'synthetic-extension-protocol',
+      'repository-path-invalid-input',
+      'repository-path-posix-symlink-escape',
+      'repository-path-windows-reparse-escape',
+      'repository-path-error-redaction',
+      'process-caller-abort-tree-cleanup',
+      'process-timeout-tree-cleanup',
+      'process-stdout-current-boundary',
+      'process-stderr-current-boundary',
+      'process-cleanup-invariant-fault',
     ]),
   }),
   golden: Object.freeze({

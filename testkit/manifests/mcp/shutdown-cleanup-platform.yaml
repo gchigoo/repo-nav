@@ -1,0 +1,14 @@
+schemaVersion: '1.0'
+id: shutdown-cleanup-probe
+scenario: shutdown-cleanup-probe
+contractId: F4-MCP-002
+expected:
+  stdoutMode: mcp-frames-only
+  exitCode: 0
+  maxShutdownMs: 5000
+requiredAssertionIds:
+  - real-close-and-tree-cleanup
+  - missing-close-negative
+  - live-descendant-negative
+  - timeout-cleanup
+  - nonzero-cleanup

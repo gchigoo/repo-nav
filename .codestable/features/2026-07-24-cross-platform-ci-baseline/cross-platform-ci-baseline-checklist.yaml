@@ -6,25 +6,25 @@ steps:
   exit_signal: 六格九项commands与cross-platform-required needs always success-only contract deep-exact，删除cell aggregate merge_group或gate、改名放宽result、改latest浮动ref、添加continue-on-error或write权限均使F4-MATRIX-001失败
   verification: npm test -- --group cross-platform-ci-contract --case workflow-matrix-contract --case runtime-cell-contract
   artifacts: [platform contract registry, matrix and stable aggregate workflow, required-check mutation report, action pin provenance]
-  status: pending
+  status: done
 - id: S2
   action: 建立orchestrator的OS applicability和marker attestation最小切片及真实runtime identity与repository path跨平台cases
   exit_signal: 六格runtime精确，absolute parent non-normalized与root泄露均被拒绝，Linux macOS四格真实执行symlink而Windows两格真实执行junction reparse，非适用cells不启动binding也不产生假passed或skipped marker
   verification: node tools/ci/run-platform-contracts.mjs --contract F4-PATH-001 --contract F4-PATH-002 --contract F4-PATH-003 --contract F4-PATH-004
   artifacts: [runtime identity report, real path fixture, POSIX symlink evidence, Windows junction evidence, path forbidden scan]
-  status: pending
+  status: done
 - id: S3
   action: 建立每contract唯一case与assertion marker的真实process当前N减1和exact N limit基线、abort timeout cleanup failure及MCP cancellation shutdown跨平台cases
   exit_signal: stdout stderr N减1成功且exact N为当前limit基线，normal abort timeout limit全部settle once并清理direct descendant，fault injection只承诺direct hard-kill且harness cleanup前观察descendant，两个MCP executable cases及其required assertion markers分别显式运行
   verification: node tools/ci/run-platform-contracts.mjs --contract F4-PROC-001 --contract F4-PROC-002 --contract F4-PROC-003 --contract F4-PROC-004 --contract F4-PROC-005 --contract F4-MCP-001 --contract F4-MCP-002
   artifacts: [process current-boundary report, pre-harness-cleanup PID liveness assertions, PlatformCaseBinding exact tuple and marker mapping, MCP cancellation report, shutdown cleanup report]
-  status: pending
+  status: done
 - id: S4
   action: 接入单一test:platform跨surface orchestrator、runner reporter签发的private actual-owner provenance、剥离owner后的assertion marker和contract evidence hash attestation、F4-owned synthetic child-extension protocol，以及含run family与passed markers的strict core-command report、always write upload cell assertion并接入S1既有stable aggregate
   exit_signal: F4 base unit和mcp bindings逐项执行且declared owner与actual task-file owner、required assertion marker与required evidence hash expected actual集合及九项command outcomes完整，base evidence集合exact empty；TEST-EXT-001以synthetic-proof固定hash的完整patch通过但不进production registry，unextended ID或漏fixture assertion evidence owner、wrong-path、declared-owner actual-owner错配、zero marker或evidence、错tuple、重复marker或evidence、invalid或unknown hash、缩小OS、同revision跨run attempt拼接均失败；artifact只含一个strict JSON且不冒充完整job outcome
   verification: npm run test:platform && node tools/ci/run-platform-contracts.mjs --self-test && npm test -- --group cross-platform-ci-contract --case safe-platform-report
   artifacts: [test platform cross-surface orchestrator, F4 base case-binding registry, no-owner-argument platform assertion and evidence hash helper, runner private actual-owner provenance, safe marker and hash summary, synthetic extension mutation corpus, wrong tuple declared-vs-actual-owner and missing assertion or evidence mutation report, run marker and hash core-command report schema, report writer, cell and aggregate assertions, cross-run-attempt and forbidden-key mutation report]
-  status: pending
+  status: done
 - id: S5
   action: 完成本地全量回归并在owner授权后取得event-specific同runrevision六格加aggregate远程证据、main required-check与失败PR不可merge证据及architecture scope闭环
   exit_signal: 所有本地核心命令与同一PR synthetic merge加head、merge-group head sha、push或manual commit的六格和aggregate均通过，main ruleset要求stable check且故意失败PR不可merge，package metadata与production v1无越界变化；global doctor仅作non-core既有P1诊断

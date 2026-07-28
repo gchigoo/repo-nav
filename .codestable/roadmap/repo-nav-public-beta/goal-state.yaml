@@ -1,5 +1,5 @@
 roadmap: repo-nav-public-beta
-status: running
+status: handoff
 baseline_ref: 9d7b0e237e3cd9245d1f057a2ad504b1d1028d7d
 driver_kind: host-agent
 driver_id: "06c57bbc-6ea2-4038-a133-a77038e95a06"
@@ -8,8 +8,8 @@ acceptance_authorization: approved
 acceptance_authorization_ref: "approval-report.md#goal-acceptance"
 commit_authorization: approved
 commit_authorization_ref: "approval-report.md#goal-commits"
-handoff_reason: ""
-handoff_next: ""
+handoff_reason: "CoreEvidenceUnavailable: F4 cross-platform-ci-baseline S5 requires owner-authorized GitHub remote six-cell matrix + cross-platform-required aggregate + main ruleset required-check evidence; goal-commits does not authorize push/PR/ruleset mutation; local S1-S4 done but cannot accept without remote core path."
+handoff_next: "Owner approved f4-remote-ci-evidence; push F4 impl, collect same-run six-cell+aggregate green, configure main required check cross-platform-required with failing-PR negative, then resume /goal at index=2."
 current_feature_index: 2
 features:
 - slug: public-output-boundary-v2
@@ -38,7 +38,7 @@ features:
   review: .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-review.md
   qa: .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-qa.md
   acceptance: .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-acceptance.md
-  status: pending
+  status: implementing
 - slug: public-result-resource-budgets-v2
   roadmap_item: public-result-resource-budgets-v2
   feature_dir: .codestable/features/2026-07-24-public-result-resource-budgets-v2
@@ -146,3 +146,21 @@ ledger:
   status: done
   feature: span-redaction-corpus-policy-v2
   note: ResumeGoalAcceptance approval-report.md#goal-acceptance; index->2
+- step: f1a-scoped-commit
+  status: done
+  feature: span-redaction-corpus-policy-v2
+  commit: 9c125e2
+  note: goal-commits authorized; working tree clean
+- step: f4-feature-start
+  status: started
+  feature: cross-platform-ci-baseline
+  index: 2
+  note: implementationReady; local S1-S4 implemented
+- step: f4-implementation-local
+  status: done
+  feature: cross-platform-ci-baseline
+  note: S1-S4 done; local build/typecheck/unit/golden/mcp/docs/test:platform green
+- step: f4-handoff
+  status: blocked
+  feature: cross-platform-ci-baseline
+  note: CoreEvidenceUnavailable awaiting owner-authorized remote matrix and ruleset

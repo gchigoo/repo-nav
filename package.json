@@ -18,6 +18,7 @@
     "test:golden": "tsx testkit/runners/golden-runner.ts",
     "test:mcp": "npm run build --silent && tsx testkit/runners/mcp-runner.ts",
     "test:docs": "npm run build --silent && tsx testkit/docs/docs-smoke-runner.ts",
+    "test:platform": "node --import tsx tools/ci/run-platform-contracts.mjs",
     "repo-nav": "node dist/tools/cli/main.js"
   },
   "dependencies": {

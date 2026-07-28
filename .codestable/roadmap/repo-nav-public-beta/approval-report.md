@@ -9,6 +9,7 @@ approvals:
   all-child-designs-current-revision: approved
   goal-acceptance: approved
   goal-commits: approved
+  f4-remote-ci-evidence: approved
 approval_groups:
   goal-execution:
     status: approved
@@ -152,6 +153,9 @@ review 失效，必须先完成受影响的独立复审，不能复用本报告�
 - 只有收到新的执行指令才进入 F1A/F4 child design 或 epic goal；本批准不自动启动实现。
 - 当前已按owner“继续”进入ChildDesignBatch；全部child designs独立review完成后一次性提交统一确认，其中必须单列`PublicSafeRankingKeyV2` contract delta。
 
+- 2026-07-27：[public-beta goal driver](06c57bbc-6ea2-4038-a133-a77038e95a06) 完成 F1A（commit `9c125e2`）后，在 F4 S5 因缺少 owner 授权的 GitHub 远程证据而 `CS_ROADMAP_GOAL_HANDOFF`；命名决策 `f4-remote-ci-evidence` 曾记为 `pending`。
+- 2026-07-28：owner 批准完整远程证据路径，`f4-remote-ci-evidence` → `approved`。
+
 ## Goal Execution Authorization Applied
 
 命名决策与 group：
@@ -170,3 +174,37 @@ Owner 一次批准同一条 `/goal` 时，原子将 group 与两项 named decisi
 
 不会自动执行 remote push、merge、publish、release、deploy、promotion、移除 `private: true`、
 license 选择或 production cutover；这些仍需各自独立 owner authorization。
+
+## F4 Remote CI Evidence Authorization Applied
+
+命名决策 `f4-remote-ci-evidence` 当前为 `approved`。
+
+- 2026-07-28：owner 回复“批准完整远程证据路径”，选择选项 1：授权 F4 本地实现 scoped-commit、push/PR、同 run 六格+aggregate、main required check=`cross-platform-required`（含失败 PR 不可 merge），完成后从 index=2 恢复 `/goal`。不包含 merge 到 main、publish 或 v2 cutover。
+
+[public-beta goal driver](06c57bbc-6ea2-4038-a133-a77038e95a06) 已完成 F1A，并在 F4
+`cross-platform-ci-baseline` 本地 S1–S4 后按协议 handoff：S5 核心路径需要 GitHub 远程证据，
+而既有 `goal-commits` 不覆盖 push / PR / ruleset。
+
+### Current Facts
+
+- goal-state：`status: handoff`，`current_feature_index: 2`，F4=`implementing`
+- F1A accepted commit：`9c125e2`
+- F4 本地实现仍在工作树（未 scoped-commit）；缺口说明：
+  `.codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-remote-evidence-gap.md`
+
+### Options
+
+1. **批准 F4 远程证据动作**：授权把当前 F4 本地实现 scoped-commit 后 push 到
+   `repo-nav-public-beta`（或开 PR），跑通同 run 六格 matrix + `cross-platform-required`
+   aggregate，配置 `main` required check=`cross-platform-required`（含 sanitized ruleset
+   与失败 PR 不可 merge 负样本）。完成后从 index=2 恢复 `/goal`。
+2. **只授权 push/PR，ruleset 另批**：先取六格+aggregate 绿证据；ruleset/负样本另开决策。
+3. **拒绝 / 改设计**：保持 handoff，不 push；另指定如何关闭 S5 或修订 F4 design。
+
+### Recommendation
+
+选项 1。F4 design 把远程六格、aggregate 与 ruleset 都标为核心验收路径。
+
+### Non-Automatic Actions
+
+即使批准本决策，也不自动 merge 到 `main`、不 publish、不 cutover production v2。

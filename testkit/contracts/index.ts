@@ -8,3 +8,5 @@ export * from './mcp-lifecycle-case.js';
 export * from './mcp-lifecycle-harness.js';
 export * from './mcp-stdio-harness.js';
 export * from './mcp-tool-result.js';
+export * from './platform-contract.js';
+export * from './platform-evidence-report.js';

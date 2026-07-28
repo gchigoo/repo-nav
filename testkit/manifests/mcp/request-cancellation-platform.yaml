@@ -1,0 +1,8 @@
+schemaVersion: '1.0'
+id: request-cancellation-cleanup
+scenario: request-cancellation-cleanup
+contractId: F4-MCP-001
+requiredAssertionIds:
+  - pre-handler-cancel
+  - inflight-signal
+  - eof-abort

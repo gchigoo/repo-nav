@@ -444,13 +444,14 @@ describe.runIf(
           },
         }).run({
           ...lifecycleCase,
+          // Budget starts after children.json; keep short once the probe is armed.
           expected: { ...lifecycleCase.expected, maxShutdownMs: 2_500 },
         }),
       ).rejects.toThrow(/exceeded/iu);
       expectProbeAuditCleaned(audit);
       recordPlatformAssertionMarker('F4-MCP-002', 'timeout-cleanup');
     },
-    10_000,
+    30_000,
   );
 
   it(

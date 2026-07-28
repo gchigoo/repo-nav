@@ -38,10 +38,13 @@ function loadWorkflow(): {
   readonly raw: string;
   readonly doc: Record<string, unknown>;
 } {
+  // Windows checkouts may materialize CRLF; mutation regexes assert on LF only.
   const raw = readFileSync(
     resolve(repositoryRoot, PLATFORM_WORKFLOW_PATH_V1),
     'utf8',
-  );
+  )
+    .replaceAll('\r\n', '\n')
+    .replaceAll('\r', '\n');
   return { raw, doc: parseYaml(raw) as Record<string, unknown> };
 }
 

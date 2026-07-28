@@ -133,17 +133,32 @@ describe.runIf(selected('path-outside-root'))('MCP path boundary mapping', () =>
 describe.runIf(selected('internal-error-parity'))(
   'MCP internal exception mapping',
   () => {
-    it('turns thrown failures into safe typed parity output', async () => {
-      await verifyServiceError(
-        'throw:INTERNAL_ERROR',
-        'INTERNAL_ERROR',
-        false,
-      );
-      await verifyServiceError(
-        'error:INTERNAL_ERROR',
-        'INTERNAL_ERROR',
-        false,
-      );
-    });
+    it(
+      'turns thrown failures into safe typed parity output',
+      async () => {
+        // One session covers both paths to avoid slow darwin dual-spawn flakes.
+        const session = await connectMcpStdioFixture();
+        try {
+          for (const question of [
+            'throw:INTERNAL_ERROR',
+            'error:INTERNAL_ERROR',
+          ] as const) {
+            const result = await session.client.callTool({
+              name: 'repo_nav_locate',
+              arguments: { ...baseArguments, question },
+            });
+            const parsed = parseLocateToolResultParity(result);
+            expectSafeError(parsed, 'INTERNAL_ERROR');
+            if (!parsed.output.ok) {
+              expect(parsed.output.error.recoverable).toBe(false);
+              expect(parsed.output.error.suggestedAction).toBeUndefined();
+            }
+          }
+        } finally {
+          await session.close();
+        }
+      },
+      20_000,
+    );
   },
 );

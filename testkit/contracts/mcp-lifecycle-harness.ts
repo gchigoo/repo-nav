@@ -357,6 +357,30 @@ async function runMcpLifecycleProcess(
     let stdoutRemainder = '';
     let shutdownTriggered = false;
     let completed = false;
+    let killTimeout: ReturnType<typeof setTimeout> | undefined;
+    const armKillTimeout = (): void => {
+      if (killTimeout !== undefined) {
+        return;
+      }
+      killTimeout = setTimeout(() => {
+        timedOut = true;
+        child.kill();
+      }, lifecycleCase.expected.maxShutdownMs);
+    };
+    // Probe cases arm the budget after children.json appears so slow darwin Nest
+    // boot cannot race force-timeout before directPid is written.
+    if (lifecycleProcess.probe === null) {
+      armKillTimeout();
+    }
+    const probeBootstrapTimeout =
+      lifecycleProcess.probe === null
+        ? undefined
+        : setTimeout(() => {
+            if (!shutdownTriggered) {
+              timedOut = true;
+              child.kill();
+            }
+          }, Math.max(lifecycleCase.expected.maxShutdownMs * 4, 20_000));
     const probePoll =
       lifecycleProcess.probe === null
         ? undefined
@@ -366,6 +390,7 @@ async function runMcpLifecycleProcess(
               existsSync(lifecycleProcess.probe?.pidFile ?? '')
             ) {
               shutdownTriggered = true;
+              armKillTimeout();
               child.stdin.end();
             }
           }, 10);
@@ -438,17 +463,17 @@ async function runMcpLifecycleProcess(
       stderr += chunk;
     });
 
-    const timeout = setTimeout(() => {
-      timedOut = true;
-      child.kill();
-    }, lifecycleCase.expected.maxShutdownMs);
-
     child.once('error', (error) => {
       if (completed) {
         return;
       }
       completed = true;
-      clearTimeout(timeout);
+      if (killTimeout !== undefined) {
+        clearTimeout(killTimeout);
+      }
+      if (probeBootstrapTimeout !== undefined) {
+        clearTimeout(probeBootstrapTimeout);
+      }
       if (probePoll !== undefined) {
         clearInterval(probePoll);
       }
@@ -485,7 +510,12 @@ async function runMcpLifecycleProcess(
         return;
       }
       completed = true;
-      clearTimeout(timeout);
+      if (killTimeout !== undefined) {
+        clearTimeout(killTimeout);
+      }
+      if (probeBootstrapTimeout !== undefined) {
+        clearTimeout(probeBootstrapTimeout);
+      }
       if (probePoll !== undefined) {
         clearInterval(probePoll);
       }

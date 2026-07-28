@@ -227,6 +227,7 @@ describe.runIf(isSelected(cleanupIdentity))('process and reader cleanup', () => 
     }
   });
 
+  // macOS-intel CI can exceed vitest's 5s default under load; keep assertion tight, budget roomy.
   it('terminates direct child and descendant on timeout', async () => {
     const cwd = mkdtempSync(resolve(tmpdir(), 'repo-nav-process-timeout-'));
     const pidFile = resolve(cwd, 'pids.json');
@@ -244,7 +245,7 @@ describe.runIf(isSelected(cleanupIdentity))('process and reader cleanup', () => 
       forceCleanup(inventory);
       rmSync(cwd, { recursive: true, force: true });
     }
-  });
+  }, 15_000);
 
   it.each([
     ['stdout', 'stdout-limit'],

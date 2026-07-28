@@ -78,6 +78,10 @@ function run(command: string, args: readonly string[], cwd: string) {
     cwd,
     encoding: 'utf8',
     windowsHide: true,
+    env: {
+      ...process.env,
+      PYTHONDONTWRITEBYTECODE: '1',
+    },
   });
 }
 

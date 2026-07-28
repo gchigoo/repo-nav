@@ -128,6 +128,9 @@ function assertWorkflowContract(workflowPath) {
   const checkout = steps.find((step) =>
     String(step.uses ?? '').startsWith('actions/checkout@'),
   );
+  const setupPython = steps.find((step) =>
+    String(step.uses ?? '').startsWith('actions/setup-python@'),
+  );
   const setup = steps.find((step) =>
     String(step.uses ?? '').startsWith('actions/setup-node@'),
   );
@@ -135,6 +138,9 @@ function assertWorkflowContract(workflowPath) {
     String(step.uses ?? '').startsWith('actions/upload-artifact@'),
   );
   const checkoutPin = PLATFORM_ACTION_PINS_V1.find((pin) => pin.id === 'checkout');
+  const setupPythonPin = PLATFORM_ACTION_PINS_V1.find(
+    (pin) => pin.id === 'setup-python',
+  );
   const setupPin = PLATFORM_ACTION_PINS_V1.find((pin) => pin.id === 'setup-node');
   const uploadPin = PLATFORM_ACTION_PINS_V1.find(
     (pin) => pin.id === 'upload-artifact',
@@ -142,6 +148,10 @@ function assertWorkflowContract(workflowPath) {
   assert(
     checkout?.uses === `actions/checkout@${checkoutPin.sha}`,
     'checkout SHA mismatch',
+  );
+  assert(
+    setupPython?.uses === `actions/setup-python@${setupPythonPin.sha}`,
+    'setup-python SHA mismatch',
   );
   assert(
     setup?.uses === `actions/setup-node@${setupPin.sha}`,

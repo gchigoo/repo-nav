@@ -29,15 +29,16 @@ const gateScript = resolve(
 );
 
 /**
- * 在当前平台探测可用的 Python 3 启动方式（Windows 优先 py -3）。
+ * 在当前平台探测可用的 Python 3 启动方式。
+ * Windows 优先 python3/python（CI 由 setup-python 提供），避免 py launcher 在跑脚本时 ACCESS_VIOLATION。
  */
 function resolvePythonInvocation(): PythonInvocation {
   const candidates: readonly PythonInvocation[] =
     process.platform === 'win32'
       ? [
-          { command: 'py', prefixArgs: ['-3'] },
           { command: 'python3', prefixArgs: [] },
           { command: 'python', prefixArgs: [] },
+          { command: 'py', prefixArgs: ['-3'] },
         ]
       : [
           { command: 'python3', prefixArgs: [] },

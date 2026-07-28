@@ -45,7 +45,7 @@ export interface PlatformCommandContract {
 }
 
 export interface PlatformActionPin {
-  readonly id: 'checkout' | 'setup-node' | 'upload-artifact';
+  readonly id: 'checkout' | 'setup-python' | 'setup-node' | 'upload-artifact';
   readonly owner: 'actions';
   readonly repository: string;
   readonly sha: string;
@@ -203,6 +203,13 @@ export const PLATFORM_ACTION_PINS_V1: readonly PlatformActionPin[] =
       repository: 'actions/checkout',
       sha: '9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0',
       tag: 'v7.0.0',
+    }),
+    Object.freeze({
+      id: 'setup-python',
+      owner: 'actions',
+      repository: 'actions/setup-python',
+      sha: 'a26af69be951a213d495a4c3e4e4022e16d87065',
+      tag: 'v5.6.0',
     }),
     Object.freeze({
       id: 'setup-node',

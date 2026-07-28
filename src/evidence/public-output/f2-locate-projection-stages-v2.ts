@@ -32,7 +32,7 @@ import {
   type TrustedMaterializedEvidenceCoreV2,
 } from './materialized-evidence-core-v2.js';
 
-type F2LocateProjectionStagesV2 = Pick<
+export type F2LocateProjectionStagesV2 = Pick<
   LocateProjectionPreparationPortV2,
   'createSource' | 'materialize'
 >;

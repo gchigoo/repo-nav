@@ -19,6 +19,14 @@ import {
   maskNonCode,
   maskSqlNonCode,
 } from '../direct-mapping-classifier.js';
+import {
+  balancedStructureV2,
+  identifierTokensV2,
+  oneSegmentApartV2,
+  type BalancedRangeV2,
+  type BalancedStructureV2,
+  type IdentifierTokenV2,
+} from '../language/identifier-structure-kernel-v2.js';
 
 export interface CandidatePolicyInput {
   readonly records: readonly DiscoveryRecord[];
@@ -110,7 +118,6 @@ export const CANDIDATE_REASON_POLICY = Object.freeze({
   }),
 } satisfies Readonly<Record<CandidateReasonCode, CandidateReasonPolicy>>);
 
-const IDENTIFIER_PATTERN = /(?:[$_]|\p{ID_Start})(?:[$_\u200C\u200D]|\p{ID_Continue})*/gu;
 const MAX_CONTEXT_LINES = 12;
 const MAX_CONTEXT_BYTES = 4 * 1024;
 const DERIVED_PROVENANCE = Object.freeze({
@@ -118,66 +125,15 @@ const DERIVED_PROVENANCE = Object.freeze({
   verifiedBy: 'filesystem' as const,
   operations: Object.freeze(['FILESYSTEM_FIND_MATCHES'] as const),
 });
-const KEYWORDS = new Set([
-  'as',
-  'bigint',
-  'boolean',
-  'class',
-  'const',
-  'create',
-  'export',
-  'extends',
-  'false',
-  'from',
-  'function',
-  'import',
-  'interface',
-  'number',
-  'let',
-  'new',
-  'null',
-  'return',
-  'select',
-  'table',
-  'string',
-  'true',
-  'type',
-  'undefined',
-  'unknown',
-  'var',
-  'void',
-]);
 const DERIVED_SELECTION_PRIORITY = Object.freeze({
   ALIAS_SOURCE_NEIGHBOR: 0,
   SAME_ENTITY_SIBLING: 1,
   SAME_SCOPE_SIMILAR_IDENTIFIER: 2,
 } as const);
 
-interface IdentifierToken {
-  readonly value: string;
-  readonly normalizedValue: string;
-  readonly start: number;
-  readonly end: number;
-  readonly line: number;
-}
-
-interface BalancedRange {
-  readonly start: number;
-  readonly end: number;
-  readonly kind: 'brace' | 'paren' | 'bracket';
-  readonly containerKind:
-    | 'scope'
-    | 'object'
-    | 'declaration'
-    | 'sql-table'
-    | 'paren'
-    | 'bracket';
-}
-
-interface BalancedStructure {
-  readonly ranges: readonly BalancedRange[];
-  readonly complete: boolean;
-}
+type IdentifierToken = IdentifierTokenV2;
+type BalancedRange = BalancedRangeV2;
+type BalancedStructure = BalancedStructureV2;
 
 function compareText(left: string, right: string): number {
   return left === right ? 0 : left < right ? -1 : 1;
@@ -238,147 +194,15 @@ export function createVerifiedCandidateContext(
 }
 
 function identifierTokens(masked: string, firstLine: number): readonly IdentifierToken[] {
-  return Object.freeze(
-    Array.from(masked.matchAll(IDENTIFIER_PATTERN)).flatMap((match) => {
-      if (match.index === undefined) {
-        return [];
-      }
-      const value = match[0];
-      const normalizedValue = value.normalize('NFKC').toLocaleLowerCase('und');
-      if (KEYWORDS.has(normalizedValue)) {
-        return [];
-      }
-      const line =
-        firstLine + (masked.slice(0, match.index).match(/\n/gu)?.length ?? 0);
-      return [{
-        value,
-        normalizedValue,
-        start: match.index,
-        end: match.index + value.length,
-        line,
-      }];
-    }),
-  );
-}
-
-function identifierSegments(value: string): readonly string[] {
-  const separated = value
-    .normalize('NFKC')
-    .replace(/([\p{Ll}\p{N}])([\p{Lu}])/gu, '$1 $2')
-    .replace(/([\p{Lu}])([\p{Lu}][\p{Ll}])/gu, '$1 $2')
-    .replace(/([\p{L}])([\p{N}])/gu, '$1 $2')
-    .replace(/([\p{N}])([\p{L}])/gu, '$1 $2');
-  return Object.freeze(
-    separated
-      .split(/[_$\s]+/u)
-      .filter((segment) => segment.length > 0)
-      .map((segment) => segment.toLocaleLowerCase('und')),
-  );
+  return identifierTokensV2(masked, firstLine);
 }
 
 function oneSegmentApart(leftValue: string, rightValue: string): boolean {
-  const left = identifierSegments(leftValue);
-  const right = identifierSegments(rightValue);
-  if (!left.some((segment) => segment.length > 1 && right.includes(segment))) {
-    return false;
-  }
-  if (Math.abs(left.length - right.length) > 1) {
-    return false;
-  }
-  if (left.length === right.length) {
-    return left.filter((segment, index) => segment !== right[index]).length === 1;
-  }
-  const shorter = left.length < right.length ? left : right;
-  const longer = left.length < right.length ? right : left;
-  for (let omitted = 0; omitted < longer.length; omitted += 1) {
-    const candidate = longer.filter((_segment, index) => index !== omitted);
-    if (candidate.every((segment, index) => segment === shorter[index])) {
-      return true;
-    }
-  }
-  return false;
+  return oneSegmentApartV2(leftValue, rightValue);
 }
 
 function balancedStructure(masked: string): BalancedStructure {
-  const ranges: BalancedRange[] = [];
-  const stack: {
-    readonly delimiter: '{' | '(' | '[';
-    readonly start: number;
-  }[] = [];
-  let complete = true;
-  for (let index = 0; index < masked.length; index += 1) {
-    const character = masked[index];
-    if (character === '{' || character === '(' || character === '[') {
-      stack.push({ delimiter: character, start: index });
-      continue;
-    }
-    if (character !== '}' && character !== ')' && character !== ']') {
-      continue;
-    }
-    const expected = character === '}' ? '{' : character === ')' ? '(' : '[';
-    const opened = stack.at(-1);
-    if (opened?.delimiter !== expected) {
-      complete = false;
-      continue;
-    }
-    stack.pop();
-    const prefix = masked.slice(0, opened.start).trimEnd();
-    if (expected === '{') {
-      const declaration =
-        /\b(?:class|interface)\s+[$_\p{ID_Start}][^{};]*$/iu.test(prefix) ||
-        /\btype\s+[$_\p{ID_Start}][^{};=]*=\s*$/iu.test(prefix) ||
-        /\b(?:as|satisfies)\s*$/iu.test(prefix) ||
-        (/:\s*$/u.test(prefix) &&
-          /^\s*(?:=|;|\||&|>|\]|\)|\}|\{)/u.test(
-            masked.slice(index + 1),
-          ));
-      const object =
-        !declaration &&
-        (/\breturn$/iu.test(prefix) || /[=(:,]\s*$/u.test(prefix));
-      ranges.push({
-        start: opened.start,
-        end: index + 1,
-        kind: 'brace',
-        containerKind: declaration
-          ? 'declaration'
-          : object
-            ? 'object'
-            : 'scope',
-      });
-    } else if (expected === '(') {
-      ranges.push({
-        start: opened.start,
-        end: index + 1,
-        kind: 'paren',
-        containerKind: /\bCREATE\s+TABLE\b[^;()]*$/iu.test(
-          masked.slice(0, opened.start),
-        )
-          ? 'sql-table'
-          : 'paren',
-      });
-    } else {
-      ranges.push({
-        start: opened.start,
-        end: index + 1,
-        kind: 'bracket',
-        containerKind: 'bracket',
-      });
-    }
-  }
-  if (stack.length > 0) {
-    complete = false;
-  }
-  return Object.freeze({
-    ranges: Object.freeze(
-      ranges.sort(
-      (left, right) =>
-          left.start - right.start ||
-          left.end - right.end ||
-          compareText(left.kind, right.kind),
-      ),
-    ),
-    complete,
-  });
+  return balancedStructureV2(masked);
 }
 
 function innermostOwnedRange(

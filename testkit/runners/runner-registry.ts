@@ -251,6 +251,58 @@ export const PLATFORM_CASE_OWNER_REGISTRATION: Readonly<
   ]),
   'unit/repository-scope-policy/platform-path-flavor-and-priority':
     Object.freeze(['test/unit/scope-policy-platform.spec.ts']),
+  'unit/language-capability-boundary/move-only-characterization': Object.freeze([
+    'test/unit/direct-mapping-classifier.spec.ts',
+    'test/unit/candidate-policy.spec.ts',
+  ]),
+  'unit/language-capability-boundary/extension-registry': Object.freeze([
+    'test/unit/language-adapter-registry-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/typescript-adapter': Object.freeze([
+    'test/unit/language-evidence-adapters-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/javascript-adapter': Object.freeze([
+    'test/unit/language-evidence-adapters-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/one-time-lexical-facts': Object.freeze([
+    'test/unit/language-lexical-facts-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/embedded-sql-completeness': Object.freeze([
+    'test/unit/language-evidence-adapters-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/sql-adapter': Object.freeze([
+    'test/unit/language-evidence-adapters-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/fallback-literal': Object.freeze([
+    'test/unit/language-evidence-adapters-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/scope-candidate-ceiling': Object.freeze([
+    'test/unit/language-capability-integration-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/adapter-product-table': Object.freeze([
+    'test/unit/language-capability-integration-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/stable-eligible-count': Object.freeze([
+    'test/unit/language-capability-integration-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/capability-proof': Object.freeze([
+    'test/unit/canonical-locate-facts-bridge.spec.ts',
+  ]),
+  'unit/language-capability-boundary/capability-contribution': Object.freeze([
+    'test/unit/language-capability-integration-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/real-complete-shadow': Object.freeze([
+    'test/unit/canonical-locate-execution.spec.ts',
+    'test/unit/di.spec.ts',
+  ]),
+  'unit/language-capability-boundary/language-extension-and-fallback':
+    Object.freeze(['test/unit/language-capability-platform.spec.ts']),
+  'golden/language-capability-boundary/v2-shadow-and-v1-parity': Object.freeze([
+    'test/golden/language-capability-boundary.spec.ts',
+  ]),
+  'golden/language-capability-boundary/large-adapter-set': Object.freeze([
+    'test/golden/large-synthetic-repository.spec.ts',
+  ]),
 });
 
 export const RUNNER_GROUP_ALIASES: Readonly<
@@ -322,6 +374,7 @@ export const RUNNER_SELECTIONS: Readonly<
       'streaming-ripgrep',
       'input-abort-contract-v2',
       'repository-scope-policy',
+      'language-capability-boundary',
     ]),
     cases: new Set([
       'runner-smoke',
@@ -508,6 +561,23 @@ export const RUNNER_SELECTIONS: Readonly<
       'real-owner-envelope',
       'large-scope-permutation',
       'platform-path-flavor-and-priority',
+      'move-only-characterization',
+      'extension-registry',
+      'typescript-adapter',
+      'javascript-adapter',
+      'one-time-lexical-facts',
+      'embedded-sql-completeness',
+      'sql-adapter',
+      'fallback-literal',
+      'scope-candidate-ceiling',
+      'adapter-product-table',
+      'stable-eligible-count',
+      'capability-proof',
+      'capability-contribution',
+      'real-complete-shadow',
+      'language-extension-and-fallback',
+      'v2-shadow-and-v1-parity',
+      'large-adapter-set',
     ]),
   }),
   golden: Object.freeze({
@@ -533,6 +603,7 @@ export const RUNNER_SELECTIONS: Readonly<
       'streaming-ripgrep',
       'input-abort-contract-v2',
       'repository-scope-policy',
+      'language-capability-boundary',
     ]),
     cases: new Set([
       'runner-smoke',
@@ -545,6 +616,8 @@ export const RUNNER_SELECTIONS: Readonly<
       'large-streaming-ripgrep',
       'large-request-outcome-permutation',
       'large-scope-permutation',
+      'v2-shadow-and-v1-parity',
+      'large-adapter-set',
       'v1-compatibility',
       'manifest-schema',
       'evaluator-smoke',

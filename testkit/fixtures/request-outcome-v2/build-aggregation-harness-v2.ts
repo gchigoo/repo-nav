@@ -47,6 +47,7 @@ import {
   buildScopeCoverageV1,
   requireScopeCoverageFactsV1,
 } from '../../../src/evidence/scope/scope-coverage-v1.js';
+import { createZeroCapabilityContributionForHarnessV2 } from '../../../src/evidence/language/capability-coverage-v2.js';
 
 export interface AggregationHarnessV2 {
   readonly execution: LocateExecutionTokenV2;
@@ -220,6 +221,7 @@ export async function buildAggregationHarnessV2(options: {
   }
   const abortDecision = abortCoordinator.closeFinalization();
 
+  const capability = createZeroCapabilityContributionForHarnessV2(execution);
   const input: RequestOutcomeAggregationInputV2 = Object.freeze({
     execution,
     backendTrace: trace,
@@ -234,12 +236,14 @@ export async function buildAggregationHarnessV2(options: {
       summary.contribution,
       snapshotContribution,
       scopeView.contribution,
+      capability.contribution,
     ] as const),
     scopeProof: scopeView.proof,
     expectedEligiblePool: registered.eligibleDiscovery,
     expectedFoldProof: foldProof,
     expectedCoverageBasis: coverageBasis,
     expectedResolvedScope: resolvedScope,
+    expectedCapabilityFacts: capability.facts,
   });
 
   return Object.freeze({

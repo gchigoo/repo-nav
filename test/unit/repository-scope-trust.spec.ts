@@ -212,33 +212,30 @@ describe.runIf(
           executed.envelope.fragments,
           'capability',
         ),
-      ).toBe(false);
+      ).toBe(true);
+      expect(executed.envelope.fragments.capability?.owner).toBe('capability');
 
-      // ranking 在有 decode+selection 时登记；四前置仅缺 capability
+      // F8：四 prerequisite 齐全；shadow 可进入 preparation（仍可能因 F2 ranking 未登记失败）
       if (executed.envelope.fragments.ranking !== undefined) {
         const presence = inspectLocateProjectionPrerequisiteOwnersV2(
           executed.envelope,
           executed,
           requireLocateProjectionExecutionTokenV2(capability),
         );
-        expect(presence.ok).toBe(false);
-        if (!presence.ok) {
-          expect(presence.missingOwners).toEqual(['capability']);
-        }
+        expect(presence.ok).toBe(true);
         const shadow = createV2ShadowLocateProjectorV2().project(
           executed,
           capability,
           createSyntheticLocateProjectionPreparationPortV2(),
         );
-        expect(shadow.ok).toBe(false);
+        // four prerequisites present；synthetic shadow may still fail non-missing-owner
         if (!shadow.ok) {
-          expect(shadow.reason).toBe('missing-owner');
-          expect(shadow.missingOwners).toEqual(['capability']);
+          expect(shadow.reason).not.toBe('missing-owner');
         }
       }
 
       const harness = await buildAggregationHarnessV2({});
-      expect(harness.input.contributions).toHaveLength(3);
+      expect(harness.input.contributions).toHaveLength(4);
       expect(() =>
         aggregateRequestOutcomeV2({
           ...harness.input,

@@ -402,17 +402,25 @@ describe.runIf(realEnvelopeSelected)(
       if (!success.ok) {
         throw new Error('expected success');
       }
-      // F7：real success 登记 scope；CountingReader 无 decode 故无 ranking；仍缺 capability
+      // F8：real success 登记 scope+capability；CountingReader 无 decode 时补空 ranking
       expect(Object.keys(success.envelope.fragments).sort()).toEqual(
-        ['scope', 'snapshot'].sort(),
+        ['capability', 'ranking', 'scope', 'snapshot'].sort(),
       );
       expect(success.envelope.fragments.snapshot?.owner).toBe('snapshot');
       expect(success.envelope.fragments.scope?.owner).toBe('scope');
+      expect(success.envelope.fragments.capability?.owner).toBe('capability');
       expect(success.envelope.fragments.snapshot?.value.coverage.consistency).toBe(
         'unknown',
       );
       for (const owner of LOCATE_FACT_OWNER_ORDER_V2) {
-        if (owner === 'snapshot' || owner === 'scope') continue;
+        if (
+          owner === 'snapshot' ||
+          owner === 'scope' ||
+          owner === 'capability' ||
+          owner === 'ranking'
+        ) {
+          continue;
+        }
         expect(
           Object.prototype.hasOwnProperty.call(
             success.envelope.fragments,

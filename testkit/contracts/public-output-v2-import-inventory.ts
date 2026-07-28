@@ -156,7 +156,7 @@ export function buildTypeScriptImportGraph(
 export function findForbiddenReachability(
   graph: TypeScriptImportGraph,
   roots: readonly string[],
-  forbidden: (file: string) => boolean,
+  forbidden: (file: string, path: readonly string[]) => boolean,
 ): readonly (readonly string[])[] {
   const findings: string[][] = [];
   for (const root of roots) {
@@ -165,7 +165,7 @@ export function findForbiddenReachability(
       path: readonly string[],
       visited: ReadonlySet<string>,
     ): void => {
-      if (forbidden(file)) {
+      if (forbidden(file, path)) {
         findings.push([...path, file]);
         return;
       }
@@ -181,11 +181,49 @@ export function findForbiddenReachability(
   return Object.freeze(findings);
 }
 
-/** F1C dangerous runtime modules that must stay unreachable from production roots. */
-export function isForbiddenCanonicalBridgeRuntimeEdge(file: string): boolean {
+/**
+ * F8：EvidenceModule 可登记 accepted ready provider；经该边的 subtree 不算 cutover。
+ */
+export function isThroughAcceptedCompleteReadyProviderV2(
+  file: string,
+  path: readonly string[] = [],
+): boolean {
+  return (
+    file.includes('accepted-complete-real-locate-shadow-orchestrator-v2') ||
+    path.some((entry) =>
+      entry.includes('accepted-complete-real-locate-shadow-orchestrator-v2'),
+    )
+  );
+}
+
+/**
+ * F1C dangerous runtime modules that must stay unreachable from production roots.
+ * F8：EvidenceModule 可登记 accepted ready provider；其 subtree 不记 forbidden。
+ */
+export function isForbiddenCanonicalBridgeRuntimeEdge(
+  file: string,
+  path: readonly string[] = [],
+): boolean {
+  if (isThroughAcceptedCompleteReadyProviderV2(file, path)) {
+    return false;
+  }
   return (
     file === 'src/contracts/v2/locate-result-v2.ts' ||
     file.includes('/evidence/public-output/') ||
     file.includes('/evidence/canonical/')
+  );
+}
+
+/** F1B dormant v2 modules；同样豁免 F8 ready-provider subtree。 */
+export function isForbiddenPublicOutputV2RuntimeEdge(
+  file: string,
+  path: readonly string[] = [],
+): boolean {
+  if (isThroughAcceptedCompleteReadyProviderV2(file, path)) {
+    return false;
+  }
+  return (
+    file === 'src/contracts/v2/locate-result-v2.ts' ||
+    file.includes('/evidence/public-output/')
   );
 }

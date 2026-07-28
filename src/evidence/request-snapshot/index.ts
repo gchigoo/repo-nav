@@ -177,6 +177,14 @@ export {
   type VerifiedLanguageCursorConsumerV2,
 } from './verified-language-consumer-v2.js';
 export {
+  createTrustedPreFinalCapabilityViewForTestV2,
+  requirePreFinalCapabilityViewV2,
+  requireStableEligibleCapabilityViewV2,
+  verifiedLastExtensionFromBasenameV2,
+  type TrustedPreFinalCapabilityViewV2,
+  type TrustedStableEligibleCapabilityViewV2,
+} from './capability-classification-views-v2.js';
+export {
   SnapshotOutcomeContributionV2Schema,
   createSnapshotOutcomeContributionV2,
   requireSnapshotOutcomeContributionV2,

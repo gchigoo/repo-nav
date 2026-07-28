@@ -42,6 +42,10 @@ import type {
   ScopeCoverageProofV1,
   ScopeOutcomeContributionV2,
 } from '../scope/scope-coverage-v1.js';
+import type {
+  CapabilityCoverageFactsV2,
+  CapabilityOutcomeContributionV2,
+} from '../language/capability-coverage-v2.js';
 import { deriveLocateStatusFromFactsV2, type LocateStatusV2 } from './locate-status-v2.js';
 import { createNextActionsV2 } from './next-action-policy-v2.js';
 import { requireRequestOutcomeContributionsV2 } from './request-outcome-contribution-registry-v2.js';
@@ -69,12 +73,14 @@ export interface RequestOutcomeAggregationInputV2 {
     PublicMaterializationContributionV2,
     SnapshotOutcomeContributionV2,
     ScopeOutcomeContributionV2,
+    CapabilityOutcomeContributionV2,
   ];
   readonly scopeProof: ScopeCoverageProofV1;
   readonly expectedEligiblePool: TrustedStableEligibleDiscoveryPoolV2;
   readonly expectedFoldProof: ScopeFoldedSafePoolProofV2;
   readonly expectedCoverageBasis: ScopeCoverageBasisV2;
   readonly expectedResolvedScope: ResolvedRepositoryScopeV1;
+  readonly expectedCapabilityFacts: CapabilityCoverageFactsV2;
 }
 
 export interface TrustedRequestOutcomeAggregationV2 {
@@ -172,6 +178,7 @@ export function aggregateRequestOutcomeV2(
     expectedFoldProof: input.expectedFoldProof,
     expectedCoverageBasis: input.expectedCoverageBasis,
     expectedResolvedScope: input.expectedResolvedScope,
+    expectedCapabilityFacts: input.expectedCapabilityFacts,
   });
   const abortSource = requireFinalizedAbortDecisionV2(
     input.abortDecision,
@@ -237,6 +244,9 @@ export function aggregateRequestOutcomeV2(
   }
   if (materializationSummary.locationRedacted) {
     degradations.push('LOCATION_REDACTED');
+  }
+  if (contributions[3].unsupportedLanguageHits > 0) {
+    degradations.push('SEMANTIC_LANGUAGE_UNSUPPORTED');
   }
 
   const exclusionSummary: {

@@ -6,7 +6,6 @@
 import type {
   CanonicalLocateExecutionV2,
   LocateExecutionTokenV2,
-  LocateStatus,
   LocateFactPayloadsV2,
   PublicSearchTermV2,
   TrustedLocateProjectionPrerequisitesV2,
@@ -15,6 +14,9 @@ import type {
   CandidateEvidenceV2,
   ConfirmedEvidenceV2,
 } from '../../contracts/v2/locate-result-v2.js';
+import { LOCATE_STATUSES_V2 } from '../../contracts/v2/locate-result-v2.js';
+
+type AggregationStatusV2 = (typeof LOCATE_STATUSES_V2)[number];
 
 declare const TRUSTED_LOCATE_PROJECTION_SOURCE_V2: unique symbol;
 export type TrustedLocateProjectionSourceV2 = Readonly<{
@@ -63,7 +65,7 @@ export interface LocateProjectionMaterializationRegistrationV2 {
 
 export interface LocateProjectionAggregationRegistrationV2 {
   readonly identity: Readonly<object>;
-  readonly statusV2: LocateStatus;
+  readonly statusV2: AggregationStatusV2;
   readonly backend: Readonly<LocateFactPayloadsV2['backend']>;
   readonly requestOutcome: Readonly<LocateFactPayloadsV2['request-outcome']>;
 }

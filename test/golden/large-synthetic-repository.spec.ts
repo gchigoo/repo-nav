@@ -158,3 +158,25 @@ describe.runIf(
     expect(hashes[0]).not.toBe(trivialHash);
   });
 });
+
+
+describe.runIf(
+  isSelected({
+    group: 'language-capability-boundary',
+    caseId: 'large-adapter-set',
+  }),
+)('F8-LARGE-001 large-adapter-set', () => {
+  it('keeps extension registry membership bounded and stable', async () => {
+    const { requireDefaultLanguageEvidenceAdapterRegistryV2 } = await import(
+      '../../src/evidence/language/language-adapter-registry-v2.js'
+    );
+    const registry = requireDefaultLanguageEvidenceAdapterRegistryV2();
+    expect(registry.semanticClassification).toEqual([
+      'typescript',
+      'javascript',
+      'sql',
+    ]);
+    expect(registry.resolveAdapter('.ts')).toBe('typescript');
+    expect(registry.resolveAdapter('.py')).toBe('fallback');
+  });
+});

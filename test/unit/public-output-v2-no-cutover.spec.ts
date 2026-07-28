@@ -8,6 +8,7 @@ import {
   buildTypeScriptImportGraph,
   findForbiddenReachability,
   isForbiddenCanonicalBridgeRuntimeEdge,
+  isForbiddenPublicOutputV2RuntimeEdge,
 } from '../../testkit/contracts/public-output-v2-import-inventory.js';
 import { CANONICAL_NO_CUTOVER_PRODUCTION_ROOTS_V2 } from '../../testkit/fixtures/canonical-locate-bridge-v2/runtime-reachability-v2.js';
 import {
@@ -57,9 +58,7 @@ describe.runIf(selected)('public output v2 no-cutover import inventory', () => {
       findForbiddenReachability(
         graph,
         NO_CUTOVER_PRODUCTION_ROOTS_V2,
-        (file) =>
-          file === 'src/contracts/v2/locate-result-v2.ts' ||
-          file.includes('/evidence/public-output/'),
+        isForbiddenPublicOutputV2RuntimeEdge,
       ),
     ).toEqual([]);
   });

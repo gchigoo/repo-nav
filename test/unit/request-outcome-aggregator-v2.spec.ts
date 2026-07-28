@@ -138,6 +138,7 @@ describe.runIf(
           cloned as typeof harness.input.contributions[0],
           harness.input.contributions[1],
           harness.input.contributions[2],
+          harness.input.contributions[3],
         ],
       }),
     ).toThrow(/identity mismatch|arity mismatch|SCOPE_COVERAGE_INVARIANT/);

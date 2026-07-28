@@ -9,7 +9,6 @@ import {
   type CanonicalLocateExecutionV2,
   type CompleteLocateFactEnvelopeV2,
   type LocateExecutionTokenV2,
-  type LocateStatus,
   type TrustedLocateProjectionPrerequisitesV2,
 } from '../../contracts/v2/locate-fact-envelope-v2.js';
 import {
@@ -75,12 +74,13 @@ function failInvalid<T>(): LocateProjectionStageRegistrationResultV2<T> {
   return Object.freeze({ ok: false, reason: 'invalid-facts' as const });
 }
 
-const LOCATE_STATUSES: readonly LocateStatus[] = Object.freeze([
+const LOCATE_STATUSES: readonly string[] = Object.freeze([
   'ok',
   'partial',
   'no_result',
   'backend_unavailable',
   'timeout',
+  'cancelled',
 ]);
 
 /**

@@ -351,6 +351,29 @@ describe.runIf(
 
 describe.runIf(
   isSelected({
+    group: 'language-capability-boundary',
+    caseId: 'move-only-characterization',
+  }),
+)('F8-MOVE-001 move-only-characterization', () => {
+  it('keeps maskNonCode/maskSqlNonCode legacy export parity after kernel extract', async () => {
+    const { maskNonCode, maskSqlNonCode } = await import(
+      '../../src/evidence/direct-mapping-classifier.js'
+    );
+    const { maskNonCode: kernelMask } = await import(
+      '../../src/evidence/language/ecmascript-lexical-kernel-v2.js'
+    );
+    const { maskSqlNonCode: kernelSql } = await import(
+      '../../src/evidence/language/sql-lexical-kernel-v2.js'
+    );
+    const sample = "const x = 'a'; // c\n/*b*/ y = 1;";
+    expect(maskNonCode(sample)).toBe(kernelMask(sample));
+    const sql = "select a AS b -- c\n/*x*/";
+    expect(maskSqlNonCode(sql)).toBe(kernelSql(sql));
+  });
+});
+
+describe.runIf(
+  isSelected({
     group: 'repository-scope-policy',
     caseId: 'explicit-test-docs',
   }),

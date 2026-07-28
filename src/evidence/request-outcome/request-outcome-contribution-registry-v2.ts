@@ -14,17 +14,24 @@ import {
   type ScopeCoverageProofV1,
   type ScopeOutcomeContributionV2,
 } from '../scope/scope-coverage-v1.js';
+import {
+  requireCapabilityOutcomeContributionV2,
+  type CapabilityCoverageFactsV2,
+  type CapabilityOutcomeContributionV2,
+} from '../language/capability-coverage-v2.js';
 
 export const REQUEST_OUTCOME_CONTRIBUTION_OWNER_ORDER_V2 = Object.freeze([
   'public-materialization',
   'snapshot-observation',
   'scope',
+  'capability',
 ] as const);
 
 export type RequestOutcomeAggregationContributionTupleV2 = readonly [
   PublicMaterializationContributionV2,
   SnapshotOutcomeContributionV2,
   ScopeOutcomeContributionV2,
+  CapabilityOutcomeContributionV2,
 ];
 
 /** @deprecated use RequestOutcomeAggregationContributionTupleV2 */
@@ -41,20 +48,22 @@ export interface RequireRequestOutcomeContributionsInputV2 {
   readonly expectedFoldProof: ScopeFoldedSafePoolProofV2;
   readonly expectedCoverageBasis: ScopeCoverageBasisV2;
   readonly expectedResolvedScope: ResolvedRepositoryScopeV1;
+  readonly expectedCapabilityFacts: CapabilityCoverageFactsV2;
 }
 
 /**
- * 校验 exact 三元组：materialization→snapshot→scope；无 future index 3。
+ * 校验 exact 四元组：materialization→snapshot→scope→capability。
  */
 export function requireRequestOutcomeContributionsV2(
   input: RequireRequestOutcomeContributionsInputV2,
 ): RequestOutcomeAggregationContributionTupleV2 {
-  if (input.contributions.length !== 3) {
+  if (input.contributions.length !== 4) {
     throw new TypeError('request-outcome contributions tuple arity mismatch');
   }
   const first = input.contributions[0];
   const second = input.contributions[1];
   const third = input.contributions[2];
+  const fourth = input.contributions[3];
   if (first !== input.materializationContribution) {
     throw new TypeError(
       'public-materialization contribution identity mismatch',
@@ -84,5 +93,13 @@ export function requireRequestOutcomeContributionsV2(
   if (scope !== third) {
     throw new TypeError('scope contribution identity mismatch');
   }
-  return Object.freeze([first, snapshot, scope] as const);
+  const capability = requireCapabilityOutcomeContributionV2(
+    fourth,
+    input.expectedCapabilityFacts,
+    input.execution,
+  );
+  if (capability !== fourth) {
+    throw new TypeError('capability contribution identity mismatch');
+  }
+  return Object.freeze([first, snapshot, scope, capability] as const);
 }

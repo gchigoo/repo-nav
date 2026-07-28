@@ -108,12 +108,12 @@ items:
     finalization，装配首个complete real-v2 shadow
   depends_on:
   - repository-scope-policy
-  status: in-progress
+  status: done
   feature: 2026-07-24-language-capability-boundary
   minimal_loop: false
-  notes: aggregation exact提交backend requestOutcome status，finalizer只消费completion-bearing
-    token；F9只消费accepted token/interface，不导入prerequisite inspector registrar stage
-    owner或acquisition symbols
+  notes: 2026-07-28 acceptance passed；language adapters + capability mount + accepted
+    complete-real shadow；production 仍 v1；empty-ranking seal / aggregation harness /
+    远程六格 F8 marker deferred；F9 cutover 需独立授权
 - slug: public-beta-release
   description: 原子切换生产 locate schema v2，并补齐版本来源 Node engines license security metadata
     lint format migration guide package dry-run 与 beta release gate

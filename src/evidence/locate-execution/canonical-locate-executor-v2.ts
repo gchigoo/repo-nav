@@ -86,6 +86,8 @@ import {
   buildExecutionScopeCoverageMountV1,
   classifyDiscoveryRecordsThroughScopeBoundProducersV2,
 } from '../scope/index.js';
+import { buildExecutionCapabilityCoverageMountV2 } from '../language/build-execution-capability-coverage-v2.js';
+import type { EvidenceRankingOutcomeV2 } from '../ranking/evidence-ranking-outcome-v2.js';
 import type { RepoLayer } from '../../contracts/index.js';
 import type { LocateFactPayloadsV2 } from '../../contracts/v2/locate-fact-envelope-v2.js';
 import {
@@ -251,6 +253,7 @@ export class CanonicalRepositoryLocateExecutorV2
     snapshotFacts: SnapshotFactsV2 = createZeroReadSnapshotFactsV2(),
     rankingFacts?: RankedEvidenceFactsV2,
     scopeFragment?: LocateFactPayloadsV2['scope'],
+    capabilityFragment?: LocateFactPayloadsV2['capability'],
   ): CanonicalLocateExecutionV2 {
     if (!legacy.ok) {
       return this.terminalFailure(
@@ -263,13 +266,26 @@ export class CanonicalRepositoryLocateExecutorV2
       legacy.evidence.repositoryRoot,
       legacy.evidence.normalizedTerms,
     );
-    // F3/F2/F7：real success 登记 snapshot；有 ranking 时登记 ranking；F7 登记 scope（仍缺 capability）
+    // F3/F2/F7/F8：snapshot；ranking；scope；capability（四 prerequisite）
     builder.add('snapshot', snapshotFacts);
     if (rankingFacts !== undefined) {
       builder.add('ranking', rankingFacts);
+    } else if (scopeFragment !== undefined && capabilityFragment !== undefined) {
+      // zero-read / no-selection：补空 ranking，使四 prerequisite 齐全
+      builder.add(
+        'ranking',
+        Object.freeze({
+          confirmed: Object.freeze([]),
+          candidates: Object.freeze([]),
+          unsatisfiedAnchors: Object.freeze([]),
+        }),
+      );
     }
     if (scopeFragment !== undefined) {
       builder.add('scope', scopeFragment);
+    }
+    if (capabilityFragment !== undefined) {
+      builder.add('capability', capabilityFragment);
     }
     const input: CanonicalLocateExecutionV2 = Object.freeze({
       ok: true as const,
@@ -333,12 +349,21 @@ export class CanonicalRepositoryLocateExecutorV2
           ? {}
           : { foldedView: options.foldedView }),
       });
+      const capabilityMount = await buildExecutionCapabilityCoverageMountV2({
+        execution,
+        foldProof: scopeMount.foldProof,
+        scopeProof: scopeMount.view.proof,
+        eligiblePool: scopeMount.eligiblePool,
+        snapshotProof: scopeMount.snapshotProof,
+        retainedEligible: Object.freeze([]),
+      });
       return this.terminalSuccess(
         legacy,
         projectionExecution,
         createZeroReadSnapshotFactsV2(),
         undefined,
         scopeMount.fragmentValue,
+        capabilityMount.fragmentValue,
       );
     }
 
@@ -426,6 +451,7 @@ export class CanonicalRepositoryLocateExecutorV2
 
     // F2：final purge 后对 trusted pool 排序；必须复用 read 前 bound selection
     let rankingFacts: RankedEvidenceFactsV2 | undefined;
+    let rankingOutcome: EvidenceRankingOutcomeV2 | undefined;
     if (options.discoverySelection !== undefined) {
       const intents = normalizeAnchorIntentsV2(
         options.rawAnchors ?? [],
@@ -447,13 +473,13 @@ export class CanonicalRepositoryLocateExecutorV2
         execution,
         preRankingPoolTruncated: pools.evidence.preRankingPoolTruncated,
       });
-      // F2 stages 登记仅限 direct harness；executor 不得 import public-output。
       // trust / invariant 失败 fail-closed（不静默吞掉）。
       rankingFacts = requireEvidenceRankingOutcomeV2(
         outcome,
         finalPools.proof,
         execution,
       ).fragment.value;
+      rankingOutcome = outcome;
     }
 
     const stableScopeRecords =
@@ -474,6 +500,15 @@ export class CanonicalRepositoryLocateExecutorV2
       snapshotProof: finalPools.proof,
       stableScopeRecords,
     });
+    const capabilityMount = await buildExecutionCapabilityCoverageMountV2({
+      execution,
+      foldProof: scopeMount.foldProof,
+      scopeProof: scopeMount.view.proof,
+      eligiblePool: finalPools.eligibleDiscovery,
+      snapshotProof: finalPools.proof,
+      retainedEligible: finalPools.retainedEligible,
+      ...(rankingOutcome === undefined ? {} : { rankingOutcome }),
+    });
 
     return this.terminalSuccess(
       adjusted,
@@ -481,6 +516,7 @@ export class CanonicalRepositoryLocateExecutorV2
       finalPools.facts,
       rankingFacts,
       scopeMount.fragmentValue,
+      capabilityMount.fragmentValue,
     );
   }
 

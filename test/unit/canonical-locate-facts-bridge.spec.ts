@@ -228,8 +228,14 @@ describe.runIf(seamSelected)(
   'F1C-MATERIALIZATION-SEAM-001 materialization seam',
   () => {
     it('keeps F1C src free of F3/F2/F6 business owner imports', () => {
-      const collect = (path: string): string[] => {
+      const collect = (
+        path: string,
+        options?: Readonly<{ excludeFileNames?: ReadonlySet<string> }>,
+      ): string[] => {
+        const excluded = options?.excludeFileNames;
         if (path.endsWith('.ts')) {
+          const base = path.split(/[\\/]/u).at(-1) ?? path;
+          if (excluded?.has(base) === true) return [];
           return [readFileSync(path, 'utf8')];
         }
         const sources: string[] = [];
@@ -237,7 +243,10 @@ describe.runIf(seamSelected)(
           for (const entry of readdirSync(current, { withFileTypes: true })) {
             const full = resolve(current, entry.name);
             if (entry.isDirectory()) visit(full);
-            else if (entry.name.endsWith('.ts')) {
+            else if (
+              entry.name.endsWith('.ts') &&
+              excluded?.has(entry.name) !== true
+            ) {
               sources.push(readFileSync(full, 'utf8'));
             }
           }
@@ -246,8 +255,14 @@ describe.runIf(seamSelected)(
         return sources;
       };
       // canonical / envelope：仍禁止 F2/F3/F6 owner 字面量
+      // F8 accepted orchestrator 是唯一允许接线 F2 stages 的 canonical 文件
+      const f8AcceptedOrchestrator = new Set([
+        'accepted-complete-real-locate-shadow-orchestrator-v2.ts',
+      ]);
       const canonicalJoined = [
-        ...collect(resolve('src/evidence/canonical')),
+        ...collect(resolve('src/evidence/canonical'), {
+          excludeFileNames: f8AcceptedOrchestrator,
+        }),
         ...collect(resolve('src/contracts/v2/locate-fact-envelope-v2.ts')),
       ].join('\n');
       for (const marker of [
@@ -436,5 +451,265 @@ describe.runIf(
       ),
     ).toThrow(/not trusted/);
     void LocateAbortCoordinatorV2;
+  });
+});
+
+
+describe.runIf(
+  isSelected({
+    group: 'language-capability-boundary',
+    caseId: 'capability-proof',
+  }),
+)('F8-TRUST-001 capability-proof', () => {
+  it('rejects retained seal when ledger entry is missing for a retained ref', async () => {
+    const {
+      createCapabilityPreBudgetCountV2,
+      sealCapabilityRetainedDecisionsV2,
+      registerCapabilityRetainedDecisionLedgerV2,
+    } = await import('../../src/evidence/language/capability-coverage-v2.js');
+    const { createTrustedLanguageCapabilityObservationV2 } = await import(
+      '../../src/evidence/language/language-capability-observation-v2.js'
+    );
+    const { createTrustedPreFinalCapabilityViewForTestV2 } = await import(
+      '../../src/evidence/request-snapshot/capability-classification-views-v2.js'
+    );
+    const { createTrustedPreFinalScopeClassificationViewForTestV2 } =
+      await import(
+        '../../src/evidence/request-snapshot/scope-classification-views-v2.js'
+      );
+    const {
+      createVerifiedLanguageConsumerAdmissionV2,
+      registerVerifiedLanguageConsumerV2,
+    } = await import(
+      '../../src/evidence/request-snapshot/verified-language-consumer-v2.js'
+    );
+    const { requireStableEligibleCapabilityViewV2 } = await import(
+      '../../src/evidence/request-snapshot/capability-classification-views-v2.js'
+    );
+    const {
+      bindEmptyStableEligibleScopeDecisionsV2,
+      requireStableEligibleScopeViewV2,
+    } = await import(
+      '../../src/evidence/request-snapshot/scope-classification-views-v2.js'
+    );
+    const { runFinalSnapshotCheckV2 } = await import(
+      '../../src/evidence/request-snapshot/final-snapshot-check-v2.js'
+    );
+    const { projectExpandedSafePreCapPoolV2 } = await import(
+      '../../src/evidence/request-snapshot/discovery-lane-universe-v2.js'
+    );
+    const {
+      readScopeFoldedSafePoolProofV2,
+      scopeFoldSafeCandidatePoolV2,
+    } = await import(
+      '../../src/evidence/request-snapshot/scope-folded-discovery-selector-v2.js'
+    );
+    const { createScopeCoverageBasisV2 } = await import(
+      '../../src/evidence/request-snapshot/scope-coverage-basis-v2.js'
+    );
+    const { resolveRepositoryScopeV1 } = await import(
+      '../../src/evidence/scope/resolve-repository-scope-v1.js'
+    );
+    const { buildScopeCoverageV1, requireScopeCoverageFactsV1 } = await import(
+      '../../src/evidence/scope/scope-coverage-v1.js'
+    );
+    const { issueEvidenceRankingOutcomeV2 } = await import(
+      '../../src/evidence/ranking/evidence-ranking-outcome-v2.js'
+    );
+    const { createOpaqueTokenV2 } = await import(
+      '../../src/evidence/request-snapshot/opaque-token-v2.js'
+    );
+    const execution = requireLocateProjectionExecutionTokenV2(
+      issueLocateProjectionExecutionCapabilityV2(),
+    );
+    const final = await runFinalSnapshotCheckV2({
+      repositoryRoot: '/tmp/f8-trust',
+      loadedFiles: [],
+      evidencePool: {
+        records: [],
+        preRankingPoolTruncated: false,
+        safeSelectionCollision: false,
+      },
+      eligiblePool: { records: [] },
+      gitState: 'unknown',
+      signal: new AbortController().signal,
+    });
+    const preCap = projectExpandedSafePreCapPoolV2([], true, execution);
+    const folded = scopeFoldSafeCandidatePoolV2(preCap, [], execution);
+    const foldProof = readScopeFoldedSafePoolProofV2(folded, execution);
+    bindEmptyStableEligibleScopeDecisionsV2({
+      pool: final.eligibleDiscovery,
+      snapshotProof: final.proof,
+      foldProof,
+      execution,
+    });
+    const emptyPool = Object.freeze({ records: Object.freeze([]) });
+    const capabilityView = createTrustedPreFinalCapabilityViewForTestV2({
+      pool: emptyPool as never,
+      execution,
+      entries: [],
+    });
+    const scopeView = createTrustedPreFinalScopeClassificationViewForTestV2(
+      execution,
+      new Map(),
+    );
+    const admission = createVerifiedLanguageConsumerAdmissionV2(
+      'language-capability',
+      execution,
+    );
+    const registered = registerVerifiedLanguageConsumerV2(
+      admission,
+      { async consumeVerifiedContext() {} },
+      execution,
+    );
+    const observation = createTrustedLanguageCapabilityObservationV2(
+      capabilityView,
+      scopeView,
+      registered,
+      execution,
+    );
+    const stableCapability = requireStableEligibleCapabilityViewV2(
+      final.eligibleDiscovery,
+      final.proof,
+      foldProof,
+      execution,
+      [],
+    );
+    const stableScope = requireStableEligibleScopeViewV2(
+      final.eligibleDiscovery,
+      final.proof,
+      foldProof,
+      execution,
+    );
+    const resolvedScope = resolveRepositoryScopeV1(undefined);
+    const coverageBasis = createScopeCoverageBasisV2({
+      excludedLocatorRefs: [],
+      mixedIncludedLocatorRefs: [],
+      stableEligiblePool: final.eligibleDiscovery,
+      snapshotProof: final.proof,
+      foldProof,
+      execution,
+    });
+    const scopeFacts = buildScopeCoverageV1(
+      final.eligibleDiscovery,
+      final.proof,
+      foldProof,
+      coverageBasis,
+      resolvedScope,
+      execution,
+    );
+    const scopeFactsView = requireScopeCoverageFactsV1(
+      scopeFacts,
+      final.eligibleDiscovery,
+      final.proof,
+      foldProof,
+      coverageBasis,
+      resolvedScope,
+      execution,
+    );
+    const preBudget = createCapabilityPreBudgetCountV2(
+      observation,
+      stableCapability,
+      stableScope,
+      final.eligibleDiscovery,
+      final.proof,
+      foldProof,
+      scopeFactsView.proof,
+      execution,
+    );
+    const brand = createOpaqueTokenV2<
+      import('../../src/evidence/request-snapshot/pre-ranking-evidence-pool-v2.js').TrustedStableRecordViewV2
+    >();
+    const retainedView = Object.freeze({
+      ...brand,
+      recordRef: createOpaqueTokenV2(),
+      fileBucketRef: createOpaqueTokenV2(),
+      draft: Object.freeze({
+        evidenceClass: 'confirmed' as const,
+        role: 'definition',
+        location: Object.freeze({
+          file: 'a.ts',
+          lines: Object.freeze([1, 1] as const),
+          excerpt: 'x',
+        }),
+        provenance: Object.freeze({
+          discoveredBy: Object.freeze(['ripgrep' as const]),
+          verifiedBy: 'filesystem' as const,
+          operations: Object.freeze(['RIPGREP_SEARCH' as const]),
+        }),
+        reasonCodes: Object.freeze(['DIRECT_ALIAS_MAPPING' as const]),
+      }),
+      rankingSignals: Object.freeze({
+        kind: 'direct' as const,
+        focusLines: Object.freeze([1, 1] as const),
+        focusExcerpt: 'x',
+      }),
+    }) as import('../../src/evidence/request-snapshot/pre-ranking-evidence-pool-v2.js').TrustedStableRecordViewV2;
+    const ranking = issueEvidenceRankingOutcomeV2({
+      fragment: Object.freeze({
+        confirmed: Object.freeze([]),
+        candidates: Object.freeze([]),
+        unsatisfiedAnchors: Object.freeze([]),
+      }),
+      budgetFacts: Object.freeze({
+        maxFilesReached: false,
+        maxConfirmedReached: false,
+        maxCandidatesReached: false,
+        preRankingPoolTruncated: false,
+        safeSelectorCollision: false,
+        safeOrderingCollision: false,
+      }),
+      confirmed: [retainedView],
+      candidates: [],
+      snapshotProof: final.proof,
+      execution,
+      collisionAnchorKeys: new Set(),
+    });
+    registerCapabilityRetainedDecisionLedgerV2(execution, []);
+    expect(() =>
+      sealCapabilityRetainedDecisionsV2(
+        preBudget,
+        ranking,
+        observation,
+        final.eligibleDiscovery,
+        final.proof,
+        foldProof,
+        scopeFactsView.proof,
+        execution,
+      ),
+    ).toThrow(/ledger|retained/i);
+    // empty retained + empty ledger seals cleanly
+    const emptyRanking = issueEvidenceRankingOutcomeV2({
+      fragment: Object.freeze({
+        confirmed: Object.freeze([]),
+        candidates: Object.freeze([]),
+        unsatisfiedAnchors: Object.freeze([]),
+      }),
+      budgetFacts: Object.freeze({
+        maxFilesReached: false,
+        maxConfirmedReached: false,
+        maxCandidatesReached: false,
+        preRankingPoolTruncated: false,
+        safeSelectorCollision: false,
+        safeOrderingCollision: false,
+      }),
+      confirmed: [],
+      candidates: [],
+      snapshotProof: final.proof,
+      execution,
+      collisionAnchorKeys: new Set(),
+    });
+    expect(
+      sealCapabilityRetainedDecisionsV2(
+        preBudget,
+        emptyRanking,
+        observation,
+        final.eligibleDiscovery,
+        final.proof,
+        foldProof,
+        scopeFactsView.proof,
+        execution,
+      ),
+    ).toBeDefined();
   });
 });

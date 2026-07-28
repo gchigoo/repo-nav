@@ -10,7 +10,7 @@ commit_authorization: approved
 commit_authorization_ref: "approval-report.md#goal-commits"
 handoff_reason: ""
 handoff_next: ""
-current_feature_index: 10
+current_feature_index: 11
 features:
 - slug: public-output-boundary-v2
   roadmap_item: public-output-boundary-v2
@@ -110,7 +110,7 @@ features:
   review: .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-review.md
   qa: .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-qa.md
   acceptance: .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-acceptance.md
-  status: implementing
+  status: accepted
 - slug: public-beta-release
   roadmap_item: public-beta-release
   feature_dir: .codestable/features/2026-07-24-public-beta-release
@@ -278,3 +278,28 @@ ledger:
   feature: repository-scope-policy
   index: 9
   note: ResumeGoalAcceptance approval-report.md#goal-acceptance; checks passed; index->10
+- step: f8-feature-start
+  status: started
+  feature: language-capability-boundary
+  index: 10
+  note: next pending feature after F7 accept
+- step: f8-implementation
+  status: done
+  feature: language-capability-boundary
+  index: 10
+  note: S1-S5 done; review round3 passed blocking=0
+- step: f8-qa
+  status: done
+  feature: language-capability-boundary
+  index: 10
+  note: QA passed; must-run + golden-all green; MOVE regex-class restore
+- step: f8-gates
+  status: done
+  feature: language-capability-boundary
+  index: 10
+  note: scope-gate/dod-runner/evidence-pack passed
+- step: f8-acceptance
+  status: done
+  feature: language-capability-boundary
+  index: 10
+  note: ResumeGoalAcceptance approval-report.md#goal-acceptance; checks passed; index->11

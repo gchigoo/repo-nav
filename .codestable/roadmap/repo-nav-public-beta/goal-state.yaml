@@ -92,7 +92,7 @@ features:
   review: .codestable/features/2026-07-24-input-abort-contract-v2/input-abort-contract-v2-review.md
   qa: .codestable/features/2026-07-24-input-abort-contract-v2/input-abort-contract-v2-qa.md
   acceptance: .codestable/features/2026-07-24-input-abort-contract-v2/input-abort-contract-v2-acceptance.md
-  status: pending
+  status: implementing
 - slug: repository-scope-policy
   roadmap_item: repository-scope-policy
   feature_dir: .codestable/features/2026-07-24-repository-scope-policy

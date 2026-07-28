@@ -1,0 +1,40 @@
+{
+  "gate_id": "evidence-pack",
+  "stage": "implementation.before_review",
+  "status": "passed",
+  "blocking": [],
+  "warnings": [],
+  "evidence": [
+    {
+      "out": ".codestable\\features\\2026-07-24-cross-platform-ci-baseline\\cross-platform-ci-baseline-evidence-pack.md",
+      "providers": {
+        "archguard": {
+          "status": "unavailable",
+          "reason": "archguard binary not found on PATH",
+          "warnings": []
+        },
+        "meta_cc": {
+          "status": "unavailable",
+          "reason": "meta-cc summary not found; realtime session collection is out of scope",
+          "warnings": []
+        }
+      }
+    }
+  ],
+  "providers": {},
+  "feature": "2026-07-24-cross-platform-ci-baseline",
+  "inputs": {
+    "design": ".codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-design.md",
+    "checklist": ".codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-checklist.yaml",
+    "out": ".codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-evidence-pack.md",
+    "dod_results": ".codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-dod-results.json",
+    "gate_results": ".codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-gate-results.json"
+  },
+  "input_digests": {
+    "design": "230a7ee1f554f0d6c0dfafa892679ee6d339e706ba337a8e1793af489f43c1a1",
+    "checklist": "fce1e865b0360bd69e1b610fae85c22a0d3219530433a86eb88c4f480d282d13",
+    "dod_results": "12766672849b20f41cd4d332d7476da89cdb67d9739f91e0a92909cb5fb85bcf",
+    "gate_results": "69aaaba355dd33797e839a126364b0158267ec01a5edad3cb6e1d8a6a267683d",
+    "out": "981553891159bf8a33e3942761b9b69a19faadda8aff2a456a5a83d450bf362b"
+  }
+}

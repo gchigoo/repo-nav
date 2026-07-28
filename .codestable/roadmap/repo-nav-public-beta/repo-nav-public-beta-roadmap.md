@@ -572,6 +572,8 @@ interface BackendExecutionOutcomeV2 {
 
 立即建立 Node 22/24 与 Windows/Linux/macOS 验证矩阵，并冻结 beta runtime 为 `^22.0.0 || ^24.0.0`；后续每个 feature 向同一 matrix 增加自己的 contract cases。它是独立 safety-net lane，F5 必须等待 blocking matrix 就绪。
 
+**状态（2026-07-28）**：acceptance `passed`；items.yaml `done`；remote run `30323465951` 六格+`cross-platform-required` 全绿；main ruleset required check 已生效。
+
 ### F5 · streaming-ripgrep
 
 修正 stdout/stderr N+1 上限语义，增加流式 JSON line consumer、maxHits 提前停止和 bounded attempt telemetry，并输出统一 `BackendExecutionOutcomeV2`。不完整 raw prefix 不进入 evidence；只有完成的 backend/fallback safe set 可进入 F3/F2。本 item 只拥有 process/backend termination facts 与进程树清理，不决定 request-level status、abortSource、limits 或 nextActions。

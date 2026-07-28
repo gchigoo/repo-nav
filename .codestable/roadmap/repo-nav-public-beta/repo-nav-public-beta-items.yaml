@@ -52,10 +52,10 @@ items:
   description: 建立受支持 Node 22/24 与 Windows Linux macOS 的 build typecheck unit Golden MCP docs 和进程路径验证矩阵
   depends_on:
   - public-output-boundary-v2
-  status: in-progress
+  status: done
   feature: 2026-07-24-cross-platform-ci-baseline
   minimal_loop: false
-  notes: 作为立即可启动的 safety-net lane；冻结 beta engines 为 ^22.0.0 || ^24.0.0，并在每个后续 feature 增加对应 matrix case，F5 前必须形成 blocking platform evidence
+  notes: 2026-07-28 acceptance passed；remote run 30323465951 六格+aggregate 全绿；main ruleset required check=cross-platform-required；F5 admission 已满足
 - slug: streaming-ripgrep
   description: 修正 N+1 输出上限语义，流式解析 ripgrep JSON，在达到 maxHits 或 stdout 上限时保留 bounded attempt telemetry，并输出带 complete-safe-set 或 telemetry-only eligibility 的统一 BackendExecutionOutcomeV2
   depends_on:

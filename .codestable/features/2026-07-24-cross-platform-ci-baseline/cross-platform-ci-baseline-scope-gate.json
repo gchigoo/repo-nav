@@ -1,0 +1,40 @@
+{
+  "gate_id": "scope-gate",
+  "stage": "implementation.before_review",
+  "status": "passed",
+  "blocking": [],
+  "warnings": [
+    "cleanliness marker TODO in .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-checklist.yaml"
+  ],
+  "evidence": [
+    {
+      "changed_files": [
+        ".codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-checklist.yaml",
+        ".codestable/roadmap/repo-nav-public-beta/goal-state.yaml",
+        ".codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-architecture-check.md",
+        ".codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-scope-allow.txt"
+      ],
+      "ignored_machine_artifacts": [],
+      "allowed_prefixes": [
+        ".codestable/features/2026-07-24-cross-platform-ci-baseline",
+        ".codestable/features/2026-07-24-cross-platform-ci-baseline",
+        ".codestable/roadmap/repo-nav-public-beta",
+        ".github/workflows/cross-platform-ci.yml",
+        "tools/ci",
+        "testkit/contracts",
+        "testkit/testing/platform-contract.ts",
+        "testkit/testing/platform-contract-setup.ts",
+        "testkit/fixtures/platform",
+        "testkit/manifests/mcp",
+        "testkit/runners",
+        "test/unit/cross-platform-ci-contract.spec.ts",
+        "test/unit/cross-platform-platform.spec.ts",
+        "test/unit/platform-evidence-report.spec.ts",
+        "test/unit/platform-contract-production-id-v1.type-test.ts",
+        "test/unit/platform-contract-synthetic-extension-v1.type-test.ts",
+        "package.json"
+      ]
+    }
+  ],
+  "providers": {}
+}

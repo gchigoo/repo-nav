@@ -3,7 +3,7 @@ doc_type: roadmap-goal-feature
 roadmap: repo-nav-public-beta
 feature: 2026-07-24-cross-platform-ci-baseline
 roadmap_item: cross-platform-ci-baseline
-status: pending
+status: accepted
 ---
 
 # cross-platform-ci-baseline Goal 执行规格

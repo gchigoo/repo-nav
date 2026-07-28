@@ -1,0 +1,17 @@
+# F4 scope + goal-state updates
+.codestable/features/2026-07-24-cross-platform-ci-baseline
+.codestable/roadmap/repo-nav-public-beta
+.github/workflows/cross-platform-ci.yml
+tools/ci
+testkit/contracts
+testkit/testing/platform-contract.ts
+testkit/testing/platform-contract-setup.ts
+testkit/fixtures/platform
+testkit/manifests/mcp
+testkit/runners
+test/unit/cross-platform-ci-contract.spec.ts
+test/unit/cross-platform-platform.spec.ts
+test/unit/platform-evidence-report.spec.ts
+test/unit/platform-contract-production-id-v1.type-test.ts
+test/unit/platform-contract-synthetic-extension-v1.type-test.ts
+package.json

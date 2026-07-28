@@ -30,188 +30,188 @@ steps:
   exit_signal: 所有本地核心命令与同一PR synthetic merge加head、merge-group head sha、push或manual commit的六格和aggregate均通过，main ruleset要求stable check且故意失败PR不可merge，package metadata与production v1无越界变化；global doctor仅作non-core既有P1诊断
   verification: npm run build && npm run typecheck && npm test && npm run test:golden -- --all && npm run test:mcp -- --all && npm run test:docs && npm run test:platform
   artifacts: [full local logs, six-cell core-command reports, GitHub run and aggregate reference, event-specific workflow source and head metadata proof, sanitized ruleset config, failing PR merge-block evidence, global doctor baseline, package scope diff, architecture update, review QA acceptance]
-  status: pending
+  status: done
 checks:
 - id: C1
   item: platform registry精确声明ubuntu-24.04 windows-2025 macos-15-intel与Node22 24的六个唯一cell且canonical order固定
   source: design §1 key decisions 1-2 / F4-MATRIX-001
-  status: pending
+  status: passed
 - id: C2
   item: macOS固定intel x64且runtime probe逐格核对process.platform process.arch和Node major
   source: design §1 key decisions 2 and 6 / F4-RUNTIME-001
-  status: pending
+  status: passed
 - id: C3
   item: checkout setup-node upload-artifact只使用design冻结的完整40位SHA并与registry tag provenance deep-exact
   source: design §1 key decision 3 / F4-MATRIX-001
-  status: pending
+  status: passed
 - id: C4
   item: workflow使用pull_request merge_group checks_requested main和repo-nav-public-beta push workflow_dispatch与ref级concurrency cancel-in-progress且cancelled run不可作验收证据
   source: design §1 key decisions 4 and 17
-  status: pending
+  status: passed
 - id: C5
   item: permissions只有contents read且checkout persist-credentials false workflow不引用secrets或write API
   source: design §1 key decision 5
-  status: pending
+  status: passed
 - id: C6
   item: matrix fail-fast false但无continue-on-error无experimental允许失败，stable cross-platform-required固定ubuntu-24.04且不checkout setup install，以needs和always只接受matrix success，删除改名改runner加依赖步骤放宽或skipped cancelled均失败
   source: design §1 success 1 / F4-MATRIX-001
-  status: pending
+  status: passed
 - id: C7
   item: setup-node显式Node major且package-manager-cache false随后执行npm ci
   source: design §1 key decision 7
-  status: pending
+  status: passed
 - id: C8
   item: 每格按registry执行install runtime build typecheck unit golden mcp docs platform九项blocking outcomes
   source: design §1 key decisions 7 and 13 / F4-MATRIX-001
-  status: pending
+  status: passed
 - id: C9
   item: test:platform由run-platform-contracts先验证当前OS再逐项执行applicable PlatformCaseBinding的现有unit和mcp runner；runner reporter从实际task file签private actualOwner且helper不接收owner参数，orchestrator先对账runner registration与declared marker/evidence owner再剥离path；exact tuple、owner、requiredAssertionIds及requiredEvidenceHashIds expected actual集合不等，或出现未知缺失重复冲突、零passed marker、零evidence、非64位小写hex均失败且不复制测试框架、不伪回填hash
   source: design §1 key decision 8
-  status: pending
+  status: passed
 - id: C10
   item: absolute parent traversal backslash或non-normalized root-relative path在真实NodeRepositoryReader上typed拒绝
   source: design §1 key decision 9 / F4-PATH-001
-  status: pending
+  status: passed
 - id: C11
   item: F4-PATH-002 applicableOs仅linux darwin且四个POSIX cells真实symlink逃逸必须拒绝，Windows不启动binding也不写假marker，fixture创建或cleanup失败不可skip
   source: design §1 key decision 9 / F4-PATH-002
-  status: pending
+  status: passed
 - id: C12
   item: F4-PATH-003 applicableOs仅win32且两个Windows cells真实junction或reparse逃逸必须拒绝，POSIX不启动binding也不写假marker，fixture创建或cleanup失败不可skip
   source: design §1 key decision 9 / F4-PATH-003
-  status: pending
+  status: passed
 - id: C13
   item: 所有path typed error和report不得包含绝对temp root
   source: design §1 success 4 / F4-PATH-004
-  status: pending
+  status: passed
 - id: C14
   item: caller abort真实父子孙进程返回aborted settle once且返回后全部owned PID不可存活
   source: design §1 key decision 10 / F4-PROC-001
-  status: pending
+  status: passed
 - id: C15
   item: timeout真实父子孙进程返回timeout settle once且返回后全部owned PID不可存活
   source: design §1 key decision 10 / F4-PROC-002
-  status: pending
+  status: passed
 - id: C16
   item: F4保持当前stdout N减1成功且exact N触发stdout-limit的基线，retained bytes不超过N并完成normal tree cleanup，N成功和N加1语义留给F5
   source: design §1 key decision 11 / F4-PROC-003
-  status: pending
+  status: passed
 - id: C17
   item: F4保持当前stderr N减1成功且exact N触发stderr-limit的基线，retained bytes不超过N并完成normal tree cleanup，N成功和N加1语义留给F5
   source: design §1 key decision 11 / F4-PROC-004
-  status: pending
+  status: passed
 - id: C18
   item: tree termination failure返回固定cleanup invariant且direct child被hard kill，harness cleanup前记录descendant真实状态再test-only强制清理，不把harness清理冒充production保证且不暴露raw error
   source: design §1 key decision 10 / F4-PROC-005
-  status: pending
+  status: passed
 - id: C19
   item: F4-MCP-001唯一映射到mcp surface mcp-surface group request-cancellation-cleanup case及pre-handler-cancel inflight-signal eof-abort markers并在真实stdio child收敛且无tracked child或context残留
   source: design §1 success 6 / F4-MCP-001
-  status: pending
+  status: passed
 - id: C20
   item: F4-MCP-002唯一映射到mcp surface lifecycle group shutdown-cleanup-probe case及五个required markers并在EOF signal parser failure与close failure路径保持frames-only stdout且清理host context direct descendant
   source: design §1 success 6 / F4-MCP-002
-  status: pending
+  status: passed
 - id: C21
   item: core-command report strict schema只允许schemaVersion cellId expected actual run revision commands requiredCaseIds passedAssertionMarkers contractEvidenceHashes completedAt；run精确含十进制workflowRunId与正安全整数runAttempt，passedAssertionMarkers按contractId assertionId排序且与当前cell applicable assertions exact，contractEvidenceHashes按contractId evidenceId排序且与applicable evidence exact、值为64位小写hex、F4 base evidence正常值exact empty；revision精确含workflowSha sourceSha eventName，workflowSha取github workflow_sha而sourceSha取显式checkout的github sha
   source: design §1 key decision 12 / F4-REPORT-001
-  status: pending
+  status: passed
 - id: C22
   item: report递归拒绝任意大小写cwd path root env stdout stderr error message pid argv键
   source: design §1 key decision 12 / F4-REPORT-001
-  status: pending
+  status: passed
 - id: C23
   item: report writer只接收fixed GitHub core step outcomes不得接收自由文本日志或自行改写failure，checkout前失败允许无report但matrix和aggregate必须失败
   source: design §1 key decision 13 / F4-REPORT-001
-  status: pending
+  status: passed
 - id: C24
   item: always cell assertion要求九项outcome全success、requiredCaseIds精确等于registry对当前OS的applicable contracts、passedAssertionMarkers与required assertions exact、contractEvidenceHashes与required evidence ID和实际hash exact，run与revision合法；report schema不完整则exit nonzero且不声称upload aggregate或完整job success
   source: design §1 key decision 13
-  status: pending
+  status: passed
 - id: C25
   item: artifact upload只包含单个safe JSON使用cell和runAttempt命名retention14且missing file失败
   source: design §1 key decision 14
-  status: pending
+  status: passed
 - id: C26
   item: 同一PR synthetic merge加head、merge-group head sha、push commit或manual selected commit的六格matrix加stable aggregate是remote acceptance evidence，workflowRunId runAttempt workflowSha sourceSha eventName与同run metadata必须一致，cancelled不同run attempt或不同revision拼接无效
   source: design §1 key decisions 15-17 / F4-REMOTE-001
-  status: pending
+  status: passed
 - id: C27
   item: runner queue或平台不可用保持environment blocker不得降级为local-only pass
   source: design §1 key decision 18
-  status: pending
+  status: passed
 - id: C28
   item: F5到F9只能向同一platform registry增加stable PlatformCaseBinding并由同一cross-surface orchestrator执行，不得复制workflow或移除既有case
   source: design §1 key decision 19
-  status: pending
+  status: passed
 - id: C29
   item: 本feature除test:platform script外不改变package engines version private license README runtime release metadata或任何production runner语义
   source: design explicit non-goals / reverse check
-  status: pending
+  status: passed
 - id: C30
   item: production src不得import tools ci testkit或platform contracts且v1 v2 transport边界不变
   source: design §3.3 reverse check
-  status: pending
+  status: passed
 - id: C31
   item: architecture只在remote六格 aggregate和main required-check真实通过后记录CI现状并同步ARCHITECTURE索引
   source: design §4
-  status: pending
+  status: passed
 - id: C32
   item: item在本地full suite与owner-authorized event-specific revision六格 aggregate required-check和失败PR不可merge验证前保持in-progress且F5不实现
   source: design §1 key decisions 16 and 18
-  status: pending
+  status: passed
 - id: C33
   item: workflow与tests不新增第三方依赖不上传raw logs不保留临时TODO debug echo或无用platform branch
   source: design cleanliness
-  status: pending
+  status: passed
 - id: C34
   item: repository owner授权后把main ruleset或branch protection中的cross-platform-required设为required并保存sanitized配置，故意失败临时PR必须显示不可merge
   source: design §1 key decision 16 / F4-REMOTE-001
-  status: pending
+  status: passed
 - id: C35
   item: merge queue启用时sourceSha必须同时等于github sha与github event merge_group head_sha并运行相同matrix和cross-platform-required check，可附head ref base sha base ref但不要求event未提供的成员PR head列表；不启用时保存live disabled事实且trigger仍受contract保护
   source: design §1 key decisions 4 and 16 / F4-MATRIX-001
-  status: pending
+  status: passed
 - id: C36
   item: PlatformCaseBinding逐项包含唯一contractId surface group executableCaseId nonempty applicableOs requiredAssertionIds requiredEvidenceHashIds fixture assertionOwner，snapshot为每个required assertion和evidence ID提供唯一owner，runner registry为tuple登记其exact owner-file集合；marker固定为platform双冒号contractId双冒号assertionId，evidence key固定为platform-evidence双冒号contractId双冒号evidenceId，机器验证全部PATH PROC MCP适用cells真实执行及actual task-file owner映射且F4 base requiredEvidenceHashIds exact empty
   source: design §2.1 executable mapping / F4-MCP-001 and F4-MCP-002
-  status: pending
+  status: passed
 - id: C37
   item: core-command report只证明九项outcomes，完整job upload matrix aggregate和ruleset truth只能由同run GitHub evidence证明
   source: design §1 key decisions 12-17 / F4-REPORT-001
-  status: pending
+  status: passed
 - id: C38
   item: 每个contract使用唯一executable tuple且一个case不服务多个contract；删除assertion或evidence、共享case、重复marker或evidence、invalid或unknown evidence hash、空applicableOs、移除必需OS coverage及合法group加合法case错配mutation均使test platform或matrix contract失败且不得根据exit零回填contractId或evidence hash
   source: design §1 key decision 8 and §3.1 F4-BINDING-001
-  status: pending
+  status: passed
 - id: C39
   item: platformContractIt只注册namespaced stable marker，recordPlatformContractEvidenceHash只注册namespaced evidence key与64位小写hex且两者都不接收owner参数；runner reporter从实际task file签private owner provenance，orchestrator对applicable binding要求declared owner与actual owner deep-exact及required markers evidence全部且仅一次，再剥离path写safe summary；nonapplicable binding不启动runner且不接受passed skipped marker或evidence
   source: design §1 key decision 8 / F4-BINDING-001
-  status: pending
+  status: passed
 - id: C40
   item: codestable doctor使用仓库真实路径但作为non-core全局诊断，当前无关旧feature P1需记录baseline而不得由F4越界修改；validate-yaml、spec与diff scoped gates均为supporting且失败仍fix-or-block
   source: design §3.5 Validation Commands / S5
-  status: pending
+  status: passed
 - id: C41
   item: F4 base PlatformContractIdV1由PLATFORM_CONTRACT_IDS_V1导出且只含F4 PATH PROC MCP IDs；production wrapper只接受该exact tuple snapshot，F4-owned SyntheticPlatformContractIdV1、SYNTHETIC_PLATFORM_CONTRACT_IDS_V1与TEST-EXT-001仅在两份type fixtures及self-test corpus出现且不被production registry或orchestrator import
   source: design key decision 20 / F4-EXT-001
-  status: pending
+  status: passed
 - id: C42
   item: F5四项 F6三项 F7一项 F8一项 F9一项目标binding仅作为跨设计ledger冻结；ledger逐项冻结assertion IDs与evidence hash IDs，其中F5 F6 F7 F8 evidence exact none、F9 exact candidate-id semantic-manifest production-closure；F4 base不加载且不要求其fixture owner存在，每个child implementation revision自行原子扩union binding fixture assertion和evidence owners runner markers hashes并取得same-revision六格证据
   source: design ChildDesignBatch registry extension table / F4-EXT-001
-  status: pending
+  status: passed
 - id: C43
   item: generic validator以NoInfer锁定调用方expected-ID tuple并先对allowedIds做canonical deep-exact，再要求每个ID恰一binding、每个required assertion恰一marker owner且每个required evidence恰一evidence owner，runner registeredCaseOwners与这些owner的canonical集合deep-exact；production-ID type fixture拒绝TEST-EXT-001，synthetic exact-tuple type fixture完整snapshot通过且漏ID unknown ID compile negative，runtime corpus对漏字段或owner、wrong-path、声明owner存在included但实际由另一included spec发marker或hash、zero-marker或evidence、invalid duplicate unknown evidence、错tuple、重复case或marker、缩小OS全部失败且不读取planned child paths
   source: design key decision 20 / F4-EXT-001
-  status: pending
+  status: passed
 - id: C44
   item: unit child assertions和evidence hash记录只位于test/unit现有Vitest surface，不创建test/platform第四surface或marker-only evidence-only不可达spec
   source: design key decision 20 / reverse checks
-  status: pending
+  status: passed
 - id: C45
   item: F4-EXT-001 exact owners为testkit/contracts/platform-contract.ts、testkit/fixtures/platform/registry-extension-mutations.ts、test/unit/platform-contract-production-id-v1.type-test.ts、test/unit/platform-contract-synthetic-extension-v1.type-test.ts、test/unit/cross-platform-ci-contract.spec.ts与testkit/runners/runner-registry.ts；TEST-EXT-001 requiredEvidenceHashIds exact synthetic-proof且evidence owner为test/unit/cross-platform-ci-contract.spec.ts并记录固定64位小写hex，全部在同一revision接入typecheck self-test和unit runner
   source: design §2.1 stable case owners / F4-EXT-001
-  status: pending
+  status: passed
 dod:
   design:
   - design checklist review hashes固定且closed PlatformContractIdV1只含F4 base；F4 stable cases exact surface group executableCaseId applicableOs requiredAssertionIds empty requiredEvidenceHashIds fixture assertion和evidence owners、runner actual-owner provenance、safe run marker evidence report、synthetic assertion加evidence extension protocol、child-owned F5-F9 assertion和evidence target ledger、aggregate required-check contract与action pins明确
@@ -261,7 +261,7 @@ dod:
     core: true
     failure_handling: fix-or-block
   - id: CMD-WORKFLOW-YAML
-    command: npm exec -- yaml .github/workflows/cross-platform-ci.yml
+    command: node tools/ci/validate-workflow-yaml.mjs .github/workflows/cross-platform-ci.yml
     core: true
     failure_handling: fix-or-block
   - id: CMD-WORKFLOW-CONTRACT

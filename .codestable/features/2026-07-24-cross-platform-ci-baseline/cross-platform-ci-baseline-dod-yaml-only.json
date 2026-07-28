@@ -1,0 +1,26 @@
+{
+  "gate_id": "dod-runner",
+  "stage": "implementation.before_review",
+  "status": "passed",
+  "blocking": [],
+  "warnings": [],
+  "evidence": [
+    {
+      "command": "node tools/ci/validate-workflow-yaml.mjs .github/workflows/cross-platform-ci.yml",
+      "exit_code": 0,
+      "stdout": "yaml_ok .github/workflows/cross-platform-ci.yml\n",
+      "stderr": "",
+      "id": "CMD-WORKFLOW-YAML",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    }
+  ],
+  "providers": {},
+  "feature": "2026-07-24-cross-platform-ci-baseline",
+  "inputs": {
+    "checklist": ".codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-checklist.yaml"
+  },
+  "input_digests": {
+    "checklist": "fce1e865b0360bd69e1b610fae85c22a0d3219530433a86eb88c4f480d282d13"
+  }
+}

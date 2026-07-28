@@ -1,0 +1,44 @@
+{
+  "gate_id": "dod-runner",
+  "stage": "implementation.before_review",
+  "status": "passed",
+  "blocking": [],
+  "warnings": [],
+  "evidence": [
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.1.0 test\n> tsx testkit/runners/unit-runner.ts\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ✓ test/unit/platform-evidence-report.spec.ts (1 test) 21ms\n ✓ test/unit/public-output-v2-no-cutover.spec.ts (3 tests) 27ms\n ✓ test/unit/cross-platform-ci-contract.spec.ts (3 tests) 55ms\n ✓ test/unit/public-output-v2-contract.spec.ts (25 tests) 62ms\n ✓ test/unit/contract.spec.ts (12 tests) 26ms\n ✓ test/unit/evidence-merge.spec.ts (6 tests) 12ms\n ✓ test/unit/direct-mapping-classifier.spec.ts (34 tests) 56ms\n ✓ test/unit/output-guardrails.spec.ts (7 tests) 19ms\n ✓ test/unit/public-output-v2-errors-projection.spec.ts (4 tests) 34ms\n ✓ test/unit/codegraph-query-planner.spec.ts (6 tests) 24ms\n ✓ test/unit/codegraph-backend.spec.ts (8 tests) 24ms\n ✓ test/unit/runner-smoke.spec.ts (1 test) 4ms\n ✓ test/unit/public-output-v2-redaction.spec.ts (19 tests) 86ms\n ✓ test/unit/public-result-assembler-v2.spec.ts (7 tests) 55ms\n ✓ test/unit/repository-safety.spec.ts (5 tests) 49ms\n ✓ test/unit/candidate-policy.spec.ts (37 tests) 235ms\n ✓ test/unit/repository-reader.spec.ts (6 tests) 128ms\n ✓ test/unit/ripgrep-backend.spec.ts (6 tests) 106ms\n ✓ test/unit/di.spec.ts (2 tests) 52ms\n ✓ test/unit/debug-cli-shell.spec.ts (10 tests) 23ms\n ✓ test/unit/scope-gate.spec.ts (2 tests) 718ms\n     ✓ passes shell metacharacters to git as literal path arguments  554ms\n ✓ test/unit/safe-process-runner.spec.ts (6 tests) 860ms\n ✓ test/unit/locate-status-evaluator.spec.ts (13 tests) 2033ms\n     ✓ distinguishes its own deadline from a caller abort  1005ms\n     ✓ retains verification completed before the abort  1006ms\n ✓ test/unit/codegraph-live-smoke.spec.ts (1 test) 2331ms\n     ✓ indexes, probes, queries, and removes only the temporary repository  2330ms\n ✓ test/unit/process-cleanup.spec.ts (6 tests) 10007ms\n     ✓ terminates direct child and descendant on caller abort and settles once  1758ms\n     ✓ terminates direct child and descendant on timeout  1821ms\n     ✓ terminates direct child and descendant when stdout exactly reaches its cap  1436ms\n     ✓ terminates direct child and descendant when stderr exactly reaches its cap  1461ms\n     ✓ rejects within a fixed cleanup deadline when tree termination fails  3402ms\n ✓ test/unit/cross-platform-platform.spec.ts (9 tests | 1 skipped) 10251ms\n     ✓ proves abort, single settlement, and owned tree death  1808ms\n     ✓ proves timeout, single settlement, and owned tree death  1975ms\n     ✓ keeps N-1 success and exact-N stdout-limit baseline  1625ms\n     ✓ keeps N-1 success and exact-N stderr-limit baseline  1479ms\n     ✓ records fixed invariant, direct child death, and descendant observation  3331ms\n\n Test Files  26 passed (26)\n      Tests  238 passed | 1 skipped (239)\n   Start at  11:25:44\n   Duration  11.37s (transform 5.08s, setup 0ms, import 16.07s, tests 27.30s, environment 3ms)\n\n",
+      "stderr": "",
+      "id": "CMD-UNIT-ALL",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run test:golden -- --all",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.1.0 test:golden\n> tsx testkit/runners/golden-runner.ts --all\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ✓ test/golden/runner-smoke.spec.ts (1 test) 3ms\n ✓ test/golden/public-output-v2.spec.ts (7 tests) 30ms\n ✓ test/golden/output-guardrails.spec.ts (8 tests) 37ms\n ✓ test/golden/golden-contract.spec.ts (5 tests) 54ms\n ✓ test/golden/text-engine-classifier.spec.ts (6 tests | 1 skipped) 83ms\n ✓ test/golden/mvp-evaluator.spec.ts (8 tests) 101ms\n ✓ test/golden/candidate-policy.spec.ts (3 tests) 127ms\n ✓ test/golden/mvp-regression-families.spec.ts (5 tests) 154ms\n ✓ test/golden/fixture-completeness.spec.ts (3 tests) 170ms\n ✓ test/golden/codegraph-fallback.spec.ts (11 tests) 219ms\n ✓ test/golden/text-evidence-engine.spec.ts (14 tests) 2115ms\n     ✓ confirms a multiline mapping through the real ripgrep-to-reader chain  681ms\n     ✓ keeps multiple canonical symbol facts stable across anchor permutations  1258ms\n ✓ test/golden/large-synthetic-repository.spec.ts (1 test) 3126ms\n     ✓ keeps five real-engine projections stable and records environment-aware timing  3124ms\n\n Test Files  12 passed (12)\n      Tests  71 passed | 1 skipped (72)\n   Start at  11:25:57\n   Duration  4.04s (transform 1.62s, setup 0ms, import 8.62s, tests 6.22s, environment 1ms)\n\n",
+      "stderr": "",
+      "id": "CMD-GOLDEN-ALL",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run test:mcp -- --all",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.1.0 test:mcp\n> npm run build --silent && tsx testkit/runners/mcp-runner.ts --all\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ✓ test/mcp/runner-smoke.spec.ts (1 test) 5ms\n ✓ test/mcp/tool-surface.spec.ts (8 tests) 294ms\n ✓ test/mcp/redaction-output-parity.spec.ts (1 test) 1430ms\n     ✓ keeps forbidden values out of structured, text, stdout protocol, and stderr  1428ms\n ✓ test/mcp/mcp-golden-adapter.spec.ts (1 test) 1431ms\n     ✓ feeds both success and error transport observations to the shared evaluator  1429ms\n ✓ test/mcp/candidate-minimal-loop.spec.ts (1 test) 1471ms\n     ✓ returns confirmed and bounded candidates with transport parity  1469ms\n ✓ test/mcp/tool-output-parity.spec.ts (2 tests) 2387ms\n     ✓ returns one confirmed mapping through real stdio  1400ms\n     ✓ keeps all recoverable statuses out of the MCP error channel  985ms\n ✓ test/mcp/request-cancellation.spec.ts (3 tests) 3461ms\n     ✓ does not lose cancellation sent before the handler starts work  1492ms\n     ✓ propagates the SDK request signal to the application service  1014ms\n     ✓ aborts an in-flight locate when stdin reaches EOF  953ms\n ✓ test/mcp/tool-error-parity.spec.ts (4 tests) 4159ms\n     ✓ maps schema-invalid objects to typed parity output  1418ms\n     ✓ preserves the typed code while sanitizing unsafe detail  979ms\n     ✓ preserves the typed code while sanitizing unsafe detail  937ms\n     ✓ turns thrown failures into safe typed parity output  822ms\n ✓ test/mcp/lifecycle-contract.spec.ts (18 tests) 11801ms\n     ✓ accepts only real MCP frames on stdout and propagates clean exit  782ms\n     ✓ treats an SDK transport parse failure as fatal without stdout pollution  619ms\n     ✓ drives graceful shutdown through stdin within the manifest budget  620ms\n     ✓ observes the real Nest context hook and direct/descendant process cleanup  1457ms\n     ✓ fails when the real context close marker is deliberately skipped  1345ms\n     ✓ fails when an actual descendant tree is deliberately left running  2809ms\n     ✓ cleans both child PIDs and the probe directory after a forced timeout  3311ms\n     ✓ cleans both child PIDs and the probe directory after a nonzero exit  818ms\n\n Test Files  9 passed (9)\n      Tests  39 passed (39)\n   Start at  11:26:07\n   Duration  13.71s (transform 1.57s, setup 0ms, import 8.53s, tests 26.44s, environment 1ms)\n\n",
+      "stderr": "",
+      "id": "CMD-MCP-ALL",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    }
+  ],
+  "providers": {},
+  "feature": "2026-07-24-cross-platform-ci-baseline",
+  "inputs": {
+    "checklist": ".codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-checklist.yaml"
+  },
+  "input_digests": {
+    "checklist": "c159dc10798551f0611f4edd928119e41aa981e838b659426cba714b702bcfc0"
+  }
+}

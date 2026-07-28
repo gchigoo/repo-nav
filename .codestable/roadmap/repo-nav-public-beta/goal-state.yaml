@@ -1,5 +1,5 @@
 roadmap: repo-nav-public-beta
-status: active
+status: running
 baseline_ref: 9d7b0e237e3cd9245d1f057a2ad504b1d1028d7d
 driver_kind: host-agent
 driver_id: "06c57bbc-6ea2-4038-a133-a77038e95a06"
@@ -10,7 +10,7 @@ commit_authorization: approved
 commit_authorization_ref: "approval-report.md#goal-commits"
 handoff_reason: ""
 handoff_next: ""
-current_feature_index: 2
+current_feature_index: 3
 features:
 - slug: public-output-boundary-v2
   roadmap_item: public-output-boundary-v2
@@ -38,7 +38,7 @@ features:
   review: .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-review.md
   qa: .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-qa.md
   acceptance: .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-acceptance.md
-  status: implementing
+  status: accepted
 - slug: public-result-resource-budgets-v2
   roadmap_item: public-result-resource-budgets-v2
   feature_dir: .codestable/features/2026-07-24-public-result-resource-budgets-v2
@@ -173,3 +173,15 @@ ledger:
   feature: cross-platform-ci-baseline
   index: 2
   note: resume review→QA→accept with remote evidence in hand
+- step: f4-review
+  status: done
+  feature: cross-platform-ci-baseline
+  note: independent subagent review passed blocking=0
+- step: f4-qa
+  status: done
+  feature: cross-platform-ci-baseline
+  note: independent QA passed; remote evidence consistent
+- step: f4-acceptance
+  status: done
+  feature: cross-platform-ci-baseline
+  note: ResumeGoalAcceptance; S5 closed; index->3

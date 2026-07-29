@@ -1,13 +1,14 @@
 import type { NormalizedAnchorIntentV2 } from './anchor-intent-normalizer-v2.js';
 import type { TrustedStableRecordViewV2 } from '../request-snapshot/pre-ranking-evidence-pool-v2.js';
-import { MATCH_PRIORITY_V2, type MatchPriorityV2 } from './match-priority-v2.js';
+import {
+  MATCH_PRIORITY_V2,
+  type MatchPriorityV2,
+} from './match-priority-v2.js';
 
 export type AnchorSatisfactionLevelV2 = 'confirmed' | 'candidate' | 'none';
 
 export type UnsatisfiedAnchorReasonV2 =
-  | 'NOT_FOUND'
-  | 'UNVERIFIED'
-  | 'BUDGET_EXCEEDED';
+  'NOT_FOUND' | 'UNVERIFIED' | 'BUDGET_EXCEEDED';
 
 function draftFile(record: TrustedStableRecordViewV2): string {
   return record.draft.location.file;
@@ -21,10 +22,7 @@ function isConfirmed(record: TrustedStableRecordViewV2): boolean {
   return record.draft.evidenceClass === 'confirmed';
 }
 
-function hasReason(
-  record: TrustedStableRecordViewV2,
-  code: string,
-): boolean {
+function hasReason(record: TrustedStableRecordViewV2, code: string): boolean {
   const draft = record.draft;
   if (!('reasonCodes' in draft) || !Array.isArray(draft.reasonCodes)) {
     return false;
@@ -76,7 +74,8 @@ export function satisfactionForAnchorV2(
     case 'table':
       if (
         isConfirmed(record) &&
-        (roleOf(record) === 'definition' || roleOf(record) === 'value-mapping') &&
+        (roleOf(record) === 'definition' ||
+          roleOf(record) === 'value-mapping') &&
         (symbolCmp === value ||
           hasReason(record, 'EXACT_TERM_MATCH') ||
           hasReason(record, 'DIRECT_ALIAS_MAPPING'))
@@ -179,9 +178,7 @@ export function classifyRecordPriorityV2(input: {
       const needle = term.caseSensitive
         ? term.value
         : term.value.toLocaleLowerCase('und');
-      const haystack = term.caseSensitive
-        ? signals.focusExcerpt
-        : focus;
+      const haystack = term.caseSensitive ? signals.focusExcerpt : focus;
       if (haystack.includes(needle)) {
         regularTermCount += 1;
       }

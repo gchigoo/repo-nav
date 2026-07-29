@@ -16,7 +16,7 @@ import {
   registerTrustedLocateProjectionMaterializationV2,
   registerTrustedLocateProjectionSourceV2,
 } from '../../src/evidence/canonical/locate-projection-stage-registrar-v2.js';
-import { createV2ShadowLocateProjectorV2 } from '../../src/evidence/canonical/v2-shadow-locate-projector.js';
+import { createV2ShadowLocateProjectorV2 } from '../../testkit/testing/v2-shadow-locate-projector-v2.js';
 import { requireTrustedSerializedLocateResultV2 } from '../../src/evidence/canonical/trusted-serialized-locate-result-v2.js';
 import {
   issueLocateProjectionExecutionCapabilityV2,

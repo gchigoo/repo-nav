@@ -137,7 +137,10 @@ interface ProbeReceiptRecordV2 {
   readonly context: BackendExecutionContextV2;
 }
 
-const contextPrivate = new WeakMap<BackendExecutionContextV2, ContextRecordV2>();
+const contextPrivate = new WeakMap<
+  BackendExecutionContextV2,
+  ContextRecordV2
+>();
 const signalContexts = new WeakMap<AbortSignal, BackendExecutionContextV2>();
 const outcomePrivate = new WeakMap<
   ValidatedBackendExecutionOutcomeV2,
@@ -214,9 +217,7 @@ function deepFreezeHits(hits: readonly BackendHit[]): readonly BackendHit[] {
   return Object.freeze(hits.map((hit) => Object.freeze({ ...hit })));
 }
 
-function validateOutcomeShape(
-  shape: BackendExecutionOutcomeV2,
-): void {
+function validateOutcomeShape(shape: BackendExecutionOutcomeV2): void {
   if (shape.hitCount !== shape.retainedHits.length) {
     throw new TypeError('invalid-outcome-hitCount');
   }
@@ -259,7 +260,13 @@ function signOutcome(
 function toTelemetry(
   shape: BackendExecutionOutcomeV2,
 ): BackendExecutionTelemetryViewV2 {
-  const { retainedHits: _hits, selectionEligibility: _elig, ...rest } = shape;
+  const {
+    retainedHits: _retainedHits,
+    selectionEligibility: _selectionEligibility,
+    ...rest
+  } = shape;
+  void _retainedHits;
+  void _selectionEligibility;
   return Object.freeze(rest) as BackendExecutionTelemetryViewV2;
 }
 
@@ -334,7 +341,10 @@ export function createExpandedLaneAttemptFactsV2(
     throw new TypeError('missing-executor');
   }
   // 通过任一 executor.requireResult 验证 handle
-  let view: { ordinal: number; binding: { backend: SearchBackendId; laneMask: string } };
+  let view: {
+    ordinal: number;
+    binding: { backend: SearchBackendId; laneMask: string };
+  };
   let matched: BackendPhysicalAttemptExecutorV2 | undefined;
   for (const candidate of record.executors.values()) {
     try {
@@ -448,9 +458,8 @@ export function requireExpandedBackendAttemptReducerV2(
         'codegraph-fallback',
       ]);
       const outcomeStart =
-        ordered.find((start) =>
-          outcomeSourceKinds.has(start.binding.kind),
-        ) ?? first;
+        ordered.find((start) => outcomeSourceKinds.has(start.binding.kind)) ??
+        first;
       const factsEntry = ctx.laneFacts.get(outcomeStart.ordinal);
       if (factsEntry === undefined) {
         throw new TypeError('missing-facts');
@@ -542,7 +551,10 @@ export function createTrustedBackendDiscoveryHandoffV2(
   input:
     | Readonly<{
         kind: 'started';
-        request: { readonly legacyMaxHits: number; readonly expandedMaxHits: number };
+        request: {
+          readonly legacyMaxHits: number;
+          readonly expandedMaxHits: number;
+        };
         attempt: ExpandedBackendLogicalAttemptV2;
         legacy: BackendSearchResult;
         fallback: BackendFallbackFactsForF3V2;
@@ -552,7 +564,10 @@ export function createTrustedBackendDiscoveryHandoffV2(
       }>
     | Readonly<{
         kind: 'no-start';
-        request: { readonly legacyMaxHits: number; readonly expandedMaxHits: number };
+        request: {
+          readonly legacyMaxHits: number;
+          readonly expandedMaxHits: number;
+        };
         decision: BackendNoStartDecisionV2;
         legacy: BackendSearchResult;
         fallback: BackendFallbackFactsForF3V2;
@@ -573,8 +588,7 @@ export function createTrustedBackendDiscoveryHandoffV2(
       attempt.outcome,
       execution,
     );
-    const complete =
-      outcomeShape.selectionEligibility === 'complete-safe-set';
+    const complete = outcomeShape.selectionEligibility === 'complete-safe-set';
     view = Object.freeze({
       kind: 'started',
       backend: attempt.backend,
@@ -738,7 +752,8 @@ export function finalizeBackendExecutionTraceV2(
   }
   const attempts = [...record.logicalAttempts.values()].sort(
     (left, right) =>
-      left.view.firstExpandedStartOrdinal - right.view.firstExpandedStartOrdinal,
+      left.view.firstExpandedStartOrdinal -
+      right.view.firstExpandedStartOrdinal,
   );
   const view: BackendExecutionTraceViewV2 = Object.freeze({
     outcomes: Object.freeze(
@@ -799,7 +814,9 @@ export function issueBackendExecutionTraceForHarnessV2(input: {
     seen.add(outcome.backend);
   }
   const view: BackendExecutionTraceViewV2 = Object.freeze({
-    outcomes: Object.freeze(input.outcomes.map((outcome) => toTelemetry(outcome))),
+    outcomes: Object.freeze(
+      input.outcomes.map((outcome) => toTelemetry(outcome)),
+    ),
     firstExpandedStartOrdinals: Object.freeze(
       input.outcomes.map((_, index) => index + 1),
     ),

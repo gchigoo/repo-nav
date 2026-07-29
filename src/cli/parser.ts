@@ -1,19 +1,17 @@
 import {
   type LocateAnchor,
-  type LocateRequest,
   type RepoLayer,
   type TermCaseMode,
-} from '../../src/contracts/index.js';
-import { safeParseLocateRequestV2 } from '../../src/contracts/locate-request-parse-v2.js';
+} from '../contracts/index.js';
 
 export const CLI_HELP = `repo-nav debug <command> [options]
 
 Commands:
   locate  Run the production repository evidence service
   probe   Probe configured repository search backends
-  golden  Run the shared Golden regression surface
 
-Use "repo-nav debug <command> --help" for command details.`;
+Use "repo-nav debug <command> --help" for command details.
+Golden regression runs via source-checkout npm run test:golden only.`;
 
 const LOCATE_HELP = `repo-nav debug locate --repo <path> --term <term> [options]
   --request <json>              Supply the complete locate request as JSON
@@ -26,16 +24,14 @@ const LOCATE_HELP = `repo-nav debug locate --repo <path> --term <term> [options]
   --term-case <mode>            smart, sensitive, or insensitive
   --max-files <n> --max-confirmed <n> --max-candidates <n> --timeout-ms <n>`;
 const PROBE_HELP = 'repo-nav debug probe --repo <path>';
-const GOLDEN_HELP =
-  'repo-nav debug golden (--all | --case <id>... | --group <id>...)';
 
 export class CliUsageError extends Error {}
 
 export type ParsedCliCommand =
   | { readonly kind: 'help'; readonly text: string }
-  | { readonly kind: 'locate'; readonly request: LocateRequest }
-  | { readonly kind: 'probe'; readonly repoPath: string }
-  | { readonly kind: 'golden'; readonly args: readonly string[] };
+  | { readonly kind: 'version' }
+  | { readonly kind: 'locate'; readonly rawRequest: unknown }
+  | { readonly kind: 'probe'; readonly repoPath: string };
 
 interface ParsedFlags {
   readonly values: ReadonlyMap<string, readonly string[]>;
@@ -100,22 +96,41 @@ function parseAnchor(value: string): LocateAnchor {
 function parseLocate(args: readonly string[]): ParsedCliCommand {
   if (args.includes('--help')) return { kind: 'help', text: LOCATE_HELP };
   const allowed = new Set([
-    '--request', '--repo', '--question', '--term', '--anchor', '--layer',
-    '--negative-term', '--term-case', '--max-files', '--max-confirmed',
-    '--max-candidates', '--timeout-ms',
+    '--request',
+    '--repo',
+    '--question',
+    '--term',
+    '--anchor',
+    '--layer',
+    '--negative-term',
+    '--term-case',
+    '--max-files',
+    '--max-confirmed',
+    '--max-candidates',
+    '--timeout-ms',
   ]);
-  const flags = parseFlags(args, new Set(['--term', '--anchor', '--layer', '--negative-term']));
+  const flags = parseFlags(
+    args,
+    new Set(['--term', '--anchor', '--layer', '--negative-term']),
+  );
   for (const flag of flags.values.keys()) {
-    if (!allowed.has(flag)) throw new CliUsageError(`Unknown locate option: ${flag}.`);
+    if (!allowed.has(flag)) {
+      throw new CliUsageError(`Unknown locate option: ${flag}.`);
+    }
   }
   let raw: unknown;
   const requestJson = one(flags, '--request');
   if (requestJson !== undefined) {
     if (flags.values.size !== 1) {
-      throw new CliUsageError('--request cannot be combined with other options.');
+      throw new CliUsageError(
+        '--request cannot be combined with other options.',
+      );
     }
-    try { raw = JSON.parse(requestJson) as unknown; }
-    catch { throw new CliUsageError('--request must contain valid JSON.'); }
+    try {
+      raw = JSON.parse(requestJson) as unknown;
+    } catch {
+      throw new CliUsageError('--request must contain valid JSON.');
+    }
   } else {
     const limits = {
       maxFiles: integer(flags, '--max-files'),
@@ -128,42 +143,64 @@ function parseLocate(args: readonly string[]): ParsedCliCommand {
       repoPath: required(flags, '--repo'),
       ...(question === undefined ? {} : { question }),
       terms: flags.values.get('--term') ?? [],
-      ...(one(flags, '--term-case') === undefined ? {} : { termCase: one(flags, '--term-case') as TermCaseMode }),
-      ...(flags.values.has('--anchor') ? { anchors: flags.values.get('--anchor')?.map(parseAnchor) } : {}),
-      ...(flags.values.has('--layer') ? { layers: flags.values.get('--layer') as readonly RepoLayer[] } : {}),
-      ...(flags.values.has('--negative-term') ? { negativeTerms: flags.values.get('--negative-term') } : {}),
-      ...(Object.values(limits).every((value) => value === undefined) ? {} : {
-        limits: Object.fromEntries(Object.entries(limits).filter(([, value]) => value !== undefined)),
-      }),
+      ...(one(flags, '--term-case') === undefined
+        ? {}
+        : { termCase: one(flags, '--term-case') as TermCaseMode }),
+      ...(flags.values.has('--anchor')
+        ? { anchors: flags.values.get('--anchor')?.map(parseAnchor) }
+        : {}),
+      ...(flags.values.has('--layer')
+        ? { layers: flags.values.get('--layer') as readonly RepoLayer[] }
+        : {}),
+      ...(flags.values.has('--negative-term')
+        ? { negativeTerms: flags.values.get('--negative-term') }
+        : {}),
+      ...(Object.values(limits).every((value) => value === undefined)
+        ? {}
+        : {
+            limits: Object.fromEntries(
+              Object.entries(limits).filter(([, value]) => value !== undefined),
+            ),
+          }),
     };
   }
-  const parsed = safeParseLocateRequestV2(raw);
-  if (!parsed.success) {
-    throw new CliUsageError(`Invalid locate request: ${parsed.error.message}`);
-  }
-  return { kind: 'locate', request: parsed.data };
+  // Schema validation is owned by PublicLocateExecutionApplicationV2 (v2 INVALID_INPUT).
+  return { kind: 'locate', rawRequest: raw };
 }
 
+/**
+ * Parse production debug CLI argv (no public Golden command).
+ */
 export function parseCliArguments(args: readonly string[]): ParsedCliCommand {
   if (args.length === 0 || args[0] === '--help' || args[0] === '-h') {
     return { kind: 'help', text: CLI_HELP };
   }
-  if (args[0] !== 'debug') throw new CliUsageError('Expected the debug command.');
+  if (args[0] === '--version' || args[0] === '-v') {
+    return { kind: 'version' };
+  }
+  if (args[0] !== 'debug') {
+    throw new CliUsageError('Expected the debug command.');
+  }
   const command = args[1];
   const tail = args.slice(2);
-  if (command === undefined || command === '--help') return { kind: 'help', text: CLI_HELP };
+  if (command === undefined || command === '--help') {
+    return { kind: 'help', text: CLI_HELP };
+  }
   if (command === 'locate') return parseLocate(tail);
   if (command === 'probe') {
     if (tail.includes('--help')) return { kind: 'help', text: PROBE_HELP };
     const flags = parseFlags(tail, new Set());
     for (const flag of flags.values.keys()) {
-      if (flag !== '--repo') throw new CliUsageError(`Unknown probe option: ${flag}.`);
+      if (flag !== '--repo') {
+        throw new CliUsageError(`Unknown probe option: ${flag}.`);
+      }
     }
     return { kind: 'probe', repoPath: required(flags, '--repo') };
   }
   if (command === 'golden') {
-    if (tail.includes('--help')) return { kind: 'help', text: GOLDEN_HELP };
-    return { kind: 'golden', args: tail };
+    throw new CliUsageError(
+      'debug golden was removed from the installed CLI; use npm run test:golden in a source checkout.',
+    );
   }
   throw new CliUsageError(`Unknown debug command: ${command}.`);
 }

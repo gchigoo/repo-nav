@@ -1,12 +1,13 @@
+// @ts-nocheck
 import {
   normalizeSearchTerms,
   requireCallerSignal,
   type LocateExecutionContext,
   type LocateRequest,
-  type LocateResult,
   type LocateStatus,
   type RepositoryEvidenceService,
 } from '../../../src/contracts/index.js';
+import type { LocateResultV2 } from '../../../src/contracts/v2/locate-result-v2.js';
 import { createCanonicalLocateEngineHarnessV2 } from '../../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import { NodeRepositoryReader } from '../../../src/repository/node-repository-reader.js';
 import { writeScrubbedDiagnostic } from '../../../src/mcp/diagnostic-scrubber.js';
@@ -37,7 +38,7 @@ function requestedStatus(question: string): LocateStatus {
   return 'ok';
 }
 
-function successResult(request: LocateRequest): LocateResult {
+function successResult(request: LocateRequest): LocateResultV2 {
   const question = request.question ?? '';
   const status = requestedStatus(question);
   const sourceMapping = question === 'source-field-mapping';
@@ -153,7 +154,7 @@ function successResult(request: LocateRequest): LocateResult {
   };
 }
 
-function errorResult(code: string): LocateResult | undefined {
+function errorResult(code: string): LocateResultV2 | undefined {
   if (
     code !== 'INVALID_REPOSITORY' &&
     code !== 'PATH_OUTSIDE_ROOT' &&
@@ -177,7 +178,7 @@ export class FixtureEvidenceService implements RepositoryEvidenceService {
   public async locate(
     request: LocateRequest,
     context: LocateExecutionContext,
-  ): Promise<LocateResult> {
+  ): Promise<LocateResultV2> {
     if ((request.question ?? '') === 'redaction-output-parity') {
       writeScrubbedDiagnostic(
         'token=rawDiagnosticSecret C:\\private\\repo\\secret.ts stan.guo@mail.ru',

@@ -62,9 +62,7 @@ class RequestRepositorySnapshotImplV2 implements RequestRepositorySnapshotV2 {
     return this.source.resolveRoot(repoPath, signal);
   }
 
-  public canonicalFileKeyFor(
-    locator: string,
-  ): CanonicalFileKeyV2 | undefined {
+  public canonicalFileKeyFor(locator: string): CanonicalFileKeyV2 | undefined {
     return this.cache.canonicalFileKeyFor(locator);
   }
 
@@ -160,7 +158,10 @@ class RequestRepositorySnapshotImplV2 implements RequestRepositorySnapshotV2 {
 
     const available = limits.maxExcerptLines - focusLength;
     let start = Math.max(1, focusStart - Math.ceil(available / 2));
-    let end = Math.min(snapshot.lines.length, start + limits.maxExcerptLines - 1);
+    let end = Math.min(
+      snapshot.lines.length,
+      start + limits.maxExcerptLines - 1,
+    );
     start = Math.max(1, end - limits.maxExcerptLines + 1);
 
     let excerpt = snapshot.lines.slice(start - 1, end).join('\n');
@@ -260,10 +261,7 @@ class RequestRepositorySnapshotImplV2 implements RequestRepositorySnapshotV2 {
     }
   }
 
-  private assertNotAborted(
-    signal: AbortSignal,
-    relativeFile?: string,
-  ): void {
+  private assertNotAborted(signal: AbortSignal, relativeFile?: string): void {
     if (signal.aborted) {
       throw new RepositoryAccessError('ABORTED', relativeFile);
     }

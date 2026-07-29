@@ -15,7 +15,9 @@ function projectFileKey(file: string): string {
     return PATH_PLACEHOLDER_V2;
   }
   const segments = file.split('/');
-  if (segments.some((segment) => utf8Bytes(segment) >= CORPUS_ENTRY_BYTES_MIN_V2)) {
+  if (
+    segments.some((segment) => utf8Bytes(segment) >= CORPUS_ENTRY_BYTES_MIN_V2)
+  ) {
     return PATH_PLACEHOLDER_V2;
   }
   return file;

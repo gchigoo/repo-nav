@@ -29,9 +29,7 @@ function isDataProperty(
   );
 }
 
-function arrayLengthWithoutReadingElements(
-  value: unknown,
-): number | undefined {
+function arrayLengthWithoutReadingElements(value: unknown): number | undefined {
   if (!Array.isArray(value)) {
     return undefined;
   }

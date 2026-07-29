@@ -77,9 +77,11 @@ describe.runIf(selected('invalid-input'))('MCP invalid input mapping', () => {
         expectSafeError(parsed, 'INVALID_INPUT');
         if (!parsed.output.ok) {
           expect(parsed.output.error.recoverable).toBe(true);
-          expect(parsed.output.error.suggestedAction).toBe(
-            invalid.suggestedAction,
-          );
+          if (parsed.output.error.code === 'INVALID_INPUT') {
+            expect(parsed.output.error.suggestedAction).toBe(
+              invalid.suggestedAction,
+            );
+          }
         }
       }
     } finally {
@@ -103,7 +105,11 @@ async function verifyServiceError(
     expectSafeError(parsed, code);
     if (!parsed.output.ok) {
       expect(parsed.output.error.recoverable).toBe(recoverable);
-      expect(parsed.output.error.suggestedAction).toBeUndefined();
+      if (parsed.output.error.code === 'INVALID_INPUT') {
+        expect(parsed.output.error.suggestedAction).toBeUndefined();
+      } else {
+        expect('suggestedAction' in parsed.output.error).toBe(false);
+      }
     }
   } finally {
     await session.close();
@@ -151,7 +157,7 @@ describe.runIf(selected('internal-error-parity'))(
             expectSafeError(parsed, 'INTERNAL_ERROR');
             if (!parsed.output.ok) {
               expect(parsed.output.error.recoverable).toBe(false);
-              expect(parsed.output.error.suggestedAction).toBeUndefined();
+              expect('suggestedAction' in parsed.output.error).toBe(false);
             }
           }
         } finally {

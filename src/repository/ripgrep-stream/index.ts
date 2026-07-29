@@ -1,7 +1,4 @@
-export {
-  LineFramerV2,
-  RIPGREP_MAX_LINE_BYTES_V2,
-} from './line-framer-v2.js';
+export { LineFramerV2, RIPGREP_MAX_LINE_BYTES_V2 } from './line-framer-v2.js';
 export {
   RipgrepProtocolFsmV2,
   type RipgrepMatchEventV2,

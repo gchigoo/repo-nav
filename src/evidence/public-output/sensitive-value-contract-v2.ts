@@ -42,8 +42,7 @@ export const LOW_INFORMATION_LITERALS_V2 = Object.freeze(
   ]),
 );
 
-export type RedactionReasonCodeV2 =
-  (typeof REDACTION_REASON_CODES_V2)[number];
+export type RedactionReasonCodeV2 = (typeof REDACTION_REASON_CODES_V2)[number];
 export type PublicFieldKindV2 = 'term' | 'file' | 'symbol' | 'excerpt';
 export type CorpusPropagationModeV2 = 'exact-text' | 'path-segment';
 

@@ -39,8 +39,7 @@ export type LocateProjectionPreparationFailureV2 = Readonly<{
 }>;
 
 export type LocateProjectionStageRegistrationResultV2<TValue> = Readonly<
-  | { ok: true; value: TValue }
-  | LocateProjectionPreparationFailureV2
+  { ok: true; value: TValue } | LocateProjectionPreparationFailureV2
 >;
 
 export interface LocateProjectionSourceRegistrationV2 {

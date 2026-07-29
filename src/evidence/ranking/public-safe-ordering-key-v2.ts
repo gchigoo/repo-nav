@@ -87,7 +87,9 @@ export function buildPublicSafeOrderingKeyV2(
     lineEnd: draft.location.lines[1],
     symbol: safeKey.symbol,
     classOrder: CLASS_ORDER[evidenceClass],
-    roleOrders: Object.freeze(roles.map((role) => enumOrder(role, ROLE_UNIVERSE))),
+    roleOrders: Object.freeze(
+      roles.map((role) => enumOrder(role, ROLE_UNIVERSE)),
+    ),
     reasonOrders: Object.freeze(
       reasons.map((reason) => enumOrder(String(reason), REASON_UNIVERSE)),
     ),

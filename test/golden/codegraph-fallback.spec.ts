@@ -7,7 +7,6 @@ import { parse } from 'yaml';
 import type {
   BackendHit,
   BackendSearchResult,
-  LocateResult,
 } from '../../src/contracts/index.js';
 import { createCanonicalLocateEngineHarnessV2 } from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
@@ -204,7 +203,7 @@ async function runCase(caseId: CaseId): Promise<TransitionRun> {
       : undefined,
   );
   const ripgrep = new CodeGraphTransitionBackend('ripgrep', ripgrepResult);
-  const resultValue: LocateResult = await createCanonicalLocateEngineHarnessV2([codegraph, ripgrep],
+  const resultValue: any = await createCanonicalLocateEngineHarnessV2([codegraph, ripgrep],
     new NodeRepositoryReader(),
   ).service.locate(goldenCase.request, { signal: caller.signal });
   return {

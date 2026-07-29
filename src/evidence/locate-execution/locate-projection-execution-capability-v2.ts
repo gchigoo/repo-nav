@@ -62,7 +62,9 @@ export function registerCanonicalLocateExecutionInputV2(
 ): void {
   const expected = capabilityToToken.get(projectionExecution);
   if (expected === undefined || expected !== execution) {
-    throw new Error('Canonical execution registration capability/token mismatch.');
+    throw new Error(
+      'Canonical execution registration capability/token mismatch.',
+    );
   }
   if (inputToBinding.has(input)) {
     throw new Error('Canonical execution input was already registered.');

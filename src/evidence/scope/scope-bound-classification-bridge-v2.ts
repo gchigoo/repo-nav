@@ -102,7 +102,10 @@ function buildPreFinalEligiblePoolFromDiscoveryRecordsV2(
   readonly pool: PreFinalEligibleDiscoveryPoolV2;
   readonly eligibleByDiscoveryKey: ReadonlyMap<string, EligibleDiscoveryRefV2>;
 } {
-  const buckets = new Map<string, ReturnType<typeof obtainOpaqueFileBucketRefV2>>();
+  const buckets = new Map<
+    string,
+    ReturnType<typeof obtainOpaqueFileBucketRefV2>
+  >();
   const poolRecords: PreFinalEligibleDiscoveryPoolV2['records'][number][] = [];
   const eligibleByDiscoveryKey = new Map<string, EligibleDiscoveryRefV2>();
   for (const record of records) {

@@ -24,13 +24,15 @@ function tokenPattern(value: string): string {
   return `(?<![\\p{L}\\p{N}_$])(${escapeRegExp(value)})(?![\\p{L}\\p{N}_$])`;
 }
 
-function hasTsDefinition(code: string, symbol: string): LanguageProducerKindV2 | undefined {
+function hasTsDefinition(
+  code: string,
+  symbol: string,
+): LanguageProducerKindV2 | undefined {
   const token = tokenPattern(symbol);
   if (
-    new RegExp(
-      `\\b(?:class|interface|enum)\\s+${token}[^{};]*\\{`,
-      'u',
-    ).test(code) ||
+    new RegExp(`\\b(?:class|interface|enum)\\s+${token}[^{};]*\\{`, 'u').test(
+      code,
+    ) ||
     new RegExp(`\\btype\\s+${token}[^;=]*=`, 'u').test(code)
   ) {
     return 'anchored-definition';
@@ -109,10 +111,13 @@ export function createTypescriptLanguageAdapterV2(): Readonly<{
       let definitionRole: 'definition' | 'execution-site' | undefined;
       let canonicalSymbol: string | undefined;
 
-      if (structureComplete && terms.length >= 2 && hasAssignmentOrObject(code, terms)) {
-        producerKind = view.anchoredSymbol !== undefined
-          ? 'direct-anchored'
-          : 'direct-term';
+      if (
+        structureComplete &&
+        terms.length >= 2 &&
+        hasAssignmentOrObject(code, terms)
+      ) {
+        producerKind =
+          view.anchoredSymbol !== undefined ? 'direct-anchored' : 'direct-term';
       }
 
       if (structureComplete && view.anchoredSymbol !== undefined) {
@@ -130,10 +135,14 @@ export function createTypescriptLanguageAdapterV2(): Readonly<{
       if (structureComplete) {
         const embedded = decodeCompleteEmbeddedSqlLiteralV2(view.sourceText);
         if (embedded.ok) {
-          const decoded = requireCompleteEmbeddedSqlLiteralFactsV2(embedded.facts);
+          const decoded = requireCompleteEmbeddedSqlLiteralFactsV2(
+            embedded.facts,
+          );
           if (containsSqlAlias(maskSqlNonCode(decoded.decoded), terms)) {
             producerKind =
-              view.anchoredSymbol !== undefined ? 'direct-anchored' : 'direct-term';
+              view.anchoredSymbol !== undefined
+                ? 'direct-anchored'
+                : 'direct-term';
           }
         }
       }

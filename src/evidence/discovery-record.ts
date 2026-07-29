@@ -157,8 +157,10 @@ function reasonCompare(
   left: DiscoveryReasonCode,
   right: DiscoveryReasonCode,
 ): number {
-  return (REASON_PRIORITY.get(left) ?? Number.MAX_SAFE_INTEGER) -
-    (REASON_PRIORITY.get(right) ?? Number.MAX_SAFE_INTEGER);
+  return (
+    (REASON_PRIORITY.get(left) ?? Number.MAX_SAFE_INTEGER) -
+    (REASON_PRIORITY.get(right) ?? Number.MAX_SAFE_INTEGER)
+  );
 }
 
 function compareTerms(

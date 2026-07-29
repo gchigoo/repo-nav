@@ -21,7 +21,9 @@ export interface DiscoveryHitSelectionV2 {
   readonly bound: BoundSafeDiscoverySelectionV2;
 }
 
-function safeSelectorKey(candidate: ScopeFoldedSelectorCandidateViewV2): string {
+function safeSelectorKey(
+  candidate: ScopeFoldedSelectorCandidateViewV2,
+): string {
   return [
     candidate.safeKey.file,
     String(candidate.lineStart),

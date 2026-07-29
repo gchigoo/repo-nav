@@ -134,9 +134,7 @@ function isThenable(value: unknown): boolean {
 
 function validateFinalizationWrapper(
   raw: unknown,
-):
-  | { readonly ok: true; readonly value: unknown }
-  | { readonly ok: false } {
+): { readonly ok: true; readonly value: unknown } | { readonly ok: false } {
   if (raw === undefined || raw === null || typeof raw !== 'object') {
     return { ok: false };
   }
@@ -260,8 +258,7 @@ export class SafeProcessExecutionKernelV2 {
       let hardKillTimeout: ReturnType<typeof setTimeout> | undefined;
       let cleanupDeadlineTimeout: ReturnType<typeof setTimeout> | undefined;
       let closeCandidate:
-        | { exitCode: number | null; signal: string | null }
-        | undefined;
+        { exitCode: number | null; signal: string | null } | undefined;
       let cleanupFailed = false;
       let finalizerInvalid = false;
       let stdoutPartial: TPartial | undefined;
@@ -270,14 +267,18 @@ export class SafeProcessExecutionKernelV2 {
       let child: ChildProcessWithoutNullStreams;
 
       try {
-        child = this.spawnImpl(validRequest.executable, [...validRequest.argv], {
-          cwd: validRequest.cwd,
-          env: controlledEnvironment(validRequest.env),
-          shell: false,
-          detached: process.platform !== 'win32',
-          stdio: ['ignore', 'pipe', 'pipe'],
-          windowsHide: true,
-        }) as unknown as ChildProcessWithoutNullStreams;
+        child = this.spawnImpl(
+          validRequest.executable,
+          [...validRequest.argv],
+          {
+            cwd: validRequest.cwd,
+            env: controlledEnvironment(validRequest.env),
+            shell: false,
+            detached: process.platform !== 'win32',
+            stdio: ['ignore', 'pipe', 'pipe'],
+            windowsHide: true,
+          },
+        ) as unknown as ChildProcessWithoutNullStreams;
       } catch {
         resolveResult(noChildResult('other-spawn-error'));
         return;
@@ -373,9 +374,7 @@ export class SafeProcessExecutionKernelV2 {
         );
       };
 
-      const runFinalizer = (
-        mode: 'partial' | 'finish',
-      ): void => {
+      const runFinalizer = (mode: 'partial' | 'finish'): void => {
         let raw: unknown;
         try {
           raw = mode === 'partial' ? consumer.partial() : consumer.finish();
@@ -504,7 +503,9 @@ export class SafeProcessExecutionKernelV2 {
           | 'stderr-limit'
           | 'consumer-stop';
         const hasPartial =
-          !stdoutUnavailable && stdoutPartial !== undefined && !finalizerInvalid;
+          !stdoutUnavailable &&
+          stdoutPartial !== undefined &&
+          !finalizerInvalid;
         settleStreaming({
           ok: false,
           kind: primaryKind,

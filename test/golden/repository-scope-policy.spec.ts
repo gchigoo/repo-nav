@@ -15,7 +15,8 @@ import {
   issueLocateProjectionExecutionCapabilityV2,
   requireLocateProjectionExecutionTokenV2,
 } from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
-import { V1LocateResultProjector } from '../../src/evidence/locate-execution/v1-locate-result-projector.js';
+import { V2LocateResultProjector } from '../../src/evidence/locate-execution/v2-locate-result-projector.js';
+import { createAcceptedCompleteRealLocateShadowOrchestratorV2 } from '../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js';
 import { projectAndScopeFoldExpandedHitsV2 } from '../../src/evidence/request-snapshot/expanded-lane-bridge-v2.js';
 import { runFinalSnapshotCheckV2 } from '../../src/evidence/request-snapshot/final-snapshot-check-v2.js';
 import { createScopeCoverageBasisV2 } from '../../src/evidence/request-snapshot/scope-coverage-basis-v2.js';
@@ -86,14 +87,15 @@ describe.runIf(
         { signal: new AbortController().signal },
         capability,
       );
-      const projector = new V1LocateResultProjector();
+      const projector = new V2LocateResultProjector(
+        createAcceptedCompleteRealLocateShadowOrchestratorV2(),
+      );
       const first = projector.project(executed, capability);
       const second = projector.project(executed, capability);
-      expect(second).toBe(first);
-      expect(first.ok).toBe(true);
-      if (first.ok) {
-        expect(first.evidence.schemaVersion).toBe('1.0');
-      }
+      // Same capability/input → same registered value object; receipt is opaque.
+      expect(second.value).toBe(first.value);
+      expect(first.value).toBeDefined();
+      expect(first.receipt).toBeDefined();
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

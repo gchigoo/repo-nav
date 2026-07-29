@@ -6,17 +6,17 @@ import type {
   CanonicalLocateExecutionV2,
   LocateFactOwnerV2,
   LocateProjectionExecutionCapabilityV2,
-} from '../../contracts/v2/locate-fact-envelope-v2.js';
-import { inspectLocateProjectionPrerequisiteOwnersV2 } from '../../contracts/v2/locate-fact-envelope-v2.js';
-import { requireCanonicalLocateExecutionTokenV2 } from '../locate-execution/locate-projection-execution-capability-v2.js';
-import type { LocateProjectionPreparationPortV2 } from './locate-projection-preparation-port-v2.js';
-import { createMaterializedLocateResultComposerV2 } from './materialized-locate-result-composer-v2.js';
-import { createRequiredOwnerFinalizerV2 } from './required-owner-finalizer-v2.js';
+} from '../../src/contracts/v2/locate-fact-envelope-v2.js';
+import { inspectLocateProjectionPrerequisiteOwnersV2 } from '../../src/contracts/v2/locate-fact-envelope-v2.js';
+import { requireCanonicalLocateExecutionTokenV2 } from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
+import type { LocateProjectionPreparationPortV2 } from '../../src/evidence/canonical/locate-projection-preparation-port-v2.js';
+import { createMaterializedLocateResultComposerV2 } from '../../src/evidence/canonical/materialized-locate-result-composer-v2.js';
+import { createRequiredOwnerFinalizerV2 } from '../../src/evidence/canonical/required-owner-finalizer-v2.js';
 import {
   serializeTrustedMaterializedLocateResultV2,
   validateComposedLocateResultV2ForSerialization,
   type TrustedSerializedLocateResultV2,
-} from './trusted-serialized-locate-result-v2.js';
+} from '../../src/evidence/canonical/trusted-serialized-locate-result-v2.js';
 
 export type V2ShadowProjectionAttemptV2 =
   | Readonly<{

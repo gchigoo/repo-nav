@@ -45,8 +45,14 @@ const outcomeByExecution = new WeakMap<
   }>
 >();
 
-const sourcePayloadByToken = new WeakMap<object, UnsafePublicMaterializationSourceV2>();
-const coreByMaterialization = new WeakMap<object, TrustedMaterializedEvidenceCoreV2>();
+const sourcePayloadByToken = new WeakMap<
+  object,
+  UnsafePublicMaterializationSourceV2
+>();
+const coreByMaterialization = new WeakMap<
+  object,
+  TrustedMaterializedEvidenceCoreV2
+>();
 
 /**
  * Direct harness：登记同 execution 的 ranking outcome 供 createSource 恢复。
@@ -56,10 +62,7 @@ export function registerF2RankingOutcomeForExecutionV2(
   outcome: EvidenceRankingOutcomeV2,
   snapshotProof: SnapshotTrustProofV2,
 ): void {
-  outcomeByExecution.set(
-    execution,
-    Object.freeze({ outcome, snapshotProof }),
-  );
+  outcomeByExecution.set(execution, Object.freeze({ outcome, snapshotProof }));
 }
 
 const LocationSchema = z
@@ -80,7 +83,8 @@ const ProvenanceSchema = z
   .strict();
 
 const OpaqueObjectSchema = z.custom<object>(
-  (value) => typeof value === 'object' && value !== null && !Array.isArray(value),
+  (value) =>
+    typeof value === 'object' && value !== null && !Array.isArray(value),
 );
 
 const RankedRefSchema = z
@@ -194,7 +198,8 @@ export function createF2LocateProjectionStagesV2(): F2LocateProjectionStagesV2 {
         if (!preflight.ok) {
           return Object.freeze({ ok: false, reason: 'invalid-facts' as const });
         }
-        const parsed = UnsafePublicMaterializationSourceV2Schema.safeParse(source);
+        const parsed =
+          UnsafePublicMaterializationSourceV2Schema.safeParse(source);
         if (!parsed.success) {
           return Object.freeze({ ok: false, reason: 'invalid-facts' as const });
         }
@@ -234,7 +239,10 @@ export function createF2LocateProjectionStagesV2(): F2LocateProjectionStagesV2 {
         // raw vs materialized wrappers must be distinct objects
         for (let i = 0; i < viewed.confirmed.length; i += 1) {
           if (viewed.confirmed[i] === viewed.rawConfirmed[i]?.draft) {
-            return Object.freeze({ ok: false, reason: 'invalid-facts' as const });
+            return Object.freeze({
+              ok: false,
+              reason: 'invalid-facts' as const,
+            });
           }
         }
         const confirmed = viewed.confirmed.map((value, index) =>
@@ -321,7 +329,9 @@ function countSymbolImportersInProductionRoots(symbol: string): number {
  * Production importer count probe（F2 acceptance 必须为 0）。
  */
 export function countF2CoreAccessorProductionImportersV2(): number {
-  return countSymbolImportersInProductionRoots('requireF2MaterializedEvidenceCoreV2');
+  return countSymbolImportersInProductionRoots(
+    'requireF2MaterializedEvidenceCoreV2',
+  );
 }
 
 export function countF2RetainedDecisionProductionImportersV2(): number {
@@ -330,4 +340,7 @@ export function countF2RetainedDecisionProductionImportersV2(): number {
   );
 }
 
-export type { CanonicalLocateExecutionV2, TrustedLocateProjectionPrerequisitesV2 };
+export type {
+  CanonicalLocateExecutionV2,
+  TrustedLocateProjectionPrerequisitesV2,
+};

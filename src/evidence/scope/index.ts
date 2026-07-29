@@ -1,6 +1,4 @@
-export {
-  asciiLowercaseCodeUnitsV1,
-} from './ascii-lowercase-v1.js';
+export { asciiLowercaseCodeUnitsV1 } from './ascii-lowercase-v1.js';
 export {
   LEGACY_DOCS_EXTENSIONS_V1,
   LEGACY_DOCS_SEGMENTS_V1,

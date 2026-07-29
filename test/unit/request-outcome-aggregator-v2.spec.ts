@@ -260,7 +260,7 @@ describe.runIf(
     const registrarHits = [
       'src/evidence/repository-evidence-engine.ts',
       'src/mcp/repo-nav-mcp-server.ts',
-      'tools/cli/execute.ts',
+      'src/cli/execute.ts',
     ].filter((relative) => {
       const source = readFileSync(resolve(process.cwd(), relative), 'utf8');
       return source.includes('registerCompleteLocateFactEnvelopeV2');

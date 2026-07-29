@@ -21,7 +21,9 @@ function schemaOrder(
   values: readonly NextActionCodeV2[],
 ): readonly NextActionCodeV2[] {
   const present = new Set(values);
-  return Object.freeze(NEXT_ACTION_CODES_V2.filter((code) => present.has(code)));
+  return Object.freeze(
+    NEXT_ACTION_CODES_V2.filter((code) => present.has(code)),
+  );
 }
 
 function hasAdjustableRequestBudgetRetry(

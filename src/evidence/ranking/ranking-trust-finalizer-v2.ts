@@ -33,10 +33,7 @@ export function assertRankingTrustFinalizerV2(input: {
     throw new TypeError('ranking candidate length mismatch');
   }
   const seen = new Set<object>();
-  for (const item of [
-    ...source.rankedConfirmed,
-    ...source.rankedCandidates,
-  ]) {
+  for (const item of [...source.rankedConfirmed, ...source.rankedCandidates]) {
     if (seen.has(item.recordRef)) {
       throw new TypeError('ranking retained record refs must be unique');
     }

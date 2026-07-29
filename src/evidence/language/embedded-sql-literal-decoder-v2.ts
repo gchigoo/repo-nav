@@ -84,7 +84,9 @@ interface SafeCallMatchV2 {
   readonly quote: "'" | '"';
 }
 
-function findCompleteSafeSqlCallV2(source: string): SafeCallMatchV2 | undefined {
+function findCompleteSafeSqlCallV2(
+  source: string,
+): SafeCallMatchV2 | undefined {
   // 简化扫描：寻找 callee(...'...'| "...") 且无模板/可选链/计算属性
   const pattern =
     /(?<![\p{L}\p{N}_$?.])((?:[\p{L}_$][\p{L}\p{N}_$]*\.)*(?:query|select|addSelect))\s*\(/giu;

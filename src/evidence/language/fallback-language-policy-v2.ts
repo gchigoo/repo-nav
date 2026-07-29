@@ -97,7 +97,9 @@ export function materializeFallbackLiteralCandidateV2(
     execution,
   );
   if (arbitrationView.kind !== 'none') {
-    throw new TypeError('fallback literal suppressed when arbitration has facts');
+    throw new TypeError(
+      'fallback literal suppressed when arbitration has facts',
+    );
   }
   const view = requireFallbackLiteralCandidateFactsV2(facts, execution);
   if (view.eligibleRef !== record) {
@@ -120,8 +122,6 @@ export function materializeFallbackLiteralCandidateV2(
       operations: Object.freeze(['FILESYSTEM_READ_RANGE'] as const),
     }),
     reasonCodes: Object.freeze([UNSUPPORTED_LANGUAGE_LITERAL_REASON]),
-    promotionRequirements: Object.freeze([
-      SUPPORTED_LANGUAGE_ADAPTER_REQUIRED,
-    ]),
+    promotionRequirements: Object.freeze([SUPPORTED_LANGUAGE_ADAPTER_REQUIRED]),
   }) as unknown as UnsafeEvidenceDraftV2;
 }

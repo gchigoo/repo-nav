@@ -114,7 +114,7 @@ export function platformContractIt(
   if (timeout === undefined) {
     it(title, run);
   } else {
-    it(title, run, timeout);
+    it(title, { timeout }, run);
   }
 }
 

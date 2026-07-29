@@ -17,7 +17,7 @@ import {
   guardSerializedPublicResultBudgetV2,
   preflightUnsafePublicMaterializationSourceBudgetV2,
 } from '../../src/evidence/public-output/result-resource-budget-guards-v2.js';
-import { projectSyntheticLocateResultV2 } from '../../src/evidence/public-output/synthetic-locate-projection-v2.js';
+import { projectSyntheticLocateResultV2 } from '../../testkit/fixtures/public-output-v2/synthetic-locate-projection-helper-v2.js';
 import { createCanonicalLocateEngineHarnessV2 } from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
 import type {
@@ -237,7 +237,7 @@ describe.runIf(rawSelected)('F1B raw-resource-budgets', () => {
     );
   });
 
-  it('F1B-RAW-FIELD-001 file/symbol/excerpt and spaced 400k excerpt', () => {
+  it('F1B-RAW-FIELD-001 file/symbol/excerpt and spaced 400k excerpt', { timeout: 30_000 }, () => {
     expect(
       assemblePublicLocateResultV2(
         withRawField('file', `a/${utf8Repeat('b', 4094)}`),

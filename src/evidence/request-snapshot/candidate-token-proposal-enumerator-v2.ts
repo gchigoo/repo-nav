@@ -28,8 +28,7 @@ const proposalRecords = new WeakMap<
   ProposalPrivateRecordV2
 >();
 
-const IDENTIFIER_PATTERN =
-  /[$_\p{ID_Start}][$_\p{ID_Continue}]*/gu;
+const IDENTIFIER_PATTERN = /[$_\p{ID_Start}][$_\p{ID_Continue}]*/gu;
 
 const KEYWORDS = new Set([
   'const',

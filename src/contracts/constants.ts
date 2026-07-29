@@ -18,11 +18,7 @@ export const ANCHOR_KINDS = [
   'term',
 ] as const;
 
-export const TERM_CASE_MODES = [
-  'sensitive',
-  'insensitive',
-  'smart',
-] as const;
+export const TERM_CASE_MODES = ['sensitive', 'insensitive', 'smart'] as const;
 
 export const LOCATE_STATUSES = [
   'ok',
@@ -32,11 +28,7 @@ export const LOCATE_STATUSES = [
   'timeout',
 ] as const;
 
-export const EVIDENCE_SOURCES = [
-  'codegraph',
-  'ripgrep',
-  'filesystem',
-] as const;
+export const EVIDENCE_SOURCES = ['codegraph', 'ripgrep', 'filesystem'] as const;
 
 export const SEARCH_BACKEND_IDS = ['codegraph', 'ripgrep'] as const;
 

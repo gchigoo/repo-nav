@@ -5,12 +5,8 @@
 
 export function maskSqlNonCode(sql: string): string {
   let state:
-    | 'code'
-    | 'single'
-    | 'double'
-    | 'dollar'
-    | 'line-comment'
-    | 'block-comment' = 'code';
+    'code' | 'single' | 'double' | 'dollar' | 'line-comment' | 'block-comment' =
+    'code';
   let dollarTag = '';
   let blockCommentDepth = 0;
   let output = '';

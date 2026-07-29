@@ -51,12 +51,7 @@ export interface BalancedRangeV2 {
   readonly end: number;
   readonly kind: 'brace' | 'paren' | 'bracket';
   readonly containerKind:
-    | 'scope'
-    | 'object'
-    | 'declaration'
-    | 'sql-table'
-    | 'paren'
-    | 'bracket';
+    'scope' | 'object' | 'declaration' | 'sql-table' | 'paren' | 'bracket';
 }
 
 export interface BalancedStructureV2 {
@@ -205,7 +200,9 @@ export function oneSegmentApartV2(
     return false;
   }
   if (left.length === right.length) {
-    return left.filter((segment, index) => segment !== right[index]).length === 1;
+    return (
+      left.filter((segment, index) => segment !== right[index]).length === 1
+    );
   }
   const shorter = left.length < right.length ? left : right;
   const longer = left.length < right.length ? right : left;

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "paths": [
+    "package.json",
+    "npm-shrinkwrap.json",
+    "tsconfig.build.json",
+    "src",
+    "tools/release",
+    "LICENSE",
+    "SECURITY.md",
+    "README.md",
+    "docs/migration-v1-to-v2.md",
+    "testkit/manifests/release-v2/release-candidate-source-paths-v1.json"
+  ]
+}

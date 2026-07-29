@@ -132,8 +132,7 @@ function addJsonStringBytes(state: CounterState, value: string): boolean {
     if (code >= 0xd800 && code <= 0xdbff) {
       const next = value.charCodeAt(index + 1);
       if (next >= 0xdc00 && next <= 0xdfff) {
-        const codePoint =
-          ((code - 0xd800) << 10) + (next - 0xdc00) + 0x10000;
+        const codePoint = ((code - 0xd800) << 10) + (next - 0xdc00) + 0x10000;
         const utf8 =
           codePoint <= 0x7f
             ? 1
@@ -177,10 +176,7 @@ function addJsonNumberBytes(state: CounterState, value: number): boolean {
   return addBytes(state, utf8ByteLengthV2(text));
 }
 
-function countCompactJsonData(
-  value: unknown,
-  state: CounterState,
-): boolean {
+function countCompactJsonData(value: unknown, state: CounterState): boolean {
   if (value === null) {
     return addBytes(state, 4);
   }
@@ -376,9 +372,7 @@ function readOwnDataValue(
   return { ok: true, value: descriptor.value };
 }
 
-function arrayLengthWithoutReadingElements(
-  value: unknown,
-): number | undefined {
+function arrayLengthWithoutReadingElements(value: unknown): number | undefined {
   if (!Array.isArray(value)) {
     return undefined;
   }
@@ -398,10 +392,7 @@ function arrayLengthWithoutReadingElements(
   }
 }
 
-function guardRawStringField(
-  value: unknown,
-  maxUtf8Bytes: number,
-): boolean {
+function guardRawStringField(value: unknown, maxUtf8Bytes: number): boolean {
   return typeof value === 'string' && utf8ByteLengthV2(value) <= maxUtf8Bytes;
 }
 
@@ -471,7 +462,11 @@ function guardEvidenceArrayFields(
   }
   for (let index = 0; index < length; index += 1) {
     const itemRead = readOwnDataValue(items, String(index));
-    if (!itemRead.ok || typeof itemRead.value !== 'object' || itemRead.value === null) {
+    if (
+      !itemRead.ok ||
+      typeof itemRead.value !== 'object' ||
+      itemRead.value === null
+    ) {
       return fail('raw-shape');
     }
     const location = readOwnDataValue(itemRead.value, 'location');
@@ -499,7 +494,11 @@ function guardNormalizedTerms(terms: unknown): ResourceBudgetCheckV2 {
   let totalBytes = 0;
   for (let index = 0; index < length; index += 1) {
     const itemRead = readOwnDataValue(terms, String(index));
-    if (!itemRead.ok || typeof itemRead.value !== 'object' || itemRead.value === null) {
+    if (
+      !itemRead.ok ||
+      typeof itemRead.value !== 'object' ||
+      itemRead.value === null
+    ) {
       return fail('raw-shape');
     }
     const valueRead = readOwnDataValue(itemRead.value, 'value');
@@ -535,10 +534,7 @@ export function preflightUnsafePublicMaterializationSourceBudgetV2(
     return fail('raw-shape');
   }
   if (okRead.value === false) {
-    const compact = guardCompactJsonDataV2(
-      input,
-      BUDGETS.raw.maxJsonUtf8Bytes,
-    );
+    const compact = guardCompactJsonDataV2(input, BUDGETS.raw.maxJsonUtf8Bytes);
     return compact.ok ? OK : fail('raw-json');
   }
 
@@ -607,10 +603,7 @@ export function preflightUnsafePublicMaterializationSourceBudgetV2(
     return candidateFields;
   }
 
-  const compact = guardCompactJsonDataV2(
-    input,
-    BUDGETS.raw.maxJsonUtf8Bytes,
-  );
+  const compact = guardCompactJsonDataV2(input, BUDGETS.raw.maxJsonUtf8Bytes);
   return compact.ok ? OK : fail('raw-json');
 }
 
@@ -644,7 +637,11 @@ export function guardSensitiveCorpusBudgetV2(
       return fail('corpus');
     }
     const entryRead = readOwnDataValue(entries as object, String(index));
-    if (!entryRead.ok || typeof entryRead.value !== 'object' || entryRead.value === null) {
+    if (
+      !entryRead.ok ||
+      typeof entryRead.value !== 'object' ||
+      entryRead.value === null
+    ) {
       return fail('corpus');
     }
     const valueRead = readOwnDataValue(entryRead.value, 'value');

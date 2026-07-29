@@ -144,10 +144,7 @@ export class CodeGraphBackend implements RepositorySearchBackend {
         signal,
       );
       if (!result.ok) {
-        const failure = failedResult(
-          result,
-          plan.canSkipFallbackIfVerified,
-        );
+        const failure = failedResult(result, plan.canSkipFallbackIfVerified);
         return Object.freeze({
           ...failure,
           hits: Object.freeze(hits.sort(compareHits)),

@@ -8,9 +8,10 @@ import type {
  * buffered run() 的 stdout/stderr collector；N+1 语义由 kernel 在 offer 层执行，
  * collector 只接受已裁剪的 offered prefix。
  */
-export class BoundedByteCollectorV2
-  implements SafeStdoutConsumerV2<Uint8Array, Uint8Array>
-{
+export class BoundedByteCollectorV2 implements SafeStdoutConsumerV2<
+  Uint8Array,
+  Uint8Array
+> {
   private readonly chunks: Buffer[] = [];
   private acceptedBytes = 0;
 

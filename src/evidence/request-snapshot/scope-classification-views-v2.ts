@@ -54,7 +54,11 @@ const EXCLUDED_DECISION_V2: ScopeEligibilityDecisionV2 = Object.freeze({
  */
 function posixFileFromDiscoveryKeyV2(discoveryKey: string): string | undefined {
   const parts = discoveryKey.split('\u0000');
-  if (parts[0] === 'discovery:v1' && parts[1] !== undefined && parts[1].length > 0) {
+  if (
+    parts[0] === 'discovery:v1' &&
+    parts[1] !== undefined &&
+    parts[1].length > 0
+  ) {
     return parts[1].replaceAll('\\', '/');
   }
   return undefined;
@@ -241,10 +245,8 @@ export function requirePreFinalScopeClassificationViewV2(
   boundSelection: BoundSafeDiscoverySelectionV2,
   expectedExecution: LocateExecutionTokenV2,
 ): TrustedPreFinalScopeClassificationViewV2 {
-  const { decisionByPath, resolvedScope } = decisionByPosixPathFromObservationV2(
-    observation,
-    expectedExecution,
-  );
+  const { decisionByPath, resolvedScope } =
+    decisionByPosixPathFromObservationV2(observation, expectedExecution);
   readScopeFoldedSafePoolProofV2(foldedView, expectedExecution);
   const foldFacts = readScopeFoldedSelectorFactsV2(
     foldedView,
@@ -324,10 +326,8 @@ export function buildStableEligibleScopeRecordsFromObservationV2(input: {
   readonly observation: TrustedScopeEligibilityObservationV2;
   readonly execution: LocateExecutionTokenV2;
 }): readonly TrustedStableScopeRecordViewV2[] {
-  const { decisionByPath, resolvedScope } = decisionByPosixPathFromObservationV2(
-    input.observation,
-    input.execution,
-  );
+  const { decisionByPath, resolvedScope } =
+    decisionByPosixPathFromObservationV2(input.observation, input.execution);
   const records: TrustedStableScopeRecordViewV2[] = [];
   for (const record of input.retainedEligible) {
     const posix =
@@ -555,11 +555,7 @@ export function readLegacyScopeDecisionForLocatorV2(
   if (record === undefined || record.execution !== execution) {
     throw new TypeError('legacy scope view is not trusted');
   }
-  return readObservedScopeDecisionV2(
-    record.observation,
-    locatorRef,
-    execution,
-  );
+  return readObservedScopeDecisionV2(record.observation, locatorRef, execution);
 }
 
 /**
@@ -569,7 +565,9 @@ export function createTrustedPreFinalScopeClassificationViewForTestV2(
   execution: LocateExecutionTokenV2,
   decisionsByEligibleRef:
     | ReadonlyMap<EligibleDiscoveryRefV2, ScopeEligibilityDecisionV2>
-    | Iterable<readonly [EligibleDiscoveryRefV2, ScopeEligibilityDecisionV2]> = [],
+    | Iterable<
+        readonly [EligibleDiscoveryRefV2, ScopeEligibilityDecisionV2]
+      > = [],
 ): TrustedPreFinalScopeClassificationViewV2 {
   const map =
     decisionsByEligibleRef instanceof Map

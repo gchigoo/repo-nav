@@ -59,11 +59,7 @@ function assertValidExtension(extension: string): string {
 }
 
 export interface LanguageEvidenceAdapterRegistryV2 {
-  readonly semanticClassification: readonly [
-    'typescript',
-    'javascript',
-    'sql',
-  ];
+  readonly semanticClassification: readonly ['typescript', 'javascript', 'sql'];
   resolveAdapter(lastExtension: string | undefined): LanguageAdapterKindV2;
   modeForExtension(
     lastExtension: string | undefined,
@@ -76,7 +72,10 @@ export interface LanguageEvidenceAdapterRegistryV2 {
 export function createLanguageEvidenceAdapterRegistryV2(
   entries: readonly LanguageAdapterExtensionEntryV2[] = DEFAULT_ENTRIES,
 ): LanguageEvidenceAdapterRegistryV2 {
-  const byExtension = new Map<string, Exclude<LanguageAdapterKindV2, 'fallback'>>();
+  const byExtension = new Map<
+    string,
+    Exclude<LanguageAdapterKindV2, 'fallback'>
+  >();
   const seenAdapters = new Set<string>();
   for (const entry of entries) {
     if (entry.adapter === ('fallback' as string)) {
@@ -103,10 +102,7 @@ export function createLanguageEvidenceAdapterRegistryV2(
     }
   }
 
-  const modeByExtension = new Map<
-    string,
-    'ts' | 'tsx' | 'js' | 'jsx' | 'sql'
-  >([
+  const modeByExtension = new Map<string, 'ts' | 'tsx' | 'js' | 'jsx' | 'sql'>([
     ['.ts', 'ts'],
     ['.mts', 'ts'],
     ['.cts', 'ts'],

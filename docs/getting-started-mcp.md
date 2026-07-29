@@ -2,7 +2,7 @@
 
 ## 安装与构建
 
-要求 Node.js 20+。在仓库根目录执行：
+要求 Node.js `^22.0.0 || ^24.0.0`。在仓库根目录执行：
 
 ```powershell
 npm ci
@@ -30,14 +30,14 @@ npm run build
     "repoPath": "{{REPO_ROOT}}",
     "question": "Where is the repository evidence service token used?",
     "terms": ["REPOSITORY_EVIDENCE_SERVICE"],
-    "anchors": [{"kind": "symbol", "value": "REPOSITORY_EVIDENCE_SERVICE"}]
+    "anchors": [{ "kind": "symbol", "value": "REPOSITORY_EVIDENCE_SERVICE" }]
   }
 }
 ```
 
 ### 可恢复的无结果
 
-无结果仍是成功的工具调用，`ok=true` 且 `evidence.status=no_result`。
+无命中仍是成功的工具调用：`ok=true`、`isError=false`，且 `confirmed` 为空（status 可能为 `no_result` 或在 fallback/degraded 路径为 `partial`）。
 
 ```json docs-smoke:mcp-recoverable-request
 {

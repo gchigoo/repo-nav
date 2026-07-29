@@ -85,26 +85,6 @@ export function createFourPrerequisiteCanonicalInputV2(): {
   const input = Object.freeze({
     ok: true as const,
     envelope,
-    legacyV1Projection: Object.freeze({
-      ok: true as const,
-      evidence: Object.freeze({
-        schemaVersion: '1.0' as const,
-        status: 'ok' as const,
-        repositoryRoot: envelope.repositoryRoot,
-        normalizedTerms: terms,
-        confirmed: Object.freeze([]),
-        candidates: Object.freeze([]),
-        coverage: Object.freeze({
-          backends: Object.freeze([]),
-          fallbackChecked: true,
-          indexState: 'available' as const,
-          indexFreshness: 'not-applicable' as const,
-          limitsReached: Object.freeze([]),
-          exclusionSummary: Object.freeze({}),
-        }),
-        nextActions: Object.freeze([]),
-      }),
-    }),
   });
   registerCanonicalLocateExecutionInputV2(input, capabilityToken, execution);
   return Object.freeze({
@@ -114,6 +94,9 @@ export function createFourPrerequisiteCanonicalInputV2(): {
   });
 }
 
+/**
+ * Build a registered success input with an empty fragment map.
+ */
 export function createEmptyCanonicalSuccessInputV2(): {
   readonly capability: ReturnType<
     typeof issueLocateProjectionExecutionCapabilityV2
@@ -134,26 +117,6 @@ export function createEmptyCanonicalSuccessInputV2(): {
   const input = Object.freeze({
     ok: true as const,
     envelope,
-    legacyV1Projection: Object.freeze({
-      ok: true as const,
-      evidence: Object.freeze({
-        schemaVersion: '1.0' as const,
-        status: 'no_result' as const,
-        repositoryRoot: envelope.repositoryRoot,
-        normalizedTerms: terms,
-        confirmed: Object.freeze([]),
-        candidates: Object.freeze([]),
-        coverage: Object.freeze({
-          backends: Object.freeze([]),
-          fallbackChecked: false,
-          indexState: 'unknown' as const,
-          indexFreshness: 'not-applicable' as const,
-          limitsReached: Object.freeze([]),
-          exclusionSummary: Object.freeze({}),
-        }),
-        nextActions: Object.freeze([]),
-      }),
-    }),
   });
   registerCanonicalLocateExecutionInputV2(input, capabilityToken, execution);
   return Object.freeze({

@@ -3,19 +3,13 @@
  */
 
 export type LanguageAdapterKindV2 =
-  | 'typescript'
-  | 'javascript'
-  | 'sql'
-  | 'fallback';
+  'typescript' | 'javascript' | 'sql' | 'fallback';
 
 export type EcmaLexicalModeV2 = 'ts' | 'tsx' | 'js' | 'jsx';
 export type LanguageLexicalModeV2 = EcmaLexicalModeV2 | 'sql';
 
 export type LexicalRegistryStateV2 =
-  | 'pending'
-  | 'fulfilled'
-  | 'failed'
-  | 'disposed';
+  'pending' | 'fulfilled' | 'failed' | 'disposed';
 
 export type LanguageProducerKindV2 =
   | 'direct-anchored'

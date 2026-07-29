@@ -62,9 +62,9 @@ async function observe(goldenCase: GoldenSuccessCase): Promise<GoldenObservation
     signal: new AbortController().signal,
   });
   return {
-    result,
+    result: result as any,
     mcpIsError: !result.ok,
-    structuredContent: result,
+    structuredContent: result as any,
     textContent: JSON.stringify(result),
   };
 }

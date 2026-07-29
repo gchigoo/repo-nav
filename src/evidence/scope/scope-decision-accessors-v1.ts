@@ -20,7 +20,11 @@ export function requirePreFinalScopeDecisionV1(
   record: EligibleDiscoveryRefV2,
   execution: LocateExecutionTokenV2,
 ): ScopeEligibilityDecisionV2 {
-  return readPreFinalScopeDecisionForEligibleRefV2(scopeView, record, execution);
+  return readPreFinalScopeDecisionForEligibleRefV2(
+    scopeView,
+    record,
+    execution,
+  );
 }
 
 /**

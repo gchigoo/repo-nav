@@ -12,9 +12,7 @@ export type { TrustedPreFinalScopeClassificationViewV2 };
 export { createTrustedPreFinalScopeClassificationViewForTestV2 };
 
 export type ScopeBoundProducerOwnerV2 =
-  | 'direct-classifier'
-  | 'candidate-collector'
-  | 'language-adapter';
+  'direct-classifier' | 'candidate-collector' | 'language-adapter';
 
 export type ScopeBoundProducerChildOwnerV2 = 'language-adapter';
 
@@ -135,7 +133,10 @@ interface PortPrivateV2 {
 interface RegistrarPrivateV2 {
   readonly execution: LocateExecutionTokenV2;
   readonly ports: RegisteredScopeBoundProducerPortV2[];
-  readonly portOwners: Map<RegisteredScopeBoundProducerPortV2, ScopeBoundProducerOwnerV2>;
+  readonly portOwners: Map<
+    RegisteredScopeBoundProducerPortV2,
+    ScopeBoundProducerOwnerV2
+  >;
   readonly sealedRecords: Set<EligibleDiscoveryRefV2>;
   readonly recordResolutions: Map<
     EligibleDiscoveryRefV2,
@@ -172,8 +173,14 @@ const registrarPrivate = new WeakMap<
   ScopeBoundProducerRegistrarV2,
   RegistrarPrivateV2
 >();
-const portPrivate = new WeakMap<RegisteredScopeBoundProducerPortV2, PortPrivateV2>();
-const sealPrivate = new WeakMap<ScopeBoundProducerRecordSetSealV2, SealPrivateV2>();
+const portPrivate = new WeakMap<
+  RegisteredScopeBoundProducerPortV2,
+  PortPrivateV2
+>();
+const sealPrivate = new WeakMap<
+  ScopeBoundProducerRecordSetSealV2,
+  SealPrivateV2
+>();
 const arbitrationPrivate = new WeakMap<
   ScopeBoundProducerArbitrationV2,
   ArbitrationPrivateV2
@@ -202,17 +209,14 @@ export function createScopeBoundProducerRegistrarV2(
   execution: LocateExecutionTokenV2,
 ): ScopeBoundProducerRegistrarV2 {
   const registrar = createOpaqueTokenV2<ScopeBoundProducerRegistrarV2>();
-  registrarPrivate.set(
-    registrar,
-    {
-      execution,
-      ports: [],
-      portOwners: new Map(),
-      sealedRecords: new Set(),
-      recordResolutions: new Map(),
-      childAdmissions: new WeakMap(),
-    },
-  );
+  registrarPrivate.set(registrar, {
+    execution,
+    ports: [],
+    portOwners: new Map(),
+    sealedRecords: new Set(),
+    recordResolutions: new Map(),
+    childAdmissions: new WeakMap(),
+  });
   return registrar;
 }
 
@@ -306,7 +310,8 @@ export function issueScopeBoundProducerChildPortAdmissionV2(
   execution: LocateExecutionTokenV2,
 ): ScopeBoundProducerChildPortAdmissionV2 {
   const privateRegistrar = requireRegistrar(registrar, execution);
-  const admission = createOpaqueTokenV2<ScopeBoundProducerChildPortAdmissionV2>();
+  const admission =
+    createOpaqueTokenV2<ScopeBoundProducerChildPortAdmissionV2>();
   privateRegistrar.childAdmissions.set(admission, { owner, used: false });
   return admission;
 }
@@ -510,4 +515,3 @@ export function readScopeBoundProducerArbitrationFactsForMaterializerV2(
   }
   return privateRecord;
 }
-

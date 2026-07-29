@@ -100,7 +100,10 @@ export function registerDerivedEvidenceProposalRefV2(input: {
       proposal: input.proposal,
       execution: input.execution,
       locationFile: facts.file,
-      locationLines: Object.freeze([facts.line, facts.line] as [number, number]),
+      locationLines: Object.freeze([facts.line, facts.line] as [
+        number,
+        number,
+      ]),
       symbol: facts.tokenValue,
     }),
   );

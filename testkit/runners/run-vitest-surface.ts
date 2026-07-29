@@ -144,6 +144,7 @@ function buildVitestInvocation(
       'run',
       '--config',
       resolve(repositoryRoot, 'vitest.config.ts'),
+      '--testTimeout=30000',
     ],
     environment: {
       ...process.env,

@@ -2,11 +2,7 @@ import type { SafeProcessRunner } from '../../contracts/index.js';
 
 export type RepositoryGitStateV2 = 'clean' | 'dirty' | 'not-git' | 'unknown';
 
-const GIT_ARGV = Object.freeze([
-  'status',
-  '--porcelain=v1',
-  '-z',
-] as const);
+const GIT_ARGV = Object.freeze(['status', '--porcelain=v1', '-z'] as const);
 
 const GIT_MAX_OUTPUT_BYTES = 1024;
 

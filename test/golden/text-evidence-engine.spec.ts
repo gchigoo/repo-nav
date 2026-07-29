@@ -21,7 +21,6 @@ import { RipgrepBackend } from '../../src/repository/ripgrep-backend.js';
 import {
   assertGoldenCase,
   GoldenCaseSchema,
-  type GoldenObservation,
   type GoldenSuccessCase,
 } from '../../testkit/contracts/index.js';
 import { isSelected } from '../../testkit/testing/selection.js';
@@ -160,7 +159,7 @@ function loadCase(caseId: EngineCaseId): GoldenSuccessCase {
 async function observe(
   goldenCase: GoldenSuccessCase,
   result: BackendSearchResult,
-): Promise<GoldenObservation> {
+): Promise<any> {
   const service = createCanonicalLocateEngineHarnessV2([new FixtureBackend(result)],
     new NodeRepositoryReader(),
   ).service;
@@ -181,7 +180,7 @@ function defineEngineCase(caseId: EngineCaseId): void {
     it('matches its versioned status and coverage manifest', async () => {
       const goldenCase = loadCase(caseId);
       const observation = await observe(goldenCase, backendResult(caseId));
-      expect(() => assertGoldenCase(goldenCase, observation)).not.toThrow();
+      expect(() => assertGoldenCase(goldenCase, observation as any)).not.toThrow();
       if (!observation.result.ok) {
         throw new Error('Engine Golden observation must be successful.');
       }

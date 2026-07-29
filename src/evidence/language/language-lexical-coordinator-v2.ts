@@ -23,9 +23,7 @@ import type {
   LexicalRegistryStateV2,
 } from './language-adapter-kinds-v2.js';
 import type { TrustedLanguageCapabilityObservationV2 } from './language-capability-observation-v2.js';
-import {
-  requireLanguageCapabilityObservationPrivateV2,
-} from './language-capability-observation-v2.js';
+import { requireLanguageCapabilityObservationPrivateV2 } from './language-capability-observation-v2.js';
 
 declare const LANGUAGE_LEXICAL_PREPARATION_REF_V2: unique symbol;
 export type LanguageLexicalPreparationRefV2 = Readonly<object> & {
@@ -253,9 +251,7 @@ export async function prepareLanguageClassificationInputV2(
       prep.role = 'leader';
       bucket.leaderPreparation = preparation.preparationRef;
       bucket.internalPromise = (async () => {
-        if (execution && false) {
-          // placeholder keep execution referenced
-        }
+        void execution;
         const carrier = issueVerifiedLanguagePreparationCarrierV2({
           eligibleRef,
           contextRef: prep.contextRef,
@@ -301,9 +297,7 @@ export async function prepareLanguageClassificationInputV2(
       // follower 等待 leader 填 proof
       const leaderRef = bucket.leaderPreparation;
       const leader =
-        leaderRef === undefined
-          ? undefined
-          : preparationPrivate.get(leaderRef);
+        leaderRef === undefined ? undefined : preparationPrivate.get(leaderRef);
       if (leader?.proof === undefined) {
         throw new TypeError('follower missing leader consumption proof');
       }

@@ -58,15 +58,15 @@ export function assertSnapshotTrustFinalizerInvariantV2(input: {
     input.evidence,
     input.eligible,
   );
-  const allowed = new Set(
-    record.evidence.map((item) => item.discoveryKey),
-  );
+  const allowed = new Set(record.evidence.map((item) => item.discoveryKey));
   for (const key of input.submittedDiscoveryKeys) {
     if (!allowed.has(key)) {
       throw new TypeError('invalid-facts: pool-external or changed draft');
     }
     if (record.changedCanonicalKeys.size > 0) {
-      const evidence = record.evidence.find((item) => item.discoveryKey === key);
+      const evidence = record.evidence.find(
+        (item) => item.discoveryKey === key,
+      );
       if (
         evidence !== undefined &&
         record.changedCanonicalKeys.has(evidence.canonicalFileKey)

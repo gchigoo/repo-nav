@@ -4,11 +4,7 @@
  */
 
 export type RipgrepEventTypeV2 =
-  | 'begin'
-  | 'match'
-  | 'context'
-  | 'end'
-  | 'summary';
+  'begin' | 'match' | 'context' | 'end' | 'summary';
 
 export interface RipgrepParsedPathV2 {
   readonly text: string;
@@ -152,7 +148,11 @@ export class RipgrepProtocolFsmV2 {
     } catch {
       return { kind: 'invalid' };
     }
-    if (!isRecord(parsed) || typeof parsed['type'] !== 'string' || !isRecord(parsed['data'])) {
+    if (
+      !isRecord(parsed) ||
+      typeof parsed['type'] !== 'string' ||
+      !isRecord(parsed['data'])
+    ) {
       return { kind: 'invalid' };
     }
     const type = parsed['type'];
@@ -280,7 +280,9 @@ export class RipgrepProtocolFsmV2 {
     };
   }
 
-  private onContext(data: Record<string, unknown>): RipgrepProtocolPushResultV2 {
+  private onContext(
+    data: Record<string, unknown>,
+  ): RipgrepProtocolPushResultV2 {
     if (!this.allowContext) {
       return { kind: 'invalid' };
     }
@@ -331,7 +333,9 @@ export class RipgrepProtocolFsmV2 {
     return { kind: 'ok', event: { type: 'end', path } };
   }
 
-  private onSummary(data: Record<string, unknown>): RipgrepProtocolPushResultV2 {
+  private onSummary(
+    data: Record<string, unknown>,
+  ): RipgrepProtocolPushResultV2 {
     if (this.openPath !== undefined || this.summary !== undefined) {
       return { kind: 'invalid' };
     }

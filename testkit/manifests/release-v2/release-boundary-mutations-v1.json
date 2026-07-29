@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "mutations": [
+    {
+      "id": "entries-n",
+      "field": "packageEntries",
+      "value": 512,
+      "expect": "pass"
+    },
+    {
+      "id": "entries-n-plus-1",
+      "field": "packageEntries",
+      "value": 513,
+      "expect": "fail"
+    },
+    {
+      "id": "packed-n",
+      "field": "packedBytes",
+      "value": 1572864,
+      "expect": "pass"
+    },
+    {
+      "id": "packed-n-plus-1",
+      "field": "packedBytes",
+      "value": 1572865,
+      "expect": "fail"
+    },
+    {
+      "id": "sbom-components-n",
+      "field": "sbomComponents",
+      "value": 512,
+      "expect": "pass"
+    },
+    {
+      "id": "sbom-components-n-plus-1",
+      "field": "sbomComponents",
+      "value": 513,
+      "expect": "fail"
+    }
+  ]
+}

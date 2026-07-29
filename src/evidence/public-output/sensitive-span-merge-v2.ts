@@ -65,13 +65,16 @@ export function createSensitiveSpanV2(
   value: string,
   start: number,
   end: number,
-  reasons: ReadonlySet<RedactionReasonCodeV2> | readonly RedactionReasonCodeV2[],
+  reasons:
+    ReadonlySet<RedactionReasonCodeV2> | readonly RedactionReasonCodeV2[],
 ): SensitiveSpanV2 {
   const reasonSet =
     reasons instanceof Set ? reasons : new Set<RedactionReasonCodeV2>(reasons);
   const reasonCodes = orderedReasons(reasonSet);
   if (reasonCodes.length === 0) {
-    throw new SpanContractViolationError('SensitiveSpanV2 reasonCodes must be non-empty.');
+    throw new SpanContractViolationError(
+      'SensitiveSpanV2 reasonCodes must be non-empty.',
+    );
   }
   let spanStart = start;
   let spanEnd = end;
@@ -84,15 +87,13 @@ export function createSensitiveSpanV2(
       break;
     }
   }
-  if (
-    !(
-      0 <= spanStart &&
-      spanStart < spanEnd &&
-      spanEnd <= value.length &&
-      isCodePointBoundary(value, spanStart) &&
-      isCodePointBoundary(value, spanEnd)
-    )
-  ) {
+  if (!(
+    0 <= spanStart &&
+    spanStart < spanEnd &&
+    spanEnd <= value.length &&
+    isCodePointBoundary(value, spanStart) &&
+    isCodePointBoundary(value, spanEnd)
+  )) {
     throw new SpanContractViolationError(
       'SensitiveSpanV2 coordinates must be valid UTF-16 half-open code-point boundaries.',
     );
@@ -133,15 +134,13 @@ export function validateSensitiveSpansV2(
         'SensitiveSpanV2 reasonCodes must follow REDACTION_REASON_CODES_V2 order.',
       );
     }
-    if (
-      !(
-        0 <= span.start &&
-        span.start < span.end &&
-        span.end <= value.length &&
-        isCodePointBoundary(value, span.start) &&
-        isCodePointBoundary(value, span.end)
-      )
-    ) {
+    if (!(
+      0 <= span.start &&
+      span.start < span.end &&
+      span.end <= value.length &&
+      isCodePointBoundary(value, span.start) &&
+      isCodePointBoundary(value, span.end)
+    )) {
       throw new SpanContractViolationError(
         'SensitiveSpanV2 coordinates must be valid UTF-16 half-open code-point boundaries.',
       );

@@ -32,18 +32,14 @@ export interface RipgrepJsonLineConsumerOptionsV2 {
 /**
  * 同步 ripgrep JSON Lines consumer：framer + fatal UTF-8 + FSM。
  */
-export class RipgrepJsonLineConsumerV2
-  implements
-    SafeStdoutConsumerV2<
-      RipgrepJsonConsumerPartialV2,
-      RipgrepJsonConsumerCompleteV2
-    >
-{
+export class RipgrepJsonLineConsumerV2 implements SafeStdoutConsumerV2<
+  RipgrepJsonConsumerPartialV2,
+  RipgrepJsonConsumerCompleteV2
+> {
   private readonly framer = new LineFramerV2();
   private readonly fsm: RipgrepProtocolFsmV2;
   private readonly onMatch:
-    | ((match: RipgrepMatchEventV2) => 'continue' | 'stop')
-    | undefined;
+    ((match: RipgrepMatchEventV2) => 'continue' | 'stop') | undefined;
   private readonly matches: RipgrepMatchEventV2[] = [];
   private invalid = false;
   private decoder = new TextDecoder('utf-8', { fatal: true });

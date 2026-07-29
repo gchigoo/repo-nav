@@ -71,7 +71,10 @@ export function classifyToInternalRecordsV2(
     context,
     initialExclusions,
   );
-  const publicByDiscovery = new Map<string, ConfirmedEvidence | CandidateEvidence>();
+  const publicByDiscovery = new Map<
+    string,
+    ConfirmedEvidence | CandidateEvidence
+  >();
   for (const item of legacy.confirmed) {
     publicByDiscovery.set(createDiscoveryKey(item.location), item);
   }

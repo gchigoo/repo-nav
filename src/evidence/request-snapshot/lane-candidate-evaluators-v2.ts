@@ -36,7 +36,10 @@ export function isReservedTokenInUniverseV2(
     ) {
       return false;
     }
-    return [...record.matchedTerms.map((term) => term.value), ...record.canonicalSymbols]
+    return [
+      ...record.matchedTerms.map((term) => term.value),
+      ...record.canonicalSymbols,
+    ]
       .map((value) => value.normalize('NFKC').toLocaleLowerCase('und'))
       .includes(normalizedValue);
   });

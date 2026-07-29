@@ -168,7 +168,10 @@ export class EvidenceRankerV2 {
           satisfactionForAnchorV2(intent, fact.record) === 'confirmed' &&
           fact.record.draft.evidenceClass === 'confirmed',
       );
-      const pickFrom = (facts: EligibleFact[], classBudget: number): boolean => {
+      const pickFrom = (
+        facts: EligibleFact[],
+        classBudget: number,
+      ): boolean => {
         if (classBudget <= 0 || facts.length === 0) {
           return false;
         }
@@ -192,7 +195,10 @@ export class EvidenceRankerV2 {
           satisfactionForAnchorV2(intent, fact.record) !== 'none',
       );
       if (
-        pickFrom(candidateCandidates, input.limits.maxCandidates - candidateUsed)
+        pickFrom(
+          candidateCandidates,
+          input.limits.maxCandidates - candidateUsed,
+        )
       ) {
         candidateUsed += 1;
       }
@@ -270,7 +276,9 @@ export class EvidenceRankerV2 {
       }) as RankedEvidenceFactsV2['confirmed'][number];
     };
     const fragment: RankedEvidenceFactsV2 = Object.freeze({
-      confirmed: Object.freeze(confirmed.map((record) => toContractDraft(record.draft))),
+      confirmed: Object.freeze(
+        confirmed.map((record) => toContractDraft(record.draft)),
+      ),
       candidates: Object.freeze(
         candidates.map((record) => toContractDraft(record.draft)),
       ),

@@ -40,9 +40,13 @@ function materializeFactsRowV2(
   draftMapperCalls += 1;
   const location = Object.freeze({
     file: locationFile,
-    lines: Object.freeze([locationLines[0], locationLines[1]] as [number, number]),
+    lines: Object.freeze([locationLines[0], locationLines[1]] as [
+      number,
+      number,
+    ]),
     excerpt: '',
-    ...(options.canonicalSymbol !== undefined || options.anchoredSymbol !== undefined
+    ...(options.canonicalSymbol !== undefined ||
+    options.anchoredSymbol !== undefined
       ? { symbol: options.canonicalSymbol ?? options.anchoredSymbol }
       : {}),
   });

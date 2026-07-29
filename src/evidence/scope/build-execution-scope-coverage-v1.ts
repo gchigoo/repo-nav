@@ -35,6 +35,8 @@ export interface ExecutionScopeCoverageMountV1 {
   readonly eligiblePool: TrustedStableEligibleDiscoveryPoolV2;
   readonly snapshotProof: SnapshotTrustProofV2;
   readonly foldProof: ScopeFoldedSafePoolProofV2;
+  readonly coverageBasis: ReturnType<typeof createScopeCoverageBasisV2>;
+  readonly resolvedScope: ReturnType<typeof resolveRepositoryScopeV1>;
   readonly fragmentValue: ScopeCoverageFactsViewV1['fragment']['value'];
 }
 
@@ -138,6 +140,8 @@ export async function buildExecutionScopeCoverageMountV1(input: {
     eligiblePool,
     snapshotProof,
     foldProof,
+    coverageBasis,
+    resolvedScope,
     fragmentValue: view.fragment.value,
   });
 }

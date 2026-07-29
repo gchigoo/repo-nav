@@ -68,7 +68,9 @@ export function comparisonKeyV2(value: string): string {
 
 export function isCorpusByteEligibleV2(value: string): boolean {
   const bytes = utf8Bytes(value);
-  return bytes >= CORPUS_ENTRY_BYTES_MIN_V2 && bytes <= CORPUS_ENTRY_BYTES_MAX_V2;
+  return (
+    bytes >= CORPUS_ENTRY_BYTES_MIN_V2 && bytes <= CORPUS_ENTRY_BYTES_MAX_V2
+  );
 }
 
 export function isGenericAssignmentEligibleV2(value: string): boolean {
@@ -97,12 +99,7 @@ function codePointBefore(value: string, index: number): number | undefined {
   if (index >= 2) {
     const high = value.charCodeAt(index - 2);
     const low = value.charCodeAt(index - 1);
-    if (
-      high >= 0xd800 &&
-      high <= 0xdbff &&
-      low >= 0xdc00 &&
-      low <= 0xdfff
-    ) {
+    if (high >= 0xd800 && high <= 0xdbff && low >= 0xdc00 && low <= 0xdfff) {
       return value.codePointAt(index - 2);
     }
   }

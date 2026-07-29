@@ -180,3 +180,52 @@ describe.runIf(
     expect(registry.resolveAdapter('.py')).toBe('fallback');
   });
 });
+
+describe.runIf(
+  isSelected({
+    group: 'public-beta-release',
+    caseId: 'large-release-boundaries',
+  }),
+)('F9-LARGE-001 large-release-boundaries', () => {
+  it('freezes N pass / N+1 fail-closed boundary constants and mutation manifest', async () => {
+    const { readFileSync } = await import('node:fs');
+    const {
+      LARGE_RELEASE_N_PLUS_ONE_V2,
+      LARGE_RELEASE_N_V2,
+    } = await import(
+      '../../testkit/fixtures/release-v2/large-release-v2.js'
+    );
+    const root = resolve(import.meta.dirname, '../..');
+    const boundariesSource = readFileSync(
+      resolve(root, 'tools/release/release-boundaries-v1.mjs'),
+      'utf8',
+    );
+    expect(boundariesSource).toContain(
+      `packageEntries: ${LARGE_RELEASE_N_V2.packageEntries}`,
+    );
+    expect(LARGE_RELEASE_N_PLUS_ONE_V2.packageEntries).toBe(
+      LARGE_RELEASE_N_V2.packageEntries + 1,
+    );
+    expect(LARGE_RELEASE_N_PLUS_ONE_V2.sbomBytes).toBe(
+      LARGE_RELEASE_N_V2.sbomBytes + 1,
+    );
+    const mutations = JSON.parse(
+      readFileSync(
+        resolve(
+          root,
+          'testkit/manifests/release-v2/release-boundary-mutations-v1.json',
+        ),
+        'utf8',
+      ),
+    ) as {
+      mutations: readonly { id: string; expect: string; value: number }[];
+    };
+    const pass = mutations.mutations.filter((m) => m.expect === 'pass');
+    const fail = mutations.mutations.filter((m) => m.expect === 'fail');
+    expect(pass.length).toBeGreaterThan(0);
+    expect(fail.length).toBeGreaterThan(0);
+    for (const row of fail) {
+      expect(row.value).toBeGreaterThan(LARGE_RELEASE_N_V2.packageEntries - 1);
+    }
+  });
+});

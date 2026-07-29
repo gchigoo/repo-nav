@@ -20,9 +20,7 @@ import type {
   CompleteSafeBackendHitForF3V2,
   TrustedBackendDiscoveryHandoffV2,
 } from '../contracts/v2/backend-execution-outcome-v2.js';
-import type {
-  SafeProcessStreamingResultV2,
-} from '../contracts/safe-process.js';
+import type { SafeProcessStreamingResultV2 } from '../contracts/safe-process.js';
 import {
   createBackendNoStartDecisionV2,
   createExpandedLaneAttemptFactsV2,
@@ -85,7 +83,11 @@ function nestedText(value: unknown): string | undefined {
 }
 
 function parseMatch(value: unknown): RipgrepMatch | undefined {
-  if (!isRecord(value) || value['type'] !== 'match' || !isRecord(value['data'])) {
+  if (
+    !isRecord(value) ||
+    value['type'] !== 'match' ||
+    !isRecord(value['data'])
+  ) {
     return undefined;
   }
   const data = value['data'];
@@ -122,7 +124,9 @@ function parseMatch(value: unknown): RipgrepMatch | undefined {
   };
 }
 
-function parseJsonLines(stdout: Uint8Array):
+function parseJsonLines(
+  stdout: Uint8Array,
+):
   | { readonly ok: true; readonly matches: readonly RipgrepMatch[] }
   | { readonly ok: false } {
   const text = Buffer.from(stdout).toString('utf8');
@@ -168,11 +172,13 @@ function failureHealth(result: SafeProcessFailure): BackendHealth {
 }
 
 function searchSeeds(request: BackendSearchRequest): readonly SearchSeed[] {
-  const seeds: SearchSeed[] = request.terms.map((term: NormalizedSearchTerm) => ({
-    ...term,
-    reasonCode: 'LITERAL_TERM_HIT',
-    symbol: false,
-  }));
+  const seeds: SearchSeed[] = request.terms.map(
+    (term: NormalizedSearchTerm) => ({
+      ...term,
+      reasonCode: 'LITERAL_TERM_HIT',
+      symbol: false,
+    }),
+  );
   for (const anchor of request.anchors) {
     if (anchor.kind === 'file') {
       continue;
@@ -500,7 +506,9 @@ export class RipgrepBackend implements RepositorySearchBackend {
     if (!result.ok) {
       return failureHealth(result);
     }
-    const firstLine = Buffer.from(result.stdout).toString('utf8').split(/\r?\n/u)[0];
+    const firstLine = Buffer.from(result.stdout)
+      .toString('utf8')
+      .split(/\r?\n/u)[0];
     return firstLine === undefined || firstLine.length === 0
       ? { state: 'error', reasonCode: 'BACKEND_PROCESS_FAILED' }
       : { state: 'available', version: firstLine };
@@ -571,9 +579,7 @@ export class RipgrepBackend implements RepositorySearchBackend {
               .filter((fact) => fact.seed.symbol)
               .map((fact) => fact.actualText),
           ),
-        ).sort((left, right) =>
-          left === right ? 0 : left < right ? -1 : 1,
-        );
+        ).sort((left, right) => (left === right ? 0 : left < right ? -1 : 1));
         for (const symbol of symbols.length === 0 ? [undefined] : symbols) {
           hits.push({
             file: match.file,
@@ -591,7 +597,9 @@ export class RipgrepBackend implements RepositorySearchBackend {
     return {
       health: {
         state: 'available',
-        ...(hits.length === 0 ? { reasonCode: 'RIPGREP_NO_RESULT' as const } : {}),
+        ...(hits.length === 0
+          ? { reasonCode: 'RIPGREP_NO_RESULT' as const }
+          : {}),
       },
       hits: Object.freeze(hits.sort(compareHits).slice(0, request.maxHits)),
       complete,
@@ -626,7 +634,10 @@ export class RipgrepBackend implements RepositorySearchBackend {
 
     if (signal.aborted) {
       try {
-        const observation = executor.observePreAbortedNoStart(signal, execution);
+        const observation = executor.observePreAbortedNoStart(
+          signal,
+          execution,
+        );
         const decision = createBackendNoStartDecisionV2(
           observation,
           backendExecutionContext,
@@ -708,7 +719,8 @@ export class RipgrepBackend implements RepositorySearchBackend {
       execution,
     );
     const versionView = executor.requireResult(versionSettled, execution);
-    const versionResult = versionView.result as AvailabilityProbeExecutionResultV2;
+    const versionResult =
+      versionView.result as AvailabilityProbeExecutionResultV2;
 
     const finishHandoff = (
       outcomeShape: BackendExecutionOutcomeV2,
@@ -904,7 +916,10 @@ export class RipgrepBackend implements RepositorySearchBackend {
         consumer,
         execution,
       );
-      const settled = await executor.settlePhysicalAttempt(groupStart, execution);
+      const settled = await executor.settlePhysicalAttempt(
+        groupStart,
+        execution,
+      );
       groupSettled.push({ settled, laneMask });
       const groupView = executor.requireResult(settled, execution);
       const classified = classifyStreamingGroupResult(groupView.result);
@@ -937,9 +952,7 @@ export class RipgrepBackend implements RepositorySearchBackend {
     const expandedHits = finalSnap.expanded.hits;
     const earlyStop = accumulator.expandedIsEarlyStop();
     const expandedComplete =
-      terminal === undefined &&
-      !earlyStop &&
-      finalSnap.expanded.complete;
+      terminal === undefined && !earlyStop && finalSnap.expanded.complete;
     const outcomeShape = buildExpandedOutcomeShape({
       expandedHits,
       expandedComplete,

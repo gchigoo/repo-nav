@@ -44,47 +44,46 @@ export interface LocateResultResourceBudgetsV2 {
   }>;
 }
 
-export const LOCATE_RESULT_RESOURCE_BUDGETS_V2 =
-  Object.freeze({
-    normalizedTerms: Object.freeze({
-      maxItems: 16,
-      maxItemUtf8Bytes: 128,
-      maxTotalUtf8Bytes: 1024,
-    }),
-    evidence: Object.freeze({
-      maxConfirmed: 20,
-      maxCandidates: 20,
-      maxTotal: 40,
-    }),
-    raw: Object.freeze({
-      maxFileUtf8Bytes: 4096,
-      maxPathSegments: 128,
-      maxSymbolUtf8Bytes: 2048,
-      maxExcerptUtf8Bytes: 16384,
-      maxJsonUtf8Bytes: 4 * 1024 * 1024,
-    }),
-    corpus: Object.freeze({
-      maxEntries: 128,
-      minEntryUtf8Bytes: 8,
-      maxEntryUtf8Bytes: 512,
-      maxTotalUtf8Bytes: 32 * 1024,
-    }),
-    public: Object.freeze({
-      maxTermUtf8Bytes: 128,
-      maxFileUtf8Bytes: 2048,
-      maxSymbolUtf8Bytes: 2048,
-      maxExcerptUtf8Bytes: 2048,
-      maxJsonUtf8Bytes: 1024 * 1024,
-    }),
-    coverage: Object.freeze({
-      maxBackends: 2,
-      maxUnsatisfiedAnchors: 16,
-      maxUnsatisfiedAnchorRequestIndex: 15,
-    }),
-    request: Object.freeze({
-      maxRawJsonUtf8Bytes: 16 * 1024,
-    }),
-  }) as LocateResultResourceBudgetsV2;
+export const LOCATE_RESULT_RESOURCE_BUDGETS_V2 = Object.freeze({
+  normalizedTerms: Object.freeze({
+    maxItems: 16,
+    maxItemUtf8Bytes: 128,
+    maxTotalUtf8Bytes: 1024,
+  }),
+  evidence: Object.freeze({
+    maxConfirmed: 20,
+    maxCandidates: 20,
+    maxTotal: 40,
+  }),
+  raw: Object.freeze({
+    maxFileUtf8Bytes: 4096,
+    maxPathSegments: 128,
+    maxSymbolUtf8Bytes: 2048,
+    maxExcerptUtf8Bytes: 16384,
+    maxJsonUtf8Bytes: 4 * 1024 * 1024,
+  }),
+  corpus: Object.freeze({
+    maxEntries: 128,
+    minEntryUtf8Bytes: 8,
+    maxEntryUtf8Bytes: 512,
+    maxTotalUtf8Bytes: 32 * 1024,
+  }),
+  public: Object.freeze({
+    maxTermUtf8Bytes: 128,
+    maxFileUtf8Bytes: 2048,
+    maxSymbolUtf8Bytes: 2048,
+    maxExcerptUtf8Bytes: 2048,
+    maxJsonUtf8Bytes: 1024 * 1024,
+  }),
+  coverage: Object.freeze({
+    maxBackends: 2,
+    maxUnsatisfiedAnchors: 16,
+    maxUnsatisfiedAnchorRequestIndex: 15,
+  }),
+  request: Object.freeze({
+    maxRawJsonUtf8Bytes: 16 * 1024,
+  }),
+}) as LocateResultResourceBudgetsV2;
 
 /** UTF-8 byte length of a string (not UTF-16 code units). */
 export function utf8ByteLengthV2(value: string): number {

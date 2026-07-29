@@ -105,7 +105,11 @@ export function createJavascriptLanguageAdapterV2(): Readonly<{
         producerKind =
           terms.length > 0 ? 'verified-literal' : 'anchored-reference';
         canonicalSymbol = view.anchoredSymbol;
-      } else if (structureComplete && terms.length >= 2 && hasAssignmentOrObject(code, terms)) {
+      } else if (
+        structureComplete &&
+        terms.length >= 2 &&
+        hasAssignmentOrObject(code, terms)
+      ) {
         producerKind =
           view.anchoredSymbol !== undefined ? 'direct-anchored' : 'direct-term';
       } else if (structureComplete && view.anchoredSymbol !== undefined) {
@@ -122,10 +126,14 @@ export function createJavascriptLanguageAdapterV2(): Readonly<{
       if (structureComplete) {
         const embedded = decodeCompleteEmbeddedSqlLiteralV2(view.sourceText);
         if (embedded.ok) {
-          const decoded = requireCompleteEmbeddedSqlLiteralFactsV2(embedded.facts);
+          const decoded = requireCompleteEmbeddedSqlLiteralFactsV2(
+            embedded.facts,
+          );
           if (containsSqlAlias(maskSqlNonCode(decoded.decoded), terms)) {
             producerKind =
-              view.anchoredSymbol !== undefined ? 'direct-anchored' : 'direct-term';
+              view.anchoredSymbol !== undefined
+                ? 'direct-anchored'
+                : 'direct-term';
           }
         }
       }

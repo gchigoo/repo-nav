@@ -266,10 +266,7 @@ export class VerifiedTextFileSourceV2 {
     }
   }
 
-  private assertNotAborted(
-    signal: AbortSignal,
-    relativeFile?: string,
-  ): void {
+  private assertNotAborted(signal: AbortSignal, relativeFile?: string): void {
     if (signal.aborted) {
       throw new RepositoryAccessError('ABORTED', relativeFile);
     }

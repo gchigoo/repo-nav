@@ -2,9 +2,9 @@ import { z } from 'zod';
 
 import {
   BackendHealthSchema,
-  LocateToolOutputSchema,
   SearchBackendIdSchema,
-} from '../../src/contracts/index.js';
+} from '../contracts/index.js';
+import { LocateResultV2Schema } from '../contracts/v2/locate-result-v2.js';
 
 export const CLI_SCHEMA_VERSION = '1.0' as const;
 
@@ -24,24 +24,6 @@ export const ProbeOutputSchema = z
   .readonly();
 export type ProbeOutput = z.infer<typeof ProbeOutputSchema>;
 
-export const GoldenOutputSchema = z
-  .strictObject({
-    schemaVersion: z.literal(CLI_SCHEMA_VERSION),
-    selection: z.array(z.string().min(1)).readonly(),
-    counts: z
-      .strictObject({
-        passed: z.int().nonnegative(),
-        failed: z.int().nonnegative(),
-        skipped: z.int().nonnegative(),
-        total: z.int().nonnegative(),
-      })
-      .readonly(),
-    failures: z.array(z.string()).readonly(),
-    artifactPaths: z.array(z.string().min(1)).readonly(),
-  })
-  .readonly();
-export type GoldenOutput = z.infer<typeof GoldenOutputSchema>;
-
 export const CliErrorOutputSchema = z
   .strictObject({
     schemaVersion: z.literal(CLI_SCHEMA_VERSION),
@@ -57,12 +39,14 @@ export const CliErrorOutputSchema = z
 export type CliErrorOutput = z.infer<typeof CliErrorOutputSchema>;
 
 export const CliFormalOutputSchema = z.union([
-  LocateToolOutputSchema,
+  LocateResultV2Schema,
   ProbeOutputSchema,
-  GoldenOutputSchema,
   CliErrorOutputSchema,
 ]);
 
+/**
+ * Create a CLI-private error envelope (usage/internal/probe only).
+ */
 export function createCliError(
   code: CliErrorOutput['error']['code'],
   message: string,
@@ -73,3 +57,19 @@ export function createCliError(
     error: { code, message },
   });
 }
+
+/** Removed from public CLI; retained stub for source-checkout docs smoke imports. */
+export const GoldenOutputSchema = z
+  .object({
+    schemaVersion: z.literal(CLI_SCHEMA_VERSION),
+    selection: z.array(z.string()),
+    counts: z.object({
+      passed: z.number(),
+      failed: z.number(),
+      skipped: z.number(),
+      total: z.number(),
+    }),
+    failures: z.array(z.string()),
+    artifactPaths: z.array(z.string()),
+  })
+  .readonly();

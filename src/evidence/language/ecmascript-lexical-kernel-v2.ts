@@ -89,7 +89,10 @@ export function maskNonCode(excerpt: string): string {
   return output;
 }
 
-export function startsRegexLiteral(source: string, slashIndex: number): boolean {
+export function startsRegexLiteral(
+  source: string,
+  slashIndex: number,
+): boolean {
   const prefix = source.slice(0, slashIndex).trimEnd();
   if (prefix.length === 0) {
     return true;

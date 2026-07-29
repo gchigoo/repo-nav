@@ -5,7 +5,7 @@ import {
   redactPublicFieldV2,
 } from '../../src/evidence/public-output/sensitive-value-policy-v2.js';
 import { assemblePublicLocateResultV2 } from '../../src/evidence/public-output/public-result-assembler-v2.js';
-import { projectSyntheticLocateResultV2 } from '../../src/evidence/public-output/synthetic-locate-projection-v2.js';
+import { projectSyntheticLocateResultV2 } from '../../testkit/fixtures/public-output-v2/synthetic-locate-projection-helper-v2.js';
 import { createUnsafeLocateSuccessV2 } from '../../testkit/fixtures/public-output-v2/synthetic-locate-v2.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 

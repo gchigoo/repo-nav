@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import {
-  createPublicErrorResult,
   createDiscoveryKey,
   DEFAULT_MAX_FILE_BYTES,
   LIMIT_REASON_CODES,
@@ -45,16 +44,18 @@ import {
 } from '../../runtime/tokens.js';
 import {
   LocateAbortCoordinatorV2,
+  type FinalizedAbortDecisionV2,
   type LocateAbortSource,
 } from '../abort-source.js';
 import { closeAndFinalizeLocateSynchronouslyV2 } from './canonical-locate-finalization-v2.js';
+import { registerProductionAcceptedProjectionSeamsV2 } from './register-production-accepted-projection-seams-v2.js';
+import type { BackendExecutionContextV2 } from '../../contracts/v2/backend-execution-outcome-v2.js';
 import {
   createVerifiedCandidateContext,
   materializeCandidateDraft,
 } from '../candidate-policy.js';
 import { classifyDiscoveryRecords } from '../direct-mapping-classifier.js';
 import { verifyAndMergeBackendHits } from '../discovery-record.js';
-import { redactLocateResult } from '../evidence-redactor.js';
 import { evaluateLocateStatus } from '../locate-status-evaluator.js';
 import { createNextActions } from '../next-action-policy.js';
 import {
@@ -114,9 +115,7 @@ function shouldUseRequestSnapshotReader(
 }
 
 /** 测试 seam：final check 前触发（mutation precedence fixture）。 */
-let beforeFinalSnapshotCheckForTestV2:
-  | (() => void | Promise<void>)
-  | undefined;
+let beforeFinalSnapshotCheckForTestV2: (() => void | Promise<void>) | undefined;
 
 /**
  * 仅测试：在 executor final check 前注入副作用。
@@ -130,7 +129,10 @@ export function setBeforeFinalSnapshotCheckForTestV2(
 const CLASSIFICATION_MAX_LINES = 12;
 const CLASSIFICATION_MAX_BYTES = 4 * 1024;
 
-type LocateSuccessEvidence = Extract<LocateResult, { readonly ok: true }>['evidence'];
+type LocateSuccessEvidence = Extract<
+  LocateResult,
+  { readonly ok: true }
+>['evidence'];
 
 interface TimeoutResultOptions {
   readonly attempts?: readonly BackendAttempt[];
@@ -160,9 +162,7 @@ function verificationTerms(
   return Object.freeze(
     values.filter((term) => {
       const key = `${term.caseSensitive ? '1' : '0'}\u0000${
-        term.caseSensitive
-          ? term.value
-          : term.value.toLocaleLowerCase('und')
+        term.caseSensitive ? term.value : term.value.toLocaleLowerCase('und')
       }`;
       if (seen.has(key)) {
         return false;
@@ -202,7 +202,9 @@ function attemptFor(
     backend,
     status,
     hitCount,
-    ...(health.reasonCode === undefined ? {} : { reasonCode: health.reasonCode }),
+    ...(health.reasonCode === undefined
+      ? {}
+      : { reasonCode: health.reasonCode }),
   });
 }
 
@@ -215,7 +217,11 @@ function indexStateFor(
 function indexFreshnessFor(
   health: BackendHealth | undefined,
 ): 'not-applicable' | 'unknown' | 'possibly-stale' {
-  if (health === undefined || health.state === 'missing' || health.state === 'unavailable') {
+  if (
+    health === undefined ||
+    health.state === 'missing' ||
+    health.state === 'unavailable'
+  ) {
     return 'not-applicable';
   }
   return health.possibleStaleIndex === true ? 'possibly-stale' : 'unknown';
@@ -237,9 +243,7 @@ function decideToolError(error: unknown): UnsafeToolErrorFactsV2 {
 }
 
 @Injectable()
-export class CanonicalRepositoryLocateExecutorV2
-  implements CanonicalLocateExecutorV2
-{
+export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecutorV2 {
   public constructor(
     @Inject(REPOSITORY_SEARCH_BACKENDS)
     private readonly backends: readonly RepositorySearchBackend[],
@@ -261,7 +265,8 @@ export class CanonicalRepositoryLocateExecutorV2
         projectionExecution,
       );
     }
-    const execution = requireLocateProjectionExecutionTokenV2(projectionExecution);
+    const execution =
+      requireLocateProjectionExecutionTokenV2(projectionExecution);
     const builder = createLocateFactEnvelopeBuilderV2(
       legacy.evidence.repositoryRoot,
       legacy.evidence.normalizedTerms,
@@ -270,7 +275,10 @@ export class CanonicalRepositoryLocateExecutorV2
     builder.add('snapshot', snapshotFacts);
     if (rankingFacts !== undefined) {
       builder.add('ranking', rankingFacts);
-    } else if (scopeFragment !== undefined && capabilityFragment !== undefined) {
+    } else if (
+      scopeFragment !== undefined &&
+      capabilityFragment !== undefined
+    ) {
       // zero-read / no-selection：补空 ranking，使四 prerequisite 齐全
       builder.add(
         'ranking',
@@ -287,10 +295,11 @@ export class CanonicalRepositoryLocateExecutorV2
     if (capabilityFragment !== undefined) {
       builder.add('capability', capabilityFragment);
     }
+    // legacy LocateResult remains an internal construction aid only; not part of execution ABI
+    void legacy;
     const input: CanonicalLocateExecutionV2 = Object.freeze({
       ok: true as const,
       envelope: builder.freeze(),
-      legacyV1Projection: legacy,
     });
     registerCanonicalLocateExecutionInputV2(
       input,
@@ -331,12 +340,16 @@ export class CanonicalRepositoryLocateExecutorV2
       /** Same-execution scope observation：post-final matched bind 权威源。 */
       readonly scopeObservation?: TrustedScopeEligibilityObservationV2;
       readonly requestedLayers?: readonly RepoLayer[];
+      readonly backendExecutionContext?: BackendExecutionContextV2;
+      readonly fallbackChecked?: boolean;
+      readonly fallbackRequired?: boolean;
+      readonly completeEquivalentFallback?: boolean;
     },
   ): Promise<CanonicalLocateExecutionV2> {
-    const execution = requireLocateProjectionExecutionTokenV2(
-      projectionExecution,
-    );
+    const execution =
+      requireLocateProjectionExecutionTokenV2(projectionExecution);
     const snapshot = options.requestSnapshot;
+    const resolvedLimits = options.limits ?? resolveLocateLimits(undefined);
     if (
       snapshot === undefined ||
       snapshot.getDecodeInvocationCount() === 0 ||
@@ -356,6 +369,28 @@ export class CanonicalRepositoryLocateExecutorV2
         eligiblePool: scopeMount.eligiblePool,
         snapshotProof: scopeMount.snapshotProof,
         retainedEligible: Object.freeze([]),
+      });
+      const abortCoordinator =
+        options.abortCoordinator ??
+        LocateAbortCoordinatorV2.create(
+          new AbortController().signal,
+          resolvedLimits.timeoutMs,
+        );
+      const abortDecision = abortCoordinator.closeFinalization();
+      registerProductionAcceptedProjectionSeamsV2({
+        execution,
+        snapshotProof: scopeMount.snapshotProof,
+        rankingOutcome: undefined,
+        scopeMount,
+        capabilityMount,
+        resolvedLimits,
+        abortCoordinator,
+        abortDecision,
+        backendExecutionContext: options.backendExecutionContext,
+        fallbackChecked: options.fallbackChecked ?? false,
+        fallbackRequired: options.fallbackRequired ?? false,
+        completeEquivalentFallback: options.completeEquivalentFallback ?? false,
+        discardedEvidenceCount: 0,
       });
       return this.terminalSuccess(
         legacy,
@@ -429,8 +464,9 @@ export class CanonicalRepositoryLocateExecutorV2
               limits,
             });
 
-      return redactLocateResult({
-        ok: true,
+      // Internal construction aid only; public authority is v2 F8 materialization.
+      return Object.freeze({
+        ok: true as const,
         evidence: {
           ...legacy.evidence,
           status,
@@ -441,12 +477,16 @@ export class CanonicalRepositoryLocateExecutorV2
       }) as LocateResult;
     };
 
+    let abortDecision: FinalizedAbortDecisionV2 | undefined;
     const adjusted: LocateResult =
       options.abortCoordinator === undefined
         ? finalizeSync(options.abortSource ?? 'none')
         : closeAndFinalizeLocateSynchronouslyV2(
             options.abortCoordinator,
-            ({ abortSource }) => finalizeSync(abortSource),
+            ({ abortDecision: decision, abortSource }) => {
+              abortDecision = decision;
+              return finalizeSync(abortSource);
+            },
           );
 
     // F2：final purge 后对 trusted pool 排序；必须复用 read 前 bound selection
@@ -510,6 +550,31 @@ export class CanonicalRepositoryLocateExecutorV2
       ...(rankingOutcome === undefined ? {} : { rankingOutcome }),
     });
 
+    const abortCoordinator =
+      options.abortCoordinator ??
+      LocateAbortCoordinatorV2.create(
+        new AbortController().signal,
+        resolvedLimits.timeoutMs,
+      );
+    if (abortDecision === undefined) {
+      abortDecision = abortCoordinator.closeFinalization();
+    }
+    registerProductionAcceptedProjectionSeamsV2({
+      execution,
+      snapshotProof: finalPools.proof,
+      rankingOutcome,
+      scopeMount,
+      capabilityMount,
+      resolvedLimits,
+      abortCoordinator,
+      abortDecision,
+      backendExecutionContext: options.backendExecutionContext,
+      fallbackChecked: options.fallbackChecked ?? false,
+      fallbackRequired: options.fallbackRequired ?? false,
+      completeEquivalentFallback: options.completeEquivalentFallback ?? false,
+      discardedEvidenceCount: finalPools.changedCanonicalKeys.size,
+    });
+
     return this.terminalSuccess(
       adjusted,
       projectionExecution,
@@ -524,15 +589,11 @@ export class CanonicalRepositoryLocateExecutorV2
     error: UnsafeToolErrorFactsV2,
     projectionExecution: LocateProjectionExecutionCapabilityV2,
   ): CanonicalLocateExecutionV2 {
-    const execution = requireLocateProjectionExecutionTokenV2(projectionExecution);
-    const legacy = createPublicErrorResult(
-      error.code,
-      error.suggestedAction,
-    ) as Extract<LocateResult, { readonly ok: false }>;
+    const execution =
+      requireLocateProjectionExecutionTokenV2(projectionExecution);
     const input: CanonicalLocateExecutionV2 = Object.freeze({
       ok: false as const,
       error,
-      legacyV1Projection: legacy,
     });
     registerCanonicalLocateExecutionInputV2(
       input,
@@ -554,7 +615,10 @@ export class CanonicalRepositoryLocateExecutorV2
     const normalizedTerms = normalizeSearchTerms(request.terms, mode);
     const anchors = normalizeLocateAnchors(request.anchors ?? [], mode);
     const termsForVerification = verificationTerms(normalizedTerms, anchors);
-    const negativeTerms = normalizeSearchTerms(request.negativeTerms ?? [], mode);
+    const negativeTerms = normalizeSearchTerms(
+      request.negativeTerms ?? [],
+      mode,
+    );
     const callerSignal = requireCallerSignal(context);
     const abortCoordinator = LocateAbortCoordinatorV2.create(
       callerSignal,
@@ -674,34 +738,34 @@ export class CanonicalRepositoryLocateExecutorV2
         lastSharedSearchMaxHits = codegraphLanes.sharedSearchMaxHits as number;
         if (abortCoordinator.signal.aborted) {
           return await this.terminalSuccessWithSnapshot(
-          this.timeoutResult(
-            repositoryRoot,
-            normalizedTerms,
-            abortCoordinator.peekSource(),
-            limits,
+            this.timeoutResult(
+              repositoryRoot,
+              normalizedTerms,
+              abortCoordinator.peekSource(),
+              limits,
+              {
+                attempts: [
+                  attemptFor(
+                    'codegraph',
+                    codegraphResult.health,
+                    codegraphResult.hits.length,
+                  ),
+                ],
+                codeGraphHealth: codegraphResult.health,
+              },
+            ),
+            projectionExecution,
             {
-              attempts: [
-                attemptFor(
-                  'codegraph',
-                  codegraphResult.health,
-                  codegraphResult.hits.length,
-                ),
-              ],
-              codeGraphHealth: codegraphResult.health,
+              requestSnapshot,
+              signal: abortCoordinator.signal,
+              limits,
+              abortSource: abortCoordinator.peekSource(),
+              abortCoordinator,
+              ...(request.layers === undefined
+                ? {}
+                : { requestedLayers: request.layers }),
             },
-          ),
-          projectionExecution,
-          {
-            requestSnapshot,
-            signal: abortCoordinator.signal,
-            limits,
-            abortSource: abortCoordinator.peekSource(),
-            abortCoordinator,
-            ...(request.layers === undefined
-              ? {}
-              : { requestedLayers: request.layers }),
-          },
-        );
+          );
         }
         if (
           codegraphResult.health.state === 'available' &&
@@ -722,9 +786,7 @@ export class CanonicalRepositoryLocateExecutorV2
             limits: verificationLimits,
             maxMatchesPerHit,
             signal: abortCoordinator.signal,
-            ...(observationCache === undefined
-              ? {}
-              : { observationCache }),
+            ...(observationCache === undefined ? {} : { observationCache }),
           });
           const primaryClassified = classifyDiscoveryRecords(
             primaryMerged.records,
@@ -771,38 +833,41 @@ export class CanonicalRepositoryLocateExecutorV2
               timeoutLimits.push('MAX_CANDIDATES_REACHED');
             }
             return await this.terminalSuccessWithSnapshot(
-          this.timeoutResult(
-              repositoryRoot,
-              normalizedTerms,
-              abortCoordinator.peekSource(),
-              limits,
-              {
-                attempts: [
-                  attemptFor(
-                    'codegraph',
-                    codegraphResult.health,
-                    codegraphResult.hits.length,
+              this.timeoutResult(
+                repositoryRoot,
+                normalizedTerms,
+                abortCoordinator.peekSource(),
+                limits,
+                {
+                  attempts: [
+                    attemptFor(
+                      'codegraph',
+                      codegraphResult.health,
+                      codegraphResult.hits.length,
+                    ),
+                  ],
+                  codeGraphHealth: codegraphResult.health,
+                  confirmed: primaryConfirmed.selected,
+                  candidates: primaryCandidates.selected,
+                  limitsReached: uniqueSchemaOrder(
+                    timeoutLimits,
+                    LIMIT_REASON_CODES,
                   ),
-                ],
-                codeGraphHealth: codegraphResult.health,
+                  exclusionSummary: primaryClassified.exclusionSummary,
+                },
+              ),
+              projectionExecution,
+              {
+                requestSnapshot,
+                signal: abortCoordinator.signal,
+                discoveryRecords: primaryMerged.records,
                 confirmed: primaryConfirmed.selected,
                 candidates: primaryCandidates.selected,
-                limitsReached: uniqueSchemaOrder(timeoutLimits, LIMIT_REASON_CODES),
-                exclusionSummary: primaryClassified.exclusionSummary,
+                limits,
+                abortSource: abortCoordinator.peekSource(),
+                abortCoordinator,
               },
-            ),
-          projectionExecution,
-          {
-            requestSnapshot,
-            signal: abortCoordinator.signal,
-            discoveryRecords: primaryMerged.records,
-            confirmed: primaryConfirmed.selected,
-            candidates: primaryCandidates.selected,
-            limits,
-            abortSource: abortCoordinator.peekSource(),
-          abortCoordinator,
-          },
-        );
+            );
           }
           skipFallback =
             !primarySelection.filesTruncated &&
@@ -818,34 +883,34 @@ export class CanonicalRepositoryLocateExecutorV2
         }
         if (abortCoordinator.signal.aborted) {
           return await this.terminalSuccessWithSnapshot(
-          this.timeoutResult(
-            repositoryRoot,
-            normalizedTerms,
-            abortCoordinator.peekSource(),
-            limits,
+            this.timeoutResult(
+              repositoryRoot,
+              normalizedTerms,
+              abortCoordinator.peekSource(),
+              limits,
+              {
+                attempts: [
+                  attemptFor(
+                    'codegraph',
+                    codegraphResult.health,
+                    codegraphResult.hits.length,
+                  ),
+                ],
+                codeGraphHealth: codegraphResult.health,
+              },
+            ),
+            projectionExecution,
             {
-              attempts: [
-                attemptFor(
-                  'codegraph',
-                  codegraphResult.health,
-                  codegraphResult.hits.length,
-                ),
-              ],
-              codeGraphHealth: codegraphResult.health,
+              requestSnapshot,
+              signal: abortCoordinator.signal,
+              limits,
+              abortSource: abortCoordinator.peekSource(),
+              abortCoordinator,
+              ...(request.layers === undefined
+                ? {}
+                : { requestedLayers: request.layers }),
             },
-          ),
-          projectionExecution,
-          {
-            requestSnapshot,
-            signal: abortCoordinator.signal,
-            limits,
-            abortSource: abortCoordinator.peekSource(),
-            abortCoordinator,
-            ...(request.layers === undefined
-              ? {}
-              : { requestedLayers: request.layers }),
-          },
-        );
+          );
         }
       }
 
@@ -895,9 +960,7 @@ export class CanonicalRepositoryLocateExecutorV2
               ? intent.value
               : intent.comparisonValue;
             if (intent.kind === 'file') {
-              const target = intent.caseSensitive
-                ? safeFile
-                : fileCmp;
+              const target = intent.caseSensitive ? safeFile : fileCmp;
               if (target === value) {
                 keys.push(intent.canonicalKey);
               }
@@ -936,7 +999,8 @@ export class CanonicalRepositoryLocateExecutorV2
         signal: abortCoordinator.signal,
         ...(observationCache === undefined ? {} : { observationCache }),
       });
-      const initialExclusions: Partial<Record<ExclusionReasonCode, number>> = {};
+      const initialExclusions: Partial<Record<ExclusionReasonCode, number>> =
+        {};
       if (merged.duplicateLocations > 0) {
         initialExclusions.DUPLICATE_LOCATION = merged.duplicateLocations;
       }
@@ -992,7 +1056,9 @@ export class CanonicalRepositoryLocateExecutorV2
             },
             abortCoordinator.signal,
           );
-          candidateContexts.push(createVerifiedCandidateContext(record, window));
+          candidateContexts.push(
+            createVerifiedCandidateContext(record, window),
+          );
         } catch (error: unknown) {
           if (!(error instanceof RepositoryAccessError)) {
             throw error;
@@ -1155,47 +1221,51 @@ export class CanonicalRepositoryLocateExecutorV2
             ]),
       ]);
       return await this.terminalSuccessWithSnapshot(
-          redactLocateResult({
-        ok: true,
-        evidence: {
-          schemaVersion: '1.0',
-          status,
-          repositoryRoot,
-          normalizedTerms,
-          confirmed,
-          candidates,
-          coverage: {
-            backends: attempts,
-            fallbackChecked,
-            indexState: indexStateFor(codegraphResult?.health),
-            indexFreshness: indexFreshnessFor(codegraphResult?.health),
-            limitsReached,
-            exclusionSummary: classified.exclusionSummary,
-          },
-          nextActions,
-        },
-      }),
-          projectionExecution,
-          {
-            requestSnapshot,
-            signal: abortCoordinator.signal,
-            discoveryRecords: merged.records,
+        Object.freeze({
+          ok: true as const,
+          evidence: {
+            schemaVersion: '1.0' as const,
+            status,
+            repositoryRoot,
+            normalizedTerms,
             confirmed,
             candidates,
-            expandedPoolCandidates,
-            limits,
-            abortSource: abortCoordinator.peekSource(),
-            abortCoordinator,
-            rawAnchors: request.anchors ?? [],
-            termCase: mode,
-            discoverySelection,
-            foldedView: expandedFold.foldedView,
-            scopeObservation,
-            ...(request.layers === undefined
-              ? {}
-              : { requestedLayers: request.layers }),
+            coverage: {
+              backends: attempts,
+              fallbackChecked,
+              indexState: indexStateFor(codegraphResult?.health),
+              indexFreshness: indexFreshnessFor(codegraphResult?.health),
+              limitsReached,
+              exclusionSummary: classified.exclusionSummary,
+            },
+            nextActions,
           },
-        );
+        }),
+        projectionExecution,
+        {
+          requestSnapshot,
+          signal: abortCoordinator.signal,
+          discoveryRecords: merged.records,
+          confirmed,
+          candidates,
+          expandedPoolCandidates,
+          limits,
+          abortSource: abortCoordinator.peekSource(),
+          abortCoordinator,
+          rawAnchors: request.anchors ?? [],
+          termCase: mode,
+          discoverySelection,
+          foldedView: expandedFold.foldedView,
+          scopeObservation,
+          backendExecutionContext,
+          fallbackChecked,
+          fallbackRequired: !skipFallback && codegraphResult !== undefined,
+          completeEquivalentFallback: skipFallback,
+          ...(request.layers === undefined
+            ? {}
+            : { requestedLayers: request.layers }),
+        },
+      );
     } catch (error: unknown) {
       if (
         (error instanceof RepositoryAccessError && error.code === 'ABORTED') ||
@@ -1203,11 +1273,11 @@ export class CanonicalRepositoryLocateExecutorV2
       ) {
         return await this.terminalSuccessWithSnapshot(
           this.timeoutResult(
-          repositoryRoot,
-          normalizedTerms,
-          abortCoordinator.peekSource(),
-          limits,
-        ),
+            repositoryRoot,
+            normalizedTerms,
+            abortCoordinator.peekSource(),
+            limits,
+          ),
           projectionExecution,
           {
             requestSnapshot,
@@ -1247,11 +1317,11 @@ export class CanonicalRepositoryLocateExecutorV2
     const confirmed = options.confirmed ?? [];
     const candidates = options.candidates ?? [];
     const limitsReached = options.limitsReached ?? ['TIMEOUT_REACHED'];
-    return redactLocateResult({
-      ok: true,
+    return Object.freeze({
+      ok: true as const,
       evidence: {
-        schemaVersion: '1.0',
-        status: 'timeout',
+        schemaVersion: '1.0' as const,
+        status: 'timeout' as const,
         repositoryRoot,
         normalizedTerms,
         confirmed,

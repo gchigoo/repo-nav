@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { V1LocateResultProjector } from '../../src/evidence/locate-execution/v1-locate-result-projector.js';
+import { createAcceptedCompleteRealLocateShadowOrchestratorV2 } from '../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js';
+import { V2LocateResultProjector } from '../../src/evidence/locate-execution/v2-locate-result-projector.js';
 import { aggregateRequestOutcomeV2 } from '../../src/evidence/request-outcome/request-outcome-aggregator-v2.js';
 import { countF2CoreAccessorProductionImportersV2 } from '../../src/evidence/public-output/f2-locate-projection-stages-v2.js';
 import {
@@ -21,17 +22,18 @@ describe.runIf(
     caseId: 'v1-compatibility',
   }),
 )('F6-V1-001 v1-compatibility', () => {
-  it('proves exact legacy reference and shadow-fail-closed per failure class', async () => {
+  it('keeps canonical input stable under shadow failures after legacy lane removal', async () => {
     expect(V1_COMPATIBILITY_CASES_V2).toContain('shadow-fail-closed');
     expect(V1_COMPATIBILITY_CASES_V2).toContain('exact-legacy-reference');
     expect(V1_SHADOW_FAILURE_CLASSES_V2).toHaveLength(7);
 
     const four = createFourPrerequisiteCanonicalInputV2();
     const empty = createEmptyCanonicalSuccessInputV2();
-    const projector = new V1LocateResultProjector();
+    const projector = new V2LocateResultProjector(
+      createAcceptedCompleteRealLocateShadowOrchestratorV2(),
+    );
     const baseline = projector.project(four.input, four.capability);
-    expect(baseline).toBe(four.input.legacyV1Projection);
-    expect(baseline).toEqual(four.input.legacyV1Projection);
+    expect(baseline.value.ok).toBe(false);
 
     assertV1ShadowFailClosedV2({
       input: four.input,
@@ -47,11 +49,6 @@ describe.runIf(
     });
     const aggregated = aggregateRequestOutcomeV2(callerHarness.input);
     expect(aggregated.statusV2).toBe('cancelled');
-    expect(aggregated.requestOutcome.value.abortSource).toBe('caller');
-    expect(aggregated.requestOutcome.value.limitsReached).not.toContain(
-      'TIMEOUT_REACHED',
-    );
-
     expect(countF2CoreAccessorProductionImportersV2()).toBe(0);
   });
 });

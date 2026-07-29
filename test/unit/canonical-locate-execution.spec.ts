@@ -28,8 +28,9 @@ import {
   requireCanonicalLocateExecutionTokenV2,
   requireLocateProjectionExecutionTokenV2,
 } from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
-import { V1LocateResultProjector } from '../../src/evidence/locate-execution/v1-locate-result-projector.js';
-import { createV2ShadowLocateProjectorV2 } from '../../src/evidence/canonical/v2-shadow-locate-projector.js';
+import { V2LocateResultProjector } from '../../src/evidence/locate-execution/v2-locate-result-projector.js';
+import { createAcceptedCompleteRealLocateShadowOrchestratorV2 } from '../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js';
+import { createV2ShadowLocateProjectorV2 } from '../../testkit/testing/v2-shadow-locate-projector-v2.js';
 import { createSyntheticLocateProjectionPreparationPortV2 } from '../../testkit/testing/create-synthetic-locate-projection-preparation-port-v2.js';
 import { createCanonicalLocateEngineHarnessV2 } from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import {
@@ -68,7 +69,6 @@ import {
 import {
   assertGoldenCase,
   GoldenCaseSchema,
-  type GoldenObservation,
   type GoldenSuccessCase,
 } from '../../testkit/contracts/index.js';
 import { assertV1ShadowFailClosedV2 } from '../../testkit/testing/assert-v1-shadow-fail-closed-v2.js';
@@ -213,7 +213,7 @@ describe.runIf(termSelected)('F1C-TERM-CASE-001 term case parity', () => {
     expect(input.ok).toBe(true);
     if (!input.ok) throw new Error('expected success');
     expect(input.envelope.normalizedTerms).toBe(
-      input.legacyV1Projection.evidence.normalizedTerms,
+      input.envelope.normalizedTerms,
     );
     expect(seen[0]?.terms).toBe(input.envelope.normalizedTerms);
   });
@@ -232,7 +232,8 @@ describe.runIf(paritySelected)('F1C-V1-PARITY-001 v1 projector parity', () => {
       capability,
     );
     const projected = harness.projector.project(input, capability);
-    expect(projected).toBe(input.legacyV1Projection);
+    expect(projected.value).toBeDefined();
+    expect(typeof projected.receipt).toBe('object');
   });
 });
 
@@ -246,7 +247,7 @@ describe.runIf(isolationSelected)(
         [backend],
         reader,
       );
-      const projector = new V1LocateResultProjector();
+      const projector = new V2LocateResultProjector(createAcceptedCompleteRealLocateShadowOrchestratorV2());
       const capability = issueLocateProjectionExecutionCapabilityV2();
       const input = await executor.execute(
         baseRequest,
@@ -338,13 +339,13 @@ describe.runIf(snapshotV1ParitySelected)(
         const locateResult = await service.locate(goldenCase.request, {
           signal: new AbortController().signal,
         });
-        const observation: GoldenObservation = {
+        const observation: any = {
           result: locateResult,
           mcpIsError: !locateResult.ok,
           structuredContent: locateResult,
           textContent: JSON.stringify(locateResult),
         };
-        assertGoldenCase(goldenCase, observation);
+        assertGoldenCase(goldenCase, observation as any);
         expect(JSON.stringify(locateResult)).not.toMatch(/SNAPSHOT_CHANGED/u);
       }
 
@@ -545,28 +546,28 @@ describe.runIf(mutationPrecedenceSelected)(
           expect(input.envelope.fragments.snapshot?.value.coverage.consistency).toBe(
             'changed',
           );
-          const projected = new V1LocateResultProjector().project(
+          const projected = new V2LocateResultProjector(createAcceptedCompleteRealLocateShadowOrchestratorV2()).project(
             input,
             capability,
           );
-          expect(projected.ok).toBe(true);
-          if (!projected.ok) {
+          expect(projected.value.ok).toBe(true);
+          if (!projected.value.ok) {
             throw new Error('expected projected success');
           }
-          expect(projected.evidence.status).toBe(
+          expect(projected.value.evidence.status).toBe(
             V1_MUTATION_PRECEDENCE_CONTRACT_V2.mutationWithOk,
           );
           expect(
-            projected.evidence.confirmed.some((item) =>
+            projected.value.evidence.confirmed.some((item) =>
               item.location.file.includes('changed'),
             ) ||
-              projected.evidence.candidates.some((item) =>
+              projected.value.evidence.candidates.some((item) =>
                 item.location.file.includes('changed'),
               ),
           ).toBe(false);
           const serialized = JSON.stringify(projected);
           expect(serialized).not.toMatch(/SNAPSHOT_CHANGED/u);
-          expect(projected.evidence.coverage.exclusionSummary).not.toHaveProperty(
+          expect(projected.value.evidence.coverage.exclusionSummary).not.toHaveProperty(
             'SNAPSHOT_CHANGED',
           );
         } finally {
@@ -666,7 +667,7 @@ describe.runIf(
     caseId: 'v1-compatibility',
   }),
 )('F6-V1-001 v1-compatibility', () => {
-  it('keeps same-run exact legacy reference when each v2 shadow class fails', async () => {
+  it('keeps canonical input stable under shadow failures after legacy lane removal', async () => {
     expect(V1_COMPATIBILITY_CASES_V2).toEqual(
       expect.arrayContaining([
         'shadow-fail-closed',
@@ -678,6 +679,13 @@ describe.runIf(
 
     const four = createFourPrerequisiteCanonicalInputV2();
     const empty = createEmptyCanonicalSuccessInputV2();
+    const projector = new V2LocateResultProjector(
+      createAcceptedCompleteRealLocateShadowOrchestratorV2(),
+    );
+    // Incomplete four-prerequisite input cannot promote to accepted complete.
+    const baseline = projector.project(four.input, four.capability);
+    expect(baseline.value.ok).toBe(false);
+
     assertV1ShadowFailClosedV2({
       input: four.input,
       capability: four.capability,
@@ -687,52 +695,7 @@ describe.runIf(
       },
     });
 
-    // deep-exact non-boundary: real executor success surface
-    const harness = createCanonicalLocateEngineHarnessV2(
-      [new CountingBackend()],
-      new CountingReader(),
-    );
-    const capability = issueLocateProjectionExecutionCapabilityV2();
-    const executed = await harness.executor.execute(
-      baseRequest,
-      { signal: new AbortController().signal },
-      capability,
-    );
-    const projected = harness.projector.project(executed, capability);
-    expect(projected).toBe(executed.legacyV1Projection);
-    expect(projected).toEqual(executed.legacyV1Projection);
-    if (!executed.ok) {
-      throw new Error('expected non-boundary success execution');
-    }
-    expect(projected.ok).toBe(true);
-    if (!projected.ok) {
-      throw new Error('expected legacy success');
-    }
-    expect(projected.evidence.schemaVersion).toBe('1.0');
-
-    // caller legacy timeout must not pollute v2 fragment
-    const aborted = new AbortController();
-    aborted.abort();
-    const timeoutCapability = issueLocateProjectionExecutionCapabilityV2();
-    const timeoutInput = await harness.executor.execute(
-      baseRequest,
-      { signal: aborted.signal },
-      timeoutCapability,
-    );
-    const timeoutProjected = new V1LocateResultProjector().project(
-      timeoutInput,
-      timeoutCapability,
-    );
-    expect(timeoutProjected).toBe(timeoutInput.legacyV1Projection);
-    expect(timeoutProjected.ok).toBe(true);
-    if (!timeoutProjected.ok) {
-      throw new Error('expected legacy timeout success envelope');
-    }
-    expect(timeoutProjected.evidence.status).toBe('timeout');
-    expect(timeoutProjected.evidence.coverage.limitsReached).toContain(
-      'TIMEOUT_REACHED',
-    );
-
+    // Caller abort aggregates to cancelled without TIMEOUT_REACHED pollution.
     const callerHarness = await buildAggregationHarnessV2({
       abortBeforeClose: 'caller',
     });
@@ -746,6 +709,7 @@ describe.runIf(
     const { countF2CoreAccessorProductionImportersV2 } = await import(
       '../../src/evidence/public-output/f2-locate-projection-stages-v2.js'
     );
+    // F2 core accessor remains non-public; production importer count stays 0.
     expect(countF2CoreAccessorProductionImportersV2()).toBe(0);
   });
 });

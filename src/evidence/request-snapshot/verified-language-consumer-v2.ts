@@ -9,8 +9,7 @@ declare const VERIFIED_LANGUAGE_CONTEXT_REF_V2: unique symbol;
 declare const VERIFIED_LANGUAGE_CONTEXT_CONSUMPTION_PROOF_V2: unique symbol;
 
 export type VerifiedLanguageConsumerOwnerV2 =
-  | 'request-snapshot-baseline'
-  | 'language-capability';
+  'request-snapshot-baseline' | 'language-capability';
 
 export type VerifiedLanguageConsumerAdmissionV2 = Readonly<object> & {
   readonly [VERIFIED_LANGUAGE_CONSUMER_ADMISSION_V2]: never;
@@ -86,7 +85,10 @@ export function createVerifiedLanguageConsumerAdmissionV2(
   owner: VerifiedLanguageConsumerOwnerV2,
   execution: LocateExecutionTokenV2,
 ): VerifiedLanguageConsumerAdmissionV2 {
-  if (owner !== 'request-snapshot-baseline' && owner !== 'language-capability') {
+  if (
+    owner !== 'request-snapshot-baseline' &&
+    owner !== 'language-capability'
+  ) {
     throw new TypeError('unsupported language consumer owner');
   }
   const admission = createOpaqueTokenV2<VerifiedLanguageConsumerAdmissionV2>();
@@ -103,7 +105,8 @@ export function registerVerifiedLanguageConsumerV2(
   if (record === undefined || record.execution !== execution) {
     throw new TypeError('language consumer admission mismatch');
   }
-  const registered = createOpaqueTokenV2<RegisteredVerifiedLanguageConsumerV2>();
+  const registered =
+    createOpaqueTokenV2<RegisteredVerifiedLanguageConsumerV2>();
   registeredPrivate.set(
     registered,
     Object.freeze({ admission, consumer, execution }),

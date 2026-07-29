@@ -16,9 +16,7 @@ import type {
 import { createProcessOpaqueTokenV2 } from './opaque-token-v2.js';
 
 export type BackendPhysicalAttemptLaneMaskV2 =
-  | 'expanded-only'
-  | 'expanded-and-legacy'
-  | 'legacy-only';
+  'expanded-only' | 'expanded-and-legacy' | 'legacy-only';
 
 export type BackendPhysicalAttemptKindV2 =
   | 'codegraph-status'
@@ -28,8 +26,7 @@ export type BackendPhysicalAttemptKindV2 =
   | 'ripgrep-group';
 
 export type ExecutableAvailabilityProbeArgvClassV2 =
-  | 'codegraph-status'
-  | 'ripgrep-version';
+  'codegraph-status' | 'ripgrep-version';
 
 declare const PREPARED_EXECUTABLE_AVAILABILITY_PROBE_V2: unique symbol;
 declare const AVAILABILITY_PROBE_PREPARATION_FAILURE_V2: unique symbol;
@@ -116,8 +113,9 @@ export interface BackendPhysicalAttemptStartViewV2 {
   readonly binding: BackendPhysicalAttemptBindingV2;
 }
 
-export interface BackendPhysicalAttemptResultViewV2<TResult>
-  extends BackendPhysicalAttemptStartViewV2 {
+export interface BackendPhysicalAttemptResultViewV2<
+  TResult,
+> extends BackendPhysicalAttemptStartViewV2 {
   readonly result: TResult;
 }
 
@@ -362,7 +360,9 @@ export function createBackendPhysicalAttemptExecutorV2(input: {
       ) {
         throw new TypeError('invalid-preparation-failure');
       }
-      if (input.starts.some((start) => start.binding.backend === input.backend)) {
+      if (
+        input.starts.some((start) => start.binding.backend === input.backend)
+      ) {
         throw new TypeError('no-start-after-start');
       }
       record.consumed = true;
@@ -386,7 +386,9 @@ export function createBackendPhysicalAttemptExecutorV2(input: {
       if (signal !== input.requestSignal || !signal.aborted) {
         throw new TypeError('invalid-pre-aborted-signal');
       }
-      if (input.starts.some((start) => start.binding.backend === input.backend)) {
+      if (
+        input.starts.some((start) => start.binding.backend === input.backend)
+      ) {
         throw new TypeError('no-start-after-start');
       }
       const observation =
@@ -420,97 +422,96 @@ export function createBackendPhysicalAttemptExecutorV2(input: {
         throw new TypeError('invalid-prepared-probe');
       }
       preparedRecord.consumed = true;
-      const promise = (async (): Promise<AvailabilityProbeExecutionResultV2> => {
-        let postCwd: CwdIdentityV2;
-        try {
-          postCwd = await readCwdIdentity(preparedRecord.request.cwd);
-        } catch {
-          return {
-            ok: false,
-            kind: 'other-spawn-error',
-            exitCode: null,
-            terminationSignal: null,
-            stdout: { kind: 'unavailable' },
-            stderr: new Uint8Array(),
-          };
-        }
-        if (
-          postCwd.realpath !== preparedRecord.cwd.realpath ||
-          postCwd.dev !== preparedRecord.cwd.dev ||
-          postCwd.ino !== preparedRecord.cwd.ino
-        ) {
-          return {
-            ok: false,
-            kind: 'other-spawn-error',
-            exitCode: null,
-            terminationSignal: null,
-            stdout: { kind: 'unavailable' },
-            stderr: new Uint8Array(),
-          };
-        }
-        const result = await input.runner.run(preparedRecord.request, signal);
-        if (!result.ok && result.kind === 'spawn-error') {
-          // ENOENT 稳定 not-found；其余 other-spawn
-          const kind = isNotFoundCode(
-            (result as { code?: unknown }).code,
-          )
-            ? 'executable-not-found'
-            : 'executable-not-found';
-          // generic runner 不暴露 code；availability 路径：spawn-error → not-found 当 executable 缺失
-          void kind;
-          return {
-            ok: false,
-            kind: 'executable-not-found',
-            exitCode: null,
-            terminationSignal: null,
-            stdout: { kind: 'unavailable' },
-            stderr: new Uint8Array(),
-          };
-        }
-        if (!result.ok) {
+      const promise =
+        (async (): Promise<AvailabilityProbeExecutionResultV2> => {
+          let postCwd: CwdIdentityV2;
+          try {
+            postCwd = await readCwdIdentity(preparedRecord.request.cwd);
+          } catch {
+            return {
+              ok: false,
+              kind: 'other-spawn-error',
+              exitCode: null,
+              terminationSignal: null,
+              stdout: { kind: 'unavailable' },
+              stderr: new Uint8Array(),
+            };
+          }
           if (
-            result.kind === 'aborted' ||
-            result.kind === 'timeout' ||
-            result.kind === 'stdout-limit' ||
-            result.kind === 'stderr-limit'
+            postCwd.realpath !== preparedRecord.cwd.realpath ||
+            postCwd.dev !== preparedRecord.cwd.dev ||
+            postCwd.ino !== preparedRecord.cwd.ino
           ) {
             return {
               ok: false,
-              kind: result.kind,
-              exitCode: result.exitCode,
-              terminationSignal: result.terminationSignal,
+              kind: 'other-spawn-error',
+              exitCode: null,
+              terminationSignal: null,
               stdout: { kind: 'unavailable' },
-              stderr: result.stderr,
+              stderr: new Uint8Array(),
             };
           }
-          if (result.kind === 'non-zero-exit') {
+          const result = await input.runner.run(preparedRecord.request, signal);
+          if (!result.ok && result.kind === 'spawn-error') {
+            // ENOENT 稳定 not-found；其余 other-spawn
+            const kind = isNotFoundCode((result as { code?: unknown }).code)
+              ? 'executable-not-found'
+              : 'executable-not-found';
+            // generic runner 不暴露 code；availability 路径：spawn-error → not-found 当 executable 缺失
+            void kind;
             return {
               ok: false,
-              kind: 'process-exit',
-              exitCode: result.exitCode,
-              terminationSignal: result.terminationSignal,
+              kind: 'executable-not-found',
+              exitCode: null,
+              terminationSignal: null,
               stdout: { kind: 'unavailable' },
-              stderr: result.stderr,
+              stderr: new Uint8Array(),
+            };
+          }
+          if (!result.ok) {
+            if (
+              result.kind === 'aborted' ||
+              result.kind === 'timeout' ||
+              result.kind === 'stdout-limit' ||
+              result.kind === 'stderr-limit'
+            ) {
+              return {
+                ok: false,
+                kind: result.kind,
+                exitCode: result.exitCode,
+                terminationSignal: result.terminationSignal,
+                stdout: { kind: 'unavailable' },
+                stderr: result.stderr,
+              };
+            }
+            if (result.kind === 'non-zero-exit') {
+              return {
+                ok: false,
+                kind: 'process-exit',
+                exitCode: result.exitCode,
+                terminationSignal: result.terminationSignal,
+                stdout: { kind: 'unavailable' },
+                stderr: result.stderr,
+              };
+            }
+            return {
+              ok: false,
+              kind: 'other-spawn-error',
+              exitCode: null,
+              terminationSignal: null,
+              stdout: { kind: 'unavailable' },
+              stderr: new Uint8Array(),
             };
           }
           return {
-            ok: false,
-            kind: 'other-spawn-error',
-            exitCode: null,
+            ok: true,
+            kind: 'completed',
+            exitCode: 0,
             terminationSignal: null,
-            stdout: { kind: 'unavailable' },
-            stderr: new Uint8Array(),
+            stdout: result.stdout,
+            stderr: result.stderr,
           };
-        }
-        return {
-          ok: true,
-          kind: 'completed',
-          exitCode: 0,
-          terminationSignal: null,
-          stdout: result.stdout,
-          stderr: result.stderr,
-        };
-      })();
+        })();
       return allocateStart(binding, promise, execution);
     },
 

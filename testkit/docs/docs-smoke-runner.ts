@@ -7,13 +7,13 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { z } from 'zod';
 
-import { LocateToolOutputSchema } from '../../src/contracts/index.js';
+import { LocateResultV2Schema } from '../../src/contracts/v2/locate-result-v2.js';
 import {
   REPO_NAV_LOCATE_INPUT_SCHEMA,
   REPO_NAV_LOCATE_OUTPUT_SCHEMA,
   REPO_NAV_LOCATE_TOOL_NAME,
 } from '../../src/mcp/locate-tool-schema.js';
-import { GoldenOutputSchema, ProbeOutputSchema } from '../../tools/cli/contracts.js';
+import { ProbeOutputSchema } from '../../src/cli/contracts.js';
 import { NodeSafeProcessRunner } from '../../src/repository/node-safe-process-runner.js';
 import { parseLocateToolResultParity } from '../contracts/mcp-tool-result.js';
 import { buildSchemaReferenceProjection } from './schema-reference.js';
@@ -27,14 +27,14 @@ const docPaths = [
 ] as const;
 const requiredBlocks = new Set([
   'mcp-config', 'mcp-success-request', 'mcp-recoverable-request', 'mcp-error-request',
-  'cli-help', 'cli-locate', 'cli-probe', 'cli-golden', 'schema-reference',
+  'cli-help', 'cli-locate', 'cli-probe', 'schema-reference',
   'acceptance-contract',
 ]);
 
 const CliSnippetSchema = z.strictObject({
   args: z.array(z.string()),
   expectedExit: z.int().min(0).max(3),
-  schema: z.enum(['help', 'locate', 'probe', 'golden']),
+  schema: z.enum(['help', 'locate', 'probe']),
 });
 const McpConfigSchema = z.strictObject({
   command: z.literal('node'),
@@ -104,7 +104,7 @@ async function verifyMcp(blocks: ReadonlyMap<string, string>): Promise<Readonly<
   });
   let stderr = '';
   transport.stderr?.on('data', (chunk: Buffer | string) => { stderr += chunk.toString(); });
-  const client = new Client({ name: 'repo-nav-docs-smoke', version: '0.1.0' });
+  const client = new Client({ name: 'repo-nav-docs-smoke', version: '0.2.0-beta.1' });
   let observation: Readonly<Record<string, unknown>> | undefined;
   try {
     await withTimeout(client.connect(transport), 'MCP connect');
@@ -129,9 +129,15 @@ async function verifyMcp(blocks: ReadonlyMap<string, string>): Promise<Readonly<
     if (success === undefined || !success.output.ok || success.isError) {
       throw new Error('MCP success snippet did not return ok=true parity output.');
     }
-    if (recoverable === undefined || !recoverable.output.ok || recoverable.isError ||
-        recoverable.output.evidence.status !== 'no_result') {
-      throw new Error('MCP recoverable snippet did not return no_result with isError=false.');
+    if (
+      recoverable === undefined ||
+      !recoverable.output.ok ||
+      recoverable.isError ||
+      recoverable.output.evidence.confirmed.length !== 0
+    ) {
+      throw new Error(
+        'MCP recoverable snippet did not return ok=true empty-confirmed with isError=false.',
+      );
     }
     if (error === undefined || error.output.ok || !error.isError || error.output.error.code !== 'INVALID_INPUT') {
       throw new Error('MCP error snippet did not return INVALID_INPUT parity output.');
@@ -140,6 +146,7 @@ async function verifyMcp(blocks: ReadonlyMap<string, string>): Promise<Readonly<
       toolCount: listed.tools.length,
       statuses: [success.output.evidence.status, recoverable.output.evidence.status],
       errorCode: error.output.error.code,
+      schemaVersion: success.output.evidence.schemaVersion,
     };
   } finally {
     await withTimeout(client.close(), 'MCP close');
@@ -153,7 +160,7 @@ interface SpawnResult { readonly exitCode: number; readonly stdout: string; read
 
 async function runCli(args: readonly string[]): Promise<SpawnResult> {
   const wrapperPath = resolve(repositoryRoot, 'testkit', 'docs', 'cli-open-stdin-child.ts');
-  const cliPath = resolve(repositoryRoot, 'dist', 'tools', 'cli', 'main.js');
+  const cliPath = resolve(repositoryRoot, 'dist', 'cli', 'main.js');
   const result = await new NodeSafeProcessRunner().run(
     {
       executable: process.execPath,
@@ -178,7 +185,7 @@ async function runCli(args: readonly string[]): Promise<SpawnResult> {
 
 async function verifyCli(blocks: ReadonlyMap<string, string>): Promise<Readonly<Record<string, unknown>>> {
   const transcripts: Readonly<Record<string, unknown>>[] = [];
-  for (const id of ['cli-help', 'cli-locate', 'cli-probe', 'cli-golden'] as const) {
+  for (const id of ['cli-help', 'cli-locate', 'cli-probe'] as const) {
     const snippet = parseJsonBlock(requiredBlock(blocks, id), CliSnippetSchema);
     const result = await runCli(snippet.args);
     if (result.exitCode !== snippet.expectedExit) {
@@ -189,9 +196,8 @@ async function verifyCli(blocks: ReadonlyMap<string, string>): Promise<Readonly<
       if (!result.stdout.startsWith('repo-nav debug')) throw new Error('CLI help snippet returned unexpected text.');
     } else {
       const parsed: unknown = JSON.parse(result.stdout);
-      if (snippet.schema === 'locate') LocateToolOutputSchema.parse(parsed);
+      if (snippet.schema === 'locate') LocateResultV2Schema.parse(parsed);
       if (snippet.schema === 'probe') ProbeOutputSchema.parse(parsed);
-      if (snippet.schema === 'golden') GoldenOutputSchema.parse(parsed);
     }
     transcripts.push({ id, exitCode: result.exitCode, schema: snippet.schema });
   }
@@ -244,6 +250,7 @@ function verifySchemaAndAcceptance(blocks: ReadonlyMap<string, string>): Readonl
 }
 
 function walkTypeScriptFiles(directory: string): readonly string[] {
+  if (!existsSync(directory)) return [];
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const path = resolve(directory, entry.name);
     return entry.isDirectory() ? walkTypeScriptFiles(path) : entry.name.endsWith('.ts') ? [path] : [];
@@ -252,10 +259,10 @@ function walkTypeScriptFiles(directory: string): readonly string[] {
 
 function verifyImportGraph(): Readonly<Record<string, unknown>> {
   const productionViolations = walkTypeScriptFiles(resolve(repositoryRoot, 'src')).filter((path) =>
-    /from\s+['"][^'"]*(?:tools\/cli|testkit)/u.test(readFileSync(path, 'utf8')),
+    /from\s+['"][^'"]*(?:testkit)/u.test(readFileSync(path, 'utf8')),
   );
   const cliForbidden = /from\s+['"][^'"]*(?:classifier|fallback|redactor)/u;
-  const cliViolations = walkTypeScriptFiles(resolve(repositoryRoot, 'tools', 'cli')).filter((path) =>
+  const cliViolations = walkTypeScriptFiles(resolve(repositoryRoot, 'src', 'cli')).filter((path) =>
     cliForbidden.test(readFileSync(path, 'utf8')),
   );
   if (productionViolations.length > 0 || cliViolations.length > 0) {
@@ -263,7 +270,7 @@ function verifyImportGraph(): Readonly<Record<string, unknown>> {
   }
   return {
     productionFilesChecked: walkTypeScriptFiles(resolve(repositoryRoot, 'src')).length,
-    cliFilesChecked: walkTypeScriptFiles(resolve(repositoryRoot, 'tools', 'cli')).length,
+    cliFilesChecked: walkTypeScriptFiles(resolve(repositoryRoot, 'src', 'cli')).length,
     violations: [],
   };
 }
@@ -271,7 +278,7 @@ function verifyImportGraph(): Readonly<Record<string, unknown>> {
 async function main(): Promise<void> {
   const blocks = readBlocks();
   const report = {
-    schemaVersion: '1.0',
+    schemaVersion: '2.0',
     generatedAt: new Date().toISOString(),
     docs: docPaths,
     blocks: [...blocks.keys()].sort(),

@@ -8,18 +8,18 @@ import {
   type BackendSearchResult,
   type LocateExecutionContext,
   type LocateRequest,
-  type LocateResult,
   type RepositoryEvidenceService,
   type RepositoryReader,
   type RepositoryReadLimits,
   type RepositorySearchBackend,
 } from '../../src/contracts/index.js';
+import type { LocateResultV2 } from '../../src/contracts/v2/locate-result-v2.js';
 import { CanonicalRepositoryLocateExecutorV2 } from '../../src/evidence/locate-execution/canonical-locate-executor-v2.js';
 import {
   CANONICAL_LOCATE_EXECUTOR_V2,
   LOCATE_RESULT_PROJECTOR,
 } from '../../src/evidence/locate-execution/locate-execution.tokens.js';
-import { V1LocateResultProjector } from '../../src/evidence/locate-execution/v1-locate-result-projector.js';
+import { V2LocateResultProjector } from '../../src/evidence/locate-execution/v2-locate-result-projector.js';
 import { RepositoryEvidenceEngine } from '../../src/evidence/repository-evidence-engine.js';
 import { NodeMcpStdioHost } from '../../src/mcp/mcp-stdio-host.js';
 import { CodeGraphBackend } from '../../src/repository/codegraph-backend.js';
@@ -99,15 +99,16 @@ class FakeService implements RepositoryEvidenceService {
   public async locate(
     _request: LocateRequest,
     _context: LocateExecutionContext,
-  ): Promise<LocateResult> {
+  ): Promise<LocateResultV2> {
     return {
       ok: false,
       error: {
+        schemaVersion: '2.0',
         code: 'INVALID_REPOSITORY',
-        message: 'Synthetic fixture repository.',
+        message: 'The repository path could not be opened.',
         recoverable: false,
       },
-    };
+    } as unknown as LocateResultV2;
   }
 }
 
@@ -182,7 +183,7 @@ describe.runIf(isSelected(diWiringIdentity))(
         const projector = application.get(LOCATE_RESULT_PROJECTOR);
         expect(service).toBeInstanceOf(RepositoryEvidenceEngine);
         expect(executor).toBeInstanceOf(CanonicalRepositoryLocateExecutorV2);
-        expect(projector).toBeInstanceOf(V1LocateResultProjector);
+        expect(projector).toBeInstanceOf(V2LocateResultProjector);
         const providerNames = Object.getOwnPropertyNames(
           Object.getPrototypeOf(application),
         ).join(',');
@@ -226,7 +227,7 @@ describe.runIf(
     const application = await createRepoNavApplicationContext();
     try {
       const projector = application.get(LOCATE_RESULT_PROJECTOR);
-      expect(projector).toBeInstanceOf(V1LocateResultProjector);
+      expect(projector).toBeInstanceOf(V2LocateResultProjector);
       const orchestrator = application.get(
         ACCEPTED_COMPLETE_REAL_LOCATE_SHADOW_ORCHESTRATOR_V2,
       );

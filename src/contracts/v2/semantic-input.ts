@@ -2,11 +2,7 @@ import { Buffer } from 'node:buffer';
 
 import { z } from 'zod';
 
-import {
-  ANCHOR_KINDS,
-  REPO_LAYERS,
-  TERM_CASE_MODES,
-} from '../constants.js';
+import { ANCHOR_KINDS, REPO_LAYERS, TERM_CASE_MODES } from '../constants.js';
 
 /**
  * F6 semantic input：question / terms / non-file anchors 走 NFKC+trim。

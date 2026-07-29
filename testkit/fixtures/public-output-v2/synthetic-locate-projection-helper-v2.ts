@@ -1,7 +1,7 @@
 import {
   LocateResultV2Schema,
   type LocateResultV2,
-} from '../../contracts/v2/locate-result-v2.js';
+} from '../../../src/contracts/v2/locate-result-v2.js';
 
 export interface SyntheticLocateProjectionV2 {
   readonly service: LocateResultV2;

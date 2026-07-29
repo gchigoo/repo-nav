@@ -12,8 +12,7 @@ export const OVERSIZED_CONTENT_PLACEHOLDER =
   '[REDACTED:BINARY_OR_OVERSIZED_CONTENT]';
 const TOKEN_PLACEHOLDER = '[REDACTED]';
 
-const SECRET_KEY =
-  String.raw`\b(?:password|passwd|secret|token|api[_-]?key|client[_-]?secret)\b`;
+const SECRET_KEY = String.raw`\b(?:password|passwd|secret|token|api[_-]?key|client[_-]?secret)\b`;
 const TEMPLATE_QUOTE = '`';
 const SECRET_ASSIGNMENT = new RegExp(
   String.raw`(${SECRET_KEY}\s*[:=]\s*)(?:"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)'|${TEMPLATE_QUOTE}((?:\\.|[^${TEMPLATE_QUOTE}\\])*)${TEMPLATE_QUOTE}|([^\s,"'${TEMPLATE_QUOTE};}\]]+))`,
@@ -39,8 +38,7 @@ const CONNECTION_SECRET_QUERY =
   /([?&](?:password|passwd|secret|token|api[_-]?key)=)([^&#\s]+)/giu;
 const CONNECTION_DETECTOR =
   /\b[a-z][a-z0-9+.-]*:\/\/[^\s/@:]+:[^\s/@]+@|[?&](?:password|passwd|secret|token|api[_-]?key)=/iu;
-const EMAIL_ADDRESS =
-  /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/giu;
+const EMAIL_ADDRESS = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/giu;
 const PHONE_LIKE_TOKEN = /(?:\+?\d[\d ()-]{7,}\d)/gu;
 const NON_WHITESPACE_TOKEN = /\S+/gu;
 
@@ -105,10 +103,19 @@ function hasUnsafeTemplateSecret(value: string): boolean {
   );
 }
 
-function collectSensitiveTokens(values: readonly string[]): readonly SensitiveToken[] {
+function collectSensitiveTokens(
+  values: readonly string[],
+): readonly SensitiveToken[] {
   const tokens = new Map<string, RedactionReasonCode>();
-  const add = (value: string | undefined, reasonCode: RedactionReasonCode): void => {
-    if (value !== undefined && value.length > 0 && value !== TOKEN_PLACEHOLDER) {
+  const add = (
+    value: string | undefined,
+    reasonCode: RedactionReasonCode,
+  ): void => {
+    if (
+      value !== undefined &&
+      value.length > 0 &&
+      value !== TOKEN_PLACEHOLDER
+    ) {
       tokens.set(value, reasonCode);
     }
   };
@@ -180,7 +187,7 @@ export function redactPublicText(value: string): PublicTextRedaction {
               ? `${prefix}'${TOKEN_PLACEHOLDER}'`
               : templateQuoted !== undefined
                 ? `${prefix}\`${TOKEN_PLACEHOLDER}\``
-              : `${prefix}${TOKEN_PLACEHOLDER}`,
+                : `${prefix}${TOKEN_PLACEHOLDER}`,
       )
       .replace(FIXED_CREDENTIAL, TOKEN_PLACEHOLDER);
   }

@@ -36,32 +36,28 @@ export type AnchorKind = z.infer<typeof AnchorKindSchema>;
 export const TermCaseModeSchema = z.enum(TERM_CASE_MODES);
 export type TermCaseMode = z.infer<typeof TermCaseModeSchema>;
 
-const rawRepoPathSchema = z
-  .string()
-  .superRefine((value, context) => {
-    try {
-      assertRawRepoPathV2(value);
-    } catch (error: unknown) {
-      context.addIssue({
-        code: 'custom',
-        message: error instanceof Error ? error.message : String(error),
-      });
-    }
-  });
+const rawRepoPathSchema = z.string().superRefine((value, context) => {
+  try {
+    assertRawRepoPathV2(value);
+  } catch (error: unknown) {
+    context.addIssue({
+      code: 'custom',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
 
-const rawFileAnchorValueSchema = z
-  .string()
-  .superRefine((value, context) => {
-    try {
-      assertRawFileAnchorValueV2(value);
-    } catch (error: unknown) {
-      context.addIssue({
-        code: 'custom',
-        message: error instanceof Error ? error.message : String(error),
-        path: [],
-      });
-    }
-  });
+const rawFileAnchorValueSchema = z.string().superRefine((value, context) => {
+  try {
+    assertRawFileAnchorValueV2(value);
+  } catch (error: unknown) {
+    context.addIssue({
+      code: 'custom',
+      message: error instanceof Error ? error.message : String(error),
+      path: [],
+    });
+  }
+});
 
 export const LocateAnchorSchema = z
   .strictObject({
@@ -140,9 +136,7 @@ export const NormalizedSearchTermSchema = z
     caseSensitive: z.boolean(),
   })
   .readonly();
-export type NormalizedSearchTerm = z.infer<
-  typeof NormalizedSearchTermSchema
->;
+export type NormalizedSearchTerm = z.infer<typeof NormalizedSearchTermSchema>;
 
 export const NormalizedLocateAnchorSchema = z
   .strictObject({
@@ -166,7 +160,11 @@ export const LocateRequestSchema = z
     terms: termArray(1).readonly(),
     termCase: TermCaseModeSchema.optional(),
     anchors: z.array(LocateAnchorSchema).max(16).readonly().optional(),
-    layers: z.array(RepoLayerSchema).max(REPO_LAYERS.length).readonly().optional(),
+    layers: z
+      .array(RepoLayerSchema)
+      .max(REPO_LAYERS.length)
+      .readonly()
+      .optional(),
     negativeTerms: termArray(0).readonly().optional(),
     limits: LocateLimitsSchema.optional(),
   })
@@ -242,9 +240,7 @@ export function normalizeLocateAnchors(
     }
     const value = anchor.value.normalize('NFKC').trim();
     const caseSensitive = isCaseSensitive(value, mode);
-    const comparison = caseSensitive
-      ? value
-      : value.toLocaleLowerCase('und');
+    const comparison = caseSensitive ? value : value.toLocaleLowerCase('und');
     const key = `${anchor.kind}\u0000${comparison}`;
     if (!seen.has(key)) {
       seen.add(key);
@@ -257,7 +253,9 @@ export function normalizeLocateAnchors(
   return Object.freeze(normalized);
 }
 
-export function resolveLocateLimits(limits?: LocateLimits): ResolvedLocateLimits {
+export function resolveLocateLimits(
+  limits?: LocateLimits,
+): ResolvedLocateLimits {
   return Object.freeze({
     maxFiles: limits?.maxFiles ?? DEFAULT_LOCATE_LIMITS.maxFiles,
     maxConfirmed: limits?.maxConfirmed ?? DEFAULT_LOCATE_LIMITS.maxConfirmed,

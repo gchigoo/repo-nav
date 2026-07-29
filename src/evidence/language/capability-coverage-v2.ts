@@ -95,11 +95,7 @@ export interface CapabilityPreBudgetCountViewV2 {
 }
 
 export interface CapabilityCoverageFactsViewV2 {
-  readonly semanticClassification: readonly [
-    'typescript',
-    'javascript',
-    'sql',
-  ];
+  readonly semanticClassification: readonly ['typescript', 'javascript', 'sql'];
   readonly unsupportedLanguageHits: number;
   readonly fragment: Readonly<{
     owner: 'capability';
@@ -180,7 +176,9 @@ function assertRetainedLedgerMappingV2(
     entry.reasonCodes.includes(UNSUPPORTED_LANGUAGE_LITERAL_REASON) ||
     entry.promotionRequirements.includes(SUPPORTED_LANGUAGE_ADAPTER_REQUIRED)
   ) {
-    throw new TypeError('supported retained evidence must not carry fallback reason');
+    throw new TypeError(
+      'supported retained evidence must not carry fallback reason',
+    );
   }
 }
 
@@ -194,7 +192,9 @@ function resolveRetainedLedgerEntriesV2(
   for (const ref of confirmedRefs) {
     const entry = ledger?.get(ref);
     if (entry === undefined) {
-      throw new TypeError('retained confirmed ref missing from decision ledger');
+      throw new TypeError(
+        'retained confirmed ref missing from decision ledger',
+      );
     }
     assertRetainedLedgerMappingV2(entry, 'confirmed');
     resolved.push(entry);
@@ -202,7 +202,9 @@ function resolveRetainedLedgerEntriesV2(
   for (const ref of candidateRefs) {
     const entry = ledger?.get(ref);
     if (entry === undefined) {
-      throw new TypeError('retained candidate ref missing from decision ledger');
+      throw new TypeError(
+        'retained candidate ref missing from decision ledger',
+      );
     }
     assertRetainedLedgerMappingV2(entry, 'candidate');
     resolved.push(entry);
@@ -428,10 +430,7 @@ export function buildCapabilityCoverageV2(
       proof,
     }),
   );
-  contributionPrivate.set(
-    contribution,
-    Object.freeze({ facts, execution }),
-  );
+  contributionPrivate.set(contribution, Object.freeze({ facts, execution }));
   return facts;
 }
 
@@ -536,8 +535,7 @@ export function createZeroCapabilityContributionForHarnessV2(
         createOpaqueTokenV2<CapabilityRetainedDecisionSealV2>(),
       observation:
         createOpaqueTokenV2<TrustedLanguageCapabilityObservationV2>(),
-      eligiblePool:
-        createOpaqueTokenV2<TrustedStableEligibleDiscoveryPoolV2>(),
+      eligiblePool: createOpaqueTokenV2<TrustedStableEligibleDiscoveryPoolV2>(),
       snapshotProof: createOpaqueTokenV2<SnapshotTrustProofV2>(),
       foldProof: createOpaqueTokenV2<ScopeFoldedSafePoolProofV2>(),
       scopeProof: createOpaqueTokenV2<ScopeCoverageProofV1>(),

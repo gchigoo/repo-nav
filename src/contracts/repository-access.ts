@@ -30,7 +30,8 @@ const ERROR_MESSAGES: Readonly<Record<RepositoryAccessErrorCode, string>> =
     BINARY_FILE: 'Repository file is not supported text content.',
     INVALID_LINE_RANGE: 'Requested line range is invalid.',
     MAX_FILE_BYTES_REACHED: 'Repository file exceeds the configured limit.',
-    MAX_EXCERPT_BYTES_REACHED: 'Repository excerpt exceeds the configured limit.',
+    MAX_EXCERPT_BYTES_REACHED:
+      'Repository excerpt exceeds the configured limit.',
     ABORTED: 'Repository access was aborted.',
   });
 

@@ -45,8 +45,7 @@ type UnsatisfiedAnchor = CoverageReportV2['unsatisfiedAnchors'][number];
 type IndexState = CoverageReportV2['indexState'];
 type IndexFreshness = CoverageReportV2['indexFreshness'];
 type UnsafeEvidenceDraftV2 =
-  | Omit<ConfirmedEvidenceV2, 'id'>
-  | Omit<CandidateEvidenceV2, 'id'>;
+  Omit<ConfirmedEvidenceV2, 'id'> | Omit<CandidateEvidenceV2, 'id'>;
 
 export interface RankedEvidenceFactsV2 {
   readonly confirmed: readonly UnsafeEvidenceDraftV2[];
@@ -120,8 +119,14 @@ export type UnsafeToolErrorFactsV2 = Extract<
   Readonly<{ ok: false }>
 >['error'];
 
-export type LegacyV1LocateSuccess = Extract<LocateResult, Readonly<{ ok: true }>>;
-export type LegacyV1LocateFailure = Extract<LocateResult, Readonly<{ ok: false }>>;
+export type LegacyV1LocateSuccess = Extract<
+  LocateResult,
+  Readonly<{ ok: true }>
+>;
+export type LegacyV1LocateFailure = Extract<
+  LocateResult,
+  Readonly<{ ok: false }>
+>;
 
 declare const LOCATE_PROJECTION_EXECUTION_CAPABILITY_V2: unique symbol;
 export type LocateProjectionExecutionCapabilityV2 = Readonly<{
@@ -137,12 +142,10 @@ export type CanonicalLocateExecutionV2 =
   | Readonly<{
       ok: true;
       envelope: LocateFactEnvelopeV2;
-      legacyV1Projection: LegacyV1LocateSuccess;
     }>
   | Readonly<{
       ok: false;
       error: UnsafeToolErrorFactsV2;
-      legacyV1Projection: LegacyV1LocateFailure;
     }>;
 
 export interface CanonicalLocateExecutorV2 {
@@ -257,9 +260,9 @@ export function inspectLocateProjectionPrerequisiteOwnersV2(
       });
     }
     if (
-      !(LOCATE_PROJECTION_PREREQUISITE_OWNER_ORDER_V2 as readonly string[]).includes(
-        key,
-      )
+      !(
+        LOCATE_PROJECTION_PREREQUISITE_OWNER_ORDER_V2 as readonly string[]
+      ).includes(key)
     ) {
       return Object.freeze({
         ok: false,
@@ -373,4 +376,9 @@ export function createLocateFactEnvelopeBuilderV2(
   };
 }
 
-export type { PublicSearchTermV2, ConfirmedEvidenceV2, CandidateEvidenceV2, LocateStatus };
+export type {
+  PublicSearchTermV2,
+  ConfirmedEvidenceV2,
+  CandidateEvidenceV2,
+  LocateStatus,
+};

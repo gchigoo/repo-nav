@@ -28,7 +28,9 @@ export function assertRawFileAnchorValueV2(
   value: unknown,
 ): asserts value is string {
   if (typeof value !== 'string' || value.length === 0) {
-    throw new Error('File anchor must be a non-empty repository-relative path.');
+    throw new Error(
+      'File anchor must be a non-empty repository-relative path.',
+    );
   }
   if (value.includes('\0')) {
     throw new Error('File anchor must not contain NUL.');

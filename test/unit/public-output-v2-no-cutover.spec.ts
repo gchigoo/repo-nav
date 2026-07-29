@@ -51,17 +51,21 @@ describe.runIf(selected)('public output v2 no-cutover import inventory', () => {
     ]);
   });
 
-  it('proves package barrels, engine, MCP and CLI cannot reach dormant v2 modules', () => {
-    const repositoryRoot = resolve(import.meta.dirname, '..', '..');
-    const graph = buildTypeScriptImportGraph(repositoryRoot);
-    expect(
-      findForbiddenReachability(
+  it(
+    'after F9 cutover, production roots intentionally reach schema v2 modules',
+    { timeout: 30_000 },
+    () => {
+      const repositoryRoot = resolve(import.meta.dirname, '..', '..');
+      const graph = buildTypeScriptImportGraph(repositoryRoot);
+      const paths = findForbiddenReachability(
         graph,
         NO_CUTOVER_PRODUCTION_ROOTS_V2,
         isForbiddenPublicOutputV2RuntimeEdge,
-      ),
-    ).toEqual([]);
-  });
+      );
+      // Pre-F9 this set was empty; post-cutover v2 is the production surface.
+      expect(paths.length).toBeGreaterThan(0);
+    },
+  );
 
   it('F1B-NOCUTOVER-001 keeps public-output free of F1C/F2/F6 markers', () => {
     const repositoryRoot = resolve(import.meta.dirname, '..', '..');

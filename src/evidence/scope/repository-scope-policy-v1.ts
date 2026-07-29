@@ -2,10 +2,7 @@ import type { RepoLayer } from '../../contracts/index.js';
 import { asciiLowercaseCodeUnitsV1 } from './ascii-lowercase-v1.js';
 import type { ResolvedRepositoryScopeV1 } from './resolve-repository-scope-v1.js';
 
-export type ScopeConfirmationModeV1 =
-  | 'allowed'
-  | 'candidate-only'
-  | 'excluded';
+export type ScopeConfirmationModeV1 = 'allowed' | 'candidate-only' | 'excluded';
 
 export type RepositoryScopeRuleV1 =
   | 'test-segment'
@@ -77,32 +74,40 @@ interface ExplicitPrefixMappingV1 {
   readonly layer: RepoLayer;
 }
 
-const EXPLICIT_PREFIX_SPECS: readonly ExplicitPrefixMappingV1[] = Object.freeze([
-  Object.freeze({ segments: Object.freeze(['apps', 'web']), layer: 'client' }),
-  Object.freeze({
-    segments: Object.freeze(['packages', 'frontend']),
-    layer: 'client',
-  }),
-  Object.freeze({
-    segments: Object.freeze(['src', 'client']),
-    layer: 'client',
-  }),
-  Object.freeze({ segments: Object.freeze(['apps', 'api']), layer: 'server' }),
-  Object.freeze({
-    segments: Object.freeze(['packages', 'backend']),
-    layer: 'server',
-  }),
-  Object.freeze({
-    segments: Object.freeze(['src', 'server']),
-    layer: 'server',
-  }),
-  Object.freeze({ segments: Object.freeze(['db']), layer: 'db' }),
-  Object.freeze({ segments: Object.freeze(['database']), layer: 'db' }),
-  Object.freeze({ segments: Object.freeze(['migrations']), layer: 'db' }),
-  Object.freeze({ segments: Object.freeze(['.config']), layer: 'config' }),
-  Object.freeze({ segments: Object.freeze(['config']), layer: 'config' }),
-  Object.freeze({ segments: Object.freeze(['configs']), layer: 'config' }),
-]);
+const EXPLICIT_PREFIX_SPECS: readonly ExplicitPrefixMappingV1[] = Object.freeze(
+  [
+    Object.freeze({
+      segments: Object.freeze(['apps', 'web']),
+      layer: 'client',
+    }),
+    Object.freeze({
+      segments: Object.freeze(['packages', 'frontend']),
+      layer: 'client',
+    }),
+    Object.freeze({
+      segments: Object.freeze(['src', 'client']),
+      layer: 'client',
+    }),
+    Object.freeze({
+      segments: Object.freeze(['apps', 'api']),
+      layer: 'server',
+    }),
+    Object.freeze({
+      segments: Object.freeze(['packages', 'backend']),
+      layer: 'server',
+    }),
+    Object.freeze({
+      segments: Object.freeze(['src', 'server']),
+      layer: 'server',
+    }),
+    Object.freeze({ segments: Object.freeze(['db']), layer: 'db' }),
+    Object.freeze({ segments: Object.freeze(['database']), layer: 'db' }),
+    Object.freeze({ segments: Object.freeze(['migrations']), layer: 'db' }),
+    Object.freeze({ segments: Object.freeze(['.config']), layer: 'config' }),
+    Object.freeze({ segments: Object.freeze(['config']), layer: 'config' }),
+    Object.freeze({ segments: Object.freeze(['configs']), layer: 'config' }),
+  ],
+);
 
 function buildExplicitPrefixTableV1(): readonly ExplicitPrefixMappingV1[] {
   const byKey = new Map<string, ExplicitPrefixMappingV1>();
@@ -182,9 +187,8 @@ function classifyLayerAndRuleV1(
   }
 
   for (const segment of segments) {
-    const layer = ORDINARY_SEGMENT_LAYER[
-      segment as keyof typeof ORDINARY_SEGMENT_LAYER
-    ];
+    const layer =
+      ORDINARY_SEGMENT_LAYER[segment as keyof typeof ORDINARY_SEGMENT_LAYER];
     if (layer !== undefined) {
       return Object.freeze({
         layer,
@@ -249,7 +253,9 @@ export function pathViewFromPosixPathV1(
  */
 export function resolveRepositoryLayerV1(file: string): RepoLayer {
   // 仅 slash 切分；不 replaceAll、不 posix.normalize
-  const path = pathViewFromPosixPathV1(file.includes('\\') ? file.replaceAll('\\', '/') : file);
+  const path = pathViewFromPosixPathV1(
+    file.includes('\\') ? file.replaceAll('\\', '/') : file,
+  );
   return classifyLayerAndRuleV1(path).layer;
 }
 

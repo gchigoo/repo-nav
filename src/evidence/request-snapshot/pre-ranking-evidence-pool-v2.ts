@@ -102,8 +102,14 @@ const fileBucketRecords = new WeakMap<
   OpaqueFileBucketRefV2,
   FileBucketPrivateRecordV2
 >();
-const stableRecordPrivate = new WeakMap<StableRecordRefV2, StableRecordPrivateV2>();
-const eligiblePrivate = new WeakMap<EligibleDiscoveryRefV2, EligiblePrivateV2>();
+const stableRecordPrivate = new WeakMap<
+  StableRecordRefV2,
+  StableRecordPrivateV2
+>();
+const eligiblePrivate = new WeakMap<
+  EligibleDiscoveryRefV2,
+  EligiblePrivateV2
+>();
 
 /**
  * 同 canonical target 共享同一个无 payload fileBucketRef。
@@ -266,9 +272,7 @@ export function toTrustedPreFinalEligibleViewsV2(
 /**
  * 探测 consumer view 是否泄漏 private 字符串键。
  */
-export function consumerViewLeaksPrivateStringsV2(
-  view: object,
-): boolean {
+export function consumerViewLeaksPrivateStringsV2(view: object): boolean {
   const json = JSON.stringify(view);
   if (json.includes('discoveryKey') || json.includes('canonicalFileKey')) {
     return true;

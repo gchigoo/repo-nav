@@ -9,8 +9,7 @@ export type LineFramerPushResultV2 =
   | Readonly<{ kind: 'invalid' }>;
 
 export type LineFramerFinishResultV2 =
-  | Readonly<{ kind: 'ok' }>
-  | Readonly<{ kind: 'invalid' }>;
+  Readonly<{ kind: 'ok' }> | Readonly<{ kind: 'invalid' }>;
 
 /**
  * 按 raw LF 切分；剥离紧邻 LF 的单个 CR；不先转 string。

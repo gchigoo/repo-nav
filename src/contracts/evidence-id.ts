@@ -26,7 +26,9 @@ export function normalizeEvidenceExcerpt(excerpt: string): string {
   return excerpt.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
 }
 
-export function createDiscoveryKey(identity: EvidenceDiscoveryIdentity): string {
+export function createDiscoveryKey(
+  identity: EvidenceDiscoveryIdentity,
+): string {
   const normalizedFile = identity.file.replaceAll('\\', '/');
   const excerptHash = sha256Hex(normalizeEvidenceExcerpt(identity.excerpt));
   return [
@@ -43,11 +45,9 @@ export function createEvidenceId(
   evidenceClass: PublicEvidence['evidenceClass'],
   primaryRole: EvidenceRole,
 ): string {
-  const publicCanonicalKey = [
-    discoveryKey,
-    evidenceClass,
-    primaryRole,
-  ].join('\u0000');
+  const publicCanonicalKey = [discoveryKey, evidenceClass, primaryRole].join(
+    '\u0000',
+  );
   return `evidence:v1:${sha256Hex(publicCanonicalKey)}`;
 }
 

@@ -15,10 +15,7 @@ import {
   type PromotionRequirementCode,
 } from '../../contracts/index.js';
 import type { DiscoveryRecord } from '../discovery-record.js';
-import {
-  maskNonCode,
-  maskSqlNonCode,
-} from '../direct-mapping-classifier.js';
+import { maskNonCode, maskSqlNonCode } from '../direct-mapping-classifier.js';
 import {
   balancedStructureV2,
   identifierTokensV2,
@@ -168,11 +165,12 @@ export function secondaryBackendCandidateReasons(
   discoveredBy: readonly EvidenceSource[],
   primaryAttempted: boolean,
 ): readonly CandidateReasonCode[] {
-  const reasons: readonly CandidateReasonCode[] = primaryAttempted &&
+  const reasons: readonly CandidateReasonCode[] =
+    primaryAttempted &&
     discoveredBy.length === 1 &&
     discoveredBy[0] === 'ripgrep'
-    ? ['SECONDARY_BACKEND_HIT']
-    : [];
+      ? ['SECONDARY_BACKEND_HIT']
+      : [];
   return Object.freeze(reasons);
 }
 
@@ -193,7 +191,10 @@ export function createVerifiedCandidateContext(
   });
 }
 
-function identifierTokens(masked: string, firstLine: number): readonly IdentifierToken[] {
+function identifierTokens(
+  masked: string,
+  firstLine: number,
+): readonly IdentifierToken[] {
   return identifierTokensV2(masked, firstLine);
 }
 
@@ -213,13 +214,10 @@ function innermostOwnedRange(
   return ranges
     .filter(
       (range) =>
-        predicate(range) &&
-        range.start < token.start &&
-        range.end >= token.end,
+        predicate(range) && range.start < token.start && range.end >= token.end,
     )
     .sort(
-      (first, second) =>
-        first.end - first.start - (second.end - second.start),
+      (first, second) => first.end - first.start - (second.end - second.start),
     )[0];
 }
 
@@ -275,7 +273,10 @@ function isPropertyOrColumn(
     }
     return /^\s*\??\s*(?::|=)/u.test(tail);
   }
-  const previous = masked.slice(range.start + 1, token.start).trimEnd().at(-1);
+  const previous = masked
+    .slice(range.start + 1, token.start)
+    .trimEnd()
+    .at(-1);
   return (
     (previous === undefined || previous === ',' || previous === '(') &&
     /^\s+(?:bigint|boolean|date|decimal|integer|jsonb?|numeric|text|timestamp|uuid|varchar)\b/iu.test(
@@ -462,8 +463,7 @@ function sameScopeSimilar(
     sameRange(
       directBraceOwner(structure, left),
       directBraceOwner(structure, right),
-    ) &&
-    oneSegmentApart(left.value, right.value)
+    ) && oneSegmentApart(left.value, right.value)
   );
 }
 
@@ -492,8 +492,9 @@ function contextContainsVerifiedFocus(
   const start = record.focusLines[0] - context.lines[0];
   const length = record.focusLines[1] - record.focusLines[0] + 1;
   return (
-    normalizeEvidenceExcerpt(contextLines.slice(start, start + length).join('\n')) ===
-    normalizeEvidenceExcerpt(record.focusExcerpt)
+    normalizeEvidenceExcerpt(
+      contextLines.slice(start, start + length).join('\n'),
+    ) === normalizeEvidenceExcerpt(record.focusExcerpt)
   );
 }
 
@@ -504,7 +505,9 @@ function arraysEqual<T>(left: readonly T[], right: readonly T[]): boolean {
   );
 }
 
-function validateInput(input: CandidatePolicyInput): ReadonlyMap<string, DiscoveryRecord> {
+function validateInput(
+  input: CandidatePolicyInput,
+): ReadonlyMap<string, DiscoveryRecord> {
   if (!Number.isInteger(input.maxCandidates) || input.maxCandidates < 0) {
     throw new Error('Candidate maxCandidates must be a non-negative integer.');
   }
@@ -519,7 +522,9 @@ function validateInput(input: CandidatePolicyInput): ReadonlyMap<string, Discove
   for (const context of input.contexts) {
     const record = records.get(context.seedDiscoveryKey);
     if (record === undefined) {
-      throw new Error(`Candidate context references an unknown seed: ${context.seedDiscoveryKey}`);
+      throw new Error(
+        `Candidate context references an unknown seed: ${context.seedDiscoveryKey}`,
+      );
     }
     if (
       context.file !== record.location.file ||
@@ -529,17 +534,22 @@ function validateInput(input: CandidatePolicyInput): ReadonlyMap<string, Discove
       !arraysEqual(context.provenance.discoveredBy, record.discoveredBy) ||
       !arraysEqual(context.provenance.operations, record.operations)
     ) {
-      throw new Error(`Candidate context violates the verified seed boundary: ${context.seedDiscoveryKey}`);
+      throw new Error(
+        `Candidate context violates the verified seed boundary: ${context.seedDiscoveryKey}`,
+      );
     }
     const siblings = bySeed.get(context.seedDiscoveryKey) ?? [];
     if (
       siblings.some(
         (sibling) =>
           sibling.file !== context.file ||
-          sibling.lines[0] <= context.lines[1] && context.lines[0] <= sibling.lines[1],
+          (sibling.lines[0] <= context.lines[1] &&
+            context.lines[0] <= sibling.lines[1]),
       )
     ) {
-      throw new Error(`Candidate contexts conflict for seed: ${context.seedDiscoveryKey}`);
+      throw new Error(
+        `Candidate contexts conflict for seed: ${context.seedDiscoveryKey}`,
+      );
     }
     siblings.push(context);
     bySeed.set(context.seedDiscoveryKey, siblings);
@@ -549,9 +559,11 @@ function validateInput(input: CandidatePolicyInput): ReadonlyMap<string, Discove
 
 function isTestOrDocsFile(file: string): boolean {
   const normalized = file.replaceAll('\\', '/').toLocaleLowerCase('und');
-  return /(?:^|\/)(?:__tests__|docs?|examples|fixtures?|specs?|tests?)(?:\/|$)/u.test(
-    normalized,
-  ) || /\.(?:md|mdx|rst|adoc|spec|test)(?:\.|$)/u.test(normalized);
+  return (
+    /(?:^|\/)(?:__tests__|docs?|examples|fixtures?|specs?|tests?)(?:\/|$)/u.test(
+      normalized,
+    ) || /\.(?:md|mdx|rst|adoc|spec|test)(?:\.|$)/u.test(normalized)
+  );
 }
 
 function isReservedToken(
@@ -567,7 +579,10 @@ function isReservedToken(
     ) {
       return false;
     }
-    return [...record.matchedTerms.map((term) => term.value), ...record.canonicalSymbols]
+    return [
+      ...record.matchedTerms.map((term) => term.value),
+      ...record.canonicalSymbols,
+    ]
       .map((value) => value.normalize('NFKC').toLocaleLowerCase('und'))
       .includes(token.normalizedValue);
   });
@@ -599,7 +614,11 @@ function draftPriority(draft: ClassifiedCandidateDraft): number {
   return Math.min(
     ...draft.reasonCodes.flatMap((reasonCode) =>
       reasonCode in DERIVED_SELECTION_PRIORITY
-        ? [DERIVED_SELECTION_PRIORITY[reasonCode as keyof typeof DERIVED_SELECTION_PRIORITY]]
+        ? [
+            DERIVED_SELECTION_PRIORITY[
+              reasonCode as keyof typeof DERIVED_SELECTION_PRIORITY
+            ],
+          ]
         : [],
     ),
   );
@@ -628,7 +647,9 @@ function mergeDraft(
     current.location.lines[1] !== incoming.location.lines[1] ||
     current.location.excerpt !== incoming.location.excerpt
   ) {
-    throw new Error(`Candidate discovery key has conflicting locations: ${current.discoveryKey}`);
+    throw new Error(
+      `Candidate discovery key has conflicting locations: ${current.discoveryKey}`,
+    );
   }
   const reasonCodes = orderedUnique(
     [...current.reasonCodes, ...incoming.reasonCodes],
@@ -711,8 +732,10 @@ function* draftsForContext(
   const tokens = identifierTokens(masked, context.lines[0]);
   const structure = balancedStructure(masked);
   const seedValues = new Set(
-    [...seedRecord.matchedTerms.map((term) => term.value), ...seedRecord.canonicalSymbols]
-      .map((value) => value.normalize('NFKC').toLocaleLowerCase('und')),
+    [
+      ...seedRecord.matchedTerms.map((term) => term.value),
+      ...seedRecord.canonicalSymbols,
+    ].map((value) => value.normalize('NFKC').toLocaleLowerCase('und')),
   );
   const seeds = tokens.filter(
     (token) =>
@@ -747,7 +770,9 @@ function* draftsForContext(
   }
 }
 
-export function applyCandidatePolicy(input: CandidatePolicyInput): CandidatePolicyResult {
+export function applyCandidatePolicy(
+  input: CandidatePolicyInput,
+): CandidatePolicyResult {
   const recordsByKey = validateInput(input);
   const records = Array.from(recordsByKey.values());
   const queue: ClassifiedCandidateDraft[] = [];
@@ -766,7 +791,9 @@ export function applyCandidatePolicy(input: CandidatePolicyInput): CandidatePoli
     }
     const seedRecord = recordsByKey.get(context.seedDiscoveryKey);
     if (seedRecord === undefined) {
-      throw new Error(`Candidate seed disappeared: ${context.seedDiscoveryKey}`);
+      throw new Error(
+        `Candidate seed disappeared: ${context.seedDiscoveryKey}`,
+      );
     }
     for (const draft of draftsForContext(
       context,
@@ -774,12 +801,7 @@ export function applyCandidatePolicy(input: CandidatePolicyInput): CandidatePoli
       records,
       input.signal,
     )) {
-      truncated =
-        insertBounded(
-          queue,
-          draft,
-          input.maxCandidates,
-        ) || truncated;
+      truncated = insertBounded(queue, draft, input.maxCandidates) || truncated;
     }
   }
 
@@ -790,7 +812,9 @@ export function applyCandidatePolicy(input: CandidatePolicyInput): CandidatePoli
     for (const context of contexts) {
       const seedRecord = recordsByKey.get(context.seedDiscoveryKey);
       if (seedRecord === undefined) {
-        throw new Error(`Candidate seed disappeared: ${context.seedDiscoveryKey}`);
+        throw new Error(
+          `Candidate seed disappeared: ${context.seedDiscoveryKey}`,
+        );
       }
       for (const draft of draftsForContext(
         context,

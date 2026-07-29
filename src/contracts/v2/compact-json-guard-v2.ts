@@ -6,8 +6,7 @@
 import { utf8ByteLengthV2 } from './locate-result-resource-budget-contract-v2.js';
 
 export type CompactJsonBudgetCheckV2 =
-  | Readonly<{ ok: true }>
-  | Readonly<{ ok: false; stage: 'raw-json' }>;
+  Readonly<{ ok: true }> | Readonly<{ ok: false; stage: 'raw-json' }>;
 
 const OK: CompactJsonBudgetCheckV2 = Object.freeze({ ok: true });
 
@@ -111,8 +110,7 @@ function addJsonStringBytes(state: CounterState, value: string): boolean {
     if (code >= 0xd800 && code <= 0xdbff) {
       const next = value.charCodeAt(index + 1);
       if (next >= 0xdc00 && next <= 0xdfff) {
-        const codePoint =
-          ((code - 0xd800) << 10) + (next - 0xdc00) + 0x10000;
+        const codePoint = ((code - 0xd800) << 10) + (next - 0xdc00) + 0x10000;
         const utf8 =
           codePoint <= 0x7f
             ? 1
@@ -156,10 +154,7 @@ function addJsonNumberBytes(state: CounterState, value: number): boolean {
   return addBytes(state, utf8ByteLengthV2(text));
 }
 
-function countCompactJsonData(
-  value: unknown,
-  state: CounterState,
-): boolean {
+function countCompactJsonData(value: unknown, state: CounterState): boolean {
   if (value === null) {
     return addBytes(state, 4);
   }

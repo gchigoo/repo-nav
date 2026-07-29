@@ -1,24 +1,13 @@
 import {
   ANCHOR_KINDS,
-  BACKEND_REASON_CODES,
-  CANDIDATE_REASON_CODES,
-  CONFIRMED_REASON_CODES,
-  EVIDENCE_OPERATION_CODES,
-  EVIDENCE_ROLES,
-  EVIDENCE_SCHEMA_VERSION,
-  EXCLUSION_REASON_CODES,
-  LIMIT_REASON_CODES,
-  LOCATE_STATUSES,
-  NEXT_ACTION_CODES,
-  PROMOTION_REQUIREMENT_CODES,
-  REDACTION_REASON_CODES,
+  LocateRequestSchema,
   REPO_LAYERS,
   TERM_CASE_MODES,
-  TOOL_ERROR_CODES,
-  createPublicErrorResult,
-  LocateRequestSchema,
-  LocateToolOutputSchema,
 } from '../../src/contracts/index.js';
+import {
+  LOCATE_STATUSES_V2,
+  LocateResultV2Schema,
+} from '../../src/contracts/v2/locate-result-v2.js';
 import {
   REPO_NAV_LOCATE_INPUT_SCHEMA,
   REPO_NAV_LOCATE_OUTPUT_SCHEMA,
@@ -42,6 +31,9 @@ function collectPropertyNames(value: unknown, result = new Set<string>()): Set<s
   return result;
 }
 
+/**
+ * Build the machine-readable API reference projection for docs smoke.
+ */
 export function buildSchemaReferenceProjection(): Readonly<Record<string, unknown>> {
   const inputProperties = Object.keys(
     objectRecord(objectRecord(REPO_NAV_LOCATE_INPUT_SCHEMA)['properties']),
@@ -57,12 +49,18 @@ export function buildSchemaReferenceProjection(): Readonly<Record<string, unknow
     anchors: [{ kind: 'symbol', value: 'mapIdentifier' }],
     layers: ['server'],
   });
-  const errorExample = LocateToolOutputSchema.parse(
-    createPublicErrorResult('INVALID_INPUT', 'ADD_TERM'),
-  );
+  const errorExample = LocateResultV2Schema.parse({
+    ok: false,
+    error: {
+      code: 'INVALID_INPUT',
+      message: 'Locate request does not match the required schema.',
+      recoverable: true,
+      suggestedAction: 'ADD_TERM',
+    },
+  });
   return {
     toolName: REPO_NAV_LOCATE_TOOL_NAME,
-    schemaVersion: EVIDENCE_SCHEMA_VERSION,
+    schemaVersion: '2.0',
     input: {
       fields: inputProperties,
       required: inputRequired,
@@ -76,18 +74,13 @@ export function buildSchemaReferenceProjection(): Readonly<Record<string, unknow
     output: {
       fields: [...collectPropertyNames(REPO_NAV_LOCATE_OUTPUT_SCHEMA)].sort(),
       enums: {
-        statuses: LOCATE_STATUSES,
-        roles: EVIDENCE_ROLES,
-        confirmedReasons: CONFIRMED_REASON_CODES,
-        candidateReasons: CANDIDATE_REASON_CODES,
-        promotionRequirements: PROMOTION_REQUIREMENT_CODES,
-        nextActions: NEXT_ACTION_CODES,
-        operations: EVIDENCE_OPERATION_CODES,
-        backendReasons: BACKEND_REASON_CODES,
-        limitReasons: LIMIT_REASON_CODES,
-        exclusionReasons: EXCLUSION_REASON_CODES,
-        redactionReasons: REDACTION_REASON_CODES,
-        toolErrors: TOOL_ERROR_CODES,
+        statuses: LOCATE_STATUSES_V2,
+        toolErrors: [
+          'INVALID_INPUT',
+          'INVALID_REPOSITORY',
+          'PATH_OUTSIDE_ROOT',
+          'INTERNAL_ERROR',
+        ],
       },
       errorExample,
     },

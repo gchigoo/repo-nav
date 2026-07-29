@@ -3,9 +3,7 @@
  */
 
 import type { LocateResultV2 } from '../../contracts/v2/locate-result-v2.js';
-import {
-  requireTrustedLocateProjectionMaterializationEntryV2,
-} from './locate-projection-stage-registrar-v2.js';
+import { requireTrustedLocateProjectionMaterializationEntryV2 } from './locate-projection-stage-registrar-v2.js';
 import {
   requireTrustedFinalizedLocateFactsV2,
   type TrustedFinalizedLocateFactsV2,
@@ -34,9 +32,7 @@ function createOpaqueBrand(): object {
   return Object.freeze(Object.create(null) as object);
 }
 
-class MaterializedLocateResultComposerV2Impl
-  implements MaterializedLocateResultComposerV2
-{
+class MaterializedLocateResultComposerV2Impl implements MaterializedLocateResultComposerV2 {
   public compose(
     finalized: TrustedFinalizedLocateFactsV2,
   ): Readonly<
@@ -51,10 +47,11 @@ class MaterializedLocateResultComposerV2Impl
     }
     let materializationEntry;
     try {
-      materializationEntry = requireTrustedLocateProjectionMaterializationEntryV2(
-        entry.materialization,
-        entry.execution,
-      );
+      materializationEntry =
+        requireTrustedLocateProjectionMaterializationEntryV2(
+          entry.materialization,
+          entry.execution,
+        );
     } catch {
       return Object.freeze({ ok: false, reason: 'invalid-facts' as const });
     }
@@ -98,7 +95,11 @@ class MaterializedLocateResultComposerV2Impl
           unsatisfiedAnchors: ranking.unsatisfiedAnchors,
           snapshot: snapshot.coverage,
           scope,
-          capabilities: capability,
+          capabilities: Object.freeze({
+            textSearch: 'supported-text-files' as const,
+            semanticClassification: capability.semanticClassification,
+            unsupportedLanguageHits: capability.unsupportedLanguageHits,
+          }),
         }),
         nextActions: entry.requestOutcome.nextActions,
       }),

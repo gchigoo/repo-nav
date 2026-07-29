@@ -102,9 +102,11 @@ export interface CompleteRealLocateShadowStageContextV2 {
   readonly prerequisites: TrustedLocateProjectionPrerequisitesV2;
 }
 
-type StageResultV2<TValue, TCode extends CompleteRealLocateShadowFailureCodeV2> =
-  | Readonly<{ ok: true; value: TValue }>
-  | Readonly<{ ok: false; code: TCode }>;
+type StageResultV2<
+  TValue,
+  TCode extends CompleteRealLocateShadowFailureCodeV2,
+> =
+  Readonly<{ ok: true; value: TValue }> | Readonly<{ ok: false; code: TCode }>;
 
 declare const ACCEPTED_COMPLETE_REAL_LOCATE_SHADOW_V2: unique symbol;
 export type AcceptedCompleteRealLocateShadowV2 = Readonly<{
@@ -223,7 +225,8 @@ function failAttempt(
  * Zero-argument factory：exact-once F2 + 两个 F1C acquisition。
  */
 export function createAcceptedCompleteRealLocateShadowOrchestratorV2(): AcceptedCompleteRealLocateShadowOrchestratorV2 {
-  const f2Stages: F2LocateProjectionStagesV2 = createF2LocateProjectionStagesV2();
+  const f2Stages: F2LocateProjectionStagesV2 =
+    createF2LocateProjectionStagesV2();
   const finalizer = createRequiredOwnerFinalizerV2();
   const composer = createMaterializedLocateResultComposerV2();
 
@@ -345,7 +348,10 @@ export function createAcceptedCompleteRealLocateShadowOrchestratorV2(): Accepted
   function runAcceptedCompleteRealLocateOwnerFinalizationV2(
     aggregation: TrustedLocateProjectionAggregationV2,
     context: CompleteRealLocateShadowStageContextV2,
-  ): StageResultV2<TrustedFinalizedLocateFactsV2, 'OWNER_FINALIZATION_INVALID'> {
+  ): StageResultV2<
+    TrustedFinalizedLocateFactsV2,
+    'OWNER_FINALIZATION_INVALID'
+  > {
     const result = finalizer.finalize(aggregation, context.execution);
     if (!result.ok) {
       return Object.freeze({
@@ -374,7 +380,8 @@ export function createAcceptedCompleteRealLocateShadowOrchestratorV2(): Accepted
   ): StageResultV2<TrustedSchemaValidatedLocateResultV2, 'SCHEMA_INVALID'> {
     void _context;
     try {
-      const value = validateComposedLocateResultV2ForSerialization(materialized);
+      const value =
+        validateComposedLocateResultV2ForSerialization(materialized);
       return Object.freeze({ ok: true, value });
     } catch {
       return Object.freeze({ ok: false, code: 'SCHEMA_INVALID' as const });
@@ -483,14 +490,11 @@ export function createAcceptedCompleteRealLocateShadowOrchestratorV2(): Accepted
       );
       counters['serialization-budget'] = 1;
       if (!serialized.ok) {
-        return failAttempt(
-          'serialization-budget',
-          serialized.code,
-          counters,
-        );
+        return failAttempt('serialization-budget', serialized.code, counters);
       }
 
-      const accepted = createOpaqueTokenV2<AcceptedCompleteRealLocateShadowV2>();
+      const accepted =
+        createOpaqueTokenV2<AcceptedCompleteRealLocateShadowV2>();
       acceptedPrivate.set(
         accepted,
         Object.freeze({

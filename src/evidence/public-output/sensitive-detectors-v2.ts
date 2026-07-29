@@ -11,8 +11,7 @@ import {
 } from './sensitive-phone-v2.js';
 
 const TEMPLATE_QUOTE = '`';
-const ASSIGNMENT_KEY =
-  String.raw`(?:"([^"\r\n]+)"|'([^'\r\n]+)'|([A-Za-z_$][A-Za-z0-9_$-]*))`;
+const ASSIGNMENT_KEY = String.raw`(?:"([^"\r\n]+)"|'([^'\r\n]+)'|([A-Za-z_$][A-Za-z0-9_$-]*))`;
 export const SECRET_ASSIGNMENT = new RegExp(
   String.raw`(${ASSIGNMENT_KEY}\s*[:=]\s*)(?:"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)'|${TEMPLATE_QUOTE}((?:\\.|[^${TEMPLATE_QUOTE}\\])*)${TEMPLATE_QUOTE}|([^\s,"'${TEMPLATE_QUOTE};}\]]+))`,
   'gu',
@@ -37,8 +36,7 @@ export const CONNECTION_USERINFO =
   /\b([a-z][a-z0-9+.-]*:\/\/)([^\s/@:]+):([^\s/@]+)@/giu;
 export const CONNECTION_SECRET_QUERY =
   /([?&](?:password|passwd|secret|token|api[_-]?key)=)([^&#\s]+)/giu;
-export const EMAIL_ADDRESS =
-  /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/giu;
+export const EMAIL_ADDRESS = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/giu;
 export const NON_WHITESPACE_TOKEN = /\S+/gu;
 export const ANSI_SEQUENCE = /\u001b(?:\[[0-?]*[ -/]*[@-~]|[@-_])/gu;
 export const BIDI_CONTROLS =
@@ -68,8 +66,7 @@ export function splitIdentifierSegments(
       const previous = text[index - 1]!;
       const current = text[index]!;
       const next = text[index + 1];
-      const lowerToUpper =
-        /[a-z0-9]/u.test(previous) && /[A-Z]/u.test(current);
+      const lowerToUpper = /[a-z0-9]/u.test(previous) && /[A-Z]/u.test(current);
       const acronymToWord =
         /[A-Z]/u.test(previous) &&
         /[A-Z]/u.test(current) &&
@@ -196,8 +193,7 @@ export function hasUnsafeTemplateSecret(value: string): boolean {
 
 export function containsOversizedToken(value: string): boolean {
   return matches(NON_WHITESPACE_TOKEN, value).some(
-    (match) =>
-      Buffer.byteLength(match[0], 'utf8') > PUBLIC_FIELD_MAX_BYTES_V2,
+    (match) => Buffer.byteLength(match[0], 'utf8') > PUBLIC_FIELD_MAX_BYTES_V2,
   );
 }
 
@@ -229,7 +225,9 @@ function pushSpan(
   }
 }
 
-export function detectAssignmentSpansV2(value: string): readonly SensitiveSpanV2[] {
+export function detectAssignmentSpansV2(
+  value: string,
+): readonly SensitiveSpanV2[] {
   const spans: SensitiveSpanV2[] = [];
   for (const match of matches(SECRET_ASSIGNMENT, value)) {
     const key = secretAssignmentKey(match);
@@ -298,8 +296,7 @@ export function detectEmailSpansV2(value: string): readonly SensitiveSpanV2[] {
     if (match.index === undefined) {
       continue;
     }
-    const previous =
-      match.index === 0 ? undefined : value[match.index - 1];
+    const previous = match.index === 0 ? undefined : value[match.index - 1];
     if (previous === ':') {
       continue;
     }
@@ -321,13 +318,7 @@ export function detectPhoneSpansV2(value: string): readonly SensitiveSpanV2[] {
     if (classification === 'reject') {
       continue;
     }
-    pushSpan(
-      spans,
-      value,
-      candidate.start,
-      candidate.end,
-      'PERSONAL_DATA',
-    );
+    pushSpan(spans, value, candidate.start, candidate.end, 'PERSONAL_DATA');
   }
   return spans;
 }
@@ -411,24 +402,12 @@ export function detectUnpairedSurrogateSpansV2(
     if (code >= 0xd800 && code <= 0xdbff) {
       const next = value.charCodeAt(index + 1);
       if (!(next >= 0xdc00 && next <= 0xdfff)) {
-        pushSpan(
-          spans,
-          value,
-          index,
-          index + 1,
-          'BINARY_OR_OVERSIZED_CONTENT',
-        );
+        pushSpan(spans, value, index, index + 1, 'BINARY_OR_OVERSIZED_CONTENT');
       } else {
         index += 1;
       }
     } else if (code >= 0xdc00 && code <= 0xdfff) {
-      pushSpan(
-        spans,
-        value,
-        index,
-        index + 1,
-        'BINARY_OR_OVERSIZED_CONTENT',
-      );
+      pushSpan(spans, value, index, index + 1, 'BINARY_OR_OVERSIZED_CONTENT');
     }
   }
   return spans;
@@ -449,7 +428,9 @@ export function detectLocalTextSpansV2(
   ];
 }
 
-export function detectLocalFileSpansV2(value: string): readonly SensitiveSpanV2[] {
+export function detectLocalFileSpansV2(
+  value: string,
+): readonly SensitiveSpanV2[] {
   return [
     ...detectAssignmentSpansV2(value),
     ...detectFixedCredentialSpansV2(value),

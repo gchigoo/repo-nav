@@ -1,4 +1,8 @@
-import type { BackendHit, BackendSearchResult, RepoLayer } from '../../contracts/index.js';
+import type {
+  BackendHit,
+  BackendSearchResult,
+  RepoLayer,
+} from '../../contracts/index.js';
 import type { LocateExecutionTokenV2 } from '../../contracts/v2/locate-fact-envelope-v2.js';
 import { redactPublicText } from '../evidence-redactor.js';
 import {

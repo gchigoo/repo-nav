@@ -92,7 +92,10 @@ export function adaptLegacyBackendPathV1(rawPath: string): string {
   return posix.normalize(rawPath.replaceAll('\\', '/'));
 }
 
-function rejectExpandedRawPath(rawPath: string, pathFlavor: 'native' | 'posix'): boolean {
+function rejectExpandedRawPath(
+  rawPath: string,
+  pathFlavor: 'native' | 'posix',
+): boolean {
   if (rawPath.length === 0 || rawPath.includes('\0')) {
     return true;
   }
@@ -119,8 +122,7 @@ function rejectExpandedRawPath(rawPath: string, pathFlavor: 'native' | 'posix'):
   const segments = slashPath.split('/');
   if (
     segments.some(
-      (segment) =>
-        segment.length === 0 || segment === '.' || segment === '..',
+      (segment) => segment.length === 0 || segment === '.' || segment === '..',
     )
   ) {
     return true;

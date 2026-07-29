@@ -60,8 +60,7 @@ export function createSqlLanguageAdapterV2(): Readonly<{
       const view = requireSemanticLanguageClassificationInputV2(input);
       const masked = maskSqlNonCode(view.sourceText);
       const structure = balancedStructureV2(masked);
-      const structureComplete =
-        view.structureComplete && structure.complete;
+      const structureComplete = view.structureComplete && structure.complete;
       const terms = view.matchedTerms;
       let producerKind: LanguageProducerKindV2 = 'none';
 

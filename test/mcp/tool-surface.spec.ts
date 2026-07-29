@@ -14,17 +14,19 @@ import {
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
+import { createRepoNavApplicationContext } from '../../src/app/create-application-context.js';
 import {
-  MCP_STDIO_HOST,
-  NodeMcpStdioHost,
+  LocateRequestSchema,
+  LocateToolOutputSchema,
+} from '../../src/contracts/index.js';
+import { NodeMcpStdioHost } from '../../src/mcp/mcp-stdio-host.js';
+import {
   REPO_NAV_LOCATE_INPUT_SCHEMA,
   REPO_NAV_LOCATE_OUTPUT_SCHEMA,
   REPO_NAV_LOCATE_TOOL_NAME,
-  LocateRequestSchema,
-  LocateToolOutputSchema,
-  createRepoNavMcpServer,
-  createRepoNavApplicationContext,
-} from '../../src/index.js';
+} from '../../src/mcp/locate-tool-schema.js';
+import { createRepoNavMcpServer } from '../../src/mcp/repo-nav-mcp-server.js';
+import { MCP_STDIO_HOST } from '../../src/runtime/tokens.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
 interface ConnectedSurface {

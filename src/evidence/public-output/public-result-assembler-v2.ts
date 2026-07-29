@@ -29,10 +29,8 @@ type UnsafeSuccessV2 = Extract<
   FinalizedUnsafeLocateResultV2,
   { readonly ok: true }
 >;
-type UnsafeConfirmedV2 =
-  UnsafeSuccessV2['evidence']['confirmed'][number];
-type UnsafeCandidateV2 =
-  UnsafeSuccessV2['evidence']['candidates'][number];
+type UnsafeConfirmedV2 = UnsafeSuccessV2['evidence']['confirmed'][number];
+type UnsafeCandidateV2 = UnsafeSuccessV2['evidence']['candidates'][number];
 
 function createSafeErrorV2(
   code: RepoNavToolErrorV2['code'],
@@ -44,9 +42,7 @@ function createSafeErrorV2(
         code,
         message: 'Locate request does not match the required schema.',
         recoverable: true,
-        ...(suggestedAction === undefined
-          ? {}
-          : { suggestedAction }),
+        ...(suggestedAction === undefined ? {} : { suggestedAction }),
       };
     case 'INVALID_REPOSITORY':
       return {
@@ -119,21 +115,14 @@ function assembleLocationV2(
         );
   const excerpt = applyPublicFieldBudgetV2(
     'excerpt',
-    redactPublicFieldForSourceV2(
-      source,
-      location.excerpt,
-      'excerpt',
-      corpus,
-    ),
+    redactPublicFieldForSourceV2(source, location.excerpt, 'excerpt', corpus),
   );
   const fields = [
     fieldMetadata('file', file),
     ...(symbol === undefined ? [] : [fieldMetadata('symbol', symbol)]),
     fieldMetadata('excerpt', excerpt),
   ].filter(
-    (
-      value,
-    ): value is NonNullable<ReturnType<typeof fieldMetadata>> =>
+    (value): value is NonNullable<ReturnType<typeof fieldMetadata>> =>
       value !== undefined,
   );
 
@@ -238,12 +227,7 @@ function assembleSuccessV2(input: UnsafeSuccessV2): LocateResultV2 {
     publicConfirmedV2(input, evidence, index + 1, corpus),
   );
   const candidates = input.evidence.candidates.map((evidence, index) =>
-    publicCandidateV2(
-      input,
-      evidence,
-      confirmed.length + index + 1,
-      corpus,
-    ),
+    publicCandidateV2(input, evidence, confirmed.length + index + 1, corpus),
   );
   const locationRedacted = [...confirmed, ...candidates].some(
     (evidence) => !evidence.location.resolvable,
@@ -283,12 +267,9 @@ function assembleSuccessV2(input: UnsafeSuccessV2): LocateResultV2 {
  * Dormant v2 public assembler with F1B resource-budget guards.
  * Accepts runtime unknown so shallow preflight can reject hostile shapes.
  */
-export function assemblePublicLocateResultV2(
-  input: unknown,
-): LocateResultV2 {
+export function assemblePublicLocateResultV2(input: unknown): LocateResultV2 {
   try {
-    const preflight =
-      preflightUnsafePublicMaterializationSourceBudgetV2(input);
+    const preflight = preflightUnsafePublicMaterializationSourceBudgetV2(input);
     if (!preflight.ok) {
       return createSafeErrorResultV2('INTERNAL_ERROR');
     }

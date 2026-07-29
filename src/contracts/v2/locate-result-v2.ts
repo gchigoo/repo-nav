@@ -113,14 +113,12 @@ export const COVERAGE_DEGRADATION_CODES_V2 = Object.freeze([
   'PROCESS_OUTPUT_LIMIT_REACHED',
   'LOCATION_REDACTED',
 ] as const);
-export const UPSTREAM_DEGRADATION_CODES_V2 = Object.freeze(
-  [
-    'SNAPSHOT_CHANGED',
-    'SEMANTIC_LANGUAGE_UNSUPPORTED',
-    'BACKEND_EARLY_STOPPED',
-    'PROCESS_OUTPUT_LIMIT_REACHED',
-  ] as const,
-);
+export const UPSTREAM_DEGRADATION_CODES_V2 = Object.freeze([
+  'SNAPSHOT_CHANGED',
+  'SEMANTIC_LANGUAGE_UNSUPPORTED',
+  'BACKEND_EARLY_STOPPED',
+  'PROCESS_OUTPUT_LIMIT_REACHED',
+] as const);
 export const EXCLUSION_REASON_CODES_V2 = Object.freeze([
   'NEGATIVE_TERM_MATCH',
   'OUTSIDE_LAYER_HINT',
@@ -150,10 +148,7 @@ const ExclusionReasonCodeV2Schema = z.enum(EXCLUSION_REASON_CODES_V2);
 const RedactedFieldNameV2Schema = z.enum(REDACTED_FIELDS_V2);
 const ToolErrorCodeV2Schema = z.enum(TOOL_ERROR_CODES_V2);
 
-function uniqueArray<T extends z.ZodType>(
-  schema: T,
-  minimum = 0,
-) {
+function uniqueArray<T extends z.ZodType>(schema: T, minimum = 0) {
   return z
     .array(schema)
     .min(minimum)
@@ -163,9 +158,7 @@ function uniqueArray<T extends z.ZodType>(
     .readonly();
 }
 
-function canonicalArray<
-  const TValues extends readonly [string, ...string[]],
->(
+function canonicalArray<const TValues extends readonly [string, ...string[]]>(
   values: TValues,
   minimum = 0,
 ) {
@@ -175,8 +168,7 @@ function canonicalArray<
       items.every(
         (item, position) =>
           position === 0 ||
-          (index.get(items[position - 1]!) ?? -1) <
-            (index.get(item) ?? -1),
+          (index.get(items[position - 1]!) ?? -1) < (index.get(item) ?? -1),
       ),
     { message: 'Array values must follow canonical schema order.' },
   );
@@ -246,10 +238,7 @@ const PublicSearchTermV2Schema = z
       })
       .refine(
         (value) =>
-          isUtf8ByteLengthAtMostV2(
-            value,
-            BUDGETS_V2.public.maxTermUtf8Bytes,
-          ),
+          isUtf8ByteLengthAtMostV2(value, BUDGETS_V2.public.maxTermUtf8Bytes),
         { message: 'Public search term exceeds UTF-8 byte budget.' },
       ),
     caseSensitive: z.boolean(),
@@ -284,16 +273,12 @@ function isNormalizedRepositoryLocator(value: string): boolean {
   return value
     .split('/')
     .every(
-      (segment) =>
-        segment.length > 0 && segment !== '.' && segment !== '..',
+      (segment) => segment.length > 0 && segment !== '.' && segment !== '..',
     );
 }
 
 function isSafePublicResolvableLocator(value: string): boolean {
-  return (
-    isNormalizedRepositoryLocator(value) &&
-    isSafePublicText(value)
-  );
+  return isNormalizedRepositoryLocator(value) && isSafePublicText(value);
 }
 
 const EvidenceProvenanceV2Schema = z
@@ -315,10 +300,7 @@ const UnsafeEvidenceLocationV2Schema = z
       })
       .refine(
         (value) =>
-          isUtf8ByteLengthAtMostV2(
-            value,
-            BUDGETS_V2.raw.maxFileUtf8Bytes,
-          ) &&
+          isUtf8ByteLengthAtMostV2(value, BUDGETS_V2.raw.maxFileUtf8Bytes) &&
           value.split('/').length <= BUDGETS_V2.raw.maxPathSegments,
         { message: 'Raw evidence file exceeds path byte/segment budget.' },
       ),
@@ -327,10 +309,7 @@ const UnsafeEvidenceLocationV2Schema = z
       .min(1)
       .refine(
         (value) =>
-          isUtf8ByteLengthAtMostV2(
-            value,
-            BUDGETS_V2.raw.maxSymbolUtf8Bytes,
-          ),
+          isUtf8ByteLengthAtMostV2(value, BUDGETS_V2.raw.maxSymbolUtf8Bytes),
         { message: 'Raw evidence symbol exceeds UTF-8 byte budget.' },
       )
       .optional(),
@@ -340,10 +319,7 @@ const UnsafeEvidenceLocationV2Schema = z
       .min(1)
       .refine(
         (value) =>
-          isUtf8ByteLengthAtMostV2(
-            value,
-            BUDGETS_V2.raw.maxExcerptUtf8Bytes,
-          ),
+          isUtf8ByteLengthAtMostV2(value, BUDGETS_V2.raw.maxExcerptUtf8Bytes),
         { message: 'Raw evidence excerpt exceeds UTF-8 byte budget.' },
       ),
   })
@@ -363,10 +339,7 @@ const EvidenceLocationV2Schema = z
       .min(1)
       .refine(
         (value) =>
-          isUtf8ByteLengthAtMostV2(
-            value,
-            BUDGETS_V2.public.maxFileUtf8Bytes,
-          ),
+          isUtf8ByteLengthAtMostV2(value, BUDGETS_V2.public.maxFileUtf8Bytes),
         { message: 'Public file exceeds UTF-8 byte budget.' },
       ),
     resolvable: z.boolean(),
@@ -378,10 +351,7 @@ const EvidenceLocationV2Schema = z
       })
       .refine(
         (value) =>
-          isUtf8ByteLengthAtMostV2(
-            value,
-            BUDGETS_V2.public.maxSymbolUtf8Bytes,
-          ),
+          isUtf8ByteLengthAtMostV2(value, BUDGETS_V2.public.maxSymbolUtf8Bytes),
         { message: 'Public symbol exceeds UTF-8 byte budget.' },
       )
       .optional(),
@@ -455,10 +425,7 @@ const EvidenceLocationV2Schema = z
         path: ['resolvable'],
       });
     }
-    if (
-      location.resolvable &&
-      !isSafePublicResolvableLocator(location.file)
-    ) {
+    if (location.resolvable && !isSafePublicResolvableLocator(location.file)) {
       context.addIssue({
         code: 'custom',
         message:
@@ -478,10 +445,7 @@ const EvidenceLocationV2Schema = z
         path: ['redaction'],
       });
     }
-    if (
-      excerptMetadata &&
-      !containsPublicReplacement(location.excerpt)
-    ) {
+    if (excerptMetadata && !containsPublicReplacement(location.excerpt)) {
       context.addIssue({
         code: 'custom',
         message:
@@ -508,10 +472,7 @@ const unsafeCandidateEvidenceV2Schema = z
     location: UnsafeEvidenceLocationV2Schema,
     provenance: EvidenceProvenanceV2Schema,
     reasonCodes: canonicalArray(CANDIDATE_REASON_CODES_V2, 1),
-    promotionRequirements: canonicalArray(
-      PROMOTION_REQUIREMENT_CODES_V2,
-      1,
-    ),
+    promotionRequirements: canonicalArray(PROMOTION_REQUIREMENT_CODES_V2, 1),
   })
   .readonly();
 
@@ -536,10 +497,7 @@ const CandidateEvidenceV2Schema = z
     location: EvidenceLocationV2Schema,
     provenance: EvidenceProvenanceV2Schema,
     reasonCodes: canonicalArray(CANDIDATE_REASON_CODES_V2, 1),
-    promotionRequirements: canonicalArray(
-      PROMOTION_REQUIREMENT_CODES_V2,
-      1,
-    ),
+    promotionRequirements: canonicalArray(PROMOTION_REQUIREMENT_CODES_V2, 1),
   })
   .readonly();
 
@@ -632,8 +590,7 @@ const RepositorySnapshotCoverageV2Schema = z
     }
     if (
       snapshot.consistency === 'unknown' &&
-      (snapshot.filesChecked !== 0 ||
-        snapshot.discardedEvidenceCount !== 0)
+      (snapshot.filesChecked !== 0 || snapshot.discardedEvidenceCount !== 0)
     ) {
       context.addIssue({
         code: 'custom',
@@ -660,9 +617,7 @@ const ScopeCoverageV2Schema = z
   .readonly()
   .superRefine((scope, context) => {
     const effective = new Set(scope.effective);
-    if (
-      scope.unmatchedLayers.some((layer) => !effective.has(layer))
-    ) {
+    if (scope.unmatchedLayers.some((layer) => !effective.has(layer))) {
       context.addIssue({
         code: 'custom',
         message: 'Unmatched layers must be a subset of effective layers.',
@@ -748,11 +703,7 @@ const createCoverageReportV2Schema = <
         'error',
         'unknown',
       ]),
-      indexFreshness: z.enum([
-        'not-applicable',
-        'unknown',
-        'possibly-stale',
-      ]),
+      indexFreshness: z.enum(['not-applicable', 'unknown', 'possibly-stale']),
       limitsReached: canonicalArray(LIMIT_REASON_CODES_V2),
       degradations: canonicalArray(degradationValues),
       exclusionSummary: exclusionSummaryV2Schema,
@@ -785,7 +736,11 @@ const createCoverageReportV2Schema = <
           path: ['fallbackChecked'],
         });
       }
-      for (let index = 0; index < coverage.unsatisfiedAnchors.length; index += 1) {
+      for (
+        let index = 0;
+        index < coverage.unsatisfiedAnchors.length;
+        index += 1
+      ) {
         const previous = coverage.unsatisfiedAnchors[index - 1];
         const current = coverage.unsatisfiedAnchors[index]!;
         if (
@@ -799,21 +754,15 @@ const createCoverageReportV2Schema = <
             path: ['unsatisfiedAnchors', index],
           });
         }
-        if (
-          current.reason === 'NOT_FOUND' &&
-          !coverage.strategyComplete
-        ) {
+        if (current.reason === 'NOT_FOUND' && !coverage.strategyComplete) {
           context.addIssue({
             code: 'custom',
-            message:
-              'NOT_FOUND requires the relevant strategy to be complete.',
+            message: 'NOT_FOUND requires the relevant strategy to be complete.',
             path: ['unsatisfiedAnchors', index, 'reason'],
           });
         }
       }
-      const timeoutLimit = coverage.limitsReached.includes(
-        'TIMEOUT_REACHED',
-      );
+      const timeoutLimit = coverage.limitsReached.includes('TIMEOUT_REACHED');
       if (
         (coverage.abortSource === 'deadline') !== timeoutLimit ||
         (coverage.abortSource === 'caller' && timeoutLimit)
@@ -822,11 +771,10 @@ const createCoverageReportV2Schema = <
           code: 'custom',
           message:
             'TIMEOUT_REACHED is owned exclusively by a request deadline.',
-            path: ['limitsReached'],
-          });
+          path: ['limitsReached'],
+        });
       }
-      const unsupported =
-        coverage.capabilities.unsupportedLanguageHits > 0;
+      const unsupported = coverage.capabilities.unsupportedLanguageHits > 0;
       const unsupportedDegradation = coverage.degradations.includes(
         'SEMANTIC_LANGUAGE_UNSUPPORTED',
       );
@@ -835,18 +783,17 @@ const createCoverageReportV2Schema = <
           code: 'custom',
           message:
             'Unsupported language hits and degradation must agree exactly.',
-            path: ['capabilities', 'unsupportedLanguageHits'],
-          });
+          path: ['capabilities', 'unsupportedLanguageHits'],
+        });
       }
-      const snapshotChanged =
-        coverage.snapshot.consistency === 'changed';
+      const snapshotChanged = coverage.snapshot.consistency === 'changed';
       const snapshotDegradation =
         coverage.degradations.includes('SNAPSHOT_CHANGED');
       const snapshotExclusions =
         coverage.exclusionSummary.SNAPSHOT_CHANGED ?? 0;
       if (
         snapshotChanged !== snapshotDegradation ||
-        snapshotChanged !== (snapshotExclusions > 0) ||
+        snapshotChanged !== snapshotExclusions > 0 ||
         (snapshotChanged &&
           coverage.snapshot.discardedEvidenceCount !== snapshotExclusions)
       ) {
@@ -854,8 +801,8 @@ const createCoverageReportV2Schema = <
           code: 'custom',
           message:
             'Changed snapshot, degradation and exclusion summary must agree.',
-            path: ['snapshot'],
-          });
+          path: ['snapshot'],
+        });
       }
       const incompleteIndexes = coverage.backends
         .map((attempt, index) =>
@@ -924,8 +871,9 @@ const createCoverageReportV2Schema = <
       }
     });
 
-export const CoverageReportV2Schema =
-  createCoverageReportV2Schema(COVERAGE_DEGRADATION_CODES_V2);
+export const CoverageReportV2Schema = createCoverageReportV2Schema(
+  COVERAGE_DEGRADATION_CODES_V2,
+);
 export const FinalizedUnsafeCoverageReportV2Schema =
   createCoverageReportV2Schema(UPSTREAM_DEGRADATION_CODES_V2);
 export type CoverageReportV2 = z.infer<typeof CoverageReportV2Schema>;
@@ -975,14 +923,8 @@ export function canonicalizeCoverageV2(
     unsatisfiedAnchors: coverage.unsatisfiedAnchors,
     snapshot: coverage.snapshot,
     scope: {
-      requested: canonicalizeValues(
-        coverage.scope.requested,
-        REPO_LAYERS_V2,
-      ),
-      effective: canonicalizeValues(
-        coverage.scope.effective,
-        REPO_LAYERS_V2,
-      ),
+      requested: canonicalizeValues(coverage.scope.requested, REPO_LAYERS_V2),
+      effective: canonicalizeValues(coverage.scope.effective, REPO_LAYERS_V2),
       unmatchedLayers: canonicalizeValues(
         coverage.scope.unmatchedLayers,
         REPO_LAYERS_V2,
@@ -1024,8 +966,7 @@ export function deriveLocateStatusV2(
     ) ||
     coverage.unsatisfiedAnchors.some(
       (anchor) =>
-        anchor.reason === 'BUDGET_EXCEEDED' ||
-        anchor.reason === 'UNVERIFIED',
+        anchor.reason === 'BUDGET_EXCEEDED' || anchor.reason === 'UNVERIFIED',
     )
   ) {
     return 'partial';
@@ -1077,10 +1018,7 @@ const FinalizedUnsafeEvidencePackV2Schema = z
         (evidence) => evidence.location.file,
       ),
     ).size;
-    if (
-      pack.coverage.snapshot.consistency === 'unknown' &&
-      evidenceCount > 0
-    ) {
+    if (pack.coverage.snapshot.consistency === 'unknown' && evidenceCount > 0) {
       context.addIssue({
         code: 'custom',
         message: 'Unknown snapshots cannot retain evidence.',
@@ -1104,10 +1042,7 @@ const UnsafeToolErrorV2Schema = z
   })
   .readonly()
   .superRefine((error, context) => {
-    if (
-      error.code !== 'INVALID_INPUT' &&
-      error.suggestedAction !== undefined
-    ) {
+    if (error.code !== 'INVALID_INPUT' && error.suggestedAction !== undefined) {
       context.addIssue({
         code: 'custom',
         message: 'Only INVALID_INPUT may suggest ADD_TERM.',
@@ -1116,23 +1051,20 @@ const UnsafeToolErrorV2Schema = z
     }
   });
 
-export const FinalizedUnsafeLocateResultV2Schema = z.discriminatedUnion(
-  'ok',
-  [
-    z
-      .strictObject({
-        ok: z.literal(true),
-        evidence: FinalizedUnsafeEvidencePackV2Schema,
-      })
-      .readonly(),
-    z
-      .strictObject({
-        ok: z.literal(false),
-        error: UnsafeToolErrorV2Schema,
-      })
-      .readonly(),
-  ],
-);
+export const FinalizedUnsafeLocateResultV2Schema = z.discriminatedUnion('ok', [
+  z
+    .strictObject({
+      ok: z.literal(true),
+      evidence: FinalizedUnsafeEvidencePackV2Schema,
+    })
+    .readonly(),
+  z
+    .strictObject({
+      ok: z.literal(false),
+      error: UnsafeToolErrorV2Schema,
+    })
+    .readonly(),
+]);
 export type FinalizedUnsafeLocateResultV2 = z.infer<
   typeof FinalizedUnsafeLocateResultV2Schema
 >;
@@ -1141,9 +1073,7 @@ const RepoNavToolErrorV2Schema = z.discriminatedUnion('code', [
   z
     .strictObject({
       code: z.literal('INVALID_INPUT'),
-      message: z.literal(
-        'Locate request does not match the required schema.',
-      ),
+      message: z.literal('Locate request does not match the required schema.'),
       recoverable: z.literal(true),
       suggestedAction: z.literal('ADD_TERM').optional(),
     })
@@ -1158,9 +1088,7 @@ const RepoNavToolErrorV2Schema = z.discriminatedUnion('code', [
   z
     .strictObject({
       code: z.literal('PATH_OUTSIDE_ROOT'),
-      message: z.literal(
-        'Repository path is outside the configured root.',
-      ),
+      message: z.literal('Repository path is outside the configured root.'),
       recoverable: z.literal(false),
     })
     .readonly(),
@@ -1216,14 +1144,12 @@ const EvidencePackV2Schema = z
     const hiddenLocations = allEvidence.filter(
       (evidence) => !evidence.location.resolvable,
     ).length;
-    const hasLocationDegradation = pack.coverage.degradations.includes(
-      'LOCATION_REDACTED',
-    );
-    if ((hiddenLocations > 0) !== hasLocationDegradation) {
+    const hasLocationDegradation =
+      pack.coverage.degradations.includes('LOCATION_REDACTED');
+    if (hiddenLocations > 0 !== hasLocationDegradation) {
       context.addIssue({
         code: 'custom',
-        message:
-          'Hidden locations and LOCATION_REDACTED must agree exactly.',
+        message: 'Hidden locations and LOCATION_REDACTED must agree exactly.',
         path: ['coverage', 'degradations'],
       });
     }

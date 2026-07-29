@@ -1,10 +1,8 @@
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
-import {
-  LocateRequestSchema,
-  LocateToolOutputSchema,
-} from '../contracts/index.js';
+import { LocateRequestSchema } from '../contracts/index.js';
+import { LocateResultV2Schema } from '../contracts/v2/locate-result-v2.js';
 
 export const REPO_NAV_LOCATE_TOOL_NAME = 'repo_nav_locate' as const;
 
@@ -195,7 +193,7 @@ export const REPO_NAV_LOCATE_INPUT_SCHEMA = Object.freeze(
 );
 
 export const REPO_NAV_LOCATE_OUTPUT_SCHEMA = Object.freeze(
-  toMcpObjectSchema(LocateToolOutputSchema, 'output') as McpOutputSchema,
+  toMcpObjectSchema(LocateResultV2Schema, 'output') as McpOutputSchema,
 );
 
 export const REPO_NAV_LOCATE_TOOL: Tool = Object.freeze({

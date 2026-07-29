@@ -3,8 +3,11 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "types": ["node"]
+    "types": ["node"],
+    "sourceMap": false,
+    "declarationMap": false,
+    "newLine": "lf"
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["dist", "node_modules", "test", "testkit"]
+  "exclude": ["dist", "node_modules", "test", "testkit", "tools"]
 }

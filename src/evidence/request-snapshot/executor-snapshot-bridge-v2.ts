@@ -44,10 +44,16 @@ export function buildPreRankingPoolInputsFromLegacyEvidenceV2(input: {
 }): readonly PreRankingPoolInputRecordV2[] {
   const draftByKey = new Map<string, UnsafeEvidenceDraftV2>();
   for (const evidence of input.confirmed) {
-    draftByKey.set(createDiscoveryKey(evidence.location), toUnsafeDraftV2(evidence));
+    draftByKey.set(
+      createDiscoveryKey(evidence.location),
+      toUnsafeDraftV2(evidence),
+    );
   }
   for (const evidence of input.candidates) {
-    draftByKey.set(createDiscoveryKey(evidence.location), toUnsafeDraftV2(evidence));
+    draftByKey.set(
+      createDiscoveryKey(evidence.location),
+      toUnsafeDraftV2(evidence),
+    );
   }
 
   const resolveKey = (locator: string): CanonicalFileKeyV2 =>
@@ -110,8 +116,7 @@ export function purgeLegacyEvidenceByChangedKeysV2<
 ): readonly T[] {
   return Object.freeze(
     evidence.filter((item) => {
-      const key =
-        canonicalFileKeyFor(item.location.file) ?? item.location.file;
+      const key = canonicalFileKeyFor(item.location.file) ?? item.location.file;
       return !changedCanonicalKeys.has(key);
     }),
   );

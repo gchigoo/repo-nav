@@ -35,7 +35,9 @@ export const LEGACY_TOP_LEVEL_LAYERS_V1 = Object.freeze(
  */
 export function legacyResolveRepositoryLayerV1(file: string): RepoLayer {
   const normalized = posix.normalize(file.replaceAll('\\', '/'));
-  const segments = normalized.split('/').map((segment) => segment.toLowerCase());
+  const segments = normalized
+    .split('/')
+    .map((segment) => segment.toLowerCase());
   const basename = segments.at(-1) ?? '';
   if (
     segments.some((segment) => LEGACY_TEST_SEGMENTS_V1.has(segment)) ||

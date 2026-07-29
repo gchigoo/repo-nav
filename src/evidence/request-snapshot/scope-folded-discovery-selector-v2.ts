@@ -24,9 +24,7 @@ export type TrustedScopeFoldedSelectorViewV2 = Readonly<object> & {
 };
 
 export type ScopeEligibilityConfirmationV2 =
-  | 'allowed'
-  | 'candidate-only'
-  | 'excluded';
+  'allowed' | 'candidate-only' | 'excluded';
 
 export interface ScopeEligibilityDecisionV2 {
   readonly layer: string;
@@ -112,7 +110,10 @@ function foldWithDecisionsV2(
     return view;
   }
 
-  const decisionByRef = new Map<DiscoveryLocatorRefV2, ScopeEligibilityDecisionV2>();
+  const decisionByRef = new Map<
+    DiscoveryLocatorRefV2,
+    ScopeEligibilityDecisionV2
+  >();
   for (const entry of decisions) {
     decisionByRef.set(entry.locatorRef, entry.decision);
   }
@@ -241,11 +242,7 @@ export function scopeFoldSafeCandidatePoolV2(
   execution: LocateExecutionTokenV2,
 ): TrustedScopeFoldedSelectorViewV2 {
   if (Array.isArray(decisionsOrObservation)) {
-    return foldWithDecisionsV2(
-      preCapPool,
-      decisionsOrObservation,
-      execution,
-    );
+    return foldWithDecisionsV2(preCapPool, decisionsOrObservation, execution);
   }
   const observed = requireTrustedScopeEligibilityObservationV2(
     decisionsOrObservation as TrustedScopeEligibilityObservationV2,

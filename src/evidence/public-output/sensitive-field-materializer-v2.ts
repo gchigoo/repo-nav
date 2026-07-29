@@ -144,8 +144,7 @@ export function isValidRawLocatorV2(value: string): boolean {
   const segments = value.split('/');
   return (
     segments.every(
-      (segment) =>
-        segment.length > 0 && segment !== '.' && segment !== '..',
+      (segment) => segment.length > 0 && segment !== '.' && segment !== '..',
     ) && segments.join('/') === value
   );
 }

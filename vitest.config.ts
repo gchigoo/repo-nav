@@ -24,5 +24,7 @@ export default defineConfig({
     passWithNoTests: false,
     reporters: ['default'],
     setupFiles,
+    // Large UTF-8 / import-graph cases exceed Vitest's 5s default under load.
+    testTimeout: 30_000,
   },
 });

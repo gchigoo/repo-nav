@@ -108,9 +108,7 @@ export {
   type CandidateTokenProposalFactsV2,
   type VerifiedCandidateTokenProposalV2,
 } from './candidate-token-proposal-enumerator-v2.js';
-export {
-  LegacyCandidateReservationV1,
-} from './legacy-candidate-reservation-v1.js';
+export { LegacyCandidateReservationV1 } from './legacy-candidate-reservation-v1.js';
 export {
   evaluateExpandedCandidateProposalsV2,
   evaluateLegacyCandidateProposalsV2,

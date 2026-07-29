@@ -1,5 +1,5 @@
 /**
- * Testkit harness: assemble executor → v1 projector → façade without Nest DI.
+ * Testkit harness: assemble executor → v2 projector → application façade without Nest DI.
  */
 
 import type {
@@ -7,14 +7,17 @@ import type {
   RepositorySearchBackend,
   RepositoryEvidenceService,
 } from '../../src/contracts/index.js';
+import { createAcceptedCompleteRealLocateShadowOrchestratorV2 } from '../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js';
 import { CanonicalRepositoryLocateExecutorV2 } from '../../src/evidence/locate-execution/canonical-locate-executor-v2.js';
-import { V1LocateResultProjector } from '../../src/evidence/locate-execution/v1-locate-result-projector.js';
+import { PublicLocateExecutionApplicationServiceV2 } from '../../src/evidence/locate-execution/public-locate-execution-application-v2.js';
+import { V2LocateResultProjector } from '../../src/evidence/locate-execution/v2-locate-result-projector.js';
 import { RepositoryEvidenceEngine } from '../../src/evidence/repository-evidence-engine.js';
 
 export interface CanonicalLocateEngineHarnessV2 {
   readonly executor: CanonicalRepositoryLocateExecutorV2;
-  readonly projector: V1LocateResultProjector;
+  readonly projector: V2LocateResultProjector;
   readonly service: RepositoryEvidenceService;
+  readonly application: PublicLocateExecutionApplicationServiceV2;
 }
 
 /**
@@ -25,7 +28,12 @@ export function createCanonicalLocateEngineHarnessV2(
   reader: RepositoryReader,
 ): CanonicalLocateEngineHarnessV2 {
   const executor = new CanonicalRepositoryLocateExecutorV2(backends, reader);
-  const projector = new V1LocateResultProjector();
-  const service = new RepositoryEvidenceEngine(executor, projector);
-  return Object.freeze({ executor, projector, service });
+  const orchestrator = createAcceptedCompleteRealLocateShadowOrchestratorV2();
+  const projector = new V2LocateResultProjector(orchestrator);
+  const application = new PublicLocateExecutionApplicationServiceV2(
+    executor,
+    projector,
+  );
+  const service = new RepositoryEvidenceEngine(application);
+  return Object.freeze({ executor, projector, service, application });
 }

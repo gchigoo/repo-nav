@@ -738,7 +738,7 @@ describe.runIf(
         const harnessInput = Object.freeze({
           ok: true as const,
           envelope,
-          legacyV1Projection: input.legacyV1Projection,
+          
         });
         const {
           registerCanonicalLocateExecutionInputV2,

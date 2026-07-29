@@ -5,7 +5,6 @@ import {
   BackendReasonCodeSchema,
   SearchBackendIdSchema,
   type EvidenceLocation,
-  type LocateResult,
   type SearchBackendId,
 } from './evidence.js';
 import {
@@ -46,9 +45,7 @@ export const RepositoryReadLimitsSchema = z
     maxExcerptLines: z.int().positive(),
   })
   .readonly();
-export type RepositoryReadLimits = z.infer<
-  typeof RepositoryReadLimitsSchema
->;
+export type RepositoryReadLimits = z.infer<typeof RepositoryReadLimitsSchema>;
 
 export const DiscoveryReasonCodeSchema = z.enum(DISCOVERY_REASON_CODES);
 export type DiscoveryReasonCode = z.infer<typeof DiscoveryReasonCodeSchema>;
@@ -110,7 +107,7 @@ export interface RepositoryEvidenceService {
   locate(
     request: LocateRequest,
     context: LocateExecutionContext,
-  ): Promise<LocateResult>;
+  ): Promise<import('./v2/locate-result-v2.js').LocateResultV2>;
 }
 
 export interface RepositorySearchBackend {

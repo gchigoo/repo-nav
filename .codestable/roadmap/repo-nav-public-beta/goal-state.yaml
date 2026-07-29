@@ -342,3 +342,18 @@ ledger:
   index: 11
   note: owner-preflight license+security written; implementing after f9-security-channel-preflight
     approved
+- step: f9-review
+  status: done
+  feature: public-beta-release
+  index: 11
+  note: round3 focused closure passed blocking=0; REV-001..003 closed
+- step: f9-qa
+  status: done
+  feature: public-beta-release
+  index: 11
+  note: QA passed; owner-gated CMD-OWNER-ACTIONS/REAL-CONSUMER/six-cell residual for acceptance
+- step: f9-acceptance
+  status: blocked
+  feature: public-beta-release
+  index: 11
+  note: awaiting owner candidate-actions confirmation six-cell before acceptance

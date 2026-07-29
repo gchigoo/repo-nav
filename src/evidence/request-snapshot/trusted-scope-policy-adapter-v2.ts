@@ -133,7 +133,10 @@ export function observeTrustedScopeEligibilityV2(input: {
     throw new TypeError('scope policy adapter is not trusted');
   }
 
-  const uniqueRefs = new Map<DiscoveryLocatorRefV2, VerifiedScopePolicyPathViewV2>();
+  const uniqueRefs = new Map<
+    DiscoveryLocatorRefV2,
+    VerifiedScopePolicyPathViewV2
+  >();
   for (const candidate of input.preCapPool.candidates) {
     if (!uniqueRefs.has(candidate.locatorRef)) {
       uniqueRefs.set(
@@ -174,7 +177,8 @@ export function observeTrustedScopeEligibilityV2(input: {
     }),
   );
 
-  const observation = createOpaqueTokenV2<TrustedScopeEligibilityObservationV2>();
+  const observation =
+    createOpaqueTokenV2<TrustedScopeEligibilityObservationV2>();
   observationPrivate.set(
     observation,
     Object.freeze({

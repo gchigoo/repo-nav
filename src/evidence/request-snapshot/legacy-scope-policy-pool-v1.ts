@@ -1,7 +1,4 @@
-import type {
-  BackendHit,
-  BackendSearchResult,
-} from '../../contracts/index.js';
+import type { BackendHit, BackendSearchResult } from '../../contracts/index.js';
 import type { LocateExecutionTokenV2 } from '../../contracts/v2/locate-fact-envelope-v2.js';
 import { createOpaqueTokenV2 } from './opaque-token-v2.js';
 

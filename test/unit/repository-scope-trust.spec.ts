@@ -11,13 +11,14 @@ import type {
   LocateRequest,
   RepositorySearchBackend,
 } from '../../src/contracts/index.js';
-import { createV2ShadowLocateProjectorV2 } from '../../src/evidence/canonical/v2-shadow-locate-projector.js';
+import { createV2ShadowLocateProjectorV2 } from '../../testkit/testing/v2-shadow-locate-projector-v2.js';
 import { CanonicalRepositoryLocateExecutorV2 } from '../../src/evidence/locate-execution/canonical-locate-executor-v2.js';
 import {
   issueLocateProjectionExecutionCapabilityV2,
   requireLocateProjectionExecutionTokenV2,
 } from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
-import { V1LocateResultProjector } from '../../src/evidence/locate-execution/v1-locate-result-projector.js';
+import { V2LocateResultProjector } from '../../src/evidence/locate-execution/v2-locate-result-projector.js';
+import { createAcceptedCompleteRealLocateShadowOrchestratorV2 } from '../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js';
 import { projectExpandedSafePreCapPoolV2 } from '../../src/evidence/request-snapshot/discovery-lane-universe-v2.js';
 import { runFinalSnapshotCheckV2 } from '../../src/evidence/request-snapshot/final-snapshot-check-v2.js';
 import { createOpaqueTokenV2 } from '../../src/evidence/request-snapshot/opaque-token-v2.js';
@@ -296,14 +297,14 @@ describe.runIf(
         { signal: new AbortController().signal },
         capability,
       );
-      const projector = new V1LocateResultProjector();
+      const projector = new V2LocateResultProjector(
+        createAcceptedCompleteRealLocateShadowOrchestratorV2(),
+      );
       const first = projector.project(executed, capability);
       const second = projector.project(executed, capability);
-      expect(second).toBe(first);
-      expect(first.ok).toBe(true);
-      if (first.ok) {
-        expect(first.evidence.schemaVersion).toBe('1.0');
-      }
+      expect(second.value).toEqual(first.value);
+      expect(first.value).toBeDefined();
+      expect(first.receipt).toBeDefined();
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

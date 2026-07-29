@@ -95,11 +95,7 @@ class LocateAbortCoordinatorV2Impl implements LocateAbortCoordinatorV2 {
     ) {
       throw new TypeError('timeoutMs must be a positive safe integer');
     }
-    return new LocateAbortCoordinatorV2Impl(
-      callerSignal,
-      timeoutMs,
-      scheduler,
-    );
+    return new LocateAbortCoordinatorV2Impl(callerSignal, timeoutMs, scheduler);
   }
 
   public get signal(): AbortSignal {

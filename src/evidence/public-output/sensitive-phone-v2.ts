@@ -1,7 +1,8 @@
 const PHONE_CUE = /(?:phone|tel|mobile|contact)/iu;
 const TIMESTAMP_CUE = /(?:version|ver|build|release|timestamp|epoch)/iu;
 const ALLOWED_PHONE_CHARS = /^[+\d() .\-]+$/u;
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}(?:[T\s]\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?)?$/u;
+const ISO_DATE =
+  /^\d{4}-\d{2}-\d{2}(?:[T\s]\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?)?$/u;
 const SEMVER_LIKE = /^v?\d+(?:\.\d+){1,3}(?:[-+][0-9A-Za-z.-]+)?$/u;
 const UUID_LIKE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
@@ -14,10 +15,7 @@ const UNIX_SECONDS_MAX = 4_102_444_799; // 2099-12-31 UTC
 const UNIX_MS_MIN = UNIX_SECONDS_MIN * 1000;
 const UNIX_MS_MAX = UNIX_SECONDS_MAX * 1000 + 999;
 
-export type PhoneClassificationV2 =
-  | 'accept'
-  | 'reject'
-  | 'local-only';
+export type PhoneClassificationV2 = 'accept' | 'reject' | 'local-only';
 
 function digitCount(value: string): number {
   return (value.match(/\d/gu) ?? []).length;
@@ -129,9 +127,11 @@ export function classifyPhoneTokenV2(
   return 'accept';
 }
 
-export function findPhoneCandidatesV2(
-  value: string,
-): readonly { readonly start: number; readonly end: number; readonly text: string }[] {
+export function findPhoneCandidatesV2(value: string): readonly {
+  readonly start: number;
+  readonly end: number;
+  readonly text: string;
+}[] {
   const pattern = new RegExp(PHONE_CANDIDATE.source, PHONE_CANDIDATE.flags);
   const found: { start: number; end: number; text: string }[] = [];
   for (const match of value.matchAll(pattern)) {

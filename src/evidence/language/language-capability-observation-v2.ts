@@ -87,7 +87,9 @@ export function createTrustedLanguageCapabilityObservationV2(
       execution,
     );
     if (scopeDecision.confirmation === 'excluded') {
-      throw new TypeError('excluded record unreachable in language observation');
+      throw new TypeError(
+        'excluded record unreachable in language observation',
+      );
     }
     const extension = capabilityView.verifiedLastExtension(record.eligibleRef);
     const adapter = registry.resolveAdapter(extension);

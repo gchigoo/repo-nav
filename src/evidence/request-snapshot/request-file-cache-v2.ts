@@ -60,9 +60,7 @@ export class RequestFileCacheV2 {
   /**
    * 已绑定 locator 的 canonical key；未读过则 undefined。
    */
-  public canonicalFileKeyFor(
-    locator: string,
-  ): CanonicalFileKeyV2 | undefined {
+  public canonicalFileKeyFor(locator: string): CanonicalFileKeyV2 | undefined {
     return this.aliasToCanonical.get(locator);
   }
 
@@ -89,10 +87,7 @@ export class RequestFileCacheV2 {
     );
     this.assertNotDisposed();
     this.aliasToCanonical.set(resolved.locator, resolved.canonicalFileKey);
-    this.identityByCanonical.set(
-      resolved.canonicalFileKey,
-      resolved.identity,
-    );
+    this.identityByCanonical.set(resolved.canonicalFileKey, resolved.identity);
     let aliases = this.aliasesByCanonical.get(resolved.canonicalFileKey);
     if (aliases === undefined) {
       aliases = new Set();

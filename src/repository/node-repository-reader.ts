@@ -151,9 +151,9 @@ export class NodeRepositoryReader implements RepositoryReader {
       const termMatches = terms.some((term) =>
         term.caseSensitive
           ? excerpt.includes(term.value)
-          : excerpt.toLocaleLowerCase('und').includes(
-              term.value.toLocaleLowerCase('und'),
-            ),
+          : excerpt
+              .toLocaleLowerCase('und')
+              .includes(term.value.toLocaleLowerCase('und')),
       );
       if (!symbolMatches && !termMatches) {
         continue;
@@ -188,10 +188,7 @@ export class NodeRepositoryReader implements RepositoryReader {
     }
   }
 
-  private assertNotAborted(
-    signal: AbortSignal,
-    relativeFile?: string,
-  ): void {
+  private assertNotAborted(signal: AbortSignal, relativeFile?: string): void {
     if (signal.aborted) {
       throw new RepositoryAccessError('ABORTED', relativeFile);
     }

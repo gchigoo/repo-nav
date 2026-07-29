@@ -31,7 +31,9 @@ export interface ClassificationContext {
 export interface ClassificationResult {
   readonly confirmed: readonly ConfirmedEvidence[];
   readonly candidates: readonly CandidateEvidence[];
-  readonly exclusionSummary: Readonly<Partial<Record<ExclusionReasonCode, number>>>;
+  readonly exclusionSummary: Readonly<
+    Partial<Record<ExclusionReasonCode, number>>
+  >;
   readonly recordsClassified: number;
 }
 
@@ -170,22 +172,20 @@ function hasObjectMapping(
 ): boolean {
   const focusOffset = Math.max(0, windowCode.length - focusCode.length);
   return termPairs(terms).some(([target, source]) =>
-    exactPairRanges(focusCode, target, source, '\\s*:\\s*').some(
-      (pair) => {
-        const pairStart = focusOffset + pair.start;
-        const openBrace = windowCode.lastIndexOf('{', pairStart);
-        const closeBrace = windowCode.lastIndexOf('}', pairStart);
-        if (openBrace < 0 || openBrace < closeBrace) {
-          return false;
-        }
-        const beforeOpen = windowCode.slice(0, openBrace).trimEnd();
-        return (
-          /\breturn$/iu.test(beforeOpen) ||
-          /=$/u.test(beforeOpen) ||
-          /[\p{L}_$][\p{L}\p{N}_$]*\s*\($/iu.test(beforeOpen)
-        );
-      },
-    ),
+    exactPairRanges(focusCode, target, source, '\\s*:\\s*').some((pair) => {
+      const pairStart = focusOffset + pair.start;
+      const openBrace = windowCode.lastIndexOf('{', pairStart);
+      const closeBrace = windowCode.lastIndexOf('}', pairStart);
+      if (openBrace < 0 || openBrace < closeBrace) {
+        return false;
+      }
+      const beforeOpen = windowCode.slice(0, openBrace).trimEnd();
+      return (
+        /\breturn$/iu.test(beforeOpen) ||
+        /=$/u.test(beforeOpen) ||
+        /[\p{L}_$][\p{L}\p{N}_$]*\s*\($/iu.test(beforeOpen)
+      );
+    }),
   );
 }
 
@@ -264,10 +264,9 @@ function symbolDefinitionRole(
 ): ConfirmedEvidence['role'] | undefined {
   const token = tokenPattern(symbol);
   if (
-    new RegExp(
-      `\\b(?:class|interface|enum)\\s+${token}[^{};]*\\{`,
-      'u',
-    ).test(code) ||
+    new RegExp(`\\b(?:class|interface|enum)\\s+${token}[^{};]*\\{`, 'u').test(
+      code,
+    ) ||
     new RegExp(`\\btype\\s+${token}[^;=]*=\\s*\\{`, 'u').test(code)
   ) {
     return 'definition';
@@ -331,7 +330,11 @@ function classifyRecord(
         (left, right) =>
           (left.role === 'execution-site' ? 0 : 1) -
             (right.role === 'execution-site' ? 0 : 1) ||
-          (left.symbol === right.symbol ? 0 : left.symbol < right.symbol ? -1 : 1),
+          (left.symbol === right.symbol
+            ? 0
+            : left.symbol < right.symbol
+              ? -1
+              : 1),
       );
     const primaryDefinition = definitions[0];
     if (primaryDefinition !== undefined && !forceCandidate) {
@@ -347,7 +350,10 @@ function classifyRecord(
       evidenceClass: 'candidate',
       role: 'reference',
       reasonCodes: ['SYMBOL_REFERENCE_ONLY'],
-      promotionRequirements: ['DIRECT_REFERENCE_REQUIRED', 'CALL_PATH_REQUIRED'],
+      promotionRequirements: [
+        'DIRECT_REFERENCE_REQUIRED',
+        'CALL_PATH_REQUIRED',
+      ],
       ...(primarySymbol === undefined
         ? {}
         : { canonicalSymbol: primarySymbol }),
@@ -403,7 +409,9 @@ function addExclusion(
 export function classifyDiscoveryRecords(
   records: readonly DiscoveryRecord[],
   context: ClassificationContext,
-  initialExclusions: Readonly<Partial<Record<ExclusionReasonCode, number>>> = {},
+  initialExclusions: Readonly<
+    Partial<Record<ExclusionReasonCode, number>>
+  > = {},
 ): ClassificationResult {
   const confirmed: ConfirmedEvidence[] = [];
   const candidates: CandidateEvidence[] = [];
@@ -413,7 +421,11 @@ export function classifyDiscoveryRecords(
   let recordsClassified = 0;
 
   for (const record of records) {
-    if (context.negativeTerms.some((term) => containsTerm(record.focusExcerpt, term))) {
+    if (
+      context.negativeTerms.some((term) =>
+        containsTerm(record.focusExcerpt, term),
+      )
+    ) {
       addExclusion(exclusionSummary, 'NEGATIVE_TERM_MATCH');
       continue;
     }
@@ -429,11 +441,7 @@ export function classifyDiscoveryRecords(
 
     recordsClassified += 1;
     // 显式 test/docs = candidate-only hard ceiling
-    const classification = classifyRecord(
-      record,
-      context,
-      isTestOrDocs,
-    );
+    const classification = classifyRecord(record, context, isTestOrDocs);
     if (classification === undefined) {
       addExclusion(exclusionSummary, 'UNVERIFIED_FILE_CONTENT');
       continue;

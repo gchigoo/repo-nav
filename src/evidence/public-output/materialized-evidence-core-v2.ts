@@ -1,5 +1,8 @@
 import type { LocateExecutionTokenV2 } from '../../contracts/v2/locate-fact-envelope-v2.js';
-import type { CandidateEvidenceV2, ConfirmedEvidenceV2 } from '../../contracts/v2/locate-result-v2.js';
+import type {
+  CandidateEvidenceV2,
+  ConfirmedEvidenceV2,
+} from '../../contracts/v2/locate-result-v2.js';
 import { createOpaqueTokenV2 } from '../request-snapshot/opaque-token-v2.js';
 import type { StableRecordRefV2 } from '../request-snapshot/pre-ranking-evidence-pool-v2.js';
 import type { UnsafeEvidenceDraftV2 } from '../request-snapshot/classified-evidence-record-v2.js';
@@ -74,7 +77,10 @@ interface CoreRecordV2 {
   readonly rawCandidates: readonly RankedUnsafeEvidenceRefForMaterializationV2[];
 }
 
-const coreRecords = new WeakMap<TrustedMaterializedEvidenceCoreV2, CoreRecordV2>();
+const coreRecords = new WeakMap<
+  TrustedMaterializedEvidenceCoreV2,
+  CoreRecordV2
+>();
 const contributionBindings = new WeakMap<
   PublicMaterializationContributionV2,
   Readonly<{
@@ -153,7 +159,11 @@ export function materializePublicEvidenceV2(
   let locationRedacted = false;
   const confirmed: MaterializedConfirmedV2[] = [];
   for (const item of source.rankedConfirmed) {
-    const materialized = materializeDraftLocation(corpusInput, item.draft, corpus);
+    const materialized = materializeDraftLocation(
+      corpusInput,
+      item.draft,
+      corpus,
+    );
     locationRedacted = locationRedacted || materialized.locationRedacted;
     const draft = item.draft;
     if (draft.evidenceClass !== 'confirmed') {
@@ -171,7 +181,11 @@ export function materializePublicEvidenceV2(
   }
   const candidates: MaterializedCandidateV2[] = [];
   for (const item of source.rankedCandidates) {
-    const materialized = materializeDraftLocation(corpusInput, item.draft, corpus);
+    const materialized = materializeDraftLocation(
+      corpusInput,
+      item.draft,
+      corpus,
+    );
     locationRedacted = locationRedacted || materialized.locationRedacted;
     const draft = item.draft;
     if (draft.evidenceClass !== 'candidate') {

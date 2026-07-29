@@ -156,8 +156,7 @@ export function createSnapshotOutcomeContributionV2(input: {
  */
 export function requireSnapshotOutcomeContributionV2(
   tokenOrContribution:
-    | SnapshotOutcomeContributionTokenV2
-    | SnapshotOutcomeContributionV2,
+    SnapshotOutcomeContributionTokenV2 | SnapshotOutcomeContributionV2,
   expectedProof: SnapshotTrustProofV2,
   expectedExecution: LocateExecutionTokenV2,
 ): SnapshotOutcomeContributionV2 {

@@ -55,8 +55,7 @@ export function deriveLocateStatusFromFactsV2(
     ) ||
     input.unsatisfiedAnchors.some(
       (anchor) =>
-        anchor.reason === 'BUDGET_EXCEEDED' ||
-        anchor.reason === 'UNVERIFIED',
+        anchor.reason === 'BUDGET_EXCEEDED' || anchor.reason === 'UNVERIFIED',
     )
   ) {
     return 'partial';

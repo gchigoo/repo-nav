@@ -6,31 +6,31 @@ steps:
   exit_signal: F9只internal deep import F8 DI token orchestrator interface attempt accessor且不import F8 zero-argument factory provider descriptor、F1C createRequiredOwnerFinalizerV2 createMaterializedLocateResultComposerV2、internal execution token accessor或stage dependency，不重登记ready provider；F8先恢复same token再执行七stage exact call order，invalid ingress issue-validation-error counters、fail-closed、single execution、receipt hostile matrix、transport parity与no-v1 reachability全部通过
   verification: npm test -- --group public-beta-release --case projector-cutover --case transport-receipt-parity --case single-execution --case failure-order --case no-v1-runtime
   artifacts: [F8 accepted orchestration signature and call-order hash, v2 cutover truth table, request receipt hostile matrix, trusted compact JSON parity, legacy deletion graph]
-  status: pending
+  status: done
 - id: S2
   action: 把production CLI迁入fresh单一src build，落0.2.0-beta.1、Node engines、pinned npm、single npm-shrinkwrap、exports files metadata与owner-selected license及conditional NOTICE且保持private true
   exit_signal: manifest shrinkwrap serverInfo two bin versions exact，empty outDir source-to-emit no-map LF和stale-v1 mutation通过，MIT或Apache no-NOTICE分支无NOTICE，Apache required分支generated NOTICE exact，root declaration只含F1C approved API
   verification: npm run build && npm run package:metadata:check && npm run package:lock:check && npm run package:emit:check && npm test -- --group public-beta-release --case version-sources --case cli-runtime-closure --case package-api
   artifacts: [CLI move characterization, version engine npm and shrinkwrap parity, fresh emit closure, public declaration closure, owner license evidence]
-  status: pending
+  status: done
 - id: S3
   action: 接入exact typed ESLint与Prettier，先由F9 design/checklist固定tuple raw bytes生成并验证ReleaseDesignRevisionV1，再按绑定该revision的exact-one owner preflight生成LICENSE conditional NOTICE SECURITY，完成public docs并用synthetic fixtures自测four-graph audit SBOM tooling但不冒充candidate证据
   exit_signal: lint format零warning；design revision的tracked-clean regular-file、固定顺序、byte length、raw sha256、self-excluding compact hash及BOM LF-CRLF reorder dirty symlink-reparse mutation全部通过；license和security内容与current-design preflight exact，tooling mutation self-test与docs smoke通过，无未冻结candidate的audit SBOM或freshness结论
   verification: npm run lint && npm run format:check && node tools/release/owner-action-schema.mjs --preflight .codestable/runtime/public-beta-release-owner-preflight.json && npm run test:docs
   artifacts: [quality logs, ReleaseDesignRevisionV1 raw-byte manifest and mutation proof, owner preflight content proof, four-graph audit SBOM tooling mutation self-test, SECURITY channel proof, migration docs smoke]
-  status: pending
+  status: done
 - id: S4
   action: 用positive和conditional NOTICE allowlist从两个fresh source copy生成actual tgz与semantic manifest，再用semantic root sentinel完成四图和ReleaseCandidateIdentityV1，在same candidate执行audit canonical SBOM exact numeric large边界及F4 F9-PACK-001五marker加candidate semantic closure三hash六格
   exit_signal: source到semantic到closure到candidate无hash cycle，tarball budgets shrinkwrap LF no-map runtime closure two-run hash和12类large N-Nplus1通过，high critical为0，SBOM full graph exact；Node22 24三OS safe cell reports的workflowRunId与runAttempt逐格exact相同，passedAssertionMarkers集合按固定顺序exact等于五个requiredAssertionIds，candidate semantic closure三hash逐格一致，sixCellEvidenceSha256按schemaVersion run cells可重算
   verification: npm run package:dry-run && npm run package:smoke && npm run package:closure:check && npm run security:audit && npm run security:sbom:check && npm run test:golden -- --group public-beta-release --case large-release-boundaries && npm run test:platform && node tools/ci/run-platform-contracts.mjs --self-test
   artifacts: [tarball N and N plus one, fresh source-to-emit manifests, two-run semantic manifest, production closure and candidate identity, actual-consumer audit report, canonical CycloneDX proof, clean install bin MCP smoke, large counters, five-marker and three-hash six-cell safe reports, PublicBetaSixCellEvidenceV1]
-  status: pending
+  status: done
 - id: S5
   action: 校验exact-one owner preflight与same-candidate machine license security advisory actions，严格校验未跟踪RealConsumerConfirmationV1的canonical repository path candidate branch HEAD intent request policy owner time与self-excluding decision hash，再以git rev-parse解析index执行全工作树before-after postcondition的installed MCP E2E，生成SanitizedRealConsumerEvidenceV1，运行21-ID跨surface aggregate并生成candidate-evidence-bound private true publish false readiness
   exit_signal: confirmation与target逐字段exact且拒绝placeholder extra alias symlink-reparse swap future或过期输入；branch HEAD resolved index tracked untracked ignored和codegraph exact不变，confirmation≤evidence≤24小时且same candidate，sanitized evidence schema与self-excluding hash拒绝identity path branch HEAD request file hash分量或raw output，semantic closure audit SBOM six-cell real-consumer hashes都绑定同candidate，full aggregate通过，runtime actions confirmation tgz均未进artifact，无外部发布动作
   verification: npm run release:owner-actions:check && node tools/release/run-real-consumer-e2e.mjs --confirmation .codestable/runtime/public-beta-real-consumer-confirmation.json && node tools/release/run-public-beta-release-contracts.mjs --all
   artifacts: [machine owner action verdicts, real consumer aggregate before-after equality, sanitized E2E, full aggregate logs, release readiness, scope inventory, review QA acceptance]
-  status: pending
+  status: done
 checks:
 - id: C1
   item: F9 implementation前F1A F1B F1C F3 F2 F4 F5 F6 F7 F8均为current-revision done且各自独立review QA acceptance通过

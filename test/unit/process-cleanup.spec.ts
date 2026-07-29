@@ -354,6 +354,7 @@ describe.runIf(
         rmSync(cwd, { recursive: true, force: true });
       }
     },
+    30_000,
   );
 });
 

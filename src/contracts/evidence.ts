@@ -58,9 +58,7 @@ export const NextActionCodeSchema = z.enum(NEXT_ACTION_CODES);
 export type NextActionCode = z.infer<typeof NextActionCodeSchema>;
 
 export const EvidenceOperationCodeSchema = z.enum(EVIDENCE_OPERATION_CODES);
-export type EvidenceOperationCode = z.infer<
-  typeof EvidenceOperationCodeSchema
->;
+export type EvidenceOperationCode = z.infer<typeof EvidenceOperationCodeSchema>;
 
 export const BackendReasonCodeSchema = z.enum(BACKEND_REASON_CODES);
 export type BackendReasonCode = z.infer<typeof BackendReasonCodeSchema>;
@@ -150,11 +148,7 @@ export const CoverageReportSchema = z
       'error',
       'unknown',
     ]),
-    indexFreshness: z.enum([
-      'not-applicable',
-      'unknown',
-      'possibly-stale',
-    ]),
+    indexFreshness: z.enum(['not-applicable', 'unknown', 'possibly-stale']),
     limitsReached: z.array(LimitReasonCodeSchema).readonly(),
     exclusionSummary: z
       .partialRecord(ExclusionReasonCodeSchema, z.int().nonnegative())
@@ -177,7 +171,9 @@ export const EvidencePackSchema = z
   .readonly()
   .superRefine((pack, context) => {
     const confirmedIds = new Set(pack.confirmed.map((item) => item.id));
-    const duplicateId = pack.candidates.find((item) => confirmedIds.has(item.id));
+    const duplicateId = pack.candidates.find((item) =>
+      confirmedIds.has(item.id),
+    );
     if (duplicateId !== undefined) {
       context.addIssue({
         code: 'custom',

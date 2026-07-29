@@ -46,7 +46,10 @@ import type {
   CapabilityCoverageFactsV2,
   CapabilityOutcomeContributionV2,
 } from '../language/capability-coverage-v2.js';
-import { deriveLocateStatusFromFactsV2, type LocateStatusV2 } from './locate-status-v2.js';
+import {
+  deriveLocateStatusFromFactsV2,
+  type LocateStatusV2,
+} from './locate-status-v2.js';
 import { createNextActionsV2 } from './next-action-policy-v2.js';
 import { requireRequestOutcomeContributionsV2 } from './request-outcome-contribution-registry-v2.js';
 import {
@@ -256,8 +259,7 @@ export function aggregateRequestOutcomeV2(
     (typeof EXCLUSION_REASON_CODES_V2)[number],
     number
   > = {
-    NEGATIVE_TERM_MATCH:
-      snapshotContribution.exclusions.negativeTermMatchCount,
+    NEGATIVE_TERM_MATCH: snapshotContribution.exclusions.negativeTermMatchCount,
     OUTSIDE_LAYER_HINT: contributions[2].outsideLayerHintCount,
     DUPLICATE_LOCATION: snapshotContribution.exclusions.duplicateLocationCount,
     UNVERIFIED_FILE_CONTENT:
@@ -300,7 +302,10 @@ export function aggregateRequestOutcomeV2(
     fallbackChecked: fallback.checked,
     abortSource,
     limitsReached: canonicalizeCodes(limitsReached, LIMIT_REASON_CODES_V2),
-    degradations: canonicalizeCodes(degradations, COVERAGE_DEGRADATION_CODES_V2),
+    degradations: canonicalizeCodes(
+      degradations,
+      COVERAGE_DEGRADATION_CODES_V2,
+    ),
     exclusionSummary: Object.freeze(exclusionSummary),
     nextActions,
   });

@@ -102,7 +102,10 @@ interface PreFinalCapabilityPrivateV2 {
   readonly execution: LocateExecutionTokenV2;
   readonly pool: PreFinalEligibleDiscoveryPoolV2;
   readonly records: readonly TrustedPreFinalCapabilityRecordViewV2[];
-  readonly extensionByRef: ReadonlyMap<EligibleDiscoveryRefV2, string | undefined>;
+  readonly extensionByRef: ReadonlyMap<
+    EligibleDiscoveryRefV2,
+    string | undefined
+  >;
   readonly contextByRef: ReadonlyMap<
     EligibleDiscoveryRefV2,
     VerifiedLanguageContextRefV2

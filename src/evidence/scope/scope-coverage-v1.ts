@@ -21,12 +21,11 @@ import {
   type ResolvedRepositoryScopeV1,
 } from './resolve-repository-scope-v1.js';
 
-type DeepReadonlyScopeV1<T> =
-  T extends readonly unknown[]
+type DeepReadonlyScopeV1<T> = T extends readonly unknown[]
+  ? { readonly [K in keyof T]: DeepReadonlyScopeV1<T[K]> }
+  : T extends object
     ? { readonly [K in keyof T]: DeepReadonlyScopeV1<T[K]> }
-    : T extends object
-      ? { readonly [K in keyof T]: DeepReadonlyScopeV1<T[K]> }
-      : T;
+    : T;
 
 export const ScopeOutcomeContributionV2Schema = z
   .object({
@@ -82,7 +81,10 @@ interface CoverageFactsPrivateV1 {
   readonly matchedLayers: ReadonlySet<RepoLayer>;
 }
 
-const factsPrivate = new WeakMap<ScopeCoverageFactsV1, CoverageFactsPrivateV1>();
+const factsPrivate = new WeakMap<
+  ScopeCoverageFactsV1,
+  CoverageFactsPrivateV1
+>();
 const contributionPrivate = new WeakMap<
   ScopeOutcomeContributionV2,
   CoverageFactsPrivateV1

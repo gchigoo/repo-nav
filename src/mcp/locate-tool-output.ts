@@ -1,36 +1,36 @@
+/**
+ * MCP locate transport helpers over trusted public LocateResultV2 views.
+ */
+
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import {
-  applyPublicErrorPolicy,
-  createPublicErrorResult,
-  LocateToolOutputSchema,
-  type LocateResult,
-  type LocateToolOutput,
-} from '../contracts/index.js';
-import { redactLocateResult } from '../evidence/evidence-redactor.js';
+import type { LocateResultV2 } from '../contracts/v2/locate-result-v2.js';
+import type { PublicLocateTransportViewV2 } from '../evidence/locate-execution/public-locate-transport-registry-v2.js';
 
-export function invalidLocateInput(addTermSuggested: boolean): LocateResult {
-  return createPublicErrorResult(
-    'INVALID_INPUT',
-    addTermSuggested ? 'ADD_TERM' : undefined,
-  );
-}
-
-export function internalLocateError(): LocateResult {
-  return createPublicErrorResult('INTERNAL_ERROR');
-}
-
-export function createLocateToolOutput(result: LocateResult): LocateToolOutput {
-  return LocateToolOutputSchema.parse(
-    redactLocateResult(applyPublicErrorPolicy(result)),
-  );
-}
-
-export function serializeLocateToolOutput(result: LocateResult): CallToolResult {
-  const output = createLocateToolOutput(result);
+/**
+ * Serialize a trusted transport view into MCP CallToolResult (exact value + same JSON text).
+ */
+export function serializeLocateTransportView(
+  view: PublicLocateTransportViewV2,
+): CallToolResult {
   return {
-    structuredContent: output as Readonly<Record<string, unknown>>,
-    content: [{ type: 'text', text: JSON.stringify(output) }],
-    isError: !output.ok,
+    structuredContent: view.value as Readonly<Record<string, unknown>>,
+    content: [{ type: 'text', text: view.compactJson }],
+    isError: !view.value.ok,
+  };
+}
+
+/**
+ * Serialize an already-trusted LocateResultV2 when only the value is available
+ * (unexpected transport failure path — must not invent a new authority).
+ */
+export function serializeLocateToolOutput(
+  result: LocateResultV2,
+): CallToolResult {
+  const compactJson = JSON.stringify(result);
+  return {
+    structuredContent: result as Readonly<Record<string, unknown>>,
+    content: [{ type: 'text', text: compactJson }],
+    isError: !result.ok,
   };
 }

@@ -20,15 +20,9 @@ import {
   type ScopeBoundProducerSourceReceiptV2,
 } from '../scope/scope-bound-producer-registrar-v2.js';
 import { materializeScopeBoundEvidenceV2 } from '../scope/scope-bound-evidence-materializer-v2.js';
-import {
-  createJavascriptLanguageAdapterV2,
-} from './javascript-language-adapter-v2.js';
-import {
-  createSqlLanguageAdapterV2,
-} from './sql-language-adapter-v2.js';
-import {
-  createTypescriptLanguageAdapterV2,
-} from './typescript-language-adapter-v2.js';
+import { createJavascriptLanguageAdapterV2 } from './javascript-language-adapter-v2.js';
+import { createSqlLanguageAdapterV2 } from './sql-language-adapter-v2.js';
+import { createTypescriptLanguageAdapterV2 } from './typescript-language-adapter-v2.js';
 import {
   dispatchFallbackLanguageResultV2,
   materializeFallbackLiteralCandidateV2,
@@ -73,11 +67,7 @@ export function createLanguageAdapterScopeProducerResolverV2(
       if (privateSource.eligibleRef !== record) {
         throw new TypeError('language source record mismatch');
       }
-      const decision = readLanguageAdapterDecisionV2(
-        observation,
-        record,
-        exec,
-      );
+      const decision = readLanguageAdapterDecisionV2(observation, record, exec);
       void decision;
       if (
         privateSource.producerKind === 'none' ||
@@ -153,7 +143,10 @@ export async function dispatchLanguageEvidenceV2(
   const semantic = requireSemanticLanguageClassificationInputV2(
     input as VerifiedSemanticLanguageClassificationInputV2,
   );
-  if (semantic.observation !== observation || semantic.execution !== execution) {
+  if (
+    semantic.observation !== observation ||
+    semantic.execution !== execution
+  ) {
     throw new TypeError('language dispatch observation/execution mismatch');
   }
   const decision = readLanguageAdapterDecisionV2(

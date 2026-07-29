@@ -232,12 +232,7 @@ export function registerTrustedLocateProjectionAggregationV2(
     baseEnvelope.repositoryRoot,
     baseEnvelope.normalizedTerms,
   );
-  for (const owner of [
-    'snapshot',
-    'ranking',
-    'scope',
-    'capability',
-  ] as const) {
+  for (const owner of ['snapshot', 'ranking', 'scope', 'capability'] as const) {
     const entry = baseEnvelope.fragments[owner];
     if (entry === undefined) {
       return failInvalid();

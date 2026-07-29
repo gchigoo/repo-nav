@@ -25,10 +25,30 @@ function expectedPath(caseId: string): string {
 
 /**
  * Stabilize a v2 locate result for companion snapshot comparison.
- * repositoryRef is already opaque (`local-repository`); no path rewrite needed.
+ * repositoryRef is already opaque (`local-repository`); normalize env-dependent
+ * snapshot.gitState so CI clean checkouts match local fixture probes.
  */
 export function createStableGoldenProjection(result: LocateResultV2): unknown {
-  return result;
+  if (result.ok !== true) {
+    return result;
+  }
+  const snapshot = result.evidence.coverage.snapshot;
+  if (snapshot === undefined || snapshot.gitState === 'unknown') {
+    return result;
+  }
+  return {
+    ...result,
+    evidence: {
+      ...result.evidence,
+      coverage: {
+        ...result.evidence.coverage,
+        snapshot: {
+          ...snapshot,
+          gitState: 'unknown' as const,
+        },
+      },
+    },
+  };
 }
 
 export function loadExpectedGoldenProjection(caseId: string): unknown {

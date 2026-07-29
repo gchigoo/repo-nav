@@ -8,8 +8,8 @@ acceptance_authorization: approved
 acceptance_authorization_ref: approval-report.md#goal-acceptance
 commit_authorization: approved
 commit_authorization_ref: approval-report.md#goal-commits
-handoff_reason: ""
-handoff_next: ""
+handoff_reason: ''
+handoff_next: ''
 current_feature_index: 11
 features:
 - slug: public-output-boundary-v2
@@ -119,7 +119,7 @@ features:
   review: .codestable/features/2026-07-24-public-beta-release/public-beta-release-review.md
   qa: .codestable/features/2026-07-24-public-beta-release/public-beta-release-qa.md
   acceptance: .codestable/features/2026-07-24-public-beta-release/public-beta-release-acceptance.md
-  status: pending
+  status: implementing
 ledger:
 - step: dispatch-goal-driver
   status: started
@@ -329,9 +329,16 @@ ledger:
   status: done
   feature: public-beta-release
   index: 11
-  note: "publicSafeText=Report security issues via GitHub Security Advisories for gchigoo/repo-nav. Do not file public issues for vulnerabilities or secrets."
+  note: publicSafeText=Report security issues via GitHub Security Advisories for gchigoo/repo-nav.
+    Do not file public issues for vulnerabilities or secrets.
 - step: f9-resume-after-security
   status: started
   feature: public-beta-release
   index: 11
   note: both preflights approved; write owner-preflight JSON and implement F9
+- step: f9-feature-start
+  status: started
+  feature: public-beta-release
+  index: 11
+  note: owner-preflight license+security written; implementing after f9-security-channel-preflight
+    approved

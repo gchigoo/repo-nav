@@ -3,7 +3,7 @@ doc_type: roadmap-goal-feature
 roadmap: repo-nav-public-beta
 feature: 2026-07-24-public-beta-release
 roadmap_item: public-beta-release
-status: pending
+status: implementing
 ---
 
 # public-beta-release Goal 执行规格

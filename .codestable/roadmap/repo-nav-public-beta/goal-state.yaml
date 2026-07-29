@@ -306,3 +306,13 @@ ledger:
 - at: "2026-07-28"
   feature: public-beta-release
   note: Owner-stop RiskAcceptanceNeeded after F8 accept 2457a7a; ge-6e44d402368a does not cover F9 cutover/publish/private/license
+- step: f9-auth
+  status: done
+  feature: public-beta-release
+  index: 11
+  note: "f9-public-beta-release approved option1; MIT/2026/Gchigoo; push+#2 allowed; no private-remove/publish/tag/merge-main"
+- step: f9-resume
+  status: started
+  feature: public-beta-release
+  index: 11
+  note: handoff cleared; enter F9 implementation

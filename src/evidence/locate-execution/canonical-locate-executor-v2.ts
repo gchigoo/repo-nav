@@ -424,35 +424,42 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
               finalStableEvidence: Object.freeze([]),
             })
           : createZeroReadSnapshotFactsV2();
-      const rankingFacts =
-        legacy.ok
-          ? Object.freeze({
-              confirmed: Object.freeze(
-                legacy.evidence.confirmed.map((item) =>
-                  Object.freeze({
-                    evidenceClass: 'confirmed' as const,
-                    role: item.role,
-                    location: item.location,
-                    provenance: item.provenance,
-                    reasonCodes: item.reasonCodes,
+      // Legacy evidence location/redaction shapes differ from contract drafts;
+      // match F2 ranker bridge and assert contract shape at the projection seam.
+      const rankingFacts: RankedEvidenceFactsV2 | undefined = legacy.ok
+        ? (Object.freeze({
+            confirmed: Object.freeze(
+              legacy.evidence.confirmed.map((item) =>
+                Object.freeze({
+                  evidenceClass: 'confirmed' as const,
+                  role: item.role,
+                  location: Object.freeze({
+                    ...item.location,
+                    resolvable: true as const,
                   }),
-                ),
+                  provenance: item.provenance,
+                  reasonCodes: item.reasonCodes,
+                }),
               ),
-              candidates: Object.freeze(
-                legacy.evidence.candidates.map((item) =>
-                  Object.freeze({
-                    evidenceClass: 'candidate' as const,
-                    role: item.role,
-                    location: item.location,
-                    provenance: item.provenance,
-                    reasonCodes: item.reasonCodes,
-                    promotionRequirements: item.promotionRequirements,
+            ),
+            candidates: Object.freeze(
+              legacy.evidence.candidates.map((item) =>
+                Object.freeze({
+                  evidenceClass: 'candidate' as const,
+                  role: item.role,
+                  location: Object.freeze({
+                    ...item.location,
+                    resolvable: true as const,
                   }),
-                ),
+                  provenance: item.provenance,
+                  reasonCodes: item.reasonCodes,
+                  promotionRequirements: item.promotionRequirements,
+                }),
               ),
-              unsatisfiedAnchors: Object.freeze([]),
-            })
-          : undefined;
+            ),
+            unsatisfiedAnchors: Object.freeze([]),
+          }) as RankedEvidenceFactsV2)
+        : undefined;
       return this.terminalSuccess(
         legacy,
         projectionExecution,

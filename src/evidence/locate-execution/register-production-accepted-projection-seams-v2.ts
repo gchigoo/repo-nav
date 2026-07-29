@@ -10,7 +10,10 @@ import type {
   LocateResult,
 } from '../../contracts/index.js';
 import type { BackendExecutionContextV2 } from '../../contracts/v2/backend-execution-outcome-v2.js';
-import type { LocateExecutionTokenV2 } from '../../contracts/v2/locate-fact-envelope-v2.js';
+import type {
+  LocateExecutionTokenV2,
+  RankedEvidenceFactsV2,
+} from '../../contracts/v2/locate-fact-envelope-v2.js';
 import type { ResolvedLocateLimits } from '../../contracts/request.js';
 import type {
   FinalizedAbortDecisionV2,
@@ -92,6 +95,21 @@ function toUnsafeDraftFromLegacyV2(
   });
 }
 
+/**
+ * Contract RankedEvidenceFacts drafts require location.resolvable.
+ */
+function toContractRankedDraftV2(
+  draft: UnsafeEvidenceDraftV2,
+): RankedEvidenceFactsV2['confirmed'][number] {
+  return Object.freeze({
+    ...draft,
+    location: Object.freeze({
+      ...draft.location,
+      resolvable: true as const,
+    }),
+  }) as RankedEvidenceFactsV2['confirmed'][number];
+}
+
 function legacyEvidenceToStableViewsV2(
   evidence: readonly (ConfirmedEvidence | CandidateEvidence)[],
 ): readonly TrustedStableRecordViewV2[] {
@@ -123,20 +141,23 @@ export function issuePassthroughRankingOutcomeFromLegacyEvidenceV2(input: {
 }): EvidenceRankingOutcomeV2 {
   const confirmed = legacyEvidenceToStableViewsV2(input.evidence.confirmed);
   const candidates = legacyEvidenceToStableViewsV2(input.evidence.candidates);
+  const fragment: RankedEvidenceFactsV2 = Object.freeze({
+    confirmed: Object.freeze(
+      confirmed.map((record) => toContractRankedDraftV2(record.draft)),
+    ),
+    candidates: Object.freeze(
+      candidates.map((record) => {
+        const draft = record.draft;
+        if (draft.evidenceClass !== 'candidate') {
+          throw new TypeError('candidate draft class mismatch');
+        }
+        return toContractRankedDraftV2(draft);
+      }),
+    ),
+    unsatisfiedAnchors: Object.freeze([]),
+  });
   return issueEvidenceRankingOutcomeV2({
-    fragment: Object.freeze({
-      confirmed: Object.freeze(confirmed.map((record) => record.draft)),
-      candidates: Object.freeze(
-        candidates.map((record) => {
-          const draft = record.draft;
-          if (draft.evidenceClass !== 'candidate') {
-            throw new TypeError('candidate draft class mismatch');
-          }
-          return draft;
-        }),
-      ),
-      unsatisfiedAnchors: Object.freeze([]),
-    }),
+    fragment,
     budgetFacts: Object.freeze({
       maxFilesReached: input.evidence.coverage.limitsReached.includes(
         'MAX_FILES_REACHED',

@@ -98,7 +98,7 @@
     "peakRssBytes": 128516096
   },
   "correctness": {
-    "stableProjectionHash": "af11706c8ae29994b6bf17747bcb7d721434f04dd2e6b16e3358784b31afa2ed",
+    "stableProjectionHash": "2a24ebb977af336d87029f5a4e3a629dd15d81148e4bf60f486cad5a375ce336",
     "status": "ok",
     "confirmedCount": 10,
     "candidateCount": 10,

@@ -35,6 +35,8 @@ export interface LocateAbortCoordinatorV2 {
   readonly signal: AbortSignal;
   /** open 态读取 live source；close/dispose 后失败。 */
   peekSource(): LocateAbortSource;
+  /** close 后仍可读冻结 source；dispose 后失败。 */
+  recordedSource(): LocateAbortSource;
   abort(source: TriggeredLocateAbortSource, reason?: unknown): boolean;
   closeFinalization(): FinalizedAbortDecisionV2;
   dispose(): void;
@@ -109,6 +111,16 @@ class LocateAbortCoordinatorV2Impl implements LocateAbortCoordinatorV2 {
     return this.currentSource;
   }
 
+  /**
+   * Read the latched abort source after closeFinalization (still fails after dispose).
+   */
+  public recordedSource(): LocateAbortSource {
+    if (this.state === 'disposed') {
+      throw new TypeError('recorded abort source is unavailable after dispose');
+    }
+    return this.currentSource;
+  }
+
   public abort(source: TriggeredLocateAbortSource, reason?: unknown): boolean {
     if (this.state !== 'open') {
       return false;
@@ -122,7 +134,10 @@ class LocateAbortCoordinatorV2Impl implements LocateAbortCoordinatorV2 {
   }
 
   public closeFinalization(): FinalizedAbortDecisionV2 {
-    if (this.state !== 'open' || this.finalized !== undefined) {
+    if (this.finalized !== undefined) {
+      return this.finalized;
+    }
+    if (this.state !== 'open') {
       throw new TypeError('finalization latch already closed');
     }
     this.clearDeadlineTimer();

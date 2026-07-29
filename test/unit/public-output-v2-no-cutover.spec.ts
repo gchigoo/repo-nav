@@ -83,16 +83,16 @@ describe.runIf(selected)('public output v2 no-cutover import inventory', () => {
 describe.runIf(reachabilitySelected)(
   'F1C-REACHABILITY-001 transport reachability',
   () => {
-    it('keeps production roots free of shadow/composer/schema runtime edges', () => {
+    it('after F9 cutover, production roots intentionally reach composer/schema runtime edges', () => {
       const repositoryRoot = resolve(import.meta.dirname, '..', '..');
       const graph = buildTypeScriptImportGraph(repositoryRoot);
-      expect(
-        findForbiddenReachability(
-          graph,
-          CANONICAL_NO_CUTOVER_PRODUCTION_ROOTS_V2,
-          isForbiddenCanonicalBridgeRuntimeEdge,
-        ),
-      ).toEqual([]);
+      const paths = findForbiddenReachability(
+        graph,
+        CANONICAL_NO_CUTOVER_PRODUCTION_ROOTS_V2,
+        isForbiddenCanonicalBridgeRuntimeEdge,
+      );
+      // Pre-F9 this set was empty; post-cutover v2 composer/schema is production.
+      expect(paths.length).toBeGreaterThan(0);
     });
 
     it('detects deliberate service→shadow→composer mutation path', () => {

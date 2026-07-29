@@ -35,7 +35,12 @@ describe.runIf(
     expect(timerCleared).toBe(1);
     expect(coordinator.abort('caller')).toBe(false);
     expect(() => coordinator.peekSource()).toThrow(/unavailable after close/);
-    expect(() => coordinator.closeFinalization()).toThrow(/already closed/);
+    // Idempotent re-close returns the same frozen decision token.
+    const relatch = coordinator.closeFinalization();
+    expect(requireFinalizedAbortDecisionV2(relatch, coordinator)).toBe(
+      'deadline',
+    );
+    expect(coordinator.closeFinalization()).toBe(relatch);
   });
 });
 

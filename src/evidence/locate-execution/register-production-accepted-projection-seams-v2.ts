@@ -4,6 +4,11 @@
  * registration is no longer sufficient).
  */
 
+import type {
+  CandidateEvidence,
+  ConfirmedEvidence,
+  LocateResult,
+} from '../../contracts/index.js';
 import type { BackendExecutionContextV2 } from '../../contracts/v2/backend-execution-outcome-v2.js';
 import type { LocateExecutionTokenV2 } from '../../contracts/v2/locate-fact-envelope-v2.js';
 import type { ResolvedLocateLimits } from '../../contracts/request.js';
@@ -22,11 +27,18 @@ import {
   type EvidenceRankingOutcomeV2,
 } from '../ranking/evidence-ranking-outcome-v2.js';
 import { issueTrustedFallbackDecisionV2 } from '../request-outcome/trusted-fallback-decision-v2.js';
+import type { UnsafeEvidenceDraftV2 } from '../request-snapshot/classified-evidence-record-v2.js';
 import {
   createSnapshotOutcomeContributionV2,
   requireSnapshotOutcomeContributionV2,
 } from '../request-snapshot/snapshot-outcome-contribution-v2.js';
 import type { SnapshotTrustProofV2 } from '../request-snapshot/final-snapshot-check-v2.js';
+import { createOpaqueTokenV2 } from '../request-snapshot/opaque-token-v2.js';
+import type {
+  OpaqueFileBucketRefV2,
+  StableRecordRefV2,
+  TrustedStableRecordViewV2,
+} from '../request-snapshot/pre-ranking-evidence-pool-v2.js';
 import type { ScopeCoverageBasisV2 } from '../request-snapshot/scope-coverage-basis-v2.js';
 import type { ResolvedRepositoryScopeV1 } from '../scope/resolve-repository-scope-v1.js';
 import type { ExecutionScopeCoverageMountV1 } from '../scope/build-execution-scope-coverage-v1.js';
@@ -51,6 +63,100 @@ export interface ProductionAcceptedProjectionSeamInputV2 {
   readonly fallbackRequired: boolean;
   readonly completeEquivalentFallback: boolean;
   readonly discardedEvidenceCount: number;
+}
+
+type LegacySuccessEvidence = Extract<
+  LocateResult,
+  { readonly ok: true }
+>['evidence'];
+
+function toUnsafeDraftFromLegacyV2(
+  evidence: ConfirmedEvidence | CandidateEvidence,
+): UnsafeEvidenceDraftV2 {
+  if (evidence.evidenceClass === 'confirmed') {
+    return Object.freeze({
+      evidenceClass: 'confirmed' as const,
+      role: evidence.role,
+      location: evidence.location,
+      provenance: evidence.provenance,
+      reasonCodes: evidence.reasonCodes,
+    });
+  }
+  return Object.freeze({
+    evidenceClass: 'candidate' as const,
+    role: evidence.role,
+    location: evidence.location,
+    provenance: evidence.provenance,
+    reasonCodes: evidence.reasonCodes,
+    promotionRequirements: evidence.promotionRequirements,
+  });
+}
+
+function legacyEvidenceToStableViewsV2(
+  evidence: readonly (ConfirmedEvidence | CandidateEvidence)[],
+): readonly TrustedStableRecordViewV2[] {
+  return Object.freeze(
+    evidence.map((item) => {
+      const draft = toUnsafeDraftFromLegacyV2(item);
+      return Object.freeze({
+        recordRef: createOpaqueTokenV2<StableRecordRefV2>(),
+        fileBucketRef: createOpaqueTokenV2<OpaqueFileBucketRefV2>(),
+        draft,
+        rankingSignals: Object.freeze({
+          kind: 'direct' as const,
+          focusLines: item.location.lines,
+          focusExcerpt: item.location.excerpt,
+        }),
+      }) as TrustedStableRecordViewV2;
+    }),
+  );
+}
+
+/**
+ * Seed F2 ranking from legacy evidence when the snapshot/ranking path is
+ * skipped (test doubles, zero-decode early finalization).
+ */
+export function issuePassthroughRankingOutcomeFromLegacyEvidenceV2(input: {
+  readonly evidence: LegacySuccessEvidence;
+  readonly snapshotProof: SnapshotTrustProofV2;
+  readonly execution: LocateExecutionTokenV2;
+}): EvidenceRankingOutcomeV2 {
+  const confirmed = legacyEvidenceToStableViewsV2(input.evidence.confirmed);
+  const candidates = legacyEvidenceToStableViewsV2(input.evidence.candidates);
+  return issueEvidenceRankingOutcomeV2({
+    fragment: Object.freeze({
+      confirmed: Object.freeze(confirmed.map((record) => record.draft)),
+      candidates: Object.freeze(
+        candidates.map((record) => {
+          const draft = record.draft;
+          if (draft.evidenceClass !== 'candidate') {
+            throw new TypeError('candidate draft class mismatch');
+          }
+          return draft;
+        }),
+      ),
+      unsatisfiedAnchors: Object.freeze([]),
+    }),
+    budgetFacts: Object.freeze({
+      maxFilesReached: input.evidence.coverage.limitsReached.includes(
+        'MAX_FILES_REACHED',
+      ),
+      maxConfirmedReached: input.evidence.coverage.limitsReached.includes(
+        'MAX_CONFIRMED_REACHED',
+      ),
+      maxCandidatesReached: input.evidence.coverage.limitsReached.includes(
+        'MAX_CANDIDATES_REACHED',
+      ),
+      preRankingPoolTruncated: false,
+      safeSelectorCollision: false,
+      safeOrderingCollision: false,
+    }),
+    confirmed,
+    candidates,
+    snapshotProof: input.snapshotProof,
+    execution: input.execution,
+    collisionAnchorKeys: new Set(),
+  });
 }
 
 /**

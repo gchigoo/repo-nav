@@ -167,7 +167,7 @@ describe.runIf(
     const backends = [
       {
         id: 'ripgrep' as const,
-        probe: vi.fn(async () => ({ status: 'available' as const })),
+        probe: vi.fn(async () => ({ state: 'available' as const })),
         search: vi.fn(),
       },
     ] as any;

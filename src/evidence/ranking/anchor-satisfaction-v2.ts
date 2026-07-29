@@ -172,7 +172,7 @@ export function classifyRecordPriorityV2(input: {
 
   const signals = input.record.rankingSignals;
   let regularTermCount = 0;
-  if (signals.kind === 'direct') {
+  if (signals.kind === 'direct' || signals.kind === 'derived') {
     const focus = signals.focusExcerpt.toLocaleLowerCase('und');
     for (const term of input.regularTerms) {
       const needle = term.caseSensitive
@@ -184,6 +184,7 @@ export function classifyRecordPriorityV2(input: {
       }
     }
     if (
+      signals.kind === 'direct' &&
       input.record.draft.provenance.discoveredBy.includes('codegraph') &&
       draftSymbol(input.record) !== undefined
     ) {
@@ -197,6 +198,15 @@ export function classifyRecordPriorityV2(input: {
   }
   if (hasReason(input.record, 'SECONDARY_BACKEND_HIT')) {
     consider(MATCH_PRIORITY_V2.SECONDARY_BACKEND);
+  }
+  // Legacy neighbor/sibling drafts often omit the seed term from their own
+  // excerpt; admit them above ordinary single-term scope noise.
+  if (input.record.draft.evidenceClass === 'candidate') {
+    if (hasReason(input.record, 'ALIAS_SOURCE_NEIGHBOR')) {
+      consider(MATCH_PRIORITY_V2.MULTI_TERM);
+    } else if (hasReason(input.record, 'SAME_ENTITY_SIBLING')) {
+      consider(MATCH_PRIORITY_V2.SINGLE_TERM);
+    }
   }
 
   return Object.freeze({

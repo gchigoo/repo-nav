@@ -227,7 +227,7 @@ export function createEvidencePackMutationFixture(): LocateResult {
             verifiedBy: 'filesystem',
             operations: ['RIPGREP_SEARCH', 'FILESYSTEM_READ_RANGE'],
           },
-          reasonCodes: ['DIRECT_ALIAS_MAPPING', 'EXACT_TERM_MATCH'],
+          reasonCodes: ['EXACT_TERM_MATCH', 'DIRECT_ALIAS_MAPPING'],
         },
       ],
       candidates: [

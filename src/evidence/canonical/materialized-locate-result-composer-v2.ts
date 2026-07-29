@@ -2,12 +2,28 @@
  * Materialized locate result composer: merges finalized owner/neutral views and assigns IDs.
  */
 
-import type { LocateResultV2 } from '../../contracts/v2/locate-result-v2.js';
+import {
+  CANDIDATE_REASON_CODES_V2,
+  CONFIRMED_REASON_CODES_V2,
+  NEXT_ACTION_CODES_V2,
+  PROMOTION_REQUIREMENT_CODES_V2,
+  canonicalizeCoverageV2,
+  deriveLocateStatusV2,
+  type LocateResultV2,
+} from '../../contracts/v2/locate-result-v2.js';
 import { requireTrustedLocateProjectionMaterializationEntryV2 } from './locate-projection-stage-registrar-v2.js';
 import {
   requireTrustedFinalizedLocateFactsV2,
   type TrustedFinalizedLocateFactsV2,
 } from './required-owner-finalizer-v2.js';
+
+function canonicalizeCodes<const TValue extends string>(
+  values: readonly TValue[],
+  order: readonly TValue[],
+): readonly TValue[] {
+  const present = new Set(values);
+  return Object.freeze(order.filter((value) => present.has(value)));
+}
 
 declare const TRUSTED_MATERIALIZED_LOCATE_RESULT_V2: unique symbol;
 export type TrustedMaterializedLocateResultV2 = Readonly<{
@@ -61,47 +77,75 @@ class MaterializedLocateResultComposerV2Impl implements MaterializedLocateResult
       Object.freeze({
         ...item.value,
         id: `evidence:v2:${String(index + 1).padStart(4, '0')}`,
+        reasonCodes: canonicalizeCodes(
+          item.value.reasonCodes,
+          CONFIRMED_REASON_CODES_V2,
+        ),
       }),
     );
     const candidates = registration.candidates.map((item, index) =>
       Object.freeze({
         ...item.value,
         id: `evidence:v2:${String(confirmed.length + index + 1).padStart(4, '0')}`,
+        reasonCodes: canonicalizeCodes(
+          item.value.reasonCodes,
+          CANDIDATE_REASON_CODES_V2,
+        ),
+        promotionRequirements: canonicalizeCodes(
+          item.value.promotionRequirements,
+          PROMOTION_REQUIREMENT_CODES_V2,
+        ),
       }),
     );
     const ranking = envelope.fragments.ranking.value;
     const snapshot = envelope.fragments.snapshot.value;
     const scope = envelope.fragments.scope.value;
     const capability = envelope.fragments.capability.value;
+    const locationRedacted = [...confirmed, ...candidates].some(
+      (evidence) => !evidence.location.resolvable,
+    );
+    const coverage = canonicalizeCoverageV2(
+      Object.freeze({
+        backends: entry.backend.outcomes,
+        strategyComplete: entry.requestOutcome.strategyComplete,
+        fallbackChecked: entry.requestOutcome.fallbackChecked,
+        indexState: entry.backend.indexState,
+        indexFreshness: entry.backend.indexFreshness,
+        limitsReached: entry.requestOutcome.limitsReached,
+        degradations: entry.requestOutcome.degradations.filter(
+          (code) => code !== 'LOCATION_REDACTED',
+        ),
+        exclusionSummary: entry.requestOutcome.exclusionSummary,
+        abortSource: entry.requestOutcome.abortSource,
+        unsatisfiedAnchors: ranking.unsatisfiedAnchors,
+        snapshot: snapshot.coverage,
+        scope,
+        capabilities: Object.freeze({
+          textSearch: 'supported-text-files' as const,
+          semanticClassification: capability.semanticClassification,
+          unsupportedLanguageHits: capability.unsupportedLanguageHits,
+        }),
+      }),
+      locationRedacted,
+    );
+    const status = deriveLocateStatusV2(
+      coverage,
+      confirmed.length + candidates.length,
+    );
     const result: LocateResultV2 = Object.freeze({
       ok: true as const,
       evidence: Object.freeze({
         schemaVersion: '2.0' as const,
-        status: entry.statusV2,
+        status,
         repositoryRef: 'local-repository' as const,
         normalizedTerms: registration.normalizedTerms,
         confirmed: Object.freeze(confirmed),
         candidates: Object.freeze(candidates),
-        coverage: Object.freeze({
-          backends: entry.backend.outcomes,
-          strategyComplete: entry.requestOutcome.strategyComplete,
-          fallbackChecked: entry.requestOutcome.fallbackChecked,
-          indexState: entry.backend.indexState,
-          indexFreshness: entry.backend.indexFreshness,
-          limitsReached: entry.requestOutcome.limitsReached,
-          degradations: entry.requestOutcome.degradations,
-          exclusionSummary: entry.requestOutcome.exclusionSummary,
-          abortSource: entry.requestOutcome.abortSource,
-          unsatisfiedAnchors: ranking.unsatisfiedAnchors,
-          snapshot: snapshot.coverage,
-          scope,
-          capabilities: Object.freeze({
-            textSearch: 'supported-text-files' as const,
-            semanticClassification: capability.semanticClassification,
-            unsupportedLanguageHits: capability.unsupportedLanguageHits,
-          }),
-        }),
-        nextActions: entry.requestOutcome.nextActions,
+        coverage,
+        nextActions: canonicalizeCodes(
+          entry.requestOutcome.nextActions,
+          NEXT_ACTION_CODES_V2,
+        ),
       }),
     });
     const token = createOpaqueBrand() as TrustedMaterializedLocateResultV2;

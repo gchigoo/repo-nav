@@ -276,20 +276,22 @@ describe.runIf(seamSelected)(
       ]) {
         expect(canonicalJoined.includes(marker), marker).toBe(false);
       }
-      // locate-execution：F2 可接线 ranking outcome；仍禁 public-output stages / F6
+      // locate-execution：F9 可接线 SnapshotTrustProof + ranking outcome；仍禁
+      // public-output stages / F6 aggregation / request-snapshot-cache 业务路径
       const locateJoined = collect(
         resolve('src/evidence/locate-execution'),
       ).join('\n');
       for (const marker of [
-        'SnapshotTrustProofV2',
         'TrustedMaterializedEvidenceCoreV2',
         'TrustedRequestOutcomeAggregationV2',
-        'f2-locate-projection-stages-v2',
         'relevance-ranking-budget',
         'request-snapshot-cache',
       ]) {
         expect(locateJoined.includes(marker), `locate:${marker}`).toBe(false);
       }
+      // F9 production seams intentionally import SnapshotTrustProofV2 + F2 stages registrar
+      expect(locateJoined.includes('SnapshotTrustProofV2')).toBe(true);
+      expect(locateJoined.includes('f2-locate-projection-stages-v2')).toBe(true);
     });
 
     it('zeroes stage callbacks when any prerequisite is missing', () => {

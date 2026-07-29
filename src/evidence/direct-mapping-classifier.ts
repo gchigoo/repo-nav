@@ -309,7 +309,7 @@ function classifyRecord(
     return {
       evidenceClass: 'confirmed',
       role: 'value-mapping',
-      reasonCodes: ['DIRECT_ALIAS_MAPPING', 'EXACT_TERM_MATCH'],
+      reasonCodes: ['EXACT_TERM_MATCH', 'DIRECT_ALIAS_MAPPING'],
       ...(record.canonicalSymbols[0] === undefined
         ? {}
         : { canonicalSymbol: record.canonicalSymbols[0] }),

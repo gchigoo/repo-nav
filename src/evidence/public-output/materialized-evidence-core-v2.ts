@@ -122,10 +122,8 @@ function materializeDraftLocation(
             corpus,
           ),
         );
-  const locationRedacted =
-    file.reasonCodes.length > 0 ||
-    excerpt.reasonCodes.length > 0 ||
-    (symbol !== undefined && symbol.reasonCodes.length > 0);
+  // LOCATION_REDACTED tracks hidden/unresolvable files only (schema agreement).
+  const locationRedacted = file.reasonCodes.length > 0;
   return Object.freeze({
     location: Object.freeze({
       file: file.value,

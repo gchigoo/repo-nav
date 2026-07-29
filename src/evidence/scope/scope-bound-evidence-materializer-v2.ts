@@ -82,8 +82,8 @@ function materializeFactsRowV2(
         location,
         provenance,
         reasonCodes: Object.freeze([
-          'DIRECT_ALIAS_MAPPING' as const,
           'EXACT_TERM_MATCH' as const,
+          'DIRECT_ALIAS_MAPPING' as const,
         ]),
       });
     case 'direct-term':
@@ -108,8 +108,8 @@ function materializeFactsRowV2(
         location,
         provenance,
         reasonCodes: Object.freeze([
-          'DIRECT_ALIAS_MAPPING' as const,
           'EXACT_TERM_MATCH' as const,
+          'DIRECT_ALIAS_MAPPING' as const,
         ]),
       });
     case 'anchored-definition':

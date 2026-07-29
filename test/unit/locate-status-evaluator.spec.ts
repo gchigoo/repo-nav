@@ -316,11 +316,14 @@ describe.runIf(
     expect(result).toMatchObject({
       ok: true,
       evidence: {
-        status: 'backend_unavailable',
+        // Post-F9 v2 derives status from aggregation/backend trace; fixed
+        // BACKEND_ABORTED must not surface as a caller-adjustable deadline.
         coverage: { limitsReached: [] },
         nextActions: [],
       },
     });
+    expect(result.ok && result.evidence.status).not.toBe('timeout');
+    expect(result.ok && result.evidence.coverage.abortSource).toBe('none');
   });
 });
 
@@ -435,13 +438,18 @@ for (const [caseId, interruption, timeoutMs] of [
         if (!result.ok) {
           throw new Error('Expected a timeout EvidencePack.');
         }
-        expect(result.evidence.status).toBe('timeout');
+        // Post-F9: caller abort → cancelled; engine deadline → timeout.
+        expect(result.evidence.status).toBe(
+          interruption === 'caller' ? 'cancelled' : 'timeout',
+        );
         expect(
           result.evidence.confirmed.length + result.evidence.candidates.length,
         ).toBeGreaterThan(0);
-        expect(result.evidence.coverage.limitsReached).toContain(
-          'TIMEOUT_REACHED',
-        );
+        if (interruption === 'deadline') {
+          expect(result.evidence.coverage.limitsReached).toContain(
+            'TIMEOUT_REACHED',
+          );
+        }
         expect(result.evidence.nextActions).toEqual(
           interruption === 'deadline' ? ['RETRY_WITH_HIGHER_LIMIT'] : [],
         );

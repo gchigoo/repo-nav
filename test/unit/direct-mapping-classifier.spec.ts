@@ -72,7 +72,7 @@ describe.runIf(isSelected(classifierIdentity))('direct mapping classifier', () =
     expect(result.confirmed).toHaveLength(1);
     expect(result.confirmed[0]).toMatchObject({
       role: 'value-mapping',
-      reasonCodes: ['DIRECT_ALIAS_MAPPING', 'EXACT_TERM_MATCH'],
+      reasonCodes: ['EXACT_TERM_MATCH', 'DIRECT_ALIAS_MAPPING'],
     });
     expect(result.candidates).toEqual([]);
   });

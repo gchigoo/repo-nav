@@ -48,7 +48,10 @@ import {
   type LocateAbortSource,
 } from '../abort-source.js';
 import { closeAndFinalizeLocateSynchronouslyV2 } from './canonical-locate-finalization-v2.js';
-import { registerProductionAcceptedProjectionSeamsV2 } from './register-production-accepted-projection-seams-v2.js';
+import {
+  issuePassthroughRankingOutcomeFromLegacyEvidenceV2,
+  registerProductionAcceptedProjectionSeamsV2,
+} from './register-production-accepted-projection-seams-v2.js';
 import type { BackendExecutionContextV2 } from '../../contracts/v2/backend-execution-outcome-v2.js';
 import {
   createVerifiedCandidateContext,
@@ -377,10 +380,18 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
           resolvedLimits.timeoutMs,
         );
       const abortDecision = abortCoordinator.closeFinalization();
+      const rankingOutcome =
+        legacy.ok
+          ? issuePassthroughRankingOutcomeFromLegacyEvidenceV2({
+              evidence: legacy.evidence,
+              snapshotProof: scopeMount.snapshotProof,
+              execution,
+            })
+          : undefined;
       registerProductionAcceptedProjectionSeamsV2({
         execution,
         snapshotProof: scopeMount.snapshotProof,
-        rankingOutcome: undefined,
+        rankingOutcome,
         scopeMount,
         capabilityMount,
         resolvedLimits,
@@ -392,11 +403,61 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
         completeEquivalentFallback: options.completeEquivalentFallback ?? false,
         discardedEvidenceCount: 0,
       });
+      const retainedFiles =
+        legacy.ok
+          ? new Set(
+              [
+                ...legacy.evidence.confirmed,
+                ...legacy.evidence.candidates,
+              ].map((item) => item.location.file),
+            ).size
+          : 0;
+      const snapshotFacts =
+        retainedFiles > 0
+          ? Object.freeze({
+              coverage: Object.freeze({
+                gitState: 'unknown' as const,
+                consistency: 'stable' as const,
+                filesChecked: retainedFiles,
+                discardedEvidenceCount: 0,
+              }),
+              finalStableEvidence: Object.freeze([]),
+            })
+          : createZeroReadSnapshotFactsV2();
+      const rankingFacts =
+        legacy.ok
+          ? Object.freeze({
+              confirmed: Object.freeze(
+                legacy.evidence.confirmed.map((item) =>
+                  Object.freeze({
+                    evidenceClass: 'confirmed' as const,
+                    role: item.role,
+                    location: item.location,
+                    provenance: item.provenance,
+                    reasonCodes: item.reasonCodes,
+                  }),
+                ),
+              ),
+              candidates: Object.freeze(
+                legacy.evidence.candidates.map((item) =>
+                  Object.freeze({
+                    evidenceClass: 'candidate' as const,
+                    role: item.role,
+                    location: item.location,
+                    provenance: item.provenance,
+                    reasonCodes: item.reasonCodes,
+                    promotionRequirements: item.promotionRequirements,
+                  }),
+                ),
+              ),
+              unsatisfiedAnchors: Object.freeze([]),
+            })
+          : undefined;
       return this.terminalSuccess(
         legacy,
         projectionExecution,
-        createZeroReadSnapshotFactsV2(),
-        undefined,
+        snapshotFacts,
+        rankingFacts,
         scopeMount.fragmentValue,
         capabilityMount.fragmentValue,
       );
@@ -572,7 +633,7 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
       fallbackChecked: options.fallbackChecked ?? false,
       fallbackRequired: options.fallbackRequired ?? false,
       completeEquivalentFallback: options.completeEquivalentFallback ?? false,
-      discardedEvidenceCount: finalPools.changedCanonicalKeys.size,
+      discardedEvidenceCount: finalPools.facts.coverage.discardedEvidenceCount,
     });
 
     return this.terminalSuccess(
@@ -628,6 +689,7 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
     let repositoryRoot = request.repoPath;
     let requestSnapshot: RequestRepositorySnapshotV2 | undefined;
     let observationCache: VerifiedDiscoveryObservationCacheV2 | undefined;
+    let backendExecutionContext: BackendExecutionContextV2 | undefined;
     const verificationLimits = Object.freeze({
       maxFileBytes: DEFAULT_MAX_FILE_BYTES,
       maxExcerptBytes: CLASSIFICATION_MAX_BYTES,
@@ -712,7 +774,7 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
         },
         legacyMaxHitsFromPublicLimitsV2(limits),
       );
-      const backendExecutionContext = createBackendExecutionContextV2(
+      backendExecutionContext = createBackendExecutionContextV2(
         new NodeSafeProcessRunner(),
         undefined,
         abortCoordinator.signal,
@@ -761,6 +823,7 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
               limits,
               abortSource: abortCoordinator.peekSource(),
               abortCoordinator,
+              backendExecutionContext,
               ...(request.layers === undefined
                 ? {}
                 : { requestedLayers: request.layers }),
@@ -866,6 +929,7 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
                 limits,
                 abortSource: abortCoordinator.peekSource(),
                 abortCoordinator,
+                backendExecutionContext,
               },
             );
           }
@@ -906,6 +970,7 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
               limits,
               abortSource: abortCoordinator.peekSource(),
               abortCoordinator,
+              backendExecutionContext,
               ...(request.layers === undefined
                 ? {}
                 : { requestedLayers: request.layers }),
@@ -1271,11 +1336,17 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
         (error instanceof RepositoryAccessError && error.code === 'ABORTED') ||
         abortCoordinator.signal.aborted
       ) {
+        let abortSource: LocateAbortSource;
+        try {
+          abortSource = abortCoordinator.peekSource();
+        } catch {
+          abortSource = abortCoordinator.recordedSource();
+        }
         return await this.terminalSuccessWithSnapshot(
           this.timeoutResult(
             repositoryRoot,
             normalizedTerms,
-            abortCoordinator.peekSource(),
+            abortSource,
             limits,
           ),
           projectionExecution,
@@ -1283,8 +1354,11 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
             requestSnapshot,
             signal: abortCoordinator.signal,
             limits,
-            abortSource: abortCoordinator.peekSource(),
+            abortSource,
             abortCoordinator,
+            ...(backendExecutionContext === undefined
+              ? {}
+              : { backendExecutionContext }),
             ...(request.layers === undefined
               ? {}
               : { requestedLayers: request.layers }),

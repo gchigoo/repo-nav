@@ -213,4 +213,37 @@ license 选择或 production cutover；这些仍需各自独立 owner authorizat
 
 即使批准本决策，也不自动 merge 到 `main`、不 publish、不 cutover production v2。
 
-- 2026-07-28：F5–F8 已在 goal-acceptance/goal-commits（`ge-6e44d402368a`）下本地验收并 scoped-commit 至 tip `2457a7a`。下一 feature `public-beta-release`（F9）触发 **RiskAcceptanceNeeded owner-stop**：需要独立授权覆盖 v2 projector cutover、license 选定、`private:true` 保留策略，以及任何 merge/push/tag/npm publish/GitHub Release。现有 `goal-acceptance`/`goal-commits` 不覆盖上述动作。
+- 2026-07-28：F5–F8 已在 goal-acceptance/goal-commits（`ge-6e44d402368a`）下本地验收并 scoped-commit；goal tip `b37f1e0`（F8 accept `2457a7a`）。下一 feature `public-beta-release`（F9）触发 **RiskAcceptanceNeeded owner-stop**：需要独立授权覆盖 v2 projector cutover、license 选定、`private:true` 保留策略，以及任何 merge/push/tag/npm publish/GitHub Release。现有 `goal-acceptance`/`goal-commits` 不覆盖上述动作。
+
+## F9 Public-Beta Release / Cutover Authorization
+
+命名决策 `f9-public-beta-release` 当前为 `approved`。
+
+- 2026-07-29：owner 回复“1”，选择选项 1：授权 license=`MIT`、实现并验收 F9 v2 projector cutover 与 `0.2.0-beta.1` 本地 release candidate、goal scoped-commit，并允许 push `repo-nav-public-beta` / 更新 PR `#2`。  
+  **明确不授权**：移除 `private:true`、`npm publish`、GitHub Release/tag、merge 到 `main`。
+- Owner-preflight license 字段（选项 1 默认，未改写 SPDX）：
+  - `choice`: `MIT`
+  - `copyrightYear`: `2026`
+  - `copyrightHolder`: `Gchigoo`（取自仓库 git author / GitHub login；若需改正另开短决策）
+  - `private:true`：保留
+
+### Current Facts（批准时）
+
+- F1–F8 均已 `accepted`；`goal-state`：`current_feature_index: 11`，`public-beta-release=pending`
+- 本地分支相对 origin ahead 15；Feature PR：https://github.com/gchigoo/repo-nav/pull/2
+- F9 design：本地 candidate ≠ publish；`private:true` 保留
+
+### Options（历史）
+
+1. **批准 F9 实现包（本地 candidate + cutover，不含 publish）** — **已选**
+2. 只批准 license + 本地 cutover，禁止 remote push
+3. 推迟 F9 / 保持 handoff
+4. 扩大授权（需逐项写明）
+
+### Recommendation
+
+选项 1。
+
+### Non-Automatic Actions
+
+即使批准本决策，也不会自动：移除 `private:true`、`npm publish`、创建 tag、GitHub Release、merge 到 `main`。

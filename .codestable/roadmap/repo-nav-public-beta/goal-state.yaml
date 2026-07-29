@@ -8,8 +8,8 @@ acceptance_authorization: approved
 acceptance_authorization_ref: "approval-report.md#goal-acceptance"
 commit_authorization: approved
 commit_authorization_ref: "approval-report.md#goal-commits"
-handoff_reason: "RiskAcceptanceNeeded: F9 public-beta-release needs separate owner auth for v2 projector cutover, license selection, private retention, and any publish/merge/tag actions beyond goal-acceptance/goal-commits"
-handoff_next: "Await named ApprovalRef for F9 cutover/release-governance before marking public-beta-release implementing"
+handoff_reason: ""
+handoff_next: ""
 current_feature_index: 11
 features:
 - slug: public-output-boundary-v2

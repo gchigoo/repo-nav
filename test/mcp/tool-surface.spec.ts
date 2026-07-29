@@ -15,10 +15,8 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createRepoNavApplicationContext } from '../../src/app/create-application-context.js';
-import {
-  LocateRequestSchema,
-  LocateToolOutputSchema,
-} from '../../src/contracts/index.js';
+import { LocateRequestSchema } from '../../src/contracts/index.js';
+import { LocateResultV2Schema } from '../../src/contracts/v2/locate-result-v2.js';
 import { NodeMcpStdioHost } from '../../src/mcp/mcp-stdio-host.js';
 import {
   REPO_NAV_LOCATE_INPUT_SCHEMA,
@@ -147,17 +145,18 @@ describe.runIf(selected('tool-list-schema'))('MCP tool schemas', () => {
     const validOutput = {
       ok: true,
       evidence: {
-        schemaVersion: '1.0',
+        schemaVersion: '2.0',
         status: 'ok',
-        repositoryRoot: 'D:/repository',
+        repositoryRef: 'local-repository',
         normalizedTerms: [{ value: 'hcp_id', caseSensitive: false }],
         confirmed: [
           {
             evidenceClass: 'confirmed',
-            id: `evidence:v1:${'0'.repeat(64)}`,
+            id: 'evidence:v2:0001',
             role: 'value-mapping',
             location: {
               file: 'server/mapping.ts',
+              resolvable: true,
               lines: [1, 1],
               excerpt: 'hcpId = hcp_id;',
             },
@@ -171,23 +170,52 @@ describe.runIf(selected('tool-list-schema'))('MCP tool schemas', () => {
         ],
         candidates: [],
         coverage: {
-          backends: [],
+          backends: [
+            {
+              backend: 'ripgrep',
+              status: 'used',
+              completion: 'complete',
+              termination: 'none',
+              hitCount: 1,
+            },
+          ],
+          strategyComplete: true,
           fallbackChecked: false,
           indexState: 'unknown',
-          indexFreshness: 'not-applicable',
+          indexFreshness: 'unknown',
           limitsReached: [],
+          degradations: [],
           exclusionSummary: {},
+          abortSource: 'none',
+          unsatisfiedAnchors: [],
+          snapshot: {
+            gitState: 'unknown',
+            consistency: 'stable',
+            filesChecked: 1,
+            discardedEvidenceCount: 0,
+          },
+          scope: {
+            requested: [],
+            effective: ['client', 'server', 'db', 'config', 'unknown'],
+            policyVersion: 'repo-scope-v1',
+            unmatchedLayers: [],
+          },
+          capabilities: {
+            textSearch: 'supported-text-files',
+            semanticClassification: ['typescript', 'javascript', 'sql'],
+            unsupportedLanguageHits: 0,
+          },
         },
         nextActions: [],
       },
     };
-    expect(LocateToolOutputSchema.safeParse(validOutput).success).toBe(true);
+    expect(LocateResultV2Schema.safeParse(validOutput).success).toBe(true);
     expect(validator(validOutput)).toBe(true);
 
     for (const invalidLines of [[], [1], [1, 2, 3]]) {
       const invalidOutput = structuredClone(validOutput);
       invalidOutput.evidence.confirmed[0]!.location.lines = invalidLines;
-      expect(LocateToolOutputSchema.safeParse(invalidOutput).success).toBe(false);
+      expect(LocateResultV2Schema.safeParse(invalidOutput).success).toBe(false);
       expect(validator(invalidOutput)).toBe(false);
     }
 
@@ -196,7 +224,7 @@ describe.runIf(selected('tool-list-schema'))('MCP tool schemas', () => {
       'DIRECT_ALIAS_MAPPING',
       'DIRECT_ALIAS_MAPPING',
     ];
-    expect(LocateToolOutputSchema.safeParse(duplicateReasons).success).toBe(
+    expect(LocateResultV2Schema.safeParse(duplicateReasons).success).toBe(
       false,
     );
     expect(validator(duplicateReasons)).toBe(false);

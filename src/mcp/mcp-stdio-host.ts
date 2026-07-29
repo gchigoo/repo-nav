@@ -161,6 +161,7 @@ export class NodeMcpStdioHost implements McpStdioHost, OnModuleDestroy {
       abort();
     }
     try {
+      // SDK cancel and host shutdown both map to callerSignal.
       const view = await this.locateApplication.execute(rawRequest, {
         callerSignal: tracked.controller.signal,
       });

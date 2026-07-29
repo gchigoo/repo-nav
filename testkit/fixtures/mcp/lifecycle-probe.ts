@@ -12,12 +12,11 @@ import {
   type LocateRequest,
   type RepositoryEvidenceService,
 } from '../../../src/contracts/index.js';
+import { PUBLIC_LOCATE_EXECUTION_APPLICATION_V2 } from '../../../src/evidence/locate-execution/public-locate-execution-application-v2.js';
 import type { McpStdioHost } from '../../../src/mcp/mcp-stdio-host.js';
 import { NodeSafeProcessRunner } from '../../../src/repository/node-safe-process-runner.js';
-import {
-  MCP_STDIO_HOST,
-  REPOSITORY_EVIDENCE_SERVICE,
-} from '../../../src/runtime/tokens.js';
+import { MCP_STDIO_HOST } from '../../../src/runtime/tokens.js';
+import { createFixtureLocateApplication } from './create-fixture-locate-application.js';
 
 function requiredEnvironment(name: string): string {
   const value = process.env[name];
@@ -138,8 +137,8 @@ async function runProbe(): Promise<void> {
     imports: [AppModule],
     providers: [{ provide: 'LIFECYCLE_CLOSE_PROBE', useValue: closeProbe }],
   })
-    .overrideProvider(REPOSITORY_EVIDENCE_SERVICE)
-    .useValue(new ProbeEvidenceService())
+    .overrideProvider(PUBLIC_LOCATE_EXECUTION_APPLICATION_V2)
+    .useValue(createFixtureLocateApplication(new ProbeEvidenceService()))
     .compile();
   const host = application.get<McpStdioHost>(MCP_STDIO_HOST);
   let shutdownPromise: Promise<void> | undefined;

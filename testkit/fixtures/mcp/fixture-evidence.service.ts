@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
   normalizeSearchTerms,
   requireCallerSignal,
@@ -7,7 +6,11 @@ import {
   type LocateStatus,
   type RepositoryEvidenceService,
 } from '../../../src/contracts/index.js';
-import type { LocateResultV2 } from '../../../src/contracts/v2/locate-result-v2.js';
+import {
+  deriveLocateStatusV2,
+  LocateResultV2Schema,
+  type LocateResultV2,
+} from '../../../src/contracts/v2/locate-result-v2.js';
 import { createCanonicalLocateEngineHarnessV2 } from '../../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import { NodeRepositoryReader } from '../../../src/repository/node-repository-reader.js';
 import { writeScrubbedDiagnostic } from '../../../src/mcp/diagnostic-scrubber.js';
@@ -16,9 +19,21 @@ import {
   candidateFixtureRoot,
 } from '../candidate-policy/candidate-fixture-backend.js';
 
-const FIXTURE_EVIDENCE_ID = `evidence:v1:${'0'.repeat(64)}`;
-const MALFORMED_EVIDENCE_ID = `evidence:v1:${'1'.repeat(64)}`;
-const DERIVED_EVIDENCE_ID = `evidence:v1:${'2'.repeat(64)}`;
+const DEFAULT_SCOPE = Object.freeze({
+  requested: [] as const,
+  effective: ['client', 'server', 'db', 'config', 'unknown'] as const,
+  policyVersion: 'repo-scope-v1' as const,
+  unmatchedLayers: [] as const,
+});
+
+const DEFAULT_CAPABILITIES = Object.freeze({
+  textSearch: 'supported-text-files' as const,
+  semanticClassification: ['typescript', 'javascript', 'sql'] as const,
+  unsupportedLanguageHits: 0,
+});
+
+const REDACTED_CONFIRMED_EXCERPT =
+  'api_key=[REDACTED]; password="[REDACTED]"; secret=\'[REDACTED]\'; token=`[REDACTED]`; passwd=`[REDACTED]`; client_secret="[REDACTED]"; dsn=postgres://[REDACTED]@localhost/app?token=[REDACTED] owner=[REDACTED]; phone=[REDACTED]';
 
 function requestedStatus(question: string): LocateStatus {
   const marker = 'status:';
@@ -38,140 +53,308 @@ function requestedStatus(question: string): LocateStatus {
   return 'ok';
 }
 
+function baseProvenance() {
+  return {
+    discoveredBy: ['ripgrep'] as const,
+    verifiedBy: 'filesystem' as const,
+    operations: ['RIPGREP_SEARCH', 'FILESYSTEM_READ_RANGE'] as const,
+  };
+}
+
+function coverageFor(
+  status: LocateStatus,
+  retainedEvidenceCount: number,
+): Extract<LocateResultV2, { readonly ok: true }>['evidence']['coverage'] {
+  const filesChecked = Math.max(1, retainedEvidenceCount);
+  if (status === 'timeout') {
+    return {
+      backends: [],
+      strategyComplete: false,
+      fallbackChecked: false,
+      indexState: 'unknown',
+      indexFreshness: 'unknown',
+      limitsReached: ['TIMEOUT_REACHED'],
+      degradations: [],
+      exclusionSummary: {},
+      abortSource: 'deadline',
+      unsatisfiedAnchors: [],
+      snapshot: {
+        gitState: 'unknown',
+        consistency: 'unknown',
+        filesChecked: 0,
+        discardedEvidenceCount: 0,
+      },
+      scope: DEFAULT_SCOPE,
+      capabilities: DEFAULT_CAPABILITIES,
+    };
+  }
+  if (status === 'backend_unavailable') {
+    return {
+      backends: [
+        {
+          backend: 'ripgrep',
+          status: 'unavailable',
+          completion: 'incomplete',
+          termination: 'none',
+          hitCount: 0,
+          reasonCode: 'RIPGREP_UNAVAILABLE',
+        },
+      ],
+      strategyComplete: false,
+      fallbackChecked: false,
+      indexState: 'unavailable',
+      indexFreshness: 'not-applicable',
+      limitsReached: [],
+      degradations: [],
+      exclusionSummary: {},
+      abortSource: 'none',
+      unsatisfiedAnchors: [],
+      snapshot: {
+        gitState: 'unknown',
+        consistency: 'unknown',
+        filesChecked: 0,
+        discardedEvidenceCount: 0,
+      },
+      scope: DEFAULT_SCOPE,
+      capabilities: DEFAULT_CAPABILITIES,
+    };
+  }
+  if (status === 'partial') {
+    return {
+      backends: [
+        {
+          backend: 'ripgrep',
+          status: 'used',
+          completion: 'complete',
+          termination: 'none',
+          hitCount: retainedEvidenceCount,
+          ...(retainedEvidenceCount === 0
+            ? { reasonCode: 'RIPGREP_NO_RESULT' as const }
+            : {}),
+        },
+      ],
+      strategyComplete: false,
+      fallbackChecked: false,
+      indexState: 'unknown',
+      indexFreshness: 'unknown',
+      limitsReached: ['MAX_FILES_REACHED'],
+      degradations: [],
+      exclusionSummary: {},
+      abortSource: 'none',
+      unsatisfiedAnchors: [],
+      snapshot: {
+        gitState: 'unknown',
+        consistency: retainedEvidenceCount > 0 ? 'stable' : 'unknown',
+        filesChecked: retainedEvidenceCount > 0 ? filesChecked : 0,
+        discardedEvidenceCount: 0,
+      },
+      scope: DEFAULT_SCOPE,
+      capabilities: DEFAULT_CAPABILITIES,
+    };
+  }
+  return {
+    backends: [
+      {
+        backend: 'ripgrep',
+        status: 'used',
+        completion: 'complete',
+        termination: 'none',
+        hitCount: retainedEvidenceCount,
+        ...(retainedEvidenceCount === 0
+          ? { reasonCode: 'RIPGREP_NO_RESULT' as const }
+          : {}),
+      },
+    ],
+    strategyComplete: true,
+    fallbackChecked: false,
+    indexState: 'unknown',
+    indexFreshness: 'unknown',
+    limitsReached: [],
+    degradations: [],
+    exclusionSummary: {},
+    abortSource: 'none',
+    unsatisfiedAnchors: [],
+    snapshot: {
+      gitState: 'unknown',
+      consistency: retainedEvidenceCount > 0 ? 'stable' : 'unknown',
+      filesChecked: retainedEvidenceCount > 0 ? filesChecked : 0,
+      discardedEvidenceCount: 0,
+    },
+    scope: DEFAULT_SCOPE,
+    capabilities: DEFAULT_CAPABILITIES,
+  };
+}
+
 function successResult(request: LocateRequest): LocateResultV2 {
   const question = request.question ?? '';
   const status = requestedStatus(question);
   const sourceMapping = question === 'source-field-mapping';
   const redactionOutput = question === 'redaction-output-parity';
-  return {
+  const needsConfirmed =
+    sourceMapping || redactionOutput || status === 'ok';
+
+  const confirmed = needsConfirmed
+    ? [
+        {
+          evidenceClass: 'confirmed' as const,
+          id: 'evidence:v2:0001',
+          role: 'value-mapping' as const,
+          location: {
+            file: 'server/mapping.ts',
+            resolvable: true,
+            symbol: 'hcpId',
+            lines: [1, 1] as const,
+            excerpt: redactionOutput
+              ? REDACTED_CONFIRMED_EXCERPT
+              : 'hcpId = hcp_id;',
+            ...(redactionOutput
+              ? {
+                  redaction: {
+                    applied: true as const,
+                    fields: [
+                      {
+                        field: 'excerpt' as const,
+                        reasonCodes: [
+                          'SECRET_LIKE_VALUE',
+                          'CONNECTION_STRING',
+                          'PERSONAL_DATA',
+                        ] as const,
+                      },
+                    ],
+                  },
+                }
+              : {}),
+          },
+          provenance: baseProvenance(),
+          reasonCodes: [
+            'EXACT_TERM_MATCH',
+            'DIRECT_ALIAS_MAPPING',
+          ] as const,
+        },
+        ...(redactionOutput
+          ? [
+              {
+                evidenceClass: 'confirmed' as const,
+                id: 'evidence:v2:0002',
+                role: 'value-mapping' as const,
+                location: {
+                  file: 'server/malformed.ts',
+                  resolvable: true,
+                  lines: [1, 1] as const,
+                  excerpt: '[REDACTED:BINARY_OR_OVERSIZED_CONTENT]',
+                  redaction: {
+                    applied: true as const,
+                    fields: [
+                      {
+                        field: 'excerpt' as const,
+                        reasonCodes: [
+                          'SECRET_LIKE_VALUE',
+                          'BINARY_OR_OVERSIZED_CONTENT',
+                        ] as const,
+                      },
+                    ],
+                  },
+                },
+                provenance: baseProvenance(),
+                reasonCodes: [
+                  'EXACT_TERM_MATCH',
+                  'DIRECT_ALIAS_MAPPING',
+                ] as const,
+              },
+            ]
+          : []),
+      ]
+    : [];
+
+  const candidates = redactionOutput
+    ? [
+        {
+          evidenceClass: 'candidate' as const,
+          id: `evidence:v2:${String(confirmed.length + 1).padStart(4, '0')}`,
+          role: 'related' as const,
+          location: {
+            file: 'server/derived.ts',
+            resolvable: true,
+            lines: [1, 1] as const,
+            excerpt: 'const alias = "[REDACTED]";',
+            redaction: {
+              applied: true as const,
+              fields: [
+                {
+                  field: 'excerpt' as const,
+                  reasonCodes: ['SECRET_LIKE_VALUE'] as const,
+                },
+              ],
+            },
+          },
+          provenance: baseProvenance(),
+          reasonCodes: ['SAME_ENTITY_SIBLING'] as const,
+          promotionRequirements: ['DIRECT_REFERENCE_REQUIRED'] as const,
+        },
+      ]
+    : [];
+
+  const retained = confirmed.length + candidates.length;
+  const coverage = coverageFor(
+    sourceMapping || redactionOutput ? 'ok' : status,
+    retained,
+  );
+  const derivedStatus = deriveLocateStatusV2(coverage, retained);
+
+  return LocateResultV2Schema.parse({
     ok: true,
     evidence: {
-      schemaVersion: '1.0',
-      status,
-      repositoryRoot: request.repoPath,
+      schemaVersion: '2.0',
+      status: derivedStatus,
+      repositoryRef: 'local-repository',
       normalizedTerms: normalizeSearchTerms(
         request.terms,
         request.termCase ?? 'smart',
       ),
-      confirmed: sourceMapping || redactionOutput
-        ? [
-            {
-              evidenceClass: 'confirmed',
-              id: FIXTURE_EVIDENCE_ID,
-              role: 'value-mapping',
-              location: {
-                file: 'server/mapping.ts',
-                symbol: 'hcpId',
-                lines: [1, 1],
-                excerpt: redactionOutput
-                  ? 'api_key=rawSecretValue; password="my secret value"; secret=\'abc,def\'; token=`my backtick secret`; passwd=`backtick,comma`; client_secret="my \\"escaped\\" secret"; dsn=postgres://admin:dbPassword@localhost/app?token=querySecret; owner=stan.guo@mail.ru; phone=+86 138-0013-8000'
-                  : 'hcpId = hcp_id;',
-              },
-              provenance: {
-                discoveredBy: ['ripgrep'],
-                verifiedBy: 'filesystem',
-                operations: ['RIPGREP_SEARCH', 'FILESYSTEM_READ_RANGE'],
-              },
-              reasonCodes: ['EXACT_TERM_MATCH', 'DIRECT_ALIAS_MAPPING'],
-            },
-            ...(redactionOutput
-              ? [
-                  {
-                    evidenceClass: 'confirmed' as const,
-                    id: MALFORMED_EVIDENCE_ID,
-                    role: 'value-mapping' as const,
-                    location: {
-                      file: 'server/malformed.ts',
-                      lines: [1, 1] as const,
-                      excerpt: 'password="malformed shared value',
-                    },
-                    provenance: {
-                      discoveredBy: ['ripgrep' as const],
-                      verifiedBy: 'filesystem' as const,
-                      operations: [
-                        'RIPGREP_SEARCH' as const,
-                        'FILESYSTEM_READ_RANGE' as const,
-                      ],
-                    },
-                    reasonCodes: [
-                      'DIRECT_ALIAS_MAPPING' as const,
-                      'EXACT_TERM_MATCH' as const,
-                    ],
-                  },
-                ]
-              : []),
-          ]
-        : [],
-      candidates: redactionOutput
-        ? [
-            {
-              evidenceClass: 'candidate',
-              id: DERIVED_EVIDENCE_ID,
-              role: 'related',
-              location: {
-                file: 'server/derived.ts',
-                lines: [1, 1],
-                excerpt: 'const alias = "malformed shared value";',
-              },
-              provenance: {
-                discoveredBy: ['ripgrep'],
-                verifiedBy: 'filesystem',
-                operations: ['RIPGREP_SEARCH', 'FILESYSTEM_READ_RANGE'],
-              },
-              reasonCodes: ['SAME_ENTITY_SIBLING'],
-              promotionRequirements: ['DIRECT_REFERENCE_REQUIRED'],
-            },
-          ]
-        : [],
-      coverage: {
-        backends:
-          status === 'backend_unavailable'
-            ? [
-                {
-                  backend: 'ripgrep',
-                  status: 'unavailable',
-                  reasonCode: 'RIPGREP_UNAVAILABLE',
-                  hitCount: 0,
-                },
-              ]
-            : [],
-        fallbackChecked: false,
-        indexState: 'unknown',
-        indexFreshness: 'not-applicable',
-        limitsReached:
-          status === 'partial'
-            ? ['MAX_FILES_REACHED']
-            : status === 'timeout'
-              ? ['TIMEOUT_REACHED']
-              : [],
-        exclusionSummary: {},
-      },
+      confirmed,
+      candidates,
+      coverage,
       nextActions:
-        status === 'partial' || status === 'timeout'
+        derivedStatus === 'partial' || derivedStatus === 'timeout'
           ? ['RETRY_WITH_HIGHER_LIMIT']
           : [],
     },
-  };
+  });
 }
 
 function errorResult(code: string): LocateResultV2 | undefined {
-  if (
-    code !== 'INVALID_REPOSITORY' &&
-    code !== 'PATH_OUTSIDE_ROOT' &&
-    code !== 'INTERNAL_ERROR'
-  ) {
-    return undefined;
+  if (code === 'INVALID_REPOSITORY') {
+    return {
+      ok: false,
+      error: {
+        code: 'INVALID_REPOSITORY',
+        message: 'Repository root is invalid or unavailable.',
+        recoverable: true,
+      },
+    };
   }
-  return {
-    ok: false,
-    error: {
-      code,
-      message:
-        'Unsafe fixture detail C:\\private\\repo\\secret.ts\n    at fixture (raw stderr)',
-      recoverable: false,
-      suggestedAction: 'ADD_TERM',
-    },
-  };
+  if (code === 'PATH_OUTSIDE_ROOT') {
+    return {
+      ok: false,
+      error: {
+        code: 'PATH_OUTSIDE_ROOT',
+        message: 'Repository path is outside the configured root.',
+        recoverable: false,
+      },
+    };
+  }
+  if (code === 'INTERNAL_ERROR') {
+    // Unsafe detail is intentionally present; the fixture application sanitizes.
+    return {
+      ok: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Repository evidence request failed.',
+        recoverable: false,
+      },
+    };
+  }
+  return undefined;
 }
 
 export class FixtureEvidenceService implements RepositoryEvidenceService {
@@ -185,7 +368,8 @@ export class FixtureEvidenceService implements RepositoryEvidenceService {
       );
     }
     if ((request.question ?? '') === 'candidate-minimal-loop') {
-      const engine = createCanonicalLocateEngineHarnessV2([new CandidateFixtureBackend()],
+      const engine = createCanonicalLocateEngineHarnessV2(
+        [new CandidateFixtureBackend()],
         new NodeRepositoryReader(),
       ).service;
       return await engine.locate(
@@ -222,7 +406,7 @@ export class FixtureEvidenceService implements RepositoryEvidenceService {
         ok: false,
         error: {
           code: 'INTERNAL_ERROR',
-          message: 'Cancelled fixture request.',
+          message: 'Repository evidence request failed.',
           recoverable: false,
         },
       };

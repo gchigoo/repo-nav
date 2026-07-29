@@ -1,9 +1,9 @@
 {
   "ok": true,
   "evidence": {
-    "schemaVersion": "1.0",
+    "schemaVersion": "2.0",
     "status": "ok",
-    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "repositoryRef": "local-repository",
     "normalizedTerms": [
       {
         "value": "targetField",
@@ -18,10 +18,11 @@
     "candidates": [
       {
         "evidenceClass": "candidate",
-        "id": "evidence:v1:d6d58a843dbffef7267f77ed64431f78fcdc02c5762f3eab789e36443adac77a",
+        "id": "evidence:v2:0001",
         "role": "reference",
         "location": {
           "file": "server/decoys.fixture",
+          "resolvable": true,
           "lines": [
             1,
             1
@@ -48,10 +49,11 @@
       },
       {
         "evidenceClass": "candidate",
-        "id": "evidence:v1:118e82a812552b1cdf9bac0fbf6a239237a44149707ee52bd14814e6b2d8751e",
+        "id": "evidence:v2:0002",
         "role": "reference",
         "location": {
           "file": "server/decoys.fixture",
+          "resolvable": true,
           "lines": [
             2,
             2
@@ -78,10 +80,11 @@
       },
       {
         "evidenceClass": "candidate",
-        "id": "evidence:v1:cb38d651490034d4b4e4b8e8d42007b765de27af66f8e715a13d4160f8567e47",
+        "id": "evidence:v2:0003",
         "role": "reference",
         "location": {
           "file": "server/decoys.fixture",
+          "resolvable": true,
           "lines": [
             3,
             3
@@ -108,10 +111,11 @@
       },
       {
         "evidenceClass": "candidate",
-        "id": "evidence:v1:a3ee8718a6e1a0e75eed0fa63f5efeeacadb6723cc3082cb4c765464aad0a223",
+        "id": "evidence:v2:0004",
         "role": "reference",
         "location": {
           "file": "server/decoys.fixture",
+          "resolvable": true,
           "lines": [
             4,
             4
@@ -138,10 +142,11 @@
       },
       {
         "evidenceClass": "candidate",
-        "id": "evidence:v1:7aaa9c8ae6e73fa641bea50b4569c0a677384d37fca3ab75cdf13005dc5e4d00",
+        "id": "evidence:v2:0005",
         "role": "reference",
         "location": {
           "file": "server/decoys.fixture",
+          "resolvable": true,
           "lines": [
             5,
             5
@@ -168,10 +173,11 @@
       },
       {
         "evidenceClass": "candidate",
-        "id": "evidence:v1:5d4ec245e8f488353c16cfc690a6e5b78144d28b2691b06f442d1fa1226d7657",
+        "id": "evidence:v2:0006",
         "role": "reference",
         "location": {
           "file": "server/decoys.fixture",
+          "resolvable": true,
           "lines": [
             6,
             6
@@ -198,10 +204,11 @@
       },
       {
         "evidenceClass": "candidate",
-        "id": "evidence:v1:7761ca54f15ce7354006b7a8e6fa2698b036eae2e70127c028b229779a72fa43",
+        "id": "evidence:v2:0007",
         "role": "reference",
         "location": {
           "file": "server/decoys.fixture",
+          "resolvable": true,
           "lines": [
             7,
             7
@@ -232,15 +239,48 @@
         {
           "backend": "ripgrep",
           "status": "used",
+          "completion": "complete",
+          "termination": "none",
           "hitCount": 9
         }
       ],
+      "strategyComplete": true,
       "fallbackChecked": false,
       "indexState": "unknown",
-      "indexFreshness": "not-applicable",
+      "indexFreshness": "unknown",
       "limitsReached": [],
+      "degradations": [],
       "exclusionSummary": {
         "OUTSIDE_LAYER_HINT": 2
+      },
+      "abortSource": "none",
+      "unsatisfiedAnchors": [],
+      "snapshot": {
+        "gitState": "unknown",
+        "consistency": "stable",
+        "filesChecked": 1,
+        "discardedEvidenceCount": 0
+      },
+      "scope": {
+        "requested": [],
+        "effective": [
+          "client",
+          "server",
+          "db",
+          "config",
+          "unknown"
+        ],
+        "policyVersion": "repo-scope-v1",
+        "unmatchedLayers": []
+      },
+      "capabilities": {
+        "textSearch": "supported-text-files",
+        "semanticClassification": [
+          "typescript",
+          "javascript",
+          "sql"
+        ],
+        "unsupportedLanguageHits": 0
       }
     },
     "nextActions": [

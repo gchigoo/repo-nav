@@ -21,7 +21,6 @@ import {
   EVIDENCE_SOURCES,
   EXCLUSION_REASON_CODES,
   LIMIT_REASON_CODES,
-  LOCATE_STATUSES,
   NEXT_ACTION_CODES,
   PROMOTION_REQUIREMENT_CODES,
   REDACTION_REASON_CODES,
@@ -29,9 +28,12 @@ import {
   SEARCH_BACKEND_IDS,
   TERM_CASE_MODES,
   TOOL_ERROR_CODES,
-  LocateResultSchema,
-  type LocateResult,
 } from '../../src/contracts/index.js';
+import {
+  LOCATE_STATUSES_V2,
+  LocateResultV2Schema,
+  type LocateResultV2,
+} from '../../src/contracts/v2/locate-result-v2.js';
 import { GoldenCaseSchema, type GoldenCase } from './golden-case.js';
 import { PUBLIC_EVIDENCE_PACK_FIELD_MUTATIONS } from './evidence-pack-field-contract.js';
 import {
@@ -53,6 +55,7 @@ const FixtureOwnershipSchema = z
     successCases: z.record(z.string(), z.string().min(1)),
     errorCases: z.record(z.string(), z.string().min(1)),
     families: z.record(z.string(), z.record(z.string(), OwnershipEntrySchema)),
+    publicBetaRelease: z.record(z.string(), z.string().min(1)).optional(),
   })
   .readonly();
 
@@ -61,7 +64,7 @@ const CONTRACT_FAMILIES: Readonly<Record<string, readonly string[]>> =
     RepoLayer: REPO_LAYERS,
     AnchorKind: ANCHOR_KINDS,
     TermCaseMode: TERM_CASE_MODES,
-    LocateStatus: LOCATE_STATUSES,
+    LocateStatus: LOCATE_STATUSES_V2,
     EvidenceSource: EVIDENCE_SOURCES,
     SearchBackendId: SEARCH_BACKEND_IDS,
     EvidenceRole: EVIDENCE_ROLES,
@@ -149,7 +152,7 @@ function addSuccessCoverage(
   coverage: Map<string, VerifiedCaseCoverage>,
   caseId: string,
   goldenCase: Extract<GoldenCase, { readonly kind: 'success' }>,
-  result: Extract<LocateResult, { readonly ok: true }>,
+  result: Extract<LocateResultV2, { readonly ok: true }>,
 ): void {
   for (const layer of goldenCase.request.layers ?? []) {
     addVerifiedCoverage(coverage, caseId, 'positive', 'RepoLayer', layer);
@@ -197,14 +200,16 @@ function addSuccessCoverage(
         operation,
       );
     }
-    for (const reason of evidence.location.redaction?.reasonCodes ?? []) {
-      addVerifiedCoverage(
-        coverage,
-        caseId,
-        'positive',
-        'RedactionReasonCode',
-        reason,
-      );
+    for (const field of evidence.location.redaction?.fields ?? []) {
+      for (const reason of field.reasonCodes) {
+        addVerifiedCoverage(
+          coverage,
+          caseId,
+          'positive',
+          'RedactionReasonCode',
+          reason,
+        );
+      }
     }
   }
   for (const evidence of result.evidence.candidates) {
@@ -242,14 +247,16 @@ function addSuccessCoverage(
         requirement,
       );
     }
-    for (const reason of evidence.location.redaction?.reasonCodes ?? []) {
-      addVerifiedCoverage(
-        coverage,
-        caseId,
-        'positive',
-        'RedactionReasonCode',
-        reason,
-      );
+    for (const field of evidence.location.redaction?.fields ?? []) {
+      for (const reason of field.reasonCodes) {
+        addVerifiedCoverage(
+          coverage,
+          caseId,
+          'positive',
+          'RedactionReasonCode',
+          reason,
+        );
+      }
     }
   }
   for (const backend of result.evidence.coverage.backends) {
@@ -302,7 +309,7 @@ function addSuccessCoverage(
 function buildVerifiedCoverage(
   ownership: z.infer<typeof FixtureOwnershipSchema>,
   manifests: readonly GoldenCase[],
-  snapshots: ReadonlyMap<string, Extract<LocateResult, { readonly ok: true }>>,
+  snapshots: ReadonlyMap<string, Extract<LocateResultV2, { readonly ok: true }>>,
 ): ReadonlyMap<string, VerifiedCaseCoverage> {
   const coverage = new Map<string, VerifiedCaseCoverage>();
   for (const key of runContractSchemaProbes()) {
@@ -482,7 +489,7 @@ export function buildFixtureCompletenessReport(
   }
   const snapshots = new Map<
     string,
-    Extract<LocateResult, { readonly ok: true }>
+    Extract<LocateResultV2, { readonly ok: true }>
   >();
   for (const snapshotId of companionSnapshotIds) {
     const snapshot: unknown = JSON.parse(
@@ -491,7 +498,7 @@ export function buildFixtureCompletenessReport(
         'utf8',
       ),
     );
-    const parsed = LocateResultSchema.parse(snapshot);
+    const parsed = LocateResultV2Schema.parse(snapshot);
     if (!parsed.ok) {
       throw new Error(`Success companion snapshot is not successful: ${snapshotId}.`);
     }

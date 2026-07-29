@@ -1,9 +1,9 @@
 {
   "ok": true,
   "evidence": {
-    "schemaVersion": "1.0",
+    "schemaVersion": "2.0",
     "status": "ok",
-    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "repositoryRef": "local-repository",
     "normalizedTerms": [
       {
         "value": "AlphaMapping",
@@ -13,10 +13,11 @@
     "confirmed": [
       {
         "evidenceClass": "confirmed",
-        "id": "evidence:v1:81af7f88eea0c10fb9b8f4c500378558c585cea3dd77e94ba0157c2ade14822b",
+        "id": "evidence:v2:0001",
         "role": "execution-site",
         "location": {
           "file": "server/definition.ts",
+          "resolvable": true,
           "symbol": "AlphaMapping",
           "lines": [
             1,
@@ -45,14 +46,54 @@
         {
           "backend": "codegraph",
           "status": "used",
+          "completion": "complete",
+          "termination": "none",
           "hitCount": 1
         }
       ],
+      "strategyComplete": true,
       "fallbackChecked": false,
-      "indexState": "available",
+      "indexState": "unknown",
       "indexFreshness": "unknown",
-      "limitsReached": [],
-      "exclusionSummary": {}
+      "limitsReached": [
+        "MAX_CANDIDATES_REACHED"
+      ],
+      "degradations": [],
+      "exclusionSummary": {},
+      "abortSource": "none",
+      "unsatisfiedAnchors": [],
+      "snapshot": {
+        "gitState": "unknown",
+        "consistency": "stable",
+        "filesChecked": 1,
+        "discardedEvidenceCount": 0
+      },
+      "scope": {
+        "requested": [],
+        "effective": [
+          "client",
+          "server",
+          "db",
+          "config",
+          "unknown"
+        ],
+        "policyVersion": "repo-scope-v1",
+        "unmatchedLayers": [
+          "client",
+          "db",
+          "config",
+          "unknown"
+        ]
+      },
+      "capabilities": {
+        "textSearch": "supported-text-files",
+        "semanticClassification": [
+          "typescript",
+          "javascript",
+          "sql"
+        ],
+        "unsupportedLanguageHits": 0
+      }
     },
     "nextActions": []
   }

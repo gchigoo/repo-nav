@@ -14,6 +14,10 @@ expected:
   confirmed: []
   candidates:
     - file: server/mapping.fixture
+      contains: targetField
+      role: related
+      reasonCodes: [SAME_SCOPE_SIMILAR_IDENTIFIER]
+    - file: server/mapping.fixture
       contains: consume(row.source_field)
       role: reference
       reasonCodes: [EXACT_TERM_WITHOUT_DIRECT_MAPPING]

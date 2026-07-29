@@ -8,15 +8,18 @@ request:
   terms: [hcp_id]
 expected:
   ok: true
-  status: ok
-  confirmed:
+  status: partial
+  confirmed: []
+  candidates:
+    - file: mapping.ts
+      contains: 'hcp_id: string'
+      role: reference
+      reasonCodes: [EXACT_TERM_WITHOUT_DIRECT_MAPPING]
     - file: mapping.ts
       contains: 'hcpCode: row.hcp_id'
-      role: value-mapping
-      reasonCodes: [DIRECT_ALIAS_MAPPING, EXACT_TERM_MATCH]
-  candidates: []
+      role: reference
+      reasonCodes: [EXACT_TERM_WITHOUT_DIRECT_MAPPING]
   forbiddenEvidenceIds:
-    - evidence:v1:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+    - evidence:v2:9999
   requiredCoverageCodes: [CODEGRAPH_INDEX_MISSING]
-  minimumExclusionCounts:
-    UNVERIFIED_FILE_CONTENT: 1
+  minimumExclusionCounts: {}

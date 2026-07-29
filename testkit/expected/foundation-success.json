@@ -1,27 +1,29 @@
 {
   "ok": true,
   "evidence": {
-    "schemaVersion": "1.0",
-    "status": "ok",
-    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "schemaVersion": "2.0",
+    "status": "partial",
+    "repositoryRef": "local-repository",
     "normalizedTerms": [
       {
         "value": "hcp_id",
         "caseSensitive": false
       }
     ],
-    "confirmed": [
+    "confirmed": [],
+    "candidates": [
       {
-        "evidenceClass": "confirmed",
-        "id": "evidence:v1:4a81263fd1339bdd04d87f69680e8b8a39e06826885abff3467c2f7fd0d5e7d5",
-        "role": "value-mapping",
+        "evidenceClass": "candidate",
+        "id": "evidence:v2:0001",
+        "role": "reference",
         "location": {
           "file": "mapping.ts",
+          "resolvable": true,
           "lines": [
-            4,
-            4
+            1,
+            1
           ],
-          "excerpt": "  return { hcpCode: row.hcp_id };"
+          "excerpt": "export function mapRow(row: Readonly<{ hcp_id: string }>): Readonly<{"
         },
         "provenance": {
           "discoveredBy": [
@@ -34,29 +36,107 @@
           ]
         },
         "reasonCodes": [
-          "DIRECT_ALIAS_MAPPING",
-          "EXACT_TERM_MATCH"
+          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
+        ],
+        "promotionRequirements": [
+          "USER_SEMANTIC_CONFIRMATION",
+          "DIRECT_REFERENCE_REQUIRED"
+        ]
+      },
+      {
+        "evidenceClass": "candidate",
+        "id": "evidence:v2:0002",
+        "role": "reference",
+        "location": {
+          "file": "mapping.ts",
+          "resolvable": true,
+          "lines": [
+            1,
+            4
+          ],
+          "excerpt": "export function mapRow(row: Readonly<{ hcp_id: string }>): Readonly<{\n  hcpCode: string;\n}> {\n  return { hcpCode: row.hcp_id };"
+        },
+        "provenance": {
+          "discoveredBy": [
+            "ripgrep"
+          ],
+          "verifiedBy": "filesystem",
+          "operations": [
+            "RIPGREP_SEARCH",
+            "FILESYSTEM_READ_RANGE"
+          ]
+        },
+        "reasonCodes": [
+          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
+        ],
+        "promotionRequirements": [
+          "USER_SEMANTIC_CONFIRMATION",
+          "DIRECT_REFERENCE_REQUIRED"
         ]
       }
     ],
-    "candidates": [],
     "coverage": {
       "backends": [
         {
           "backend": "codegraph",
           "status": "unavailable",
+          "completion": "incomplete",
+          "termination": "none",
           "reasonCode": "CODEGRAPH_INDEX_MISSING",
           "hitCount": 0
+        },
+        {
+          "backend": "ripgrep",
+          "status": "used",
+          "completion": "complete",
+          "termination": "none",
+          "hitCount": 2
         }
       ],
+      "strategyComplete": false,
       "fallbackChecked": true,
-      "indexState": "missing",
+      "indexState": "unknown",
       "indexFreshness": "unknown",
       "limitsReached": [],
-      "exclusionSummary": {
-        "UNVERIFIED_FILE_CONTENT": 1
+      "degradations": [],
+      "exclusionSummary": {},
+      "abortSource": "none",
+      "unsatisfiedAnchors": [],
+      "snapshot": {
+        "gitState": "unknown",
+        "consistency": "stable",
+        "filesChecked": 1,
+        "discardedEvidenceCount": 0
+      },
+      "scope": {
+        "requested": [],
+        "effective": [
+          "client",
+          "server",
+          "db",
+          "config",
+          "unknown"
+        ],
+        "policyVersion": "repo-scope-v1",
+        "unmatchedLayers": [
+          "client",
+          "server",
+          "db",
+          "config"
+        ]
+      },
+      "capabilities": {
+        "textSearch": "supported-text-files",
+        "semanticClassification": [
+          "typescript",
+          "javascript",
+          "sql"
+        ],
+        "unsupportedLanguageHits": 0
       }
     },
-    "nextActions": []
+    "nextActions": [
+      "CONFIRM_CANDIDATE"
+    ]
   }
 }

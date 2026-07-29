@@ -1,9 +1,9 @@
 {
   "ok": true,
   "evidence": {
-    "schemaVersion": "1.0",
+    "schemaVersion": "2.0",
     "status": "backend_unavailable",
-    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "repositoryRef": "local-repository",
     "normalizedTerms": [
       {
         "value": "targetField",
@@ -21,15 +21,54 @@
         {
           "backend": "ripgrep",
           "status": "unavailable",
+          "completion": "incomplete",
+          "termination": "none",
           "reasonCode": "RIPGREP_UNAVAILABLE",
           "hitCount": 0
         }
       ],
+      "strategyComplete": false,
       "fallbackChecked": false,
       "indexState": "unknown",
-      "indexFreshness": "not-applicable",
+      "indexFreshness": "unknown",
       "limitsReached": [],
-      "exclusionSummary": {}
+      "degradations": [],
+      "exclusionSummary": {},
+      "abortSource": "none",
+      "unsatisfiedAnchors": [],
+      "snapshot": {
+        "gitState": "unknown",
+        "consistency": "unknown",
+        "filesChecked": 0,
+        "discardedEvidenceCount": 0
+      },
+      "scope": {
+        "requested": [],
+        "effective": [
+          "client",
+          "server",
+          "db",
+          "config",
+          "unknown"
+        ],
+        "policyVersion": "repo-scope-v1",
+        "unmatchedLayers": [
+          "client",
+          "server",
+          "db",
+          "config",
+          "unknown"
+        ]
+      },
+      "capabilities": {
+        "textSearch": "supported-text-files",
+        "semanticClassification": [
+          "typescript",
+          "javascript",
+          "sql"
+        ],
+        "unsupportedLanguageHits": 0
+      }
     },
     "nextActions": []
   }

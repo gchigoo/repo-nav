@@ -1,9 +1,9 @@
 {
   "ok": true,
   "evidence": {
-    "schemaVersion": "1.0",
+    "schemaVersion": "2.0",
     "status": "partial",
-    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "repositoryRef": "local-repository",
     "normalizedTerms": [
       {
         "value": "targetField",
@@ -18,10 +18,42 @@
     "candidates": [
       {
         "evidenceClass": "candidate",
-        "id": "evidence:v1:33f8adf836a7af480d617f8a1157c4dbf55965d11f38379c5e99cf807bfd10f6",
+        "id": "evidence:v2:0001",
+        "role": "related",
+        "location": {
+          "file": "server/mapping.fixture",
+          "resolvable": true,
+          "symbol": "targetField",
+          "lines": [
+            1,
+            1
+          ],
+          "excerpt": "targetField"
+        },
+        "provenance": {
+          "discoveredBy": [
+            "filesystem"
+          ],
+          "verifiedBy": "filesystem",
+          "operations": [
+            "FILESYSTEM_READ_RANGE"
+          ]
+        },
+        "reasonCodes": [
+          "SAME_SCOPE_SIMILAR_IDENTIFIER"
+        ],
+        "promotionRequirements": [
+          "USER_SEMANTIC_CONFIRMATION",
+          "DIRECT_REFERENCE_REQUIRED"
+        ]
+      },
+      {
+        "evidenceClass": "candidate",
+        "id": "evidence:v2:0002",
         "role": "reference",
         "location": {
           "file": "server/mapping.fixture",
+          "resolvable": true,
           "lines": [
             1,
             2
@@ -52,14 +84,50 @@
         {
           "backend": "ripgrep",
           "status": "used",
+          "completion": "incomplete",
+          "termination": "early-stop",
           "hitCount": 1
         }
       ],
+      "strategyComplete": false,
       "fallbackChecked": false,
       "indexState": "unknown",
-      "indexFreshness": "not-applicable",
-      "limitsReached": [],
-      "exclusionSummary": {}
+      "indexFreshness": "unknown",
+      "limitsReached": [
+        "MAX_BACKEND_HITS_REACHED"
+      ],
+      "degradations": [
+        "SEMANTIC_LANGUAGE_UNSUPPORTED",
+        "BACKEND_EARLY_STOPPED"
+      ],
+      "exclusionSummary": {},
+      "abortSource": "none",
+      "unsatisfiedAnchors": [],
+      "snapshot": {
+        "gitState": "unknown",
+        "consistency": "stable",
+        "filesChecked": 1,
+        "discardedEvidenceCount": 0
+      },
+      "scope": {
+        "requested": [
+          "server"
+        ],
+        "effective": [
+          "server"
+        ],
+        "policyVersion": "repo-scope-v1",
+        "unmatchedLayers": []
+      },
+      "capabilities": {
+        "textSearch": "supported-text-files",
+        "semanticClassification": [
+          "typescript",
+          "javascript",
+          "sql"
+        ],
+        "unsupportedLanguageHits": 7
+      }
     },
     "nextActions": [
       "CONFIRM_CANDIDATE"

@@ -12,6 +12,7 @@ import { CanonicalRepositoryLocateExecutorV2 } from '../../src/evidence/locate-e
 import { PublicLocateExecutionApplicationServiceV2 } from '../../src/evidence/locate-execution/public-locate-execution-application-v2.js';
 import { V2LocateResultProjector } from '../../src/evidence/locate-execution/v2-locate-result-projector.js';
 import { RepositoryEvidenceEngine } from '../../src/evidence/repository-evidence-engine.js';
+import { wrapFixtureBackendsSearchViewsV2 } from './wrap-fixture-backend-search-views-v2.js';
 
 export interface CanonicalLocateEngineHarnessV2 {
   readonly executor: CanonicalRepositoryLocateExecutorV2;
@@ -22,12 +23,17 @@ export interface CanonicalLocateEngineHarnessV2 {
 
 /**
  * Create the production wiring shape used by migrated constructor tests.
+ * Fixture backends without searchViews are wrapped so coverage telemetry registers.
  */
 export function createCanonicalLocateEngineHarnessV2(
   backends: readonly RepositorySearchBackend[],
   reader: RepositoryReader,
 ): CanonicalLocateEngineHarnessV2 {
-  const executor = new CanonicalRepositoryLocateExecutorV2(backends, reader);
+  const wiredBackends = wrapFixtureBackendsSearchViewsV2(backends);
+  const executor = new CanonicalRepositoryLocateExecutorV2(
+    wiredBackends,
+    reader,
+  );
   const orchestrator = createAcceptedCompleteRealLocateShadowOrchestratorV2();
   const projector = new V2LocateResultProjector(orchestrator);
   const application = new PublicLocateExecutionApplicationServiceV2(

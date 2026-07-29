@@ -49,7 +49,8 @@ families:
     partial: {positive: ripgrep-incomplete}
     no_result: {positive: contract-code-probes}
     backend_unavailable: {positive: backend-unavailable}
-    timeout: {positive: codegraph-global-abort-no-fallback}
+    timeout: {positive: contract-code-probes}
+    cancelled: {positive: codegraph-global-abort-no-fallback}
   EvidenceSource:
     codegraph: {positive: codegraph-incomplete}
     ripgrep: {positive: source-field-mapping}
@@ -101,7 +102,7 @@ families:
     MAX_CANDIDATES_REACHED: {positive: contract-code-probes}
     MAX_FILE_BYTES_REACHED: {positive: contract-code-probes}
     MAX_EXCERPT_BYTES_REACHED: {positive: contract-code-probes}
-    TIMEOUT_REACHED: {positive: codegraph-global-abort-no-fallback}
+    TIMEOUT_REACHED: {positive: contract-code-probes}
   ExclusionReasonCode:
     NEGATIVE_TERM_MATCH: {positive: exclusion-summary}
     OUTSIDE_LAYER_HINT: {positive: exclusion-summary}

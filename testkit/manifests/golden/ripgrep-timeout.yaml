@@ -15,5 +15,5 @@ expected:
   confirmed: []
   candidates: []
   forbiddenEvidenceIds: []
-  requiredCoverageCodes: [BACKEND_ABORTED]
+  requiredCoverageCodes: [BACKEND_PROCESS_FAILED]
   minimumExclusionCounts: {}

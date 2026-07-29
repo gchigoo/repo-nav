@@ -10,19 +10,19 @@ request:
   layers: [server]
 expected:
   ok: true
-  status: ok
+  status: partial
   confirmed:
     - file: server/mapping.fixture
       contains: 'hcpId: row.hcp_id'
       role: value-mapping
-      reasonCodes: [DIRECT_ALIAS_MAPPING, EXACT_TERM_MATCH]
+      reasonCodes: [EXACT_TERM_MATCH, DIRECT_ALIAS_MAPPING]
   candidates:
     - file: server/mapping.fixture
       contains: sourceAlias
       role: related
       reasonCodes: [ALIAS_SOURCE_NEIGHBOR]
     - file: server/mapping.fixture
-      contains: hcp_name
+      contains: hcpId
       role: related
       reasonCodes: [SAME_SCOPE_SIMILAR_IDENTIFIER]
     - file: server/mapping.fixture
@@ -33,11 +33,7 @@ expected:
       contains: hcpEmail
       role: related
       reasonCodes: [SAME_SCOPE_SIMILAR_IDENTIFIER, SAME_ENTITY_SIBLING]
-    - file: server/mapping.fixture
-      contains: hcp_email
-      role: related
-      reasonCodes: [SAME_SCOPE_SIMILAR_IDENTIFIER]
   forbiddenEvidenceIds:
-    - evidence:v1:dc7e46a20ef89e12a87008a440bab96154f961cda087c622bed853b670005291
+    - evidence:v2:9999
   requiredCoverageCodes: []
   minimumExclusionCounts: {}

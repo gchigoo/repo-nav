@@ -26,7 +26,7 @@ const CASE_IDS = [
 ] as const;
 const EXPECTED_CANDIDATES = [
   { symbol: 'sourceAlias', reasonCodes: ['ALIAS_SOURCE_NEIGHBOR'] },
-  { symbol: 'hcp_name', reasonCodes: ['SAME_SCOPE_SIMILAR_IDENTIFIER'] },
+  { symbol: 'hcpId', reasonCodes: ['SAME_SCOPE_SIMILAR_IDENTIFIER'] },
   {
     symbol: 'hcpName',
     reasonCodes: [
@@ -41,7 +41,6 @@ const EXPECTED_CANDIDATES = [
       'SAME_ENTITY_SIBLING',
     ],
   },
-  { symbol: 'hcp_email', reasonCodes: ['SAME_SCOPE_SIMILAR_IDENTIFIER'] },
 ] as const;
 
 function loadCase(caseId: (typeof CASE_IDS)[number]): GoldenSuccessCase {

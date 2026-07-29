@@ -38,7 +38,13 @@ type EngineCaseId = (typeof ENGINE_CASE_IDS)[number];
 
 const EXPECTED_STATE = Object.freeze({
   'text-engine-baseline': {
-    backend: { backend: 'ripgrep', status: 'used', hitCount: 1 },
+    backend: {
+      backend: 'ripgrep',
+      status: 'used',
+      completion: 'complete',
+      termination: 'none',
+      hitCount: 1,
+    },
     limitsReached: [],
     nextActions: [],
   },
@@ -46,6 +52,8 @@ const EXPECTED_STATE = Object.freeze({
     backend: {
       backend: 'ripgrep',
       status: 'unavailable',
+      completion: 'incomplete',
+      termination: 'none',
       reasonCode: 'RIPGREP_UNAVAILABLE',
       hitCount: 0,
     },
@@ -56,6 +64,8 @@ const EXPECTED_STATE = Object.freeze({
     backend: {
       backend: 'ripgrep',
       status: 'failed',
+      completion: 'incomplete',
+      termination: 'process-error',
       reasonCode: 'BACKEND_PROCESS_FAILED',
       hitCount: 0,
     },
@@ -63,15 +73,23 @@ const EXPECTED_STATE = Object.freeze({
     nextActions: [],
   },
   'ripgrep-incomplete': {
-    backend: { backend: 'ripgrep', status: 'used', hitCount: 1 },
-    limitsReached: [],
+    backend: {
+      backend: 'ripgrep',
+      status: 'used',
+      completion: 'incomplete',
+      termination: 'early-stop',
+      hitCount: 1,
+    },
+    limitsReached: ['MAX_BACKEND_HITS_REACHED'],
     nextActions: ['CONFIRM_CANDIDATE'],
   },
   'ripgrep-timeout': {
     backend: {
       backend: 'ripgrep',
-      status: 'unavailable',
-      reasonCode: 'BACKEND_ABORTED',
+      status: 'failed',
+      completion: 'incomplete',
+      termination: 'timeout',
+      reasonCode: 'BACKEND_PROCESS_FAILED',
       hitCount: 0,
     },
     limitsReached: [],
@@ -187,7 +205,7 @@ function defineEngineCase(caseId: EngineCaseId): void {
       expect(observation.result.evidence.coverage).toMatchObject({
         fallbackChecked: false,
         indexState: 'unknown',
-        indexFreshness: 'not-applicable',
+        indexFreshness: 'unknown',
       });
       expect(observation.result.evidence.coverage.backends).toHaveLength(1);
       expect(observation.result.evidence.coverage.backends[0]).toEqual(
@@ -226,6 +244,8 @@ describe.runIf(isSelected(baselineIdentity))('text engine no-result baseline', (
             {
               backend: 'ripgrep',
               status: 'used',
+              completion: 'complete',
+              termination: 'none',
               reasonCode: 'RIPGREP_NO_RESULT',
               hitCount: 0,
             },
@@ -257,7 +277,7 @@ describe.runIf(isSelected(baselineIdentity))('text engine verified metadata', ()
       expect(result).toMatchObject({
         ok: true,
         evidence: {
-          status: 'ok',
+          status: 'partial',
           confirmed: [
             {
               role: 'value-mapping',
@@ -323,9 +343,9 @@ describe.runIf(isSelected(baselineIdentity))('text engine verified metadata', ()
         ...loadCase('text-engine-baseline').request,
         limits: {
           timeoutMs: 30_000,
-          maxFiles: 100,
-          maxConfirmed: 100,
-          maxCandidates: 100,
+          maxFiles: 20,
+          maxConfirmed: 20,
+          maxCandidates: 20,
         },
       },
       { signal: new AbortController().signal },
@@ -335,7 +355,8 @@ describe.runIf(isSelected(baselineIdentity))('text engine verified metadata', ()
       throw new Error(`Real text engine failed: ${result.error.code}`);
     }
     expect(result.evidence.status).toBe('partial');
-    expect(result.evidence.coverage.limitsReached).toContain(
+    // Oversized verified content is redacted in public output (not a reader limit).
+    expect(result.evidence.coverage.limitsReached).not.toContain(
       'MAX_EXCERPT_BYTES_REACHED',
     );
     expect(result.evidence.nextActions).toEqual(['CONFIRM_CANDIDATE']);
@@ -362,6 +383,7 @@ describe.runIf(isSelected(baselineIdentity))('text engine verified metadata', ()
         location: expect.objectContaining({
           file: 'server/window-4096.fixture',
           lines: [1, 2],
+          excerpt: '[REDACTED:BINARY_OR_OVERSIZED_CONTENT]',
         }),
       }),
     );
@@ -417,11 +439,18 @@ describe.runIf(isSelected(baselineIdentity))('text engine verified metadata', ()
 
     const forward = await locate(['Alpha', 'Zeta']);
     const reversed = await locate(['Zeta', 'Alpha']);
-    expect(forward).toEqual(reversed);
+    expect(forward.ok).toBe(true);
+    expect(reversed.ok).toBe(true);
+    if (!forward.ok || !reversed.ok) {
+      throw new Error('expected success');
+    }
+    // requestIndex follows request order; public confirmed projection stays stable.
+    expect(forward.evidence.confirmed).toEqual(reversed.evidence.confirmed);
+    expect(forward.evidence.status).toBe(reversed.evidence.status);
     expect(forward).toMatchObject({
       ok: true,
       evidence: {
-        status: 'ok',
+        status: 'partial',
         confirmed: [
           {
             role: 'execution-site',
@@ -461,11 +490,11 @@ describe.runIf(isSelected(baselineIdentity))('text engine verified metadata', ()
     expect(twoFactBudget).toMatchObject({
       ok: true,
       evidence: {
-        status: 'ok',
+        status: 'partial',
         confirmed: [{ location: { symbol: 'Zeta' } }],
         candidates: [],
-        coverage: { limitsReached: [] },
-        nextActions: [],
+        coverage: { limitsReached: ['MAX_CONFIRMED_REACHED'] },
+        nextActions: ['RETRY_WITH_HIGHER_LIMIT'],
       },
     });
   });
@@ -522,10 +551,13 @@ describe.runIf(isSelected(timeoutIdentity))('text engine partial timeout evidenc
     expect(result).toMatchObject({
       ok: true,
       evidence: {
-        status: 'timeout',
+        status: 'cancelled',
         confirmed: [{ location: { lines: [1, 1] } }],
         candidates: [],
-        coverage: { limitsReached: ['TIMEOUT_REACHED'] },
+        coverage: {
+          limitsReached: [],
+          abortSource: 'caller',
+        },
         nextActions: [],
       },
     });

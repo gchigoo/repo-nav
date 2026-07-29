@@ -11,7 +11,6 @@ import {
   EvidenceSourceSchema,
   ExclusionReasonCodeSchema,
   LimitReasonCodeSchema,
-  LocateStatusSchema,
   NextActionCodeSchema,
   PromotionRequirementCodeSchema,
   RedactionReasonCodeSchema,
@@ -21,6 +20,7 @@ import {
   TOOL_ERROR_CODES,
   TermCaseModeSchema,
 } from '../../src/contracts/index.js';
+import { LOCATE_STATUSES_V2 } from '../../src/contracts/v2/locate-result-v2.js';
 
 export const CONTRACT_SCHEMA_PROBE_VALUES = Object.freeze({
   RepoLayer: Object.freeze([
@@ -40,6 +40,7 @@ export const CONTRACT_SCHEMA_PROBE_VALUES = Object.freeze({
     'no_result',
     'backend_unavailable',
     'timeout',
+    'cancelled',
   ]),
   EvidenceSource: Object.freeze(['codegraph', 'ripgrep', 'filesystem']),
   SearchBackendId: Object.freeze(['codegraph', 'ripgrep']),
@@ -127,7 +128,7 @@ const PROBE_SCHEMAS: Readonly<Record<string, z.ZodType>> = Object.freeze({
   RepoLayer: RepoLayerSchema,
   AnchorKind: AnchorKindSchema,
   TermCaseMode: TermCaseModeSchema,
-  LocateStatus: LocateStatusSchema,
+  LocateStatus: z.enum(LOCATE_STATUSES_V2),
   EvidenceSource: EvidenceSourceSchema,
   SearchBackendId: SearchBackendIdSchema,
   EvidenceRole: EvidenceRoleSchema,

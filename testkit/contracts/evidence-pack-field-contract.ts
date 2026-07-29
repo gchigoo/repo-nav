@@ -1,7 +1,7 @@
 import {
-  LocateResultSchema,
-  type LocateResult,
-} from '../../src/contracts/index.js';
+  LocateResultV2Schema,
+  type LocateResultV2,
+} from '../../src/contracts/v2/locate-result-v2.js';
 
 export interface EvidencePackFieldMutation {
   readonly path: string;
@@ -10,12 +10,12 @@ export interface EvidencePackFieldMutation {
 }
 
 export const PUBLIC_EVIDENCE_PACK_FIELD_MUTATIONS = Object.freeze([
-  { path: 'evidence.schemaVersion', replacement: '2.0', normalized: false },
+  { path: 'evidence.schemaVersion', replacement: '1.0', normalized: false },
   { path: 'evidence.status', replacement: 'partial', normalized: false },
   {
-    path: 'evidence.repositoryRoot',
-    replacement: 'D:/another-fixture',
-    normalized: true,
+    path: 'evidence.repositoryRef',
+    replacement: 'other-repository',
+    normalized: false,
   },
   { path: 'evidence.normalizedTerms', replacement: [], normalized: false },
   {
@@ -36,7 +36,7 @@ export const PUBLIC_EVIDENCE_PACK_FIELD_MUTATIONS = Object.freeze([
   },
   {
     path: 'evidence.confirmed.0.id',
-    replacement: `evidence:v1:${'c'.repeat(64)}`,
+    replacement: 'evidence:v2:0009',
     normalized: false,
   },
   {
@@ -47,6 +47,11 @@ export const PUBLIC_EVIDENCE_PACK_FIELD_MUTATIONS = Object.freeze([
   {
     path: 'evidence.confirmed.0.location.file',
     replacement: 'server/other.ts',
+    normalized: false,
+  },
+  {
+    path: 'evidence.confirmed.0.location.resolvable',
+    replacement: false,
     normalized: false,
   },
   {
@@ -70,8 +75,8 @@ export const PUBLIC_EVIDENCE_PACK_FIELD_MUTATIONS = Object.freeze([
     normalized: false,
   },
   {
-    path: 'evidence.confirmed.0.location.redaction.reasonCodes',
-    replacement: ['PERSONAL_DATA'],
+    path: 'evidence.confirmed.0.location.redaction.fields',
+    replacement: [{ field: 'excerpt', reasonCodes: ['PERSONAL_DATA'] }],
     normalized: false,
   },
   {
@@ -102,7 +107,7 @@ export const PUBLIC_EVIDENCE_PACK_FIELD_MUTATIONS = Object.freeze([
   },
   {
     path: 'evidence.candidates.0.id',
-    replacement: `evidence:v1:${'d'.repeat(64)}`,
+    replacement: 'evidence:v2:0009',
     normalized: false,
   },
   {
@@ -113,6 +118,11 @@ export const PUBLIC_EVIDENCE_PACK_FIELD_MUTATIONS = Object.freeze([
   {
     path: 'evidence.candidates.0.location.file',
     replacement: 'server/other-candidate.ts',
+    normalized: false,
+  },
+  {
+    path: 'evidence.candidates.0.location.resolvable',
+    replacement: false,
     normalized: false,
   },
   {
@@ -162,6 +172,16 @@ export const PUBLIC_EVIDENCE_PACK_FIELD_MUTATIONS = Object.freeze([
     normalized: false,
   },
   {
+    path: 'evidence.coverage.backends.0.completion',
+    replacement: 'incomplete',
+    normalized: false,
+  },
+  {
+    path: 'evidence.coverage.backends.0.termination',
+    replacement: 'aborted',
+    normalized: false,
+  },
+  {
     path: 'evidence.coverage.backends.0.reasonCode',
     replacement: 'BACKEND_ABORTED',
     normalized: false,
@@ -169,6 +189,11 @@ export const PUBLIC_EVIDENCE_PACK_FIELD_MUTATIONS = Object.freeze([
   {
     path: 'evidence.coverage.backends.0.hitCount',
     replacement: 2,
+    normalized: false,
+  },
+  {
+    path: 'evidence.coverage.strategyComplete',
+    replacement: false,
     normalized: false,
   },
   {
@@ -192,34 +217,65 @@ export const PUBLIC_EVIDENCE_PACK_FIELD_MUTATIONS = Object.freeze([
     normalized: false,
   },
   {
+    path: 'evidence.coverage.degradations',
+    replacement: ['SNAPSHOT_CHANGED'],
+    normalized: false,
+  },
+  {
     path: 'evidence.coverage.exclusionSummary',
     replacement: { OUTSIDE_LAYER_HINT: 2 },
+    normalized: false,
+  },
+  {
+    path: 'evidence.coverage.abortSource',
+    replacement: 'caller',
+    normalized: false,
+  },
+  {
+    path: 'evidence.coverage.snapshot.consistency',
+    replacement: 'changed',
+    normalized: false,
+  },
+  {
+    path: 'evidence.coverage.scope.policyVersion',
+    replacement: 'repo-scope-v0',
+    normalized: false,
+  },
+  {
+    path: 'evidence.coverage.capabilities.unsupportedLanguageHits',
+    replacement: 1,
     normalized: false,
   },
   { path: 'evidence.nextActions', replacement: [], normalized: false },
 ] satisfies readonly EvidencePackFieldMutation[]);
 
-export function createEvidencePackMutationFixture(): LocateResult {
-  return LocateResultSchema.parse({
+export function createEvidencePackMutationFixture(): LocateResultV2 {
+  return LocateResultV2Schema.parse({
     ok: true,
     evidence: {
-      schemaVersion: '1.0',
+      schemaVersion: '2.0',
       status: 'ok',
-      repositoryRoot: 'D:/fixture',
+      repositoryRef: 'local-repository',
       normalizedTerms: [{ value: 'targetField', caseSensitive: false }],
       confirmed: [
         {
           evidenceClass: 'confirmed',
-          id: `evidence:v1:${'a'.repeat(64)}`,
+          id: 'evidence:v2:0001',
           role: 'value-mapping',
           location: {
             file: 'server/mapping.ts',
+            resolvable: true,
             symbol: 'Mapping',
             lines: [1, 1],
-            excerpt: 'const targetField = <redacted:secret-like-value>;',
+            excerpt: 'const targetField = [REDACTED];',
             redaction: {
               applied: true,
-              reasonCodes: ['SECRET_LIKE_VALUE'],
+              fields: [
+                {
+                  field: 'excerpt',
+                  reasonCodes: ['SECRET_LIKE_VALUE'],
+                },
+              ],
             },
           },
           provenance: {
@@ -233,10 +289,11 @@ export function createEvidencePackMutationFixture(): LocateResult {
       candidates: [
         {
           evidenceClass: 'candidate',
-          id: `evidence:v1:${'b'.repeat(64)}`,
+          id: 'evidence:v2:0002',
           role: 'related',
           location: {
             file: 'server/candidate.ts',
+            resolvable: true,
             lines: [3, 3],
             excerpt: 'candidateField',
           },
@@ -260,15 +317,37 @@ export function createEvidencePackMutationFixture(): LocateResult {
           {
             backend: 'ripgrep',
             status: 'used',
-            reasonCode: 'RIPGREP_NO_RESULT',
+            completion: 'complete',
+            termination: 'none',
             hitCount: 1,
           },
         ],
+        strategyComplete: true,
         fallbackChecked: false,
         indexState: 'unknown',
         indexFreshness: 'unknown',
         limitsReached: ['MAX_FILES_REACHED'],
+        degradations: [],
         exclusionSummary: { NEGATIVE_TERM_MATCH: 1 },
+        abortSource: 'none',
+        unsatisfiedAnchors: [],
+        snapshot: {
+          gitState: 'unknown',
+          consistency: 'stable',
+          filesChecked: 2,
+          discardedEvidenceCount: 0,
+        },
+        scope: {
+          requested: [],
+          effective: ['client', 'server', 'db', 'config', 'unknown'],
+          policyVersion: 'repo-scope-v1',
+          unmatchedLayers: [],
+        },
+        capabilities: {
+          textSearch: 'supported-text-files',
+          semanticClassification: ['typescript', 'javascript', 'sql'],
+          unsupportedLanguageHits: 0,
+        },
       },
       nextActions: ['RETRY_WITH_HIGHER_LIMIT'],
     },
@@ -280,7 +359,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export function applyEvidencePackFieldMutation(
-  input: LocateResult,
+  input: LocateResultV2,
   mutation: EvidencePackFieldMutation,
 ): unknown {
   const clone: unknown = JSON.parse(JSON.stringify(input)) as unknown;

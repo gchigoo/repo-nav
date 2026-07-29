@@ -830,3 +830,51 @@ export function issueBackendExecutionTraceForHarnessV2(input: {
   });
   return token;
 }
+
+/**
+ * F6/testkit harness：fixture backend 无 physical start 时直接登记 logical attempt。
+ * production path 不得调用。
+ */
+export function issueExpandedBackendLogicalAttemptForHarnessV2(input: {
+  readonly execution: LocateExecutionTokenV2;
+  readonly context: BackendExecutionContextV2;
+  readonly outcome: BackendExecutionOutcomeV2;
+}): ExpandedBackendLogicalAttemptV2 {
+  const record = requireContext(input.context, input.execution);
+  validateOutcomeShape(input.outcome);
+  if (record.logicalAttempts.has(input.outcome.backend)) {
+    throw new TypeError('duplicate-logical-attempt');
+  }
+  if (record.sealedBackends.has(input.outcome.backend)) {
+    throw new TypeError('backend-already-sealed');
+  }
+  const outcome = signOutcome(
+    input.outcome,
+    input.context,
+    input.execution,
+  );
+  const attempt =
+    createProcessOpaqueTokenV2<ExpandedBackendLogicalAttemptV2>();
+  const firstExpandedStartOrdinal = record.logicalAttempts.size + 1;
+  const view: ExpandedBackendLogicalAttemptViewV2 = Object.freeze({
+    backend: input.outcome.backend,
+    firstExpandedStartOrdinal,
+    outcome,
+  });
+  attemptPrivate.set(attempt, {
+    view,
+    outcomeShape: Object.freeze({
+      ...input.outcome,
+      retainedHits: deepFreezeHits(input.outcome.retainedHits),
+    }) as BackendExecutionOutcomeV2,
+    execution: input.execution,
+    context: input.context,
+  });
+  record.logicalAttempts.set(input.outcome.backend, {
+    attempt,
+    view,
+    outcomeShape: input.outcome,
+  });
+  record.sealedBackends.add(input.outcome.backend);
+  return attempt;
+}

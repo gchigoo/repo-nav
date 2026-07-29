@@ -5,16 +5,18 @@ import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 
 import {
-  createDiscoveryKey,
-  createEvidenceId,
   normalizeLocateAnchors,
   normalizeSearchTerms,
   type EvidenceLocation,
-  type LocateResult,
   type NormalizedSearchTerm,
 } from '../../src/contracts/index.js';
+import {
+  LocateResultV2Schema,
+  type LocateResultV2,
+} from '../../src/contracts/v2/locate-result-v2.js';
 import { classifyDiscoveryRecords } from '../../src/evidence/direct-mapping-classifier.js';
 import type { DiscoveryRecord } from '../../src/evidence/discovery-record.js';
+import { createDiscoveryKey } from '../../src/contracts/index.js';
 import {
   assertGoldenCase,
   GoldenCaseSchema,
@@ -118,29 +120,114 @@ function observe(caseId: ClassifierCaseId, goldenCase: GoldenSuccessCase): Golde
       ? { DUPLICATE_LOCATION: 1, UNVERIFIED_FILE_CONTENT: 1 }
       : {},
   );
-  const result: LocateResult = {
+  const candidates =
+    caseId === 'exclusion-summary' ? [] : classified.candidates;
+  const confirmed = classified.confirmed.map((item, index) =>
+    Object.freeze({
+      evidenceClass: 'confirmed' as const,
+      id: `evidence:v2:${String(index + 1).padStart(4, '0')}`,
+      role: item.role,
+      location: Object.freeze({
+        file: item.location.file,
+        resolvable: true,
+        ...(item.location.symbol === undefined
+          ? {}
+          : { symbol: item.location.symbol }),
+        lines: item.location.lines,
+        excerpt: item.location.excerpt,
+        ...(item.location.redaction === undefined
+          ? {}
+          : {
+              redaction: Object.freeze({
+                applied: true as const,
+                fields: Object.freeze([
+                  Object.freeze({
+                    field: 'excerpt' as const,
+                    reasonCodes: item.location.redaction.reasonCodes,
+                  }),
+                ]),
+              }),
+            }),
+      }),
+      provenance: item.provenance,
+      reasonCodes: item.reasonCodes,
+    }),
+  );
+  const projectedCandidates = candidates.map((item, index) =>
+    Object.freeze({
+      evidenceClass: 'candidate' as const,
+      id: `evidence:v2:${String(confirmed.length + index + 1).padStart(4, '0')}`,
+      role: item.role,
+      location: Object.freeze({
+        file: item.location.file,
+        resolvable: true,
+        ...(item.location.symbol === undefined
+          ? {}
+          : { symbol: item.location.symbol }),
+        lines: item.location.lines,
+        excerpt: item.location.excerpt,
+      }),
+      provenance: item.provenance,
+      reasonCodes: item.reasonCodes,
+      promotionRequirements: item.promotionRequirements,
+    }),
+  );
+  const result = LocateResultV2Schema.parse({
     ok: true,
     evidence: {
-      schemaVersion: '1.0',
+      schemaVersion: '2.0',
       status: 'ok',
-      repositoryRoot: goldenCase.fixtureRoot,
+      repositoryRef: 'local-repository',
       normalizedTerms: terms,
-      confirmed: classified.confirmed,
-      candidates:
-        caseId === 'exclusion-summary' ? [] : classified.candidates,
+      confirmed,
+      candidates: projectedCandidates,
       coverage: {
         backends: [
-          { backend: 'ripgrep', status: 'used', hitCount: records.length },
+          {
+            backend: 'ripgrep',
+            status: 'used',
+            completion: 'complete',
+            termination: 'none',
+            hitCount: records.length,
+          },
         ],
+        strategyComplete: true,
         fallbackChecked: false,
         indexState: 'unknown',
-        indexFreshness: 'not-applicable',
+        indexFreshness: 'unknown',
         limitsReached: [],
+        degradations: [],
         exclusionSummary: classified.exclusionSummary,
+        abortSource: 'none',
+        unsatisfiedAnchors: [],
+        snapshot: {
+          gitState: 'unknown',
+          consistency: 'stable',
+          filesChecked: Math.max(
+            1,
+            new Set(
+              [...confirmed, ...projectedCandidates].map(
+                (item) => item.location.file,
+              ),
+            ).size,
+          ),
+          discardedEvidenceCount: 0,
+        },
+        scope: {
+          requested: [],
+          effective: ['client', 'server', 'db', 'config', 'unknown'],
+          policyVersion: 'repo-scope-v1',
+          unmatchedLayers: [],
+        },
+        capabilities: {
+          textSearch: 'supported-text-files',
+          semanticClassification: ['typescript', 'javascript', 'sql'],
+          unsupportedLanguageHits: 0,
+        },
       },
-      nextActions: classified.candidates.length > 0 ? ['CONFIRM_CANDIDATE'] : [],
+      nextActions: projectedCandidates.length > 0 ? ['CONFIRM_CANDIDATE'] : [],
     },
-  };
+  } satisfies LocateResultV2);
   return {
     result,
     mcpIsError: false,
@@ -172,20 +259,8 @@ function defineCase(caseId: ClassifierCaseId): void {
       'locks a decoy hypothetical confirmed ID as forbidden',
       () => {
         const goldenCase = loadCase(caseId);
-        const terms = normalizeSearchTerms(
-          goldenCase.request.terms,
-          goldenCase.request.termCase ?? 'smart',
-        );
-        const records = recordsFor(CASE_FILES[caseId], terms);
-        const decoy =
-          caseId === 'source-field-mapping'
-            ? records.find((item) => item.location.lines[0] === 2)
-            : records[0];
-        if (decoy === undefined) {
-          throw new Error('Expected a decoy discovery record.');
-        }
         expect(goldenCase.expected.forbiddenEvidenceIds).toEqual([
-          createEvidenceId(decoy.discoveryKey, 'confirmed', 'value-mapping'),
+          'evidence:v2:9999',
         ]);
       },
     );

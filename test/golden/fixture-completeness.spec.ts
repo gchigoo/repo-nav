@@ -23,7 +23,7 @@ const probeIdentity = {
 
 describe.runIf(isSelected(probeIdentity))('contract enum/code probes', () => {
   it('executes every explicit schema probe independently of owner declarations', () => {
-    expect(runContractSchemaProbes()).toHaveLength(79);
+    expect(runContractSchemaProbes()).toHaveLength(80);
   });
 });
 

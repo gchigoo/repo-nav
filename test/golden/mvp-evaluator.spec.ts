@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 
-import { LocateResultSchema } from '../../src/contracts/index.js';
+import { LocateResultV2Schema } from '../../src/contracts/v2/locate-result-v2.js';
 import {
   GoldenCaseSchema,
   PUBLIC_EVIDENCE_PACK_FIELD_MUTATIONS,
@@ -35,7 +35,7 @@ function loadSuccessResult(caseId: string) {
   const input: unknown = JSON.parse(
     readFileSync(resolve(expectedRoot, `${caseId}.json`), 'utf8'),
   );
-  const result = LocateResultSchema.parse(input);
+  const result = LocateResultV2Schema.parse(input);
   if (!result.ok) {
     throw new Error(`${caseId} must contain a successful projection.`);
   }
@@ -43,7 +43,7 @@ function loadSuccessResult(caseId: string) {
 }
 
 function observe(result: unknown, mcpIsError = false): GoldenObservation {
-  const parsed = LocateResultSchema.parse(result);
+  const parsed = LocateResultV2Schema.parse(result);
   return {
     result: parsed,
     mcpIsError,
@@ -75,24 +75,17 @@ const evaluatorIdentity = {
 } as const;
 
 describe.runIf(isSelected(evaluatorIdentity))('shared GoldenCaseEvaluator', () => {
-  it('uses one public evaluator for success/error and normalizes only repositoryRoot', () => {
+  it('uses one public evaluator for success/error on the v2 projection surface', () => {
     const success = successCase('manifest-schema-success');
     const successResult = loadSuccessResult('foundation-success');
-    const relocated = {
-      ...successResult,
-      evidence: {
-        ...successResult.evidence,
-        repositoryRoot: 'D:/temporary/repo-nav-fixture',
-      },
-    };
-    expect(() => assertGoldenCase(success, observe(relocated))).not.toThrow();
+    expect(() => assertGoldenCase(success, observe(successResult))).not.toThrow();
 
     const errorCase = loadCase('manifest-schema-error');
     const errorResult = {
       ok: false,
       error: {
         code: 'INVALID_INPUT',
-        message: 'terms must contain at least one item.',
+        message: 'Locate request does not match the required schema.',
         recoverable: true,
         suggestedAction: 'ADD_TERM',
       },
@@ -134,7 +127,10 @@ describe.runIf(isSelected(negativeIdentity))(
           ...candidateResult.evidence,
           candidates: [
             ...candidateResult.evidence.candidates,
-            { ...firstCandidate, id: `evidence:v1:${'a'.repeat(64)}` },
+            {
+              ...firstCandidate,
+              id: `evidence:v2:${String(candidateResult.evidence.candidates.length + candidateResult.evidence.confirmed.length + 1).padStart(4, '0')}`,
+            },
           ],
         },
       };
@@ -146,7 +142,13 @@ describe.runIf(isSelected(negativeIdentity))(
         ...candidateResult,
         evidence: {
           ...candidateResult.evidence,
-          candidates: [...candidateResult.evidence.candidates].reverse(),
+          candidates: (() => {
+            const reversed = [...candidateResult.evidence.candidates].reverse();
+            return reversed.map((item, index) => ({
+              ...item,
+              id: `evidence:v2:${String(candidateResult.evidence.confirmed.length + index + 1).padStart(4, '0')}`,
+            }));
+          })(),
         },
       };
       expect(() => assertGoldenCase(candidateCase, observe(wrongOrder))).toThrow(
@@ -300,11 +302,11 @@ describe.runIf(isSelected(negativeIdentity))(
 
     it('rejects error structured/text parity mismatches', () => {
       const errorCase = loadCase('manifest-schema-error');
-      const result = LocateResultSchema.parse({
+      const result = LocateResultV2Schema.parse({
         ok: false,
         error: {
           code: 'INVALID_INPUT',
-          message: 'safe error',
+          message: 'Locate request does not match the required schema.',
           recoverable: true,
           suggestedAction: 'ADD_TERM',
         },
@@ -325,7 +327,7 @@ describe.runIf(isSelected(negativeIdentity))(
       const expected = createStableGoldenProjection(fixture);
       for (const mutation of PUBLIC_EVIDENCE_PACK_FIELD_MUTATIONS) {
         const mutated = applyEvidencePackFieldMutation(fixture, mutation);
-        const parsed = LocateResultSchema.safeParse(mutated);
+        const parsed = LocateResultV2Schema.safeParse(mutated);
         if (mutation.normalized) {
           expect(parsed.success, mutation.path).toBe(true);
           if (parsed.success) {
@@ -354,6 +356,18 @@ describe.runIf(isSelected(negativeIdentity))(
           probe.family === 'ConfirmedReasonCode'
             ? 'evidence.confirmed.0.reasonCodes'
             : 'evidence.candidates.0.reasonCodes';
+        const canon =
+          probe.family === 'ConfirmedReasonCode'
+            ? (['EXACT_TERM_MATCH', 'EXACT_SYMBOL_ANCHOR', 'DIRECT_ALIAS_MAPPING'] as const)
+            : ([
+                'EXACT_TERM_WITHOUT_DIRECT_MAPPING',
+                'SYMBOL_REFERENCE_ONLY',
+                'SAME_SCOPE_SIMILAR_IDENTIFIER',
+                'SAME_ENTITY_SIBLING',
+                'ALIAS_SOURCE_NEIGHBOR',
+                'SECONDARY_BACKEND_HIT',
+                'UNSUPPORTED_LANGUAGE_LITERAL',
+              ] as const);
         const alternate = REASON_CODE_NEGATIVE_PROBES.find(
           (candidate) =>
             candidate.family === probe.family && candidate.code !== probe.code,
@@ -361,7 +375,7 @@ describe.runIf(isSelected(negativeIdentity))(
         if (alternate === undefined) {
           throw new Error(`Missing alternate negative probe for ${probe.family}.`);
         }
-        const baseline = LocateResultSchema.parse(
+        const baseline = LocateResultV2Schema.parse(
           applyEvidencePackFieldMutation(fixture, {
             path,
             replacement: [alternate.code],
@@ -369,12 +383,15 @@ describe.runIf(isSelected(negativeIdentity))(
           }),
         );
         const expected = createStableGoldenProjection(baseline);
+        const orderedPair = canon.filter(
+          (code) => code === alternate.code || code === probe.code,
+        );
         const mutated = applyEvidencePackFieldMutation(baseline, {
           path,
-          replacement: [alternate.code, probe.code],
+          replacement: orderedPair,
           normalized: false,
         });
-        const parsed = LocateResultSchema.parse(mutated);
+        const parsed = LocateResultV2Schema.parse(mutated);
         expect(
           compareGoldenProjection(expected, parsed).matches,
           `${probe.family}.${probe.code}`,

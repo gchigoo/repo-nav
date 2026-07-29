@@ -21,7 +21,7 @@ request:
     maxCandidates: 20
     timeoutMs: 30000
 expected:
-  status: partial
+  status: ok
   confirmedCount: 10
   candidateCount: 10
   limitsReached: [MAX_FILES_REACHED]

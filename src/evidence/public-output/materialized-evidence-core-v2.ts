@@ -1,7 +1,8 @@
 import type { LocateExecutionTokenV2 } from '../../contracts/v2/locate-fact-envelope-v2.js';
-import type {
-  CandidateEvidenceV2,
-  ConfirmedEvidenceV2,
+import {
+  REDACTION_REASON_CODES_V2,
+  type CandidateEvidenceV2,
+  type ConfirmedEvidenceV2,
 } from '../../contracts/v2/locate-result-v2.js';
 import { createOpaqueTokenV2 } from '../request-snapshot/opaque-token-v2.js';
 import type { StableRecordRefV2 } from '../request-snapshot/pre-ranking-evidence-pool-v2.js';
@@ -89,6 +90,37 @@ const contributionBindings = new WeakMap<
   }>
 >();
 
+type RedactionReasonCodeV2 = (typeof REDACTION_REASON_CODES_V2)[number];
+
+function fieldMetadata(
+  field: 'file' | 'symbol' | 'excerpt',
+  redaction: Readonly<{
+    readonly value: string;
+    readonly reasonCodes: readonly string[];
+  }>,
+):
+  | {
+      readonly field: 'file' | 'symbol' | 'excerpt';
+      readonly reasonCodes: readonly RedactionReasonCodeV2[];
+    }
+  | undefined {
+  if (redaction.reasonCodes.length === 0) {
+    return undefined;
+  }
+  const reasonCodes = Object.freeze(
+    redaction.reasonCodes.filter((code): code is RedactionReasonCodeV2 =>
+      (REDACTION_REASON_CODES_V2 as readonly string[]).includes(code),
+    ),
+  );
+  if (reasonCodes.length === 0) {
+    return undefined;
+  }
+  return {
+    field,
+    reasonCodes,
+  };
+}
+
 function materializeDraftLocation(
   source: object,
   draft: UnsafeEvidenceDraftV2,
@@ -122,6 +154,14 @@ function materializeDraftLocation(
             corpus,
           ),
         );
+  const fields = [
+    fieldMetadata('file', file),
+    ...(symbol === undefined ? [] : [fieldMetadata('symbol', symbol)]),
+    fieldMetadata('excerpt', excerpt),
+  ].filter(
+    (value): value is NonNullable<ReturnType<typeof fieldMetadata>> =>
+      value !== undefined,
+  );
   // LOCATION_REDACTED tracks hidden/unresolvable files only (schema agreement).
   const locationRedacted = file.reasonCodes.length > 0;
   return Object.freeze({
@@ -131,6 +171,14 @@ function materializeDraftLocation(
       lines: draft.location.lines,
       excerpt: excerpt.value,
       ...(symbol === undefined ? {} : { symbol: symbol.value }),
+      ...(fields.length === 0
+        ? {}
+        : {
+            redaction: Object.freeze({
+              applied: true as const,
+              fields: Object.freeze(fields),
+            }),
+          }),
     }),
     locationRedacted,
   });

@@ -21,6 +21,7 @@ import {
   FIXED_CREDENTIAL,
   SECRET_ASSIGNMENT,
   hasSensitiveIdentifier,
+  malformedSecretTail,
   matches,
   secretAssignmentKey,
   secretAssignmentValue,
@@ -289,6 +290,14 @@ export function collectSensitiveCorpusV2(input: unknown): SensitiveCorpusV2 {
             isGenericAssignmentEligibleV2(assignmentValue),
         );
       }
+    }
+    const malformedTail = malformedSecretTail(value);
+    if (malformedTail !== undefined) {
+      add(
+        malformedTail,
+        'SECRET_LIKE_VALUE',
+        malformedTail.length > 0 && isGenericAssignmentEligibleV2(malformedTail),
+      );
     }
     for (const match of matches(FIXED_CREDENTIAL, value)) {
       add(match[0], 'SECRET_LIKE_VALUE', true);

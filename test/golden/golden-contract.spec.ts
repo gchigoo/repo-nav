@@ -5,10 +5,9 @@ import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 
 import {
-  createDiscoveryKey,
-  createEvidenceId,
-  type LocateResult,
-} from '../../src/contracts/index.js';
+  type LocateResultV2,
+  LocateResultV2Schema,
+} from '../../src/contracts/v2/locate-result-v2.js';
 import {
   assertGoldenCase,
   GoldenCaseSchema,
@@ -42,63 +41,21 @@ function loadCase(path: string): GoldenCase {
   return GoldenCaseSchema.parse(loadManifest(path));
 }
 
-function createSuccessResult(): LocateResult {
-  const discoveryKey = createDiscoveryKey({
-    file: 'mapping.ts',
-    lines: [4, 4],
-    excerpt: '  return { hcpCode: row.hcp_id };',
-  });
-  return {
-    ok: true,
-    evidence: {
-      schemaVersion: '1.0',
-      status: 'ok',
-      repositoryRoot: 'testkit/fixtures/foundation',
-      normalizedTerms: [{ value: 'hcp_id', caseSensitive: false }],
-      confirmed: [
-        {
-          evidenceClass: 'confirmed',
-          id: createEvidenceId(
-            discoveryKey,
-            'confirmed',
-            'value-mapping',
-          ),
-          role: 'value-mapping',
-          location: {
-            file: 'mapping.ts',
-            lines: [4, 4],
-            excerpt: '  return { hcpCode: row.hcp_id };',
-          },
-          provenance: {
-            discoveredBy: ['ripgrep'],
-            verifiedBy: 'filesystem',
-            operations: ['RIPGREP_SEARCH', 'FILESYSTEM_READ_RANGE'],
-          },
-          reasonCodes: ['EXACT_TERM_MATCH', 'DIRECT_ALIAS_MAPPING'],
-        },
-      ],
-      candidates: [],
-      coverage: {
-        backends: [
-          {
-            backend: 'codegraph',
-            status: 'unavailable',
-            reasonCode: 'CODEGRAPH_INDEX_MISSING',
-            hitCount: 0,
-          },
-        ],
-        fallbackChecked: true,
-        indexState: 'missing',
-        indexFreshness: 'unknown',
-        limitsReached: [],
-        exclusionSummary: { UNVERIFIED_FILE_CONTENT: 1 },
-      },
-      nextActions: [],
-    },
-  };
+function createSuccessResult(): LocateResultV2 {
+  return LocateResultV2Schema.parse(
+    JSON.parse(
+      readFileSync(
+        resolve(repositoryRoot, 'testkit', 'expected', 'foundation-success.json'),
+        'utf8',
+      ),
+    ),
+  );
 }
 
-function observationFor(result: LocateResult, mcpIsError: boolean): GoldenObservation {
+function observationFor(
+  result: LocateResultV2,
+  mcpIsError: boolean,
+): GoldenObservation {
   return {
     result,
     mcpIsError,
@@ -143,11 +100,11 @@ describe.runIf(isSelected(evaluatorIdentity))('Golden evaluator', () => {
       ok: false,
       error: {
         code: 'INVALID_INPUT',
-        message: 'terms must contain at least one item.',
+        message: 'Locate request does not match the required schema.',
         recoverable: true,
         suggestedAction: 'ADD_TERM',
       },
-    } as const satisfies LocateResult;
+    } as const satisfies LocateResultV2;
 
     expect(() =>
       assertGoldenCase(successCase, observationFor(successResult, false)),
@@ -168,7 +125,7 @@ describe.runIf(isSelected(evaluatorIdentity))('Golden evaluator', () => {
       ...successCase,
       expected: {
         ...successCase.expected,
-        forbiddenEvidenceIds: [successResult.evidence.confirmed[0]?.id],
+        forbiddenEvidenceIds: [successResult.evidence.confirmed[0]?.id ?? successResult.evidence.candidates[0]?.id],
         requiredCoverageCodes: ['MAX_FILES_REACHED'],
         minimumExclusionCounts: { UNVERIFIED_FILE_CONTENT: 2 },
       },
@@ -177,11 +134,11 @@ describe.runIf(isSelected(evaluatorIdentity))('Golden evaluator', () => {
       ok: false,
       error: {
         code: 'INVALID_INPUT',
-        message: 'terms must contain at least one item.',
+        message: 'Locate request does not match the required schema.',
         recoverable: true,
         suggestedAction: 'ADD_TERM',
       },
-    } as const satisfies LocateResult;
+    } as const satisfies LocateResultV2;
     const parityFailure = {
       ...observationFor(errorResult, true),
       textContent: JSON.stringify({ ok: true }),
@@ -203,10 +160,10 @@ describe.runIf(isSelected(evaluatorIdentity))('Golden evaluator', () => {
       ok: false,
       error: {
         code: 'INTERNAL_ERROR',
-        message: 'Synthetic mismatch.',
+        message: 'Repository evidence request failed.',
         recoverable: false,
       },
-    } as const satisfies LocateResult;
+    } as const satisfies LocateResultV2;
 
     expect(() =>
       assertGoldenCase(successCase, { ...validObservation, mcpIsError: true }),

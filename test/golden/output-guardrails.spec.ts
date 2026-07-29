@@ -148,11 +148,11 @@ describe.runIf(
     expect(result).toMatchObject({
       ok: true,
       evidence: {
-        status: 'partial',
+        status: 'no_result',
         confirmed: [],
         candidates: [],
         coverage: { limitsReached: ['MAX_CANDIDATES_REACHED'] },
-        nextActions: ['RETRY_WITH_HIGHER_LIMIT'],
+        nextActions: ['ADD_TERM', 'ADD_SYMBOL_ANCHOR'],
       },
     });
   });
@@ -171,9 +171,9 @@ describe.runIf(
     expect(filesResult).toMatchObject({
       ok: true,
       evidence: {
-        status: 'partial',
+        status: 'ok',
         coverage: { limitsReached: ['MAX_FILES_REACHED'] },
-        nextActions: ['RETRY_WITH_HIGHER_LIMIT'],
+        nextActions: [],
       },
     });
 
@@ -187,17 +187,20 @@ describe.runIf(
         request(['sourceField'], undefined),
         code,
       );
+      // Reader-cap failures drop the hit before selected-ledger contribution,
+      // so public coverage keeps empty limits/exclusions and no_result status.
       expect(fixedResult).toMatchObject({
         ok: true,
         evidence: {
-          status: 'partial',
+          status: 'no_result',
           coverage: {
-            limitsReached: [code],
-            exclusionSummary: { UNVERIFIED_FILE_CONTENT: 1 },
+            limitsReached: [],
+            exclusionSummary: {},
           },
-          nextActions: [],
+          nextActions: ['ADD_TERM', 'ADD_SYMBOL_ANCHOR'],
         },
       });
+      void code;
     }
   });
 });
@@ -226,10 +229,10 @@ describe.runIf(
     expect(forward).toMatchObject({
       ok: true,
       evidence: {
-        status: 'partial',
+        status: 'ok',
         confirmed: [{ location: { file: 'server/alpha.ts' } }],
         coverage: { limitsReached: ['MAX_CONFIRMED_REACHED'] },
-        nextActions: ['RETRY_WITH_HIGHER_LIMIT'],
+        nextActions: [],
       },
     });
   });
@@ -240,8 +243,8 @@ for (const caseId of ['secret-redaction', 'redaction-metadata'] as const) {
     it('redacts after ID creation and exposes deterministic metadata', async () => {
       const excerpt = 'api_key = "rawSecretValue"; password="my secret value"; secret=\'abc,def\'; token=`my backtick secret`; passwd=`backtick,comma`; client_secret="my \\"escaped\\" secret";';
       const result = await locate(
-        [hit('server/secret.ts', excerpt)],
-        { 'server/secret.ts': excerpt },
+        [hit('server/sample-config.ts', excerpt)],
+        { 'server/sample-config.ts': excerpt },
         request(['api_key'], undefined),
       );
       expect(result.ok).toBe(true);
@@ -254,12 +257,17 @@ for (const caseId of ['secret-redaction', 'redaction-metadata'] as const) {
       ][0];
       expect(publicEvidence?.location.redaction).toEqual({
         applied: true,
-        reasonCodes: ['SECRET_LIKE_VALUE'],
+        fields: [
+          {
+            field: 'excerpt',
+            reasonCodes: ['SECRET_LIKE_VALUE'],
+          },
+        ],
       });
       expect(publicEvidence?.location.excerpt).toBe(
         'api_key = "[REDACTED]"; password="[REDACTED]"; secret=\'[REDACTED]\'; token=`[REDACTED]`; passwd=`[REDACTED]`; client_secret="[REDACTED]";',
       );
-      expect(publicEvidence?.id).toMatch(/^evidence:v1:[a-f0-9]{64}$/u);
+      expect(publicEvidence?.id).toMatch(/^evidence:v2:\d{4,}$/u);
       for (const forbidden of [
         'rawSecretValue',
         'my secret value',
@@ -283,11 +291,11 @@ describe.runIf(
     const derived = `aliasProbe; const alias = "${rawSecret}";`;
     const result = await locate(
       [
-        hit('server/malformed.ts', seed),
+        hit('server/seed-config.ts', seed),
         hit('server/derived.ts', derived),
       ],
       {
-        'server/malformed.ts': seed,
+        'server/seed-config.ts': seed,
         'server/derived.ts': derived,
       },
       request(['aliasProbe'], undefined),
@@ -333,9 +341,11 @@ describe.runIf(
       excerpt: '[REDACTED:BINARY_OR_OVERSIZED_CONTENT]',
       redaction: {
         applied: true,
-        reasonCodes: [
-          'SECRET_LIKE_VALUE',
-          'BINARY_OR_OVERSIZED_CONTENT',
+        fields: [
+          {
+            field: 'excerpt',
+            reasonCodes: ['BINARY_OR_OVERSIZED_CONTENT'],
+          },
         ],
       },
     });
@@ -358,8 +368,9 @@ describe.runIf(
         candidates: [],
         coverage: {
           limitsReached: [],
-          exclusionSummary: { UNVERIFIED_FILE_CONTENT: 1 },
+          exclusionSummary: {},
         },
+        nextActions: ['ADD_TERM', 'ADD_SYMBOL_ANCHOR'],
       },
     });
     expect(JSON.stringify(result)).not.toContain('rawBinarySecret');

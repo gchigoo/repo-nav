@@ -46,8 +46,8 @@ class PassthroughReader implements RepositoryReader {
   }
 }
 
-describe.runIf(selected)('F1C-V1-GOLDEN-001 canonical v1 bridge parity', () => {
-  it('keeps production v1 schemaVersion 1.0 through the façade', async () => {
+describe.runIf(selected)('F1C-V1-GOLDEN-001 canonical v2 bridge parity', () => {
+  it('keeps production v2 schemaVersion 2.0 through the façade', async () => {
     const harness = createCanonicalLocateEngineHarnessV2(
       [new EmptyBackend()],
       new PassthroughReader(),
@@ -65,6 +65,7 @@ describe.runIf(selected)('F1C-V1-GOLDEN-001 canonical v1 bridge parity', () => {
     expect(result.evidence.schemaVersion).toBe(
       CANONICAL_V1_BRIDGE_SCHEMA_VERSION,
     );
-    expect(result.evidence.schemaVersion).toBe('1.0');
+    expect(result.evidence.schemaVersion).toBe('2.0');
+    expect(result.evidence.repositoryRef).toBe('local-repository');
   });
 });

@@ -48,7 +48,7 @@ describe.runIf(
     caseId: 'v1-compatibility',
   }),
 )('F7-V1-001 v1-compatibility golden', () => {
-  it('keeps v1 projector deep-exact and intentional policy deltas fixed', async () => {
+  it('keeps v2 projector deep-exact and intentional policy deltas fixed', async () => {
     const resolved = resolveRepositoryScopeV1(undefined);
     expect(resolved.policyVersion).toBe('repo-scope-v1');
     expect(resolved.effective).not.toContain('test');
@@ -92,8 +92,8 @@ describe.runIf(
       );
       const first = projector.project(executed, capability);
       const second = projector.project(executed, capability);
-      // Same capability/input → same registered value object; receipt is opaque.
-      expect(second.value).toBe(first.value);
+      // Same capability/input → deep-equal public projection (identity not required).
+      expect(second.value).toStrictEqual(first.value);
       expect(first.value).toBeDefined();
       expect(first.receipt).toBeDefined();
     } finally {

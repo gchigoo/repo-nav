@@ -1,9 +1,9 @@
 {
   "ok": true,
   "evidence": {
-    "schemaVersion": "1.0",
+    "schemaVersion": "2.0",
     "status": "ok",
-    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "repositoryRef": "local-repository",
     "normalizedTerms": [
       {
         "value": "hcp_id",
@@ -17,10 +17,11 @@
     "confirmed": [
       {
         "evidenceClass": "confirmed",
-        "id": "evidence:v1:0000000000000000000000000000000000000000000000000000000000000000",
+        "id": "evidence:v2:0001",
         "role": "value-mapping",
         "location": {
           "file": "server/mapping.ts",
+          "resolvable": true,
           "symbol": "hcpId",
           "lines": [
             1,
@@ -39,19 +40,58 @@
           ]
         },
         "reasonCodes": [
-          "DIRECT_ALIAS_MAPPING",
-          "EXACT_TERM_MATCH"
+          "EXACT_TERM_MATCH",
+          "DIRECT_ALIAS_MAPPING"
         ]
       }
     ],
     "candidates": [],
     "coverage": {
-      "backends": [],
+      "backends": [
+        {
+          "backend": "ripgrep",
+          "status": "used",
+          "completion": "complete",
+          "termination": "none",
+          "hitCount": 1
+        }
+      ],
+      "strategyComplete": true,
       "fallbackChecked": false,
       "indexState": "unknown",
-      "indexFreshness": "not-applicable",
+      "indexFreshness": "unknown",
       "limitsReached": [],
-      "exclusionSummary": {}
+      "degradations": [],
+      "exclusionSummary": {},
+      "abortSource": "none",
+      "unsatisfiedAnchors": [],
+      "snapshot": {
+        "gitState": "unknown",
+        "consistency": "stable",
+        "filesChecked": 1,
+        "discardedEvidenceCount": 0
+      },
+      "scope": {
+        "requested": [],
+        "effective": [
+          "client",
+          "server",
+          "db",
+          "config",
+          "unknown"
+        ],
+        "policyVersion": "repo-scope-v1",
+        "unmatchedLayers": []
+      },
+      "capabilities": {
+        "textSearch": "supported-text-files",
+        "semanticClassification": [
+          "typescript",
+          "javascript",
+          "sql"
+        ],
+        "unsupportedLanguageHits": 0
+      }
     },
     "nextActions": []
   }

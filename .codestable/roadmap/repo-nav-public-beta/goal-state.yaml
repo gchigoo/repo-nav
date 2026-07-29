@@ -8,11 +8,8 @@ acceptance_authorization: approved
 acceptance_authorization_ref: approval-report.md#goal-acceptance
 commit_authorization: approved
 commit_authorization_ref: approval-report.md#goal-commits
-handoff_reason: 'RiskAcceptanceNeeded: F9 blocked pending exact-one security-channel-preflight
-  (license MIT/2026/Gchigoo already approved under f9-public-beta-release option 1;
-  design KD21 forbids inventing SECURITY channel)'
-handoff_next: Await named decision f9-security-channel-preflight Options 1|2|3|4 in
-  approval-report.md; then write owner-preflight JSON and resume F9 implementing
+handoff_reason: ""
+handoff_next: ""
 current_feature_index: 11
 features:
 - slug: public-output-boundary-v2
@@ -324,8 +321,17 @@ ledger:
   index: 11
   note: handoff cleared; enter F9 implementation
 - step: f9-security-channel-owner-stop
-  status: handoff
+  status: cleared
   feature: public-beta-release
   index: 11
-  note: license approved; security-channel-preflight missing; Options written; no
-    implementing
+  note: f9-security-channel-preflight approved option1; github-private-vulnerability-reporting
+- step: f9-security-channel-auth
+  status: done
+  feature: public-beta-release
+  index: 11
+  note: "publicSafeText=Report security issues via GitHub Security Advisories for gchigoo/repo-nav. Do not file public issues for vulnerabilities or secrets."
+- step: f9-resume-after-security
+  status: started
+  feature: public-beta-release
+  index: 11
+  note: both preflights approved; write owner-preflight JSON and implement F9

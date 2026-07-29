@@ -250,37 +250,34 @@ license 选择或 production cutover；这些仍需各自独立 owner authorizat
 
 ## F9 Security-Channel Preflight（blocking before implementation）
 
-命名决策 `f9-security-channel-preflight` 当前为 `pending`。
+命名决策 `f9-security-channel-preflight` 当前为 `approved`。
 
-### Why stop
+- 2026-07-29：owner 回复“1 按你推荐来”，选择选项 1，并接受推荐 `publicSafeText`：
+  - `channelType`: `github-private-vulnerability-reporting`
+  - `publicSafeText`: `Report security issues via GitHub Security Advisories for gchigoo/repo-nav. Do not file public issues for vulnerabilities or secrets.`
+  - owner 确认：本仓库使用 GitHub Security Advisories / private vulnerability reporting 作为漏洞报告入口
 
-F9 design KD21 / 顺序约束 1：任何 F9 implementation 前必须同时具备
+### Why stop（已解除）
 
-1. exact-one `license-preflight`（选项 1 已给：MIT / 2026 / Gchigoo）
-2. exact-one `security-channel-preflight`（**尚未给出**）
+F9 design 要求 implementation 前同时具备 license-preflight 与 security-channel-preflight；二者现均已批准。
 
-`SECURITY.md` 不得虚构联系渠道或 SLA；实现不得从 remote 猜测 private vulnerability reporting 是否可用。因此在缺少 owner 对 channel type + public-safe text 的确认前，**不得** mark `public-beta-release` implementing，也不得开始 cutover / packaging。
+### Current Facts（批准时）
 
-### Current Facts
+- license：MIT / 2026 / Gchigoo；`private:true` 保留
+- securityChannel：如上 exact 字段
+- 仍不授权：remove-private / npm publish / tag / GitHub Release / merge-main
 
-- tip：`7ce6948`（含 `f9-public-beta-release=approved` option 1）
-- license preflight 字段已批准；`private:true` 保留
-- `securityChannel` 字段缺失：无 `channelType`、`publicSafeText`、`owner`、`verified_at`
-- goal-state：`current_feature_index: 11`，`public-beta-release=pending`
+### Options（历史）
 
-### Options（请回复编号）
-
-1. **GitHub Security Advisory**：确认本仓库已启用 private vulnerability reporting；preflight 记  
-   `channelType=github-private-vulnerability-reporting`，`publicSafeText` 使用设计允许的固定公开表述（例如指向本仓库 Security Advisories 入口的 public-safe 文案，由 owner 给出 exact 字符串）。
-2. **Owner-provided private channel**：提供真实私密渠道的 **public-safe** 文案（不得写入未验证 email/个人账号/公开 issue 为漏洞入口）；`channelType=owner-provided-private-channel`，并给出 exact `publicSafeText`。
-3. **Design delta**：若上述均不可用，先改 F9 design 的 SECURITY 契约后再恢复 goal（需另开 design 修订 + design-review）。
-4. **推迟 F9**：保持 handoff，不实现 cutover。
+1. **GitHub Security Advisory** — **已选**
+2. Owner-provided private channel
+3. Design delta
+4. 推迟 F9
 
 ### Recommendation
 
-选项 1（若仓库确已开启 private vulnerability reporting）；否则选项 2。Agent **不会**代填或猜测 channel text。
+选项 1。
 
 ### Non-Automatic Actions
 
-选定后才会写 machine-readable  
-`.codestable/runtime/public-beta-release-owner-preflight.json`（license + securityChannel），并恢复 F9 implementing。仍不授权移除 `private:true`、`npm publish`、tag、GitHub Release、merge 到 `main`。
+批准后可写 machine-readable owner-preflight（license + securityChannel）并恢复 F9 implementing。仍不授权移除 `private:true`、`npm publish`、tag、GitHub Release、merge 到 `main`。

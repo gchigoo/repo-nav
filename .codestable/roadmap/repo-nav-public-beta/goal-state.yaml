@@ -2,14 +2,17 @@ roadmap: repo-nav-public-beta
 status: running
 baseline_ref: 9d7b0e237e3cd9245d1f057a2ad504b1d1028d7d
 driver_kind: host-agent
-driver_id: "06c57bbc-6ea2-4038-a133-a77038e95a06"
-execution_confirmation_id: "ge-6e44d402368a"
+driver_id: 06c57bbc-6ea2-4038-a133-a77038e95a06
+execution_confirmation_id: ge-6e44d402368a
 acceptance_authorization: approved
-acceptance_authorization_ref: "approval-report.md#goal-acceptance"
+acceptance_authorization_ref: approval-report.md#goal-acceptance
 commit_authorization: approved
-commit_authorization_ref: "approval-report.md#goal-commits"
-handoff_reason: ""
-handoff_next: ""
+commit_authorization_ref: approval-report.md#goal-commits
+handoff_reason: 'RiskAcceptanceNeeded: F9 blocked pending exact-one security-channel-preflight
+  (license MIT/2026/Gchigoo already approved under f9-public-beta-release option 1;
+  design KD21 forbids inventing SECURITY channel)'
+handoff_next: Await named decision f9-security-channel-preflight Options 1|2|3|4 in
+  approval-report.md; then write owner-preflight JSON and resume F9 implementing
 current_feature_index: 11
 features:
 - slug: public-output-boundary-v2
@@ -123,7 +126,7 @@ features:
 ledger:
 - step: dispatch-goal-driver
   status: started
-  driver_id: "06c57bbc-6ea2-4038-a133-a77038e95a06"
+  driver_id: 06c57bbc-6ea2-4038-a133-a77038e95a06
   note: host-agent goal driver dispatched after owner authorization
 - step: f1a-feature-start
   status: started
@@ -167,7 +170,8 @@ ledger:
 - step: f4-remote-evidence
   status: done
   feature: cross-platform-ci-baseline
-  note: "same-run green 30323465951@865fcf0; ruleset 19864943; failing PR#1 BLOCKED; artifacts under remote-evidence/"
+  note: same-run green 30323465951@865fcf0; ruleset 19864943; failing PR#1 BLOCKED;
+    artifacts under remote-evidence/
 - step: f4-resume
   status: started
   feature: cross-platform-ci-baseline
@@ -257,7 +261,8 @@ ledger:
   status: done
   feature: input-abort-contract-v2
   index: 8
-  note: impl/review(r4)/QA(r3)/accept complete; ResumeGoalAcceptance approval-report.md#goal-acceptance; checks passed; index->9
+  note: impl/review(r4)/QA(r3)/accept complete; ResumeGoalAcceptance approval-report.md#goal-acceptance;
+    checks passed; index->9
 - step: f7-feature-start
   status: started
   feature: repository-scope-policy
@@ -303,16 +308,24 @@ ledger:
   feature: language-capability-boundary
   index: 10
   note: ResumeGoalAcceptance approval-report.md#goal-acceptance; checks passed; index->11
-- at: "2026-07-28"
+- at: '2026-07-28'
   feature: public-beta-release
-  note: Owner-stop RiskAcceptanceNeeded after F8 accept 2457a7a; ge-6e44d402368a does not cover F9 cutover/publish/private/license
+  note: Owner-stop RiskAcceptanceNeeded after F8 accept 2457a7a; ge-6e44d402368a does
+    not cover F9 cutover/publish/private/license
 - step: f9-auth
   status: done
   feature: public-beta-release
   index: 11
-  note: "f9-public-beta-release approved option1; MIT/2026/Gchigoo; push+#2 allowed; no private-remove/publish/tag/merge-main"
+  note: f9-public-beta-release approved option1; MIT/2026/Gchigoo; push+#2 allowed;
+    no private-remove/publish/tag/merge-main
 - step: f9-resume
   status: started
   feature: public-beta-release
   index: 11
   note: handoff cleared; enter F9 implementation
+- step: f9-security-channel-owner-stop
+  status: handoff
+  feature: public-beta-release
+  index: 11
+  note: license approved; security-channel-preflight missing; Options written; no
+    implementing

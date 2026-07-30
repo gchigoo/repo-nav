@@ -232,25 +232,27 @@ describe.runIf(isSelected(cleanupIdentity))('process and reader cleanup', () => 
     }
   });
 
-  // macOS-intel CI can exceed vitest's 5s default under load; keep assertion tight, budget roomy.
+  // Observe pid inventory before awaiting timeout settlement so macOS-intel
+  // spawn latency cannot race past timeoutMs before the helper writes pids.
   it('terminates direct child and descendant on timeout', async () => {
     const cwd = mkdtempSync(resolve(tmpdir(), 'repo-nav-process-timeout-'));
     const pidFile = resolve(cwd, 'pids.json');
     let inventory: ProcessInventory | undefined;
     try {
-      const result = await new NodeSafeProcessRunner().run(
-        treeRequest(cwd, pidFile, { timeoutMs: 500 }),
+      const runPromise = new NodeSafeProcessRunner().run(
+        treeRequest(cwd, pidFile, { timeoutMs: 2_000 }),
         new AbortController().signal,
       );
-      await waitFor(() => existsSync(pidFile));
+      await waitFor(() => existsSync(pidFile), 15_000);
       inventory = readInventory(pidFile);
+      const result = await runPromise;
       expectTermination(result, 'timeout');
       await expectInventoryStopped(inventory);
     } finally {
       forceCleanup(inventory);
       rmSync(cwd, { recursive: true, force: true });
     }
-  }, 15_000);
+  }, 20_000);
 
   it.each([
     ['stdout', 'stdout-limit'],

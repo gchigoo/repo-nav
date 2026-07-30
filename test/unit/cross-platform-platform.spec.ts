@@ -426,7 +426,7 @@ describe.runIf(
     let settlements = 0;
     try {
       const runPromise = new NodeSafeProcessRunner().run(
-        treeRequest(cwd, pidFile, { timeoutMs: 500 }),
+        treeRequest(cwd, pidFile, { timeoutMs: 2_000 }),
         new AbortController().signal,
       );
       void runPromise.then(
@@ -437,7 +437,8 @@ describe.runIf(
           settlements += 1;
         },
       );
-      await waitFor(() => existsSync(pidFile));
+      // Wait for inventory before timeout settles (macOS-intel spawn latency).
+      await waitFor(() => existsSync(pidFile), 15_000);
       inventory = readInventory(pidFile);
       const result = await runPromise;
       expectTermination(result, 'timeout');
@@ -451,7 +452,7 @@ describe.runIf(
       forceCleanup(inventory);
       rmSync(cwd, { recursive: true, force: true });
     }
-  });
+  }, 20_000);
 });
 
 describe.runIf(

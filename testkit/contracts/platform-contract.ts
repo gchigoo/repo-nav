@@ -73,6 +73,7 @@ export const PLATFORM_CONTRACT_IDS_V1 = [
   'F6-LATCH-001',
   'F7-SCOPE-001',
   'F8-LANG-001',
+  'F9-PACK-001',
 ] as const;
 
 export type PlatformContractIdV1 =
@@ -571,7 +572,31 @@ const BASE_BINDINGS: readonly PlatformCaseBindingV1<PlatformContractIdV1>[] =
       fixture: 'testkit/fixtures/language-capability-v2/extension-matrix-v2.ts',
       assertionOwner: 'test/unit/language-capability-platform.spec.ts',
     }),
+    Object.freeze({
+      contractId: 'F9-PACK-001',
+      surface: 'unit',
+      group: 'public-beta-release',
+      executableCaseId: 'package-install-and-bin-smoke',
+      applicableOs: ALL_OS,
+      requiredAssertionIds: Object.freeze([
+        'tarball-allowlist-exact',
+        'package-bins-executable',
+        'node-engine-range-declared',
+        'mcp-v2-installed-parity',
+        'package-runtime-closure',
+      ]),
+      requiredEvidenceHashIds: Object.freeze([
+        'candidate-id',
+        'semantic-manifest',
+        'production-closure',
+      ]),
+      fixture: 'testkit/fixtures/release-v2/package-install-v2.ts',
+      assertionOwner: 'test/unit/public-beta-release-platform.spec.ts',
+    }),
   ]);
+
+const F9_PACK_EVIDENCE_OWNER =
+  'test/unit/public-beta-release-platform.spec.ts' as const;
 
 const BASE_MARKER_OWNERS: readonly PlatformAssertionMarkerOwnerV1<PlatformContractIdV1>[] =
   Object.freeze(
@@ -584,13 +609,32 @@ const BASE_MARKER_OWNERS: readonly PlatformAssertionMarkerOwnerV1<PlatformContra
     ),
   );
 
+const BASE_EVIDENCE_HASH_OWNERS: readonly PlatformEvidenceHashOwnerV1<PlatformContractIdV1>[] =
+  Object.freeze([
+    Object.freeze({
+      contractId: 'F9-PACK-001' as const,
+      evidenceId: 'candidate-id',
+      evidenceOwner: F9_PACK_EVIDENCE_OWNER,
+    }),
+    Object.freeze({
+      contractId: 'F9-PACK-001' as const,
+      evidenceId: 'semantic-manifest',
+      evidenceOwner: F9_PACK_EVIDENCE_OWNER,
+    }),
+    Object.freeze({
+      contractId: 'F9-PACK-001' as const,
+      evidenceId: 'production-closure',
+      evidenceOwner: F9_PACK_EVIDENCE_OWNER,
+    }),
+  ]);
+
 export const PRODUCTION_PLATFORM_CONTRACT_SNAPSHOT_V1: PlatformContractSnapshotV1<
   typeof PLATFORM_CONTRACT_IDS_V1
 > = Object.freeze({
   allowedIds: PLATFORM_CONTRACT_IDS_V1,
   bindings: BASE_BINDINGS,
   markerOwners: BASE_MARKER_OWNERS,
-  evidenceHashOwners: Object.freeze([]),
+  evidenceHashOwners: BASE_EVIDENCE_HASH_OWNERS,
 });
 
 /** Cross-design ledger only; F4 base does not load these rows. */

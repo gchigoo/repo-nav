@@ -297,6 +297,9 @@ export const PLATFORM_CASE_OWNER_REGISTRATION: Readonly<
   ]),
   'unit/language-capability-boundary/language-extension-and-fallback':
     Object.freeze(['test/unit/language-capability-platform.spec.ts']),
+  'unit/public-beta-release/package-install-and-bin-smoke': Object.freeze([
+    'test/unit/public-beta-release-platform.spec.ts',
+  ]),
   'golden/language-capability-boundary/v2-shadow-and-v1-parity': Object.freeze([
     'test/golden/language-capability-boundary.spec.ts',
   ]),

@@ -43,6 +43,7 @@ export function buildSyntheticExtensionSnapshotV1(): PlatformContractSnapshotV1<
       }),
     ]),
     evidenceHashOwners: Object.freeze([
+      ...PRODUCTION_PLATFORM_CONTRACT_SNAPSHOT_V1.evidenceHashOwners,
       Object.freeze({
         contractId: 'TEST-EXT-001' as const,
         evidenceId: 'synthetic-proof',

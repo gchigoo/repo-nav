@@ -59,6 +59,9 @@ jobs:
       - name: Security SBOM check
         run: npm run security:sbom:check
 
+      - name: Real-repo benchmark gate
+        run: npm run benchmark:real-repos
+
   macos-arm-smoke:
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: macos-14

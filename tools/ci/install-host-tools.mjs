@@ -2,6 +2,7 @@
 /**
  * Install pinned host tools required by the full unit/MCP suite on CI.
  * Does not rely on runner image preinstalls.
+ * Set GITHUB_TOKEN so @vscode/ripgrep postinstall can authenticate GitHub API downloads.
  */
 import { spawnSync } from 'node:child_process';
 import { appendFileSync, existsSync, mkdirSync } from 'node:fs';

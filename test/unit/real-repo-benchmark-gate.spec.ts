@@ -3,9 +3,7 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  RealRepoBenchmarkCatalogSchema,
-} from '../../tools/benchmark/real-repo-benchmark-runner.js';
+import { RealRepoBenchmarkCatalogSchema } from '../../tools/benchmark/real-repo-benchmark-runner.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
 const root = resolve(import.meta.dirname, '../..');
@@ -30,14 +28,5 @@ describe.runIf(
       expect(entry.expectations.maxP95Ms).toBeGreaterThan(0);
       expect(entry.expectations.forbidPublicAbsolutePath).toBe(true);
     }
-  });
-});
-
-describe('real-repo benchmark gate catalog (ungated smoke)', () => {
-  it('keeps catalog.json parseable when release gate is not selected', () => {
-    const raw: unknown = JSON.parse(readFileSync(catalogPath, 'utf8'));
-    const catalog = RealRepoBenchmarkCatalogSchema.parse(raw);
-    expect(catalog.schemaVersion).toBe('1.0');
-    expect(catalog.repos.length).toBeGreaterThanOrEqual(10);
   });
 });

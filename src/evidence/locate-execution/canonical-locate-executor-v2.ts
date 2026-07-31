@@ -37,6 +37,7 @@ import { EvidenceRankerV2 } from '../ranking/evidence-ranker-v2.js';
 import { normalizeAnchorIntentsV2 } from '../ranking/anchor-intent-normalizer-v2.js';
 import { requireEvidenceRankingOutcomeV2 } from '../ranking/evidence-ranking-outcome-v2.js';
 import { runAuthoritativeExpandedSelectionPhaseV2 } from './authoritative-expanded-selection-phase-v2.js';
+import { resolveVerificationHitsV2 } from './resolve-verification-hits-v2.js';
 import type { LocateAnchor, TermCaseMode } from '../../contracts/request.js';
 import {
   REPOSITORY_READER,
@@ -1028,19 +1029,16 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
       const scopeObservation: TrustedScopeEligibilityObservationV2 =
         authoritativeSelection.observation;
       const discoverySelection = authoritativeSelection.boundSelection;
-      // complete expanded → authoritative；任一 available incomplete → legacy 兼容桥
-      const expandedIncomplete = expandedBackendResults.some(
-        (result) =>
-          result.health.state === 'available' && result.complete === false,
-      );
-      const useAuthoritative =
-        !expandedIncomplete && authoritativeSelection.hits.length > 0;
-      const verifyHits = useAuthoritative
-        ? authoritativeSelection.hits
-        : legacyFrozen.result.hits;
-      const filesTruncated = useAuthoritative
-        ? authoritativeSelection.filesTruncated
-        : legacyFrozen.result.filesTruncated;
+      // truncated-but-valid expanded 仍走 authoritative；仅空选择才 legacy bridge
+      const verificationResolution = resolveVerificationHitsV2({
+        authoritativeHits: authoritativeSelection.hits,
+        authoritativeFilesTruncated: authoritativeSelection.filesTruncated,
+        expandedResults: expandedBackendResults,
+        legacyHits: legacyFrozen.result.hits,
+        legacyFilesTruncated: legacyFrozen.result.filesTruncated,
+      });
+      const verifyHits = verificationResolution.hits;
+      const filesTruncated = verificationResolution.filesTruncated;
 
       const merged = await verifyAndMergeBackendHits({
         repositoryRoot,
@@ -1169,6 +1167,7 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
         usedLegacyCandidateReservation: true,
         expandedProposalCount: expandedProposals.length,
         expandedEvaluatedDraftCount: expandedCandidateDrafts.length,
+        verificationSelectionMode: verificationResolution.mode,
       });
 
       const candidateSelection = selectCandidateBudget(
@@ -1197,10 +1196,17 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
         candidatePolicy.truncated ||
         candidateSelection.truncated;
 
-      const strategyComplete = skipFallback
-        ? codegraphResult?.health.state === 'available' &&
-          codegraphResult.complete
-        : ripgrepResult?.health.state === 'available' && ripgrepResult.complete;
+      // authoritative 路径以 expanded completeness 为准，避免 legacy 决策 completeness
+      const strategyComplete =
+        verificationResolution.mode === 'authoritative-complete'
+          ? true
+          : verificationResolution.mode === 'authoritative-partial'
+            ? false
+            : skipFallback
+              ? codegraphResult?.health.state === 'available' &&
+                codegraphResult.complete
+              : ripgrepResult?.health.state === 'available' &&
+                ripgrepResult.complete;
       const finalBackendResult = ripgrepResult ?? codegraphResult;
       const limitReasons: LimitReasonCode[] = [];
       if (filesTruncated) {

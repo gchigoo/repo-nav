@@ -5,7 +5,7 @@
 要求 Node.js `^22.0.0 || ^24.0.0`（不支持 Node 20/23）。
 
 ```powershell
-npm i -g repo-nav@beta
+npm install -g repo-nav
 ```
 
 ## MCP 宿主配置

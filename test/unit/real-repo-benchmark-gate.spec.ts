@@ -14,8 +14,8 @@ const catalogPath = resolve(
 
 describe.runIf(
   isSelected({ group: 'public-beta-release', caseId: 'package-metadata' }),
-)('real-repo benchmark gate catalog', () => {
-  it('lists at least ten benchmark repos with required schema fields', () => {
+)('fixture-scenario benchmark gate catalog', () => {
+  it('lists at least ten fixture scenarios with required schema fields', () => {
     const raw: unknown = JSON.parse(readFileSync(catalogPath, 'utf8'));
     const catalog = RealRepoBenchmarkCatalogSchema.parse(raw);
 
@@ -25,7 +25,7 @@ describe.runIf(
       expect(entry.path.length).toBeGreaterThan(0);
       expect(entry.request.terms.length).toBeGreaterThan(0);
       expect(entry.expectations.minConfirmed).toBeGreaterThanOrEqual(0);
-      expect(entry.expectations.maxP95Ms).toBeGreaterThan(0);
+      expect(entry.expectations.maxElapsedMs).toBeGreaterThan(0);
       expect(entry.expectations.forbidPublicAbsolutePath).toBe(true);
     }
   });

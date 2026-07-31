@@ -26,7 +26,7 @@
       "expectations": {
         "minConfirmed": 1,
         "mustIncludeFile": "server/auth.ts",
-        "maxP95Ms": 15000,
+        "maxElapsedMs": 15000,
         "forbidPublicAbsolutePath": true
       }
     },
@@ -55,7 +55,7 @@
       "expectations": {
         "minConfirmed": 1,
         "mustIncludeFile": "server/handlers/checkout.ts",
-        "maxP95Ms": 15000,
+        "maxElapsedMs": 15000,
         "forbidPublicAbsolutePath": true
       }
     },
@@ -84,7 +84,7 @@
       "expectations": {
         "minConfirmed": 1,
         "mustIncludeFile": "db/migrations/001_users.sql",
-        "maxP95Ms": 15000,
+        "maxElapsedMs": 15000,
         "forbidPublicAbsolutePath": true
       }
     },
@@ -107,7 +107,7 @@
       "expectations": {
         "minConfirmed": 1,
         "mustIncludeFile": "server/modules/billing/v2/internal/ledger.ts",
-        "maxP95Ms": 15000,
+        "maxElapsedMs": 15000,
         "forbidPublicAbsolutePath": true
       }
     },
@@ -130,7 +130,7 @@
       "expectations": {
         "minConfirmed": 1,
         "mustIncludeFile": "server/app.ts",
-        "maxP95Ms": 15000,
+        "maxElapsedMs": 15000,
         "forbidPublicAbsolutePath": true
       }
     },
@@ -153,7 +153,7 @@
       "expectations": {
         "minConfirmed": 1,
         "mustIncludeFile": "server/ping.js",
-        "maxP95Ms": 15000,
+        "maxElapsedMs": 15000,
         "forbidPublicAbsolutePath": true
       }
     },
@@ -177,7 +177,7 @@
         "minConfirmed": 1,
         "mustIncludeFile": "server/config.ts",
         "mustNotIncludeLiteral": "sk_live_bench_redact_9f3a2b1c0d",
-        "maxP95Ms": 15000,
+        "maxElapsedMs": 15000,
         "forbidPublicAbsolutePath": true
       }
     },
@@ -200,7 +200,7 @@
       "expectations": {
         "minConfirmed": 1,
         "mustIncludeFile": "server/fetch.js",
-        "maxP95Ms": 15000,
+        "maxElapsedMs": 15000,
         "forbidPublicAbsolutePath": true
       }
     },
@@ -229,7 +229,7 @@
       "expectations": {
         "minConfirmed": 1,
         "mustIncludeFile": "client/widget.js",
-        "maxP95Ms": 15000,
+        "maxElapsedMs": 15000,
         "forbidPublicAbsolutePath": true
       }
     },
@@ -252,7 +252,7 @@
       "expectations": {
         "minConfirmed": 1,
         "mustIncludeFile": "db/schema.sql",
-        "maxP95Ms": 15000,
+        "maxElapsedMs": 15000,
         "forbidPublicAbsolutePath": true
       }
     },
@@ -281,7 +281,7 @@
       "expectations": {
         "minConfirmed": 1,
         "mustIncludeFile": "server/constants.ts",
-        "maxP95Ms": 15000,
+        "maxElapsedMs": 15000,
         "forbidPublicAbsolutePath": true
       }
     },
@@ -310,7 +310,7 @@
       "expectations": {
         "minConfirmed": 1,
         "mustIncludeFile": "server/routes.js",
-        "maxP95Ms": 15000,
+        "maxElapsedMs": 15000,
         "forbidPublicAbsolutePath": true
       }
     }

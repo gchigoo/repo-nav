@@ -6,10 +6,13 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export interface PackageMetadataV1 {
+export interface PackageMetadata {
   readonly name: string;
   readonly version: string;
 }
+
+/** @deprecated Prefer `PackageMetadata`. */
+export type PackageMetadataV1 = PackageMetadata;
 
 const NAME_PATTERN = /^[a-z0-9][a-z0-9._-]*$/u;
 const VERSION_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/u;
@@ -17,7 +20,7 @@ const VERSION_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/u;
 /**
  * Read bounded name/version from the package root package.json near this module.
  */
-export function readPackageMetadata(): PackageMetadataV1 {
+export function readPackageMetadata(): PackageMetadata {
   const here = dirname(fileURLToPath(import.meta.url));
   // dist/runtime → package root; src/runtime → package root
   const packageRoot = join(here, '..', '..');

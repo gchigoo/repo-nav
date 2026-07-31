@@ -1,0 +1,283 @@
+{
+  "gate_id": "dod-runner",
+  "stage": "acceptance",
+  "status": "passed",
+  "blocking": [],
+  "warnings": [
+    "CMD-DOCTOR: non-core command failed with exit 1"
+  ],
+  "evidence": [
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.2.0-beta.1 build\n> npm run clean && tsc -p tsconfig.build.json\n\n\n> repo-nav@0.2.0-beta.1 clean\n> node tools/release/clean-build-output.mjs\n\n",
+      "stderr": "",
+      "id": "CMD-BUILD",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.2.0-beta.1 typecheck\n> tsc -p tsconfig.json --noEmit\n\n",
+      "stderr": "",
+      "id": "CMD-TYPECHECK",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.2.0-beta.1 lint\n> eslint --max-warnings=0 .\n\n",
+      "stderr": "",
+      "id": "CMD-LINT",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run format:check",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.2.0-beta.1 format:check\n> prettier --check \"src/**/*.{ts,json,md,mjs}\" \"tools/release/**/*.{mjs,json}\" \"docs/**/*.md\" \"README.md\" \"SECURITY.md\" \"*.mjs\" \"package.json\" \"tsconfig*.json\" --ignore-path .prettierignore\n\nChecking formatting...\nAll matched files use Prettier code style!\n",
+      "stderr": "",
+      "id": "CMD-FORMAT",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm test -- --group public-beta-release",
+      "exit_code": 0,
+      "stdout": "d)\n ↓ test/unit/locate-request-v2.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/pre-ranking-evidence-pool.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/language-capability-integration-v2.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/language-evidence-adapters-v2.spec.ts (5 tests | 5 skipped)\n ✓ test/unit/public-beta-release-cli-closure.spec.ts (1 test) 6ms\n ✓ test/unit/public-beta-release-boundary.spec.ts (1 test) 13ms\n ✓ test/unit/public-beta-release-docs.spec.ts (2 tests) 6ms\n ✓ test/unit/public-beta-release-metadata.spec.ts (3 tests) 10ms\n ✓ test/unit/public-beta-release-package-api.spec.ts (1 test) 5ms\n ↓ test/unit/executor-dual-lane-wiring-v2.spec.ts (1 test | 1 skipped)\n ✓ test/unit/public-beta-release-package.spec.ts (2 tests) 11ms\n ✓ test/unit/public-beta-release-quality.spec.ts (1 test) 6ms\n ↓ test/unit/process-cleanup.spec.ts (7 tests | 7 skipped)\n ✓ test/unit/public-beta-release-readiness.spec.ts (1 test) 6ms\n ↓ test/unit/debug-cli-shell.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/di.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/locate-status-evaluator.spec.ts (13 tests | 13 skipped)\n ↓ test/unit/public-output-v2-contract.spec.ts (25 tests | 25 skipped)\n ↓ test/unit/canonical-locate-facts-bridge.spec.ts (13 tests | 13 skipped)\n ↓ test/unit/candidate-policy.spec.ts (38 tests | 38 skipped)\n ↓ test/unit/repository-git-state-probe.spec.ts (1 test | 1 skipped)\n ↓ test/unit/public-output-v2-errors-projection.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/public-result-assembler-v2.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/public-output-v2-redaction.spec.ts (19 tests | 19 skipped)\n ↓ test/unit/public-output-v2-no-cutover.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/repository-scope-integration.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/canonical-locate-execution.spec.ts (10 tests | 10 skipped)\n ↓ test/unit/repository-scope-selection.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/repository-scope-policy.spec.ts (7 tests | 7 skipped)\n ✓ test/unit/public-beta-release-cutover.spec.ts (3 tests) 48ms\n ✓ test/unit/public-beta-release-install.spec.ts (1 test) 1665ms\n     ✓ runs verify-installed-closure and requires shrinkwrap production graph  1662ms\n ↓ test/unit/repository-safety.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/repository-reader.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/ripgrep-json-line-consumer-v2.spec.ts (3 tests | 3 skipped)\n ✓ test/unit/public-beta-release-transport.spec.ts (1 test) 44ms\n ↓ test/unit/request-snapshot-capability-seams-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/runner-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/unit/relevance-ranking-budget.spec.ts (15 tests | 15 skipped)\n ↓ test/unit/public-result-resource-budgets-v2.spec.ts (16 tests | 16 skipped)\n ↓ test/unit/scope-gate.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/scope-bound-evidence-materializer-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/request-snapshot-cache.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/verified-record-cache.spec.ts (1 test | 1 skipped)\n ↓ test/unit/snapshot-outcome-contribution-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/ripgrep-backend.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/request-outcome-aggregator-v2.spec.ts (8 tests | 8 skipped)\n ↓ test/unit/scope-policy-platform.spec.ts (1 test | 1 skipped)\n ↓ test/unit/ripgrep-streaming-backend-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/safe-process-runner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/repository-scope-trust.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/safe-process-streaming-v2.spec.ts (9 tests | 9 skipped)\n ✓ test/unit/public-beta-release-security.spec.ts (2 tests) 2191ms\n     ✓ runs audit-installed-closure with high/critical zero  2097ms\n ✓ test/unit/public-beta-real-consumer-gate.spec.ts (1 test) 3000ms\n     ✓ owner-blocks with exit 2 when confirmation is absent (no stub pass)  2998ms\n\n Test Files  14 passed | 64 skipped (78)\n      Tests  25 passed | 393 skipped (418)\n   Start at  09:36:00\n   Duration  5.28s (transform 15.60s, setup 0ms, import 55.05s, tests 7.02s, environment 15ms)\n\n",
+      "stderr": "",
+      "id": "CMD-F9-UNIT",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "node tools/release/run-public-beta-release-contracts.mjs --all",
+      "exit_code": 0,
+      "stdout": "     \"surface\": \"unit\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"projector-cutover\",\n      \"commandId\": \"CMD-F9-UNIT\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-TRANSPORT-001\",\n      \"surface\": \"unit\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"transport-receipt-parity\",\n      \"commandId\": \"CMD-F9-UNIT\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-SINGLE-EXEC-001\",\n      \"surface\": \"unit\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"single-execution\",\n      \"commandId\": \"CMD-F9-UNIT\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-FAIL-CLOSED-001\",\n      \"surface\": \"unit\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"failure-order\",\n      \"commandId\": \"CMD-F9-UNIT\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-NO-V1-001\",\n      \"surface\": \"unit\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"no-v1-runtime\",\n      \"commandId\": \"CMD-F9-UNIT\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-VERSION-001\",\n      \"surface\": \"unit\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"version-sources\",\n      \"commandId\": \"CMD-F9-UNIT\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-NODE-001\",\n      \"surface\": \"unit\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"node-range-declared\",\n      \"commandId\": \"CMD-F9-UNIT\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-CLI-CLOSURE-001\",\n      \"surface\": \"unit\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"cli-runtime-closure\",\n      \"commandId\": \"CMD-F9-UNIT\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-PACKAGE-API-001\",\n      \"surface\": \"unit\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"package-api\",\n      \"commandId\": \"CMD-F9-UNIT\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-METADATA-001\",\n      \"surface\": \"unit\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"package-metadata\",\n      \"commandId\": \"CMD-F9-UNIT\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-QUALITY-001\",\n      \"surface\": \"unit\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"quality-gates\",\n      \"commandId\": \"CMD-F9-UNIT\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-PACK-001\",\n      \"surface\": \"unit\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"package-install-and-bin-smoke\",\n      \"commandId\": \"CMD-F9-UNIT\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-PACK-REPRO-001\",\n      \"surface\": \"unit\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"package-reproducibility\",\n      \"commandId\": \"CMD-F9-UNIT\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-INSTALL-001\",\n      \"surface\": \"unit\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"installed-closure\",\n      \"commandId\": \"CMD-F9-UNIT\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-AUDIT-001\",\n      \"surface\": \"unit\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"installed-audit\",\n      \"commandId\": \"CMD-F9-UNIT\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-SBOM-001\",\n      \"surface\": \"unit\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"installed-sbom\",\n      \"commandId\": \"CMD-F9-UNIT\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-SECURITY-001\",\n      \"surface\": \"docs\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"security-document\",\n      \"commandId\": \"CMD-DOCS\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-MIGRATION-001\",\n      \"surface\": \"docs\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"migration-document\",\n      \"commandId\": \"CMD-DOCS\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-REAL-MCP-001\",\n      \"surface\": \"unit\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"real-consumer-read-only\",\n      \"commandId\": \"CMD-F9-UNIT\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-LARGE-001\",\n      \"surface\": \"golden\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"large-release-boundaries\",\n      \"commandId\": \"CMD-LARGE\",\n      \"exit\": 0\n    },\n    {\n      \"id\": \"F9-RELEASE-001\",\n      \"surface\": \"unit\",\n      \"group\": \"public-beta-release\",\n      \"case\": \"release-readiness\",\n      \"commandId\": \"CMD-F9-UNIT\",\n      \"exit\": 0\n    }\n  ]\n}\n",
+      "stderr": "",
+      "id": "CMD-F9-CASE-AGGREGATE",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "stdout": " candidate window expands  425ms\n     ✓ emits one confirmed evidence for an occurrence that also matches candidate terms  356ms\n     ✓ keeps confirmed evidence stable when maxCandidates is 0  362ms\n     ✓ keeps confirmed evidence stable when maxCandidates is 1  649ms\n     ✓ is invariant to backend hit order before maxFiles selection  534ms\n ✓ test/unit/ripgrep-streaming-backend-v2.spec.ts (3 tests) 324ms\n ✓ test/unit/snapshot-outcome-contribution-v2.spec.ts (1 test) 6ms\n ✓ test/unit/verified-record-cache.spec.ts (1 test) 7ms\n ✓ test/unit/scope-bound-evidence-materializer-v2.spec.ts (1 test) 8ms\n ✓ test/unit/scope-policy-platform.spec.ts (1 test) 4ms\n ✓ test/unit/codegraph-live-smoke.spec.ts (1 test) 6920ms\n     ✓ indexes, probes, queries, and removes only the temporary repository  6911ms\n ✓ test/unit/request-outcome-aggregator-v2.spec.ts (8 tests) 368ms\n ✓ test/unit/scope-gate.spec.ts (2 tests) 1453ms\n     ✓ passes shell metacharacters to git as literal path arguments  1030ms\n     ✓ blocks when git status cannot inspect the current directory  420ms\n ✓ test/unit/repository-scope-trust.spec.ts (4 tests) 1192ms\n     ✓ mounts scope on real executor and keeps missing-owner=capability only  721ms\n ✓ test/unit/relevance-ranking-budget.spec.ts (15 tests) 3751ms\n     ✓ does not export F2 stages from package root  3267ms\n     ✓ ranks via EvidenceRankerV2.rank and runs createSource→materialize chain  313ms\n ✓ test/unit/safe-process-runner.spec.ts (6 tests) 2502ms\n     ✓ distinguishes invalid request, spawn error, and non-zero exit  453ms\n     ✓ terminates the tree on stdout N+1 overflow  500ms\n     ✓ terminates the tree on stderr N+1 overflow  738ms\n ✓ test/unit/canonical-locate-execution.spec.ts (10 tests) 2852ms\n     ✓ keeps no-mutation v2 success surface on NodeRepositoryReader snapshot path  1313ms\n     ✓ purges mutated evidence and elevates v1 status to at least partial  757ms\n ✓ test/unit/safe-process-streaming-v2.spec.ts (9 tests) 4204ms\n     ✓ succeeds at exact N and limits on N+1 for stdout/stderr  1068ms\n     ✓ accepts continue-full and rejects invalid decisions  1716ms\n     ✓ projects kernel settlements to legacy SafeProcessResult rows  664ms\n     ✓ partial/finish exact union  398ms\n     ✓ rejects top-level Promise finalizer  338ms\n ✓ test/unit/cross-platform-platform.spec.ts (9 tests | 1 skipped) 21254ms\n     ✓ proves abort, single settlement, and owned tree death  3004ms\n     ✓ proves timeout, single settlement, and owned tree death  4983ms\n     ✓ keeps exact-N success and N+1 stdout-limit  4483ms\n     ✓ keeps exact-N success and N+1 stderr-limit  4100ms\n     ✓ records fixed invariant, direct child death, and descendant observation  4625ms\n ✓ test/unit/process-cleanup.spec.ts (7 tests) 23542ms\n     ✓ terminates direct child and descendant on caller abort and settles once  2975ms\n     ✓ terminates direct child and descendant on timeout  4953ms\n     ✓ terminates direct child and descendant when stdout observes N+1  3556ms\n     ✓ terminates direct child and descendant when stderr observes N+1  3853ms\n     ✓ rejects within a fixed cleanup deadline when tree termination fails  4611ms\n     ✓ early-stop/output path kills owned tree  3420ms\n ✓ test/unit/public-result-resource-budgets-v2.spec.ts (16 tests) 19845ms\n     ✓ F1B-TERM-001 N/N+1 for items, item bytes, and totals  338ms\n     ✓ F1B-EVIDENCE-001 count gates fail closed before poison elements  466ms\n     ✓ F1B-RAW-FIELD-001 file/symbol/excerpt and spaced 400k excerpt  16893ms\n     ✓ F1B-PUBLIC-FIELD-001 / ORDINAL-001 assembler file/excerpt replacement and order  928ms\n     ✓ F1B-LEGACY-ISOLATION-001 v2 shadow failures do not alter v1 engine bytes  517ms\n ✓ test/unit/public-beta-release-security.spec.ts (2 tests) 24984ms\n     ✓ runs audit-installed-closure with high/critical zero  24830ms\n\n Test Files  78 passed (78)\n      Tests  417 passed | 1 skipped (418)\n   Start at  09:48:27\n   Duration  28.36s (transform 32.94s, setup 0ms, import 83.18s, tests 126.46s, environment 12ms)\n\n",
+      "stderr": "",
+      "id": "CMD-UPSTREAM-UNIT",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run test:golden -- --all",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.2.0-beta.1 test:golden\n> tsx testkit/runners/golden-runner.ts --all\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ✓ test/golden/runner-smoke.spec.ts (1 test) 4ms\n ✓ test/golden/large-streaming-ripgrep.spec.ts (1 test) 6ms\n ✓ test/golden/public-output-v2.spec.ts (7 tests) 45ms\n ✓ test/golden/relevance-ranking-budget.spec.ts (3 tests) 24ms\n ✓ test/golden/request-snapshot-cache.spec.ts (2 tests) 115ms\n ✓ test/golden/golden-contract.spec.ts (5 tests) 60ms\n ✓ test/golden/mvp-evaluator.spec.ts (8 tests) 99ms\n ✓ test/golden/fixture-completeness.spec.ts (3 tests) 135ms\n ✓ test/golden/text-engine-classifier.spec.ts (6 tests | 1 skipped) 54ms\n ✓ test/golden/mvp-regression-families.spec.ts (5 tests) 101ms\n ✓ test/golden/language-capability-boundary.spec.ts (1 test) 9ms\n ✓ test/golden/input-abort-contract-v2.spec.ts (1 test) 51ms\n ✓ test/golden/repository-scope-policy.spec.ts (2 tests) 348ms\n ✓ test/golden/canonical-locate-bridge.spec.ts (1 test) 210ms\n ✓ test/golden/output-guardrails.spec.ts (8 tests) 1352ms\n     ✓ uses an oversized placeholder only after a complete text read  479ms\n ✓ test/golden/candidate-policy.spec.ts (3 tests) 3386ms\n     ✓ matches the bounded candidate policy manifest  1738ms\n     ✓ matches the bounded candidate policy manifest  628ms\n     ✓ matches the bounded candidate policy manifest  993ms\n ✓ test/golden/codegraph-fallback.spec.ts (11 tests) 7879ms\n     ✓ matches the explicit fallback transition contract  1734ms\n     ✓ matches the explicit fallback transition contract  615ms\n     ✓ matches the explicit fallback transition contract  617ms\n     ✓ matches the explicit fallback transition contract  587ms\n     ✓ matches the explicit fallback transition contract  1101ms\n     ✓ matches the explicit fallback transition contract  752ms\n     ✓ matches the explicit fallback transition contract  682ms\n     ✓ matches the explicit fallback transition contract  890ms\n     ✓ still invokes ripgrep when only one of multiple requested symbols is verified  566ms\n ✓ test/golden/text-evidence-engine.spec.ts (14 tests) 11971ms\n     ✓ matches its versioned status and coverage manifest  1446ms\n     ✓ matches its versioned status and coverage manifest  527ms\n     ✓ carries a term anchor into filesystem verification  816ms\n     ✓ carries a table anchor into filesystem verification  1330ms\n     ✓ carries a route anchor into filesystem verification  678ms\n     ✓ confirms a multiline mapping through the real ripgrep-to-reader chain  4117ms\n     ✓ keeps multiple canonical symbol facts stable across anchor permutations  2394ms\n ✓ test/golden/large-synthetic-repository.spec.ts (4 tests) 20693ms\n     ✓ keeps five real-engine projections stable and records environment-aware timing  20608ms\n\n Test Files  19 passed (19)\n      Tests  85 passed | 1 skipped (86)\n   Start at  09:39:13\n   Duration  24.74s (transform 11.18s, setup 0ms, import 42.35s, tests 46.54s, environment 3ms)\n\n",
+      "stderr": "",
+      "id": "CMD-GOLDEN",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run test:mcp -- --all",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.2.0-beta.1 test:mcp\n> npm run build --silent && tsx testkit/runners/mcp-runner.ts --all\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ✓ test/mcp/runner-smoke.spec.ts (1 test) 5ms\n ✓ test/mcp/request-cancellation-v2.spec.ts (1 test) 4ms\n ✓ test/mcp/mcp-golden-adapter.spec.ts (1 test) 1922ms\n     ✓ feeds both success and error transport observations to the shared evaluator  1916ms\n ✓ test/mcp/redaction-output-parity.spec.ts (1 test) 1927ms\n     ✓ keeps forbidden values out of structured, text, stdout protocol, and stderr  1923ms\n ✓ test/mcp/candidate-minimal-loop.spec.ts (1 test) 2598ms\n     ✓ returns confirmed and bounded candidates with transport parity  2595ms\n ✓ test/mcp/tool-output-parity.spec.ts (2 tests) 3166ms\n     ✓ returns one confirmed mapping through real stdio  1812ms\n     ✓ keeps all recoverable statuses out of the MCP error channel  1346ms\n ✓ test/mcp/request-cancellation.spec.ts (3 tests) 4365ms\n     ✓ does not lose cancellation sent before the handler starts work  1779ms\n     ✓ propagates the SDK request signal to the application service  1337ms\n     ✓ aborts an in-flight locate when stdin reaches EOF  1245ms\n ✓ test/mcp/tool-error-parity.spec.ts (4 tests) 5558ms\n     ✓ maps schema-invalid objects to typed parity output  1787ms\n     ✓ preserves the typed code while sanitizing unsafe detail  1283ms\n     ✓ preserves the typed code while sanitizing unsafe detail  1331ms\n     ✓ turns thrown failures into safe typed parity output  1151ms\n ✓ test/mcp/tool-surface.spec.ts (8 tests) 964ms\n ✓ test/mcp/lifecycle-contract.spec.ts (18 tests) 16231ms\n     ✓ accepts only real MCP frames on stdout and propagates clean exit  1034ms\n     ✓ treats an SDK transport parse failure as fatal without stdout pollution  863ms\n     ✓ drives graceful shutdown through stdin within the manifest budget  744ms\n     ✓ observes the real Nest context hook and direct/descendant process cleanup  2229ms\n     ✓ fails when the real context close marker is deliberately skipped  2703ms\n     ✓ fails when an actual descendant tree is deliberately left running  3492ms\n     ✓ cleans both child PIDs and the probe directory after a forced timeout  3784ms\n     ✓ cleans both child PIDs and the probe directory after a nonzero exit  1238ms\n\n Test Files  10 passed (10)\n      Tests  40 passed (40)\n   Start at  09:39:50\n   Duration  18.31s (transform 3.96s, setup 0ms, import 17.13s, tests 36.74s, environment 1ms)\n\n",
+      "stderr": "",
+      "id": "CMD-MCP",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run test:docs",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.2.0-beta.1 test:docs\n> npm run build --silent && tsx testkit/docs/docs-smoke-runner.ts\n\nDocs smoke passed: test-artifacts/docs/docs-smoke-v1.json\n",
+      "stderr": "",
+      "id": "CMD-DOCS",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run test:platform",
+      "exit_code": 0,
+      "stdout": " skipped)\n ↓ test/unit/public-beta-release-boundary.spec.ts (1 test | 1 skipped)\n ↓ test/unit/language-evidence-adapters-v2.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/public-beta-release-cli-closure.spec.ts (1 test | 1 skipped)\n ↓ test/unit/pre-ranking-evidence-pool.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/public-beta-release-install.spec.ts (1 test | 1 skipped)\n ↓ test/unit/public-beta-release-docs.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/public-beta-release-package-api.spec.ts (1 test | 1 skipped)\n ↓ test/unit/public-beta-release-package.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/public-beta-release-metadata.spec.ts (3 tests | 3 skipped)\n ✓ test/unit/public-beta-release-platform.spec.ts (5 tests) 8ms\n ↓ test/unit/process-cleanup.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/public-beta-release-quality.spec.ts (1 test | 1 skipped)\n ↓ test/unit/public-beta-release-readiness.spec.ts (1 test | 1 skipped)\n ↓ test/unit/public-output-v2-contract.spec.ts (25 tests | 25 skipped)\n ↓ test/unit/public-beta-release-security.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/executor-dual-lane-wiring-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/repository-git-state-probe.spec.ts (1 test | 1 skipped)\n ↓ test/unit/locate-status-evaluator.spec.ts (13 tests | 13 skipped)\n ↓ test/unit/public-result-assembler-v2.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/public-output-v2-errors-projection.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/repository-reader.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/canonical-locate-facts-bridge.spec.ts (13 tests | 13 skipped)\n ↓ test/unit/repository-safety.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/public-output-v2-no-cutover.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/candidate-policy.spec.ts (38 tests | 38 skipped)\n ↓ test/unit/public-output-v2-redaction.spec.ts (19 tests | 19 skipped)\n ↓ test/unit/repository-scope-integration.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/debug-cli-shell.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/runner-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/unit/ripgrep-backend.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/di.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/repository-scope-selection.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/request-snapshot-capability-seams-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/ripgrep-json-line-consumer-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/repository-scope-policy.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/request-snapshot-cache.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/public-beta-release-cutover.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/scope-gate.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/safe-process-runner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/ripgrep-streaming-backend-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/verified-record-cache.spec.ts (1 test | 1 skipped)\n ↓ test/unit/snapshot-outcome-contribution-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/scope-bound-evidence-materializer-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/scope-policy-platform.spec.ts (1 test | 1 skipped)\n ↓ test/unit/safe-process-streaming-v2.spec.ts (9 tests | 9 skipped)\n ↓ test/unit/repository-scope-trust.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/request-outcome-aggregator-v2.spec.ts (8 tests | 8 skipped)\n ↓ test/unit/public-beta-release-transport.spec.ts (1 test | 1 skipped)\n ↓ test/unit/public-result-resource-budgets-v2.spec.ts (16 tests | 16 skipped)\n ↓ test/unit/canonical-locate-execution.spec.ts (10 tests | 10 skipped)\n ↓ test/unit/relevance-ranking-budget.spec.ts (15 tests | 15 skipped)\n\n Test Files  1 passed | 77 skipped (78)\n      Tests  5 passed | 413 skipped (418)\n   Start at  09:43:55\n   Duration  8.59s (transform 42.01s, setup 8.54s, import 100.87s, tests 8ms, environment 11ms)\n\nplatform contracts passed: F4-MCP-001, F4-MCP-002, F4-PATH-001, F4-PATH-003, F4-PATH-004, F4-PROC-001, F4-PROC-002, F4-PROC-003, F4-PROC-004, F4-PROC-005, F5-CLEANUP-001, F5-PROC-001, F5-PROC-003, F5-RG-001, F6-ABORT-001, F6-INPUT-001, F6-LATCH-001, F7-SCOPE-001, F8-LANG-001, F9-PACK-001\n",
+      "stderr": "",
+      "id": "CMD-PLATFORM",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run package:metadata:check",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.2.0-beta.1 package:metadata:check\n> node tools/release/check-package-metadata.mjs\n\n{\n  \"ok\": true,\n  \"version\": \"0.2.0-beta.1\",\n  \"private\": true\n}\n",
+      "stderr": "",
+      "id": "CMD-METADATA",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run package:lock:check",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.2.0-beta.1 package:lock:check\n> node tools/release/check-package-lock.mjs\n\n{\n  \"ok\": true\n}\n",
+      "stderr": "",
+      "id": "CMD-LOCK",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run package:emit:check",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.2.0-beta.1 package:emit:check\n> node tools/release/check-package-emit.mjs\n\n{\n  \"ok\": true,\n  \"sourceCount\": 175\n}\n",
+      "stderr": "",
+      "id": "CMD-EMIT",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run package:dry-run",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.2.0-beta.1 package:dry-run\n> node tools/release/pack-candidate.mjs --dry-run\n\n{\n  \"ok\": true,\n  \"mode\": \"dry-run\",\n  \"entryCount\": 358,\n  \"packed\": 266590,\n  \"unpacked\": 1252696,\n  \"version\": \"0.2.0-beta.1\",\n  \"private\": true\n}\n",
+      "stderr": "",
+      "id": "CMD-PACK-DRY",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run package:smoke",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.2.0-beta.1 package:smoke\n> node tools/release/pack-candidate.mjs --smoke\n\n{\n  \"ok\": true,\n  \"mode\": \"smoke\",\n  \"entryCount\": 358,\n  \"packed\": 266590,\n  \"unpacked\": 1252696,\n  \"version\": \"0.2.0-beta.1\",\n  \"private\": true\n}\n",
+      "stderr": "",
+      "id": "CMD-PACK-SMOKE",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run package:closure:check",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.2.0-beta.1 package:closure:check\n> node tools/release/verify-installed-closure.mjs\n\n{\n  \"ok\": true,\n  \"name\": \"repo-nav\",\n  \"version\": \"0.2.0-beta.1\",\n  \"nodeCount\": 112,\n  \"edgeCount\": 182,\n  \"authority\": \"npm-shrinkwrap+npm-ls-topology\"\n}\n",
+      "stderr": "",
+      "id": "CMD-PROD-CLOSURE",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run security:audit",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.2.0-beta.1 security:audit\n> node tools/release/audit-installed-closure.mjs\n\n{\n  \"ok\": true,\n  \"high\": 0,\n  \"critical\": 0,\n  \"residual\": \"moderate-low-dispositions-and-actual-consumer-audit-pending-owner\"\n}\n",
+      "stderr": "",
+      "id": "CMD-AUDIT",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run security:sbom:check",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.2.0-beta.1 security:sbom:check\n> node tools/release/verify-installed-sbom.mjs\n\n{\n  \"ok\": true,\n  \"specVersion\": \"1.5\",\n  \"componentCount\": 112,\n  \"edgeCount\": 182,\n  \"sha256\": \"9be3971bd80cd3fd2c9cb684b28a0d40fae722b955165f4a7a111afb1dec4086\",\n  \"root\": \"pkg:npm/repo-nav@0.2.0-beta.1\"\n}\n",
+      "stderr": "",
+      "id": "CMD-SBOM",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run test:golden -- --group public-beta-release --case large-release-boundaries",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.2.0-beta.1 test:golden\n> tsx testkit/runners/golden-runner.ts --group public-beta-release --case large-release-boundaries\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ↓ test/golden/runner-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/golden/large-streaming-ripgrep.spec.ts (1 test | 1 skipped)\n ↓ test/golden/public-output-v2.spec.ts (7 tests | 7 skipped)\n ↓ test/golden/relevance-ranking-budget.spec.ts (3 tests | 3 skipped)\n ↓ test/golden/request-snapshot-cache.spec.ts (2 tests | 2 skipped)\n ↓ test/golden/fixture-completeness.spec.ts (3 tests | 3 skipped)\n ↓ test/golden/golden-contract.spec.ts (5 tests | 5 skipped)\n ↓ test/golden/mvp-evaluator.spec.ts (8 tests | 8 skipped)\n ↓ test/golden/text-engine-classifier.spec.ts (6 tests | 6 skipped)\n ↓ test/golden/mvp-regression-families.spec.ts (5 tests | 5 skipped)\n ↓ test/golden/language-capability-boundary.spec.ts (1 test | 1 skipped)\n ↓ test/golden/input-abort-contract-v2.spec.ts (1 test | 1 skipped)\n ↓ test/golden/repository-scope-policy.spec.ts (2 tests | 2 skipped)\n ↓ test/golden/output-guardrails.spec.ts (8 tests | 8 skipped)\n ↓ test/golden/canonical-locate-bridge.spec.ts (1 test | 1 skipped)\n ✓ test/golden/large-synthetic-repository.spec.ts (4 tests | 3 skipped) 80ms\n ↓ test/golden/codegraph-fallback.spec.ts (11 tests | 11 skipped)\n ↓ test/golden/candidate-policy.spec.ts (3 tests | 3 skipped)\n ↓ test/golden/text-evidence-engine.spec.ts (14 tests | 14 skipped)\n\n Test Files  1 passed | 18 skipped (19)\n      Tests  1 passed | 85 skipped (86)\n   Start at  09:47:08\n   Duration  5.05s (transform 10.12s, setup 0ms, import 43.55s, tests 80ms, environment 3ms)\n\n",
+      "stderr": "",
+      "id": "CMD-LARGE",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run release:owner-actions:check",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.2.0-beta.1 release:owner-actions:check\n> node tools/release/check-owner-actions.mjs\n\n{\n  \"ok\": true,\n  \"preflightValidated\": true,\n  \"designRevisionSha256\": \"7753006032fa60b7574cb25c722f8ead3670e3cea6117060e8966c54adf70893\",\n  \"residuals\": []\n}\n",
+      "stderr": "",
+      "id": "CMD-OWNER-ACTIONS",
+      "core": true,
+      "failure_handling": "block-owner-action"
+    },
+    {
+      "command": "npm test -- --group public-beta-release --case no-v1-runtime",
+      "exit_code": 0,
+      "stdout": ".ts (37 tests | 37 skipped)\n ↓ test/unit/language-capability-platform.spec.ts (1 test | 1 skipped)\n ↓ test/unit/output-guardrails.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/locate-request-v2.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/public-beta-real-consumer-gate.spec.ts (1 test | 1 skipped)\n ↓ test/unit/pre-ranking-evidence-pool.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/language-evidence-adapters-v2.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/language-capability-integration-v2.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/public-beta-release-cli-closure.spec.ts (1 test | 1 skipped)\n ✓ test/unit/public-beta-release-boundary.spec.ts (1 test) 14ms\n ↓ test/unit/public-beta-release-install.spec.ts (1 test | 1 skipped)\n ↓ test/unit/public-beta-release-docs.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/public-beta-release-package-api.spec.ts (1 test | 1 skipped)\n ↓ test/unit/public-beta-release-quality.spec.ts (1 test | 1 skipped)\n ↓ test/unit/public-beta-release-package.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/public-beta-release-readiness.spec.ts (1 test | 1 skipped)\n ↓ test/unit/public-beta-release-metadata.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/public-beta-release-security.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/process-cleanup.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/executor-dual-lane-wiring-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/public-output-v2-contract.spec.ts (25 tests | 25 skipped)\n ↓ test/unit/canonical-locate-facts-bridge.spec.ts (13 tests | 13 skipped)\n ↓ test/unit/repository-git-state-probe.spec.ts (1 test | 1 skipped)\n ↓ test/unit/locate-status-evaluator.spec.ts (13 tests | 13 skipped)\n ↓ test/unit/public-output-v2-errors-projection.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/public-result-assembler-v2.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/candidate-policy.spec.ts (38 tests | 38 skipped)\n ↓ test/unit/public-output-v2-redaction.spec.ts (19 tests | 19 skipped)\n ↓ test/unit/public-output-v2-no-cutover.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/repository-reader.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/repository-safety.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/repository-scope-integration.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/debug-cli-shell.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/repository-scope-selection.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/runner-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/unit/di.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/repository-scope-policy.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/request-snapshot-capability-seams-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/ripgrep-json-line-consumer-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/ripgrep-backend.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/scope-gate.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/request-snapshot-cache.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/public-beta-release-cutover.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/public-beta-release-transport.spec.ts (1 test | 1 skipped)\n ↓ test/unit/relevance-ranking-budget.spec.ts (15 tests | 15 skipped)\n ↓ test/unit/scope-bound-evidence-materializer-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/safe-process-runner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/verified-record-cache.spec.ts (1 test | 1 skipped)\n ↓ test/unit/ripgrep-streaming-backend-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/snapshot-outcome-contribution-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/scope-policy-platform.spec.ts (1 test | 1 skipped)\n ↓ test/unit/repository-scope-trust.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/public-result-resource-budgets-v2.spec.ts (16 tests | 16 skipped)\n ↓ test/unit/safe-process-streaming-v2.spec.ts (9 tests | 9 skipped)\n ↓ test/unit/request-outcome-aggregator-v2.spec.ts (8 tests | 8 skipped)\n ↓ test/unit/canonical-locate-execution.spec.ts (10 tests | 10 skipped)\n\n Test Files  1 passed | 77 skipped (78)\n      Tests  1 passed | 417 skipped (418)\n   Start at  09:47:16\n   Duration  5.48s (transform 21.59s, setup 0ms, import 68.45s, tests 14ms, environment 15ms)\n\n",
+      "stderr": "",
+      "id": "CMD-NO-V1",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "node tools/release/run-real-consumer-e2e.mjs --confirmation .codestable/runtime/public-beta-real-consumer-confirmation.json",
+      "exit_code": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"schemaVersion\": 1,\n  \"confirmationDecisionSha256\": \"d757bfa098b0f3e045f263cc3b48510c5c7719838ebdd5af644e7d8335d5713a\",\n  \"intentId\": \"public-beta-readonly-locate-ctxline-1\",\n  \"sensitiveOutputPolicy\": \"memory-only-v2-strict-forbidden-scan-no-persist\",\n  \"verified_at\": \"2026-07-31T01:47:24.355Z\",\n  \"semanticManifestSha256\": \"b216c8aa6eb540f6ee4b085e4eb8503da6f2ceb18eea32c2ac89b1c9635fb332\",\n  \"trackedCount\": 454,\n  \"untrackedCount\": 0,\n  \"ignoredCount\": 0,\n  \"codegraphEntryCount\": 0,\n  \"branchHeadUnchanged\": true,\n  \"resolvedIndexUnchanged\": true,\n  \"worktreeEntriesUnchanged\": true,\n  \"beforeAfterAggregateEqual\": true,\n  \"serviceMcpCliParity\": true,\n  \"strictForbiddenScanPassed\": true,\n  \"evidenceSha256\": \"30012ebddf9bcfed4da92754db11be5be6b58d9b47eb6542fbbb495ce84b9a06\",\n  \"locateExit\": 0,\n  \"locateSchema\": null\n}\n",
+      "stderr": "",
+      "id": "CMD-REAL-CONSUMER",
+      "core": true,
+      "failure_handling": "block-owner-confirmation"
+    },
+    {
+      "command": "node tools/ci/run-platform-contracts.mjs --self-test",
+      "exit_code": 0,
+      "stdout": "platform contract self-test passed\n",
+      "stderr": "",
+      "id": "CMD-F4-REGISTRY",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "python .codestable/tools/validate-yaml.py --file .codestable/features/2026-07-24-public-beta-release/public-beta-release-checklist.yaml --yaml-only",
+      "exit_code": 0,
+      "stdout": "Validated 1 file(s): 1 passed, 0 failed.\n\n  ✓ .codestable\\features\\2026-07-24-public-beta-release\\public-beta-release-checklist.yaml\n\nAll files valid.\n",
+      "stderr": "",
+      "id": "CMD-YAML",
+      "core": false,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "python .codestable/tools/codestable-dod-contract-gate.py --design .codestable/features/2026-07-24-public-beta-release/public-beta-release-design.md --stage design",
+      "exit_code": 0,
+      "stdout": "{\n  \"gate_id\": \"dod-contract-gate\",\n  \"stage\": \"design\",\n  \"status\": \"passed\",\n  \"blocking\": [],\n  \"warnings\": [],\n  \"evidence\": [\n    {\n      \"design\": \".codestable\\\\features\\\\2026-07-24-public-beta-release\\\\public-beta-release-design.md\",\n      \"checked_block\": \"DoD Contract\",\n      \"structure_checks\": {\n        \"validation command id\": [\n          \"CMD-\"\n        ],\n        \"command core marker\": [\n          \"core\",\n          \"核心性\"\n        ],\n        \"failure handling marker\": [\n          \"failure_handling\",\n          \"失败处理\"\n        ]\n      },\n      \"strength\": \"minimal DoD Contract section check\"\n    }\n  ],\n  \"providers\": {}\n}\n",
+      "stderr": "",
+      "id": "CMD-DOD-GATE",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "python .codestable/tools/codestable-spec-governance.py --root . analyze",
+      "exit_code": 0,
+      "stdout": "OK: True\n",
+      "stderr": "",
+      "id": "CMD-SPEC",
+      "core": false,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "python .codestable/tools/codestable-doctor.py --root .",
+      "exit_code": 1,
+      "stdout": "CodeStable doctor: blocked\nNext action: Resolve P1 findings before reporting the task complete.\n- P1: CodeStable implementation review must use a Task agent reviewer. (.codestable/features/2026-07-10-debug-cli-mcp-guide/debug-cli-mcp-guide-review.md)\nOCR tool: unconfigured — ocr 已装但未配 LLM。用 provider 体系配置（ocr config set provider <name> + providers.<name>.url/api_key），勿用旧 llm.* 块；详见 cs-onboard OCR 段。\n",
+      "stderr": "",
+      "id": "CMD-DOCTOR",
+      "core": false,
+      "failure_handling": "record-baseline-or-block-new-regression"
+    },
+    {
+      "command": "python .codestable/tools/codestable-scope-gate.py --feature-dir .codestable/features/2026-07-24-public-beta-release --allow-file .codestable/features/2026-07-24-public-beta-release/public-beta-release-scope-allow.txt --check-path . --cleanliness-path src --cleanliness-path tools --cleanliness-path test --cleanliness-path testkit --cleanliness-path docs --cleanliness-path .github --stage implementation.before_review",
+      "exit_code": 0,
+      "stdout": "{\n  \"gate_id\": \"scope-gate\",\n  \"stage\": \"implementation.before_review\",\n  \"status\": \"passed\",\n  \"blocking\": [],\n  \"warnings\": [],\n  \"evidence\": [\n    {\n      \"changed_files\": [\n        \".codestable/architecture/system-repo-nav-foundation.md\",\n        \".codestable/features/2026-07-24-public-beta-release/public-beta-release-checklist.yaml\",\n        \".codestable/features/2026-07-24-public-beta-release/public-beta-release-scope-allow.txt\",\n        \".codestable/roadmap/repo-nav-public-beta/goal-features/public-beta-release.md\",\n        \".codestable/roadmap/repo-nav-public-beta/repo-nav-public-beta-items.yaml\",\n        \".codestable/roadmap/repo-nav-public-beta/repo-nav-public-beta-roadmap.md\",\n        \"src/evidence/locate-execution/canonical-locate-executor-v2.ts\",\n        \"src/evidence/locate-execution/register-production-accepted-projection-seams-v2.ts\",\n        \"src/evidence/public-output/sensitive-corpus-v2.ts\",\n        \"src/process/backend-execution-context-v2.ts\",\n        \"test/unit/public-beta-release-package.spec.ts\",\n        \".codestable/features/2026-07-24-public-beta-release/public-beta-release-acceptance.md\"\n      ],\n      \"ignored_machine_artifacts\": [\n        \".codestable/features/2026-07-24-public-beta-release/public-beta-release-dod-results.json\",\n        \".codestable/features/2026-07-24-public-beta-release/public-beta-release-gate-results.json\"\n      ],\n      \"allowed_prefixes\": [\n        \".codestable/features/2026-07-24-public-beta-release\",\n        \".codestable/architecture/system-repo-nav-foundation.md\",\n        \".codestable/features/2026-07-24-public-beta-release\",\n        \".codestable/roadmap/repo-nav-public-beta\",\n        \".codestable/runtime/public-beta-release-owner-preflight.json\",\n        \".gitattributes\",\n        \".prettierignore\",\n        \".prettierrc.json\",\n        \"LICENSE\",\n        \"SECURITY.md\",\n        \"README.md\",\n        \"docs/\",\n        \"eslint.config.mjs\",\n        \"npm-shrinkwrap.json\",\n        \"package.json\",\n        \"src/\",\n        \"test/\",\n        \"testkit/\",\n        \"tools/release/\",\n        \"tsconfig.build.json\",\n        \"vitest.config.ts\"\n      ]\n    }\n  ],\n  \"providers\": {}\n}\n",
+      "stderr": "",
+      "id": "CMD-SCOPE",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "warning: in the working copy of '.codestable/roadmap/repo-nav-public-beta/goal-features/public-beta-release.md', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of '.codestable/roadmap/repo-nav-public-beta/repo-nav-public-beta-items.yaml', CRLF will be replaced by LF the next time Git touches it\n",
+      "id": "CMD-DIFF-CHECK",
+      "core": false,
+      "failure_handling": "fix-or-block"
+    }
+  ],
+  "providers": {},
+  "note": "CMD-UPSTREAM-UNIT re-verified after Windows EPERM temp cleanup harden (safeRmTemp); see public-beta-release-dod-upstream-retry.json"
+}

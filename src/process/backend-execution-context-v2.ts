@@ -848,13 +848,8 @@ export function issueExpandedBackendLogicalAttemptForHarnessV2(input: {
   if (record.sealedBackends.has(input.outcome.backend)) {
     throw new TypeError('backend-already-sealed');
   }
-  const outcome = signOutcome(
-    input.outcome,
-    input.context,
-    input.execution,
-  );
-  const attempt =
-    createProcessOpaqueTokenV2<ExpandedBackendLogicalAttemptV2>();
+  const outcome = signOutcome(input.outcome, input.context, input.execution);
+  const attempt = createProcessOpaqueTokenV2<ExpandedBackendLogicalAttemptV2>();
   const firstExpandedStartOrdinal = record.logicalAttempts.size + 1;
   const view: ExpandedBackendLogicalAttemptViewV2 = Object.freeze({
     backend: input.outcome.backend,

@@ -606,6 +606,8 @@ interface BackendExecutionOutcomeV2 {
 
 补齐版本来源、Node engines、license/security/metadata、lint/format、迁移指南和 release candidate gate；在全部 field producer 通过后原子切换生产 locate schema v2。
 
+**状态（2026-07-31）**：acceptance 文档就绪（DoD 绿后 flip passed）；items.yaml `done`；architecture 已回写 production v2 cutover / private:true / F9-PACK-001 六格 / owner gates；REV-005/008 为 residual；不 publish/tag/merge main。
+
 ### Goal Coverage Matrix
 
 | 完成信号 | Owner item | 可执行证据 |

@@ -121,8 +121,8 @@ items:
   - request-snapshot-cache
   - streaming-ripgrep
   - language-capability-boundary
-  status: in-progress
+  status: done
   feature: 2026-07-24-public-beta-release
   minimal_loop: false
-  notes: 所有真实 coverage field producer 就绪前不得用占位值切换 v2；license 选择、移除 private、merge、push
-    与发布仍需 owner 单独批准
+  notes: 2026-07-31 acceptance passed；production v2 cutover + 0.2.0-beta.1 candidate（private:true
+    保留）；F9-PACK-001 六格 + owner gates + real-consumer ctxline；不 publish/tag/merge main

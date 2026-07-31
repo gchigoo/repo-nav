@@ -117,6 +117,23 @@ async function expectInventoryStopped(
   );
 }
 
+/**
+ * Best-effort temp cleanup; Windows may keep EPERM briefly after taskkill.
+ */
+function safeRmTemp(directory: string): void {
+  try {
+    rmSync(directory, { recursive: true, force: true });
+  } catch (error: unknown) {
+    const code =
+      typeof error === 'object' && error !== null && 'code' in error
+        ? error.code
+        : undefined;
+    if (code !== 'EPERM' && code !== 'EBUSY' && code !== 'ENOTEMPTY') {
+      throw error;
+    }
+  }
+}
+
 function forceCleanup(inventory: ProcessInventory | undefined): void {
   if (inventory === undefined) {
     return;
@@ -408,7 +425,7 @@ describe.runIf(
       recordPlatformAssertionMarker('F4-PROC-001', 'owned-tree-dead');
     } finally {
       forceCleanup(inventory);
-      rmSync(cwd, { recursive: true, force: true });
+      safeRmTemp(cwd);
     }
   });
 });
@@ -450,7 +467,7 @@ describe.runIf(
       recordPlatformAssertionMarker('F4-PROC-002', 'owned-tree-dead');
     } finally {
       forceCleanup(inventory);
-      rmSync(cwd, { recursive: true, force: true });
+      safeRmTemp(cwd);
     }
   }, 20_000);
 });
@@ -494,7 +511,7 @@ describe.runIf(
       recordPlatformAssertionMarker('F4-PROC-003', 'owned-tree-dead');
     } finally {
       forceCleanup(inventory);
-      rmSync(cwd, { recursive: true, force: true });
+      safeRmTemp(cwd);
     }
   });
 });
@@ -538,7 +555,7 @@ describe.runIf(
       recordPlatformAssertionMarker('F4-PROC-004', 'owned-tree-dead');
     } finally {
       forceCleanup(inventory);
-      rmSync(cwd, { recursive: true, force: true });
+      safeRmTemp(cwd);
     }
   });
 });
@@ -582,7 +599,7 @@ describe.runIf(
       if (inventory !== undefined) {
         await expectInventoryStopped(inventory);
       }
-      rmSync(cwd, { recursive: true, force: true });
+      safeRmTemp(cwd);
     }
   });
 });

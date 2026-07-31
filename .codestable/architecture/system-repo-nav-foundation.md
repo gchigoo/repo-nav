@@ -4,7 +4,7 @@ slug: repo-nav-foundation
 scope: RepoNav 当前已落地的 production v1 公共契约、repository 安全 seams、单一 safe-process kernel（N+1 + streaming）、ripgrep multi-view stream、请求级 BackendExecutionContext/physical start authority、F3 trusted handoff 与 F6 no-hits telemetry seam、F6 raw request guard / abort latch / RequestOutcomeAggregatorV2 production mount（经 F8 accepted shadow）、F7 path-only repository scope policy / F3 fold+adapter / two-base-port+language-port materializer / ScopeCoverage mount、F8 language capability adapters / pre-budget unsupported count / CapabilityCoverage mount / four-prerequisite complete real-v2 shadow（transport-unreachable）、请求级 request-snapshot cache/final-check、CodeGraph-primary/ripgrep-fallback evidence engine、有界 candidate policy、状态/预算/redaction/error output guardrails、stdio MCP、debug CLI、executable docs、发布候选级 Verification Kit，以及尚未接入 production 的 v2 raw/public 输出安全边界
 summary: Production 继续由 Zod schema v1、薄 RepositoryEvidenceEngine façade、CanonicalRepositoryLocateExecutorV2（请求级 snapshot + snapshot/scope/capability owners）、唯一 V1LocateResultProjector、stdio MCP 与 shallow debug CLI 提供；F5–F7 已落地 process/backend/abort/scope seams；F8 已落地 TS/JS/SQL+fallback language adapters、F7 language port/three-port seal、pre-budget unsupportedLanguageHits、CapabilityCoverage contribution、EvidenceModule 唯一 non-exported accepted complete-real shadow orchestrator（four-prerequisite→F2→F6→F1C）；typed fact envelope / finalizer / composer 仍为 transport-unreachable；dormant LocateResultV2 与 PublicResultAssemblerV2 仍无 production edge，真实原子切换由 F9 独占
 status: current
-last_reviewed: 2026-07-28
+last_reviewed: 2026-07-31
 tags: [repo-nav, foundation, evidence, request-snapshot, candidate-policy, language-capability, output-guardrails, redaction, repository-safety, codegraph, ripgrep, streaming, safe-process, backend-execution, fallback, mcp, stdio, cli, docs, golden, regression, schema-v2, public-assembler, no-cutover]
 depends_on: []
 implements: [source-of-truth-evidence]
@@ -272,7 +272,7 @@ flowchart LR
 - `src/evidence/scope/` — F7 path-only `RepositoryScopePolicyV1`、resolve/request-scope、ScopeCoverageFacts/contribution accessors、scope-bound classification bridge、producer registrar（含 F8 language port admission）与 arbitration materializer、execution coverage mount；兼容 legacy layer export。
 - `src/evidence/ranking/` — F2 dormant ranking：`DiscoveryHitSelectorV2`（read 前 F3 opaque folded view reservation）、`EvidenceRankerV2`（purge 后 trusted pool + structured public-safe ordering / MatchPriority / round-robin / unsatisfied ledger）、opaque `EvidenceRankingOutcomeV2` 与 F6 fragment-budget / F8 retained-ref accessors；ranking 不 import `public-output`。
 - `src/evidence/public-output/f2-locate-projection-stages-v2.ts` / `materialized-evidence-core-v2.ts` — F2 zero-arg `createSource`/`materialize` 与 F1 `materializePublicEvidenceV2`；F8 accepted shadow 经 exact-once acquisition 委托；F9 前 package 不导出。
-- `src/evidence/evidence.module.ts` — 唯一 non-exported ready provider 绑定 F8 accepted complete-real shadow orchestrator；LOCATE_RESULT_PROJECTOR 仍 v1。
+- `src/evidence/evidence.module.ts` — 唯一 non-exported ready provider 绑定 F8 accepted complete-real shadow orchestrator；LOCATE_RESULT_PROJECTOR 唯一 binding 为 V2LocateResultProjector（F9 cutover）。
 - `src/repository/verified-text-file-source-v2.ts:VerifiedTextFileSourceV2` — realpath→containment→open→bounded UTF-8 decode 安全内核；`NodeRepositoryReader` 与 request snapshot 共用。
 - `src/evidence/abort-source.ts:LocateAbortCoordinator` — first-writer-wins caller/deadline ownership；closeable freeze/cleanup。
 - `src/evidence/locate-execution/canonical-locate-finalization-v2.ts` — finalization latch（last await 后同步 finalize 屏障）。
@@ -383,6 +383,7 @@ flowchart LR
 
 ## 8. 变更日志
 
+- 2026-07-31：F9 `public-beta-release` acceptance 回填 production v2 cutover（LOCATE_RESULT_PROJECTOR→V2LocateResultProjector）、`private:true` 保留、`0.2.0-beta.1` release candidate、F9-PACK-001 远程六格（push run 30506332626）、owner gates（license MIT/security/advisory dispositions/real-consumer ctxline）；不 npm publish/tag/merge main；REV-005/008 记为 residual。
 - 2026-07-28：F8 `language-capability-boundary` acceptance 回填 TS/JS/SQL+fallback adapters、F7 language port/three-port seal、pre-budget unsupportedLanguageHits、CapabilityCoverage mount、F6 四元组 capability、EvidenceModule 唯一 accepted complete-real shadow；production 仍 v1；empty-ranking seal / aggregation harness / 远程六格 F8 marker / F9 cutover 记为残留。
 - 2026-07-28：F7 `repository-scope-policy` acceptance 回填 path-only scope policy、F3 trusted adapter/pre-cap fold、two-base-port producer registrar/materializer、ScopeCoverageFacts 固定顺序 accessors 与 production scope mount（envelope 仍缺 capability）；production 仍 v1；REV-007..010 与远程六格 F7 marker 记为残留。
 - 2026-07-28：F6 `input-abort-contract-v2` acceptance 回填 raw request guard、abort/finalization latch、`RequestOutcomeAggregatorV2` direct seam、F8-only production mount 与 F2 core accessor importer=0；production 仍 v1；REV-003/013 与远程六格 F6 marker 记为残留。

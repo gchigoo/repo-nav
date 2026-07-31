@@ -380,14 +380,13 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
           resolvedLimits.timeoutMs,
         );
       const abortDecision = abortCoordinator.closeFinalization();
-      const rankingOutcome =
-        legacy.ok
-          ? issuePassthroughRankingOutcomeFromLegacyEvidenceV2({
-              evidence: legacy.evidence,
-              snapshotProof: scopeMount.snapshotProof,
-              execution,
-            })
-          : undefined;
+      const rankingOutcome = legacy.ok
+        ? issuePassthroughRankingOutcomeFromLegacyEvidenceV2({
+            evidence: legacy.evidence,
+            snapshotProof: scopeMount.snapshotProof,
+            execution,
+          })
+        : undefined;
       registerProductionAcceptedProjectionSeamsV2({
         execution,
         snapshotProof: scopeMount.snapshotProof,
@@ -403,15 +402,13 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
         completeEquivalentFallback: options.completeEquivalentFallback ?? false,
         discardedEvidenceCount: 0,
       });
-      const retainedFiles =
-        legacy.ok
-          ? new Set(
-              [
-                ...legacy.evidence.confirmed,
-                ...legacy.evidence.candidates,
-              ].map((item) => item.location.file),
-            ).size
-          : 0;
+      const retainedFiles = legacy.ok
+        ? new Set(
+            [...legacy.evidence.confirmed, ...legacy.evidence.candidates].map(
+              (item) => item.location.file,
+            ),
+          ).size
+        : 0;
       const snapshotFacts =
         retainedFiles > 0
           ? Object.freeze({

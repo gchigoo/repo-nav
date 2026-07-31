@@ -159,9 +159,8 @@ export function issuePassthroughRankingOutcomeFromLegacyEvidenceV2(input: {
   return issueEvidenceRankingOutcomeV2({
     fragment,
     budgetFacts: Object.freeze({
-      maxFilesReached: input.evidence.coverage.limitsReached.includes(
-        'MAX_FILES_REACHED',
-      ),
+      maxFilesReached:
+        input.evidence.coverage.limitsReached.includes('MAX_FILES_REACHED'),
       maxConfirmedReached: input.evidence.coverage.limitsReached.includes(
         'MAX_CONFIRMED_REACHED',
       ),

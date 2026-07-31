@@ -1,4 +1,5 @@
 # F9 public-beta-release implementation scope
+.codestable/architecture/system-repo-nav-foundation.md
 .codestable/features/2026-07-24-public-beta-release
 .codestable/roadmap/repo-nav-public-beta
 .codestable/runtime/public-beta-release-owner-preflight.json

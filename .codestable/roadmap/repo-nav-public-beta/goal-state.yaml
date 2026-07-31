@@ -1,5 +1,5 @@
 roadmap: repo-nav-public-beta
-status: running
+status: complete
 baseline_ref: 9d7b0e237e3cd9245d1f057a2ad504b1d1028d7d
 driver_kind: host-agent
 driver_id: 06c57bbc-6ea2-4038-a133-a77038e95a06
@@ -119,7 +119,7 @@ features:
   review: .codestable/features/2026-07-24-public-beta-release/public-beta-release-review.md
   qa: .codestable/features/2026-07-24-public-beta-release/public-beta-release-qa.md
   acceptance: .codestable/features/2026-07-24-public-beta-release/public-beta-release-acceptance.md
-  status: implementing
+  status: accepted
 ledger:
 - step: dispatch-goal-driver
   status: started
@@ -353,7 +353,13 @@ ledger:
   index: 11
   note: QA passed; owner-gated CMD-OWNER-ACTIONS/REAL-CONSUMER/six-cell residual for acceptance
 - step: f9-acceptance
-  status: blocked
+  status: done
   feature: public-beta-release
   index: 11
-  note: awaiting owner candidate-actions confirmation six-cell before acceptance
+  note: ResumeGoalAcceptance approval-report.md#goal-acceptance; owner gates+six-cell+DoD/evidence-pack
+    passed; checks C1-C68 passed
+- step: f9-goal-complete
+  status: done
+  feature: public-beta-release
+  index: 11
+  note: goal 12/12 complete; private:true retained; no publish/tag/merge-main

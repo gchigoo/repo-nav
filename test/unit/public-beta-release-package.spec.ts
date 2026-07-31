@@ -13,9 +13,9 @@ const root = resolve(import.meta.dirname, '../..');
 describe.runIf(
   isSelected({
     group: 'public-beta-release',
-    caseId: 'package-install-and-bin-smoke',
+    caseId: 'package-metadata',
   }),
-)('F9-PACK-001 package-install-and-bin-smoke', () => {
+)('F9-PACK-001 package files allowlist (unit metadata)', () => {
   it('keeps positive files allowlist exact and shrinkwrap in package surface', () => {
     const pkg = JSON.parse(
       readFileSync(resolve(root, 'package.json'), 'utf8'),

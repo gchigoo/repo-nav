@@ -296,7 +296,8 @@ export function collectSensitiveCorpusV2(input: unknown): SensitiveCorpusV2 {
       add(
         malformedTail,
         'SECRET_LIKE_VALUE',
-        malformedTail.length > 0 && isGenericAssignmentEligibleV2(malformedTail),
+        malformedTail.length > 0 &&
+          isGenericAssignmentEligibleV2(malformedTail),
       );
     }
     for (const match of matches(FIXED_CREDENTIAL, value)) {

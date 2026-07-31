@@ -38,6 +38,18 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Install host tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOOLS="${RUNNER_TEMP}/repo-nav-host-tools"
+          mkdir -p "$TOOLS"
+          npm install --prefix "$TOOLS" --no-save --no-package-lock --no-fund --no-audit \
+            @vscode/ripgrep@1.15.9
+          RG_BIN="$TOOLS/node_modules/@vscode/ripgrep/bin"
+          echo "$RG_BIN" >> "$GITHUB_PATH"
+          "${RG_BIN}/rg" --version
+
       - name: Lint
         run: npm run lint
 

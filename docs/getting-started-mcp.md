@@ -12,7 +12,7 @@ npm i -g repo-nav@beta
 
 全局安装后，把下面的 stdio 配置加入支持 MCP 的宿主：
 
-```json docs-smoke:mcp-config
+```json
 {
   "command": "repo-nav-mcp"
 }
@@ -20,7 +20,7 @@ npm i -g repo-nav@beta
 
 源码仓调试时，`{{REPO_ROOT}}` 替换为本仓库绝对路径：
 
-```json
+```json docs-smoke:mcp-config
 {
   "command": "node",
   "args": ["{{REPO_ROOT}}/dist/main.js"],

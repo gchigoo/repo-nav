@@ -1,6 +1,6 @@
 {
   "name": "repo-nav",
-  "version": "0.2.0-beta.2",
+  "version": "0.2.0-beta.3",
   "private": false,
   "type": "module",
   "description": "Deterministic repository evidence service for local MCP clients.",

@@ -33,7 +33,7 @@ function majorAllowed(version: string, range: string): boolean {
 describe.runIf(
   isSelected({ group: 'public-beta-release', caseId: 'version-sources' }),
 )('F9-VERSION-001 version-sources', () => {
-  it('uses package.json as sole version authority at 0.2.0-beta.1', () => {
+  it('uses package.json as sole version authority', () => {
     expect(pkg.version).toBe(EXPECTED_PACKAGE_VERSION_V2);
     expect(readPackageMetadata().version).toBe(EXPECTED_PACKAGE_VERSION_V2);
     expect(pkg.private).toBe(false);

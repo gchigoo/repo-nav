@@ -116,9 +116,12 @@ export class DiscoveryHitSelectorV2 {
         );
         continue;
       }
-      const matchGroups = groupBySafeKey(matching);
+      const matchGroups = [...groupBySafeKey(matching).values()].sort(
+        (left, right) =>
+          safeSelectorKey(left[0]!).localeCompare(safeSelectorKey(right[0]!)),
+      );
       let reserved = false;
-      for (const group of matchGroups.values()) {
+      for (const group of matchGroups) {
         if (occupied + group.length > maxFiles) {
           filesTruncated = true;
           safeSelectionCollision = true;
@@ -168,8 +171,11 @@ export class DiscoveryHitSelectorV2 {
       );
     }
 
-    // 非 anchor 容量：按 safe 等价类补齐
-    for (const group of groups.values()) {
+    // 非 anchor 容量：按 safe 等价类补齐（字典序稳定，避免 arrival 顺序漂移）
+    const orderedGroups = [...groups.values()].sort((left, right) =>
+      safeSelectorKey(left[0]!).localeCompare(safeSelectorKey(right[0]!)),
+    );
+    for (const group of orderedGroups) {
       if (group.every((candidate) => selected.has(candidate.locatorRef))) {
         continue;
       }

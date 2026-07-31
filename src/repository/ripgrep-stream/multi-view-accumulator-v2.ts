@@ -38,6 +38,11 @@ export interface MultiViewAccumulatorSnapshotV2 {
   readonly allLanesFrozen: boolean;
 }
 
+interface LegacyCompletenessLatchV2 {
+  readonly complete: boolean;
+  readonly truncated: boolean;
+}
+
 function compareHits(left: BackendHit, right: BackendHit): number {
   const compareText = (first: string, second: string): number =>
     first === second ? 0 : first < second ? -1 : 1;
@@ -118,6 +123,7 @@ export class MultiViewAccumulatorV2 {
   private stagingCommitCount = 0;
   private stagingDiscardCount = 0;
   private expandedEarlyStop = false;
+  private legacyCompletenessLatch: LegacyCompletenessLatchV2 | undefined;
 
   public constructor(config: MultiViewAccumulatorConfigV2) {
     this.expandedMaxHits = config.expandedMaxHits;
@@ -138,6 +144,12 @@ export class MultiViewAccumulatorV2 {
       return 'legacy-complete';
     }
     if (this.legacyCommitted.length >= this.legacyMaxHits) {
+      const legacyWasComplete =
+        this.legacyCommitted.length <= this.legacyMaxHits;
+      this.legacyCompletenessLatch = Object.freeze({
+        complete: legacyWasComplete,
+        truncated: !legacyWasComplete,
+      });
       const capped = this.legacyCommitted
         .slice(0, this.legacyMaxHits)
         .sort(compareHits);
@@ -188,19 +200,23 @@ export class MultiViewAccumulatorV2 {
     this.stagingDiscardCount += 1;
   }
 
-  /** 全部 groups 自然完成后的 legacy 收尾：complete 判定再 sort+slice。 */
+  /** 全部 groups 自然完成后的 legacy 收尾：slice 前锁存 complete/truncated。 */
   public finishNaturalLegacy(): void {
     if (this.legacyFrozen) {
       return;
     }
-    const complete = this.legacyCommitted.length <= this.legacyMaxHits;
+    const legacyWasComplete = this.legacyCommitted.length <= this.legacyMaxHits;
+    const legacyWasTruncated = !legacyWasComplete;
+    this.legacyCompletenessLatch = Object.freeze({
+      complete: legacyWasComplete,
+      truncated: legacyWasTruncated,
+    });
     const finalized = [...this.legacyCommitted]
       .sort(compareHits)
       .slice(0, this.legacyMaxHits);
     this.legacyCommitted.length = 0;
     this.legacyCommitted.push(...finalized);
     this.legacyFrozen = true;
-    void complete;
   }
 
   public markExpandedComplete(): void {
@@ -215,7 +231,10 @@ export class MultiViewAccumulatorV2 {
       !this.expandedEarlyStop &&
       this.expandedHits.length <= this.expandedMaxHits;
     const legacyComplete =
-      this.legacyFrozen && this.legacyCommitted.length <= this.legacyMaxHits;
+      this.legacyCompletenessLatch !== undefined
+        ? this.legacyCompletenessLatch.complete
+        : this.legacyFrozen &&
+          this.legacyCommitted.length <= this.legacyMaxHits;
     return Object.freeze({
       expanded: Object.freeze({
         hits: Object.freeze([...this.expandedHits]),

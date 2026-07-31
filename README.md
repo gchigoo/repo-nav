@@ -10,26 +10,24 @@ to text search when necessary. It does not modify the target repository.
 
 ## Requirements
 
-- Node.js 20+
+- Node.js `^22.0.0 || ^24.0.0`
 - `rg` (ripgrep) for the text-search fallback
 - Optional: CodeGraph for indexed repository exploration
 
-## Install and build
+## Install
 
 ```powershell
-git clone https://github.com/gchigoo/repo-nav.git
-cd repo-nav
-npm ci
-npm run build
+npm i -g repo-nav@beta
 ```
 
-## Add to Codex
+## MCP host configuration
 
-Register the built stdio server with Codex:
+After install, register the stdio MCP server (`repo-nav-mcp`):
 
-```powershell
-codex mcp add repo_nav -- node <ABSOLUTE_REPO_PATH>\dist\main.js
-codex mcp list
+```json
+{
+  "command": "repo-nav-mcp"
+}
 ```
 
 The server publishes one read-only MCP tool:
@@ -55,23 +53,44 @@ contract.
 
 ## Debug CLI
 
-```powershell
-npm run repo-nav -- --help
-npm run repo-nav -- debug locate --help
-npm run repo-nav -- debug probe --help
-```
+The global install exposes `repo-nav`:
 
-Requires Node.js `^22.0.0 || ^24.0.0`. Golden regressions run from a source checkout via `npm run test:golden` only.
+```powershell
+repo-nav --help
+repo-nav debug locate --help
+repo-nav debug probe --help
+```
 
 See [the debug CLI guide](docs/debug-cli.md) for command details and exit-code
 semantics.
 
+## Programmatic API
+
+Root package exports (`repo-nav`) are v2-only. Import legacy v1 contracts from
+`repo-nav/legacy-v1`.
+
+## Development from source
+
+```powershell
+git clone https://github.com/gchigoo/repo-nav.git
+cd repo-nav
+npm ci
+npm run build
+```
+
+Register a local stdio server with Codex:
+
+```powershell
+codex mcp add repo_nav -- node <ABSOLUTE_REPO_PATH>\dist\main.js
+codex mcp list
+```
+
+Golden regressions run from a source checkout via `npm run test:golden` only.
+
 ## Verification
 
 ```powershell
-npm run build
-npm run typecheck
-npm test
+npm run build && npm run typecheck && npm test
 npm run test:golden -- --all
 npm run test:mcp -- --all
 npm run test:docs

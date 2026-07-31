@@ -16,7 +16,12 @@ function fail(msg) {
 
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 if (pkg.private !== false) fail('private must be false for public beta');
-if (pkg.version !== '0.2.0-beta.1') fail('version must be 0.2.0-beta.1');
+if (
+  typeof pkg.version !== 'string' ||
+  !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/u.test(pkg.version)
+) {
+  fail('version must be a semver release or prerelease');
+}
 if (!existsSync(join(root, 'npm-shrinkwrap.json'))) fail('shrinkwrap missing');
 if (existsSync(join(root, 'package-lock.json')))
   fail('package-lock must not exist');

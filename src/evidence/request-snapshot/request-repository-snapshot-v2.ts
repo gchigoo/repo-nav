@@ -36,6 +36,7 @@ export interface RequestRepositorySnapshotV2 extends RepositoryReader {
     evidencePool: PreRankingEvidencePoolV2,
     eligibleDiscoveryPool: PreFinalEligibleDiscoveryPoolV2,
     gitState: RepositoryGitStateV2,
+    snapshotRef?: string,
   ): Promise<TrustedFinalSnapshotPoolsV2>;
   dispose(): void;
 }
@@ -75,6 +76,7 @@ class RequestRepositorySnapshotImplV2 implements RequestRepositorySnapshotV2 {
     evidencePool: PreRankingEvidencePoolV2,
     eligibleDiscoveryPool: PreFinalEligibleDiscoveryPoolV2,
     gitState: RepositoryGitStateV2,
+    snapshotRef?: string,
   ): Promise<TrustedFinalSnapshotPoolsV2> {
     return runFinalSnapshotCheckV2({
       repositoryRoot: this.repositoryRoot,
@@ -82,6 +84,7 @@ class RequestRepositorySnapshotImplV2 implements RequestRepositorySnapshotV2 {
       evidencePool,
       eligiblePool: eligibleDiscoveryPool,
       gitState,
+      ...(snapshotRef === undefined ? {} : { snapshotRef }),
       signal,
     });
   }

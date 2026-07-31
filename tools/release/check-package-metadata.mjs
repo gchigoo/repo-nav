@@ -14,7 +14,12 @@ function fail(msg) {
   process.exit(1);
 }
 
-if (pkg.version !== '0.2.0-beta.1') fail('version must be 0.2.0-beta.1');
+if (
+  typeof pkg.version !== 'string' ||
+  !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/u.test(pkg.version)
+) {
+  fail('version must be a semver release or prerelease');
+}
 if (pkg.private !== false) fail('private must be false for public beta');
 if (pkg.engines?.node !== '^22.0.0 || ^24.0.0') fail('engines.node mismatch');
 if (pkg.packageManager !== 'npm@11.12.1') fail('packageManager mismatch');

@@ -1,0 +1,65 @@
+roadmap: repo-nav-ga
+created: 2026-07-31
+items:
+- slug: authoritative-expanded-selection
+  phase: beta.2
+  description: 将 DiscoveryHitSelectorV2 选中的 locator refs 转为 exact BackendHit[] 并作为 verifyAndMergeBackendHits 唯一权威输入；legacy selectAndFreeze 降为 coverage/telemetry
+  depends_on: []
+  status: done
+  notes: review P1 低 maxFiles 锚点被字典序截断；新增 golden/unit 回归
+- slug: legacy-completeness-fix
+  phase: beta.2
+  description: 在 slice 前保存 legacyWasComplete/legacyWasTruncated，修复 snapshot().legacy.complete 在截断后恒 true 的问题
+  depends_on:
+  - authoritative-expanded-selection
+  status: done
+  notes: 软依赖，可与 authoritative-expanded-selection 并行实施；beta.2 发版前需 done
+- slug: npm-root-export-v2-only
+  phase: beta.2
+  description: 根 package exports 只保留 v2 与稳定 client API；v1 迁至显式子路径或移出 exports，并补根导出 symbol snapshot test
+  depends_on: []
+  status: done
+  notes: 更新 migration-v1-to-v2；beta.2 exit 项
+- slug: docs-npm-first-readme
+  phase: beta.3
+  description: README 第一屏 npm i -g repo-nav@beta、CLI/MCP/宿主配置；Node ^22||^24；clone 降为开发路径
+  depends_on:
+  - npm-root-export-v2-only
+  status: done
+  notes: 对齐 getting-started 与 migration 中 Node 20 残留
+- slug: package-release-ci-gate
+  phase: beta.3
+  description: 新增 Linux package/release workflow（lint、format:check、pack smoke、closure、audit、SBOM）；升级 actions；可选 macOS ARM64 MCP smoke
+  depends_on:
+  - npm-root-export-v2-only
+  status: done
+  notes: 不替代既有六格 cross-platform-required
+- slug: snapshot-git-probe-hardening
+  phase: beta.3
+  description: 用 git diff --quiet/cached 与流式 untracked 探测替代 porcelain 1024 截断；coverage 增加无绝对路径 snapshotRef
+  depends_on: []
+  status: done
+  notes: dirty 状态用安全 fingerprint
+- slug: executor-module-split
+  phase: "1.0"
+  description: 将 canonical executor 行为等价拆为 search/select/verify/classify/project 稳定模块；隔离或删除 legacy selection bridge
+  depends_on:
+  - docs-npm-first-readme
+  - package-release-ci-gate
+  - snapshot-git-probe-hardening
+  status: done
+  notes: 禁止新增 proof layer；beta.3 稳定后启动
+- slug: real-repo-benchmark-gate
+  phase: "1.0"
+  description: 固定 10–20 个 TS/JS/SQL 真实仓库基准（anchor satisfaction、Recall@K、脱敏 FP/FN、latency、fallback、unsupported 降级）
+  depends_on:
+  - executor-module-split
+  status: done
+  notes: 未证明需求前不扩更多语言分类器
+- slug: ga-publish
+  phase: "1.0"
+  description: 版本升 1.0.0；评估 latest 与 beta 分 tag；GA checklist = 基准门槛 + 导出收口 + release gate
+  depends_on:
+  - real-repo-benchmark-gate
+  status: done
+  notes: 不以 acceptance pack 体积为完成标准；publish/latest 需 owner 授权

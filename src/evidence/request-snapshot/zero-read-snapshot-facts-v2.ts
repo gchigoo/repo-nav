@@ -6,6 +6,7 @@ import type { RepositoryGitStateV2 } from './repository-git-state-probe-v2.js';
  */
 export function createZeroReadSnapshotFactsV2(
   gitState: RepositoryGitStateV2 = 'unknown',
+  snapshotRef = '',
 ): SnapshotFactsV2 {
   return Object.freeze({
     coverage: Object.freeze({
@@ -13,6 +14,7 @@ export function createZeroReadSnapshotFactsV2(
       consistency: 'unknown' as const,
       filesChecked: 0,
       discardedEvidenceCount: 0,
+      ...(snapshotRef.length > 0 ? { snapshotRef } : {}),
     }),
     finalStableEvidence: Object.freeze([]),
   });

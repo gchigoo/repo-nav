@@ -185,7 +185,7 @@ flowchart LR
   connection、email/phone、malformed/oversized、C0/DEL/ANSI/bidi 与跨字段 token；
   literal placeholder 只有结合 metadata/resolvable 才具有 redaction 语义。
 - v2 state 只存在于单次 pure function 调用和 synthetic tests；没有 DI provider、
-  cache、数据库、Redis、文件持久化或日志。`package.json` 仍为 `private: true`。
+  cache、数据库、Redis、文件持久化或日志。`package.json` 在 public beta 授权后为 `private: false`。
 - `LocateRequestSchema` 负责 strict input、NFKC/UTF-8 budgets、per-term case 与 file/symbol anchors；engine 解析默认 limits，并把 term 与 anchor metadata 传给 backend/verification/classifier。
 - CodeGraph/ripgrep discovery facts 经当前文件核验后才成为 `DiscoveryRecord`；相同 key 的重复/permuted hits 先合并 provenance，classification、primary role、public ID 与排序均在 merge 后执行。
 - Direct mapping confirmed 仅覆盖同一 executable statement 的 `target = source`、可执行 object literal 的 `target: source`、受支持 SQL query call/`.sql` alias，以及 exact anchored implementation/definition；其余 exact term/symbol reference降为 candidate。
@@ -383,7 +383,7 @@ flowchart LR
 
 ## 8. 变更日志
 
-- 2026-07-31：F9 `public-beta-release` acceptance 回填 production v2 cutover（LOCATE_RESULT_PROJECTOR→V2LocateResultProjector）、`private:true` 保留、`0.2.0-beta.1` release candidate、F9-PACK-001 远程六格（push run 30506332626）、owner gates（license MIT/security/advisory dispositions/real-consumer ctxline）；不 npm publish/tag/merge main；REV-005/008 记为 residual。
+- 2026-07-31：F9 `public-beta-release` acceptance 回填 production v2 cutover（LOCATE_RESULT_PROJECTOR→V2LocateResultProjector）、`0.2.0-beta.1` release candidate、F9-PACK-001 远程六格（push run 30506332626）、owner gates（license MIT/security/advisory dispositions/real-consumer ctxline）；随后 owner 授权 public：`private:false`、merge main、tag、npm publish；REV-005/008 记为 residual。
 - 2026-07-28：F8 `language-capability-boundary` acceptance 回填 TS/JS/SQL+fallback adapters、F7 language port/three-port seal、pre-budget unsupportedLanguageHits、CapabilityCoverage mount、F6 四元组 capability、EvidenceModule 唯一 accepted complete-real shadow；production 仍 v1；empty-ranking seal / aggregation harness / 远程六格 F8 marker / F9 cutover 记为残留。
 - 2026-07-28：F7 `repository-scope-policy` acceptance 回填 path-only scope policy、F3 trusted adapter/pre-cap fold、two-base-port producer registrar/materializer、ScopeCoverageFacts 固定顺序 accessors 与 production scope mount（envelope 仍缺 capability）；production 仍 v1；REV-007..010 与远程六格 F7 marker 记为残留。
 - 2026-07-28：F6 `input-abort-contract-v2` acceptance 回填 raw request guard、abort/finalization latch、`RequestOutcomeAggregatorV2` direct seam、F8-only production mount 与 F2 core accessor importer=0；production 仍 v1；REV-003/013 与远程六格 F6 marker 记为残留。

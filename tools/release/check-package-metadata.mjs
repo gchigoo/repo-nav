@@ -15,7 +15,7 @@ function fail(msg) {
 }
 
 if (pkg.version !== '0.2.0-beta.1') fail('version must be 0.2.0-beta.1');
-if (pkg.private !== true) fail('private must remain true');
+if (pkg.private !== false) fail('private must be false for public beta');
 if (pkg.engines?.node !== '^22.0.0 || ^24.0.0') fail('engines.node mismatch');
 if (pkg.packageManager !== 'npm@11.12.1') fail('packageManager mismatch');
 if (pkg.license !== 'MIT') fail('license SPDX must be MIT');
@@ -55,5 +55,5 @@ if (probe.status !== 0 || probe.stdout.trim() !== pkg.version) {
 }
 
 process.stdout.write(
-  `${JSON.stringify({ ok: true, version: pkg.version, private: true }, null, 2)}\n`,
+  `${JSON.stringify({ ok: true, version: pkg.version, private: false }, null, 2)}\n`,
 );

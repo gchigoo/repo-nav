@@ -281,3 +281,14 @@ F9 design 要求 implementation 前同时具备 license-preflight 与 security-c
 ### Non-Automatic Actions
 
 批准后可写 machine-readable owner-preflight（license + securityChannel）并恢复 F9 implementing。仍不授权移除 `private:true`、`npm publish`、tag、GitHub Release、merge 到 `main`。
+
+## F9 Public Publish Authorization
+
+命名决策 `f9-public-publish` 当前为 `approved`。
+
+- 2026-07-31：owner 明确授权 public beta 发布动作：移除 `private:true`（设为 `false`）、merge 到 `main`、创建 git tag、`npm publish`（包名 `repo-nav@0.2.0-beta.1`）。
+- 范围：上述四项；不自动创建额外 GitHub Release notes 以外的 deploy；不授权后续 stable（非 beta）版本。
+
+### Non-Automatic Actions
+
+执行仍需真实 npm registry 认证与 CI/merge 门禁通过；本批准不替代 registry 登录本身。

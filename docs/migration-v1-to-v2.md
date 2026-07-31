@@ -42,4 +42,4 @@ v2 tool error:
 
 ## Install notes
 
-Installed package `engines.node` is exactly `^22.0.0 || ^24.0.0`. Node 20/23 are outside the declared engines range. `private:true` remains until a separate publish authorization.
+Installed package `engines.node` is exactly `^22.0.0 || ^24.0.0`. Node 20/23 are outside the declared engines range. Package `private:false` after owner publish authorization for the public beta.

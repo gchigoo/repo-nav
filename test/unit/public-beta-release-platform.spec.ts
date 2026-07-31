@@ -97,7 +97,7 @@ describe.runIf(
       const pkg = JSON.parse(
         readFileSync(resolve(root, 'package.json'), 'utf8'),
       ) as { private: boolean };
-      expect(pkg.private).toBe(true);
+      expect(pkg.private).toBe(false);
       const pkgText = readFileSync(resolve(root, 'package.json'));
       const wrapText = readFileSync(resolve(root, 'npm-shrinkwrap.json'));
       const candidateId = createHash('sha256')

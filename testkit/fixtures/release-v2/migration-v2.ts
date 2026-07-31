@@ -2,7 +2,7 @@
 export const MIGRATION_REQUIRED_PHRASES_V2 = Object.freeze([
   'schema `2.0` only',
   '^22.0.0 || ^24.0.0',
-  'private:true',
+  'private:false',
   'debug golden',
 ] as const);
 

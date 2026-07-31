@@ -10,8 +10,8 @@ import { readFileSync } from 'node:fs';
 const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const npmCli = join(root, 'node_modules/npm/bin/npm-cli.js');
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
-if (pkg.private !== true) {
-  process.stderr.write('private must be true\n');
+if (pkg.private !== false) {
+  process.stderr.write('private must be false for public beta\n');
   process.exit(1);
 }
 

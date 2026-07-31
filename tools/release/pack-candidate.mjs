@@ -26,8 +26,8 @@ function run(args, opts = {}) {
 }
 
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
-if (pkg.private !== true) {
-  process.stderr.write('private must be true\n');
+if (pkg.private !== false) {
+  process.stderr.write('private must be false for public beta\n');
   process.exit(1);
 }
 
@@ -119,7 +119,7 @@ process.stdout.write(
       packed,
       unpacked,
       version: pkg.version,
-      private: true,
+      private: false,
     },
     null,
     2,

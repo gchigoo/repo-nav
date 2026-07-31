@@ -14,7 +14,7 @@ function fail(msg) {
 }
 
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
-if (pkg.private !== true) fail('private must be true');
+if (pkg.private !== false) fail('private must be false for public beta');
 
 let result;
 try {

@@ -36,7 +36,7 @@ describe.runIf(
   it('uses package.json as sole version authority at 0.2.0-beta.1', () => {
     expect(pkg.version).toBe(EXPECTED_PACKAGE_VERSION_V2);
     expect(readPackageMetadata().version).toBe(EXPECTED_PACKAGE_VERSION_V2);
-    expect(pkg.private).toBe(true);
+    expect(pkg.private).toBe(false);
     const wrap = JSON.parse(
       readFileSync(resolve(root, 'npm-shrinkwrap.json'), 'utf8'),
     ) as { version: string; name: string };
@@ -59,7 +59,7 @@ describe.runIf(
 describe.runIf(
   isSelected({ group: 'public-beta-release', caseId: 'package-metadata' }),
 )('F9-METADATA-001 package-metadata', () => {
-  it('keeps MIT license SPDX, private true, and LICENSE holder exact', () => {
+  it('keeps MIT license SPDX, private false, and LICENSE holder exact', () => {
     expect(pkg.license).toBe(EXPECTED_LICENSE_SPDX_V2);
     expect(pkg.private).toBe(EXPECTED_PRIVATE_V2);
     const license = readFileSync(resolve(root, 'LICENSE'), 'utf8');

@@ -1,5 +1,5 @@
 /**
- * Emit candidate-bound private-true publish-false readiness verdict from local facts.
+ * Emit candidate-bound public-ready publish-false readiness verdict from local facts.
  */
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
@@ -15,7 +15,7 @@ function fail(msg) {
 }
 
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
-if (pkg.private !== true) fail('private must be true');
+if (pkg.private !== false) fail('private must be false for public beta');
 if (pkg.version !== '0.2.0-beta.1') fail('version must be 0.2.0-beta.1');
 if (!existsSync(join(root, 'npm-shrinkwrap.json'))) fail('shrinkwrap missing');
 if (existsSync(join(root, 'package-lock.json')))
@@ -27,7 +27,7 @@ const revision = computeReleaseDesignRevisionV1({ requireClean: false });
 const body = {
   schemaVersion: 1,
   version: pkg.version,
-  private: true,
+  private: false,
   publishPerformed: false,
   designRevisionSha256: revision.designRevisionSha256,
   engines: pkg.engines.node,

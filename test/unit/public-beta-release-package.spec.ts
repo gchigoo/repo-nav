@@ -24,7 +24,7 @@ describe.runIf(
       private: boolean;
       bin?: Record<string, string>;
     };
-    expect(pkg.private).toBe(true);
+    expect(pkg.private).toBe(false);
     expect([...(pkg.files ?? [])].sort()).toEqual(
       [...PACKAGE_FILES_ALLOWLIST_V2].sort(),
     );

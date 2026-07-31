@@ -16,7 +16,7 @@ const root = resolve(import.meta.dirname, '../..');
 describe.runIf(
   isSelected({ group: 'public-beta-release', caseId: 'release-readiness' }),
 )('F9-RELEASE-001 release-readiness', () => {
-  it('keeps private true, publish false, and forbids publish/push/release scripts', () => {
+  it('keeps private false, publish scripts absent, and forbids publish/push/release scripts', () => {
     const pkg = JSON.parse(
       readFileSync(resolve(root, 'package.json'), 'utf8'),
     ) as {

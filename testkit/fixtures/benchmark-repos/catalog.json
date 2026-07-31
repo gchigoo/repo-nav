@@ -1,0 +1,318 @@
+{
+  "schemaVersion": "1.0",
+  "repos": [
+    {
+      "id": "bench-01-ts-symbol",
+      "path": "bench-01-ts-symbol",
+      "languageFamily": "ts",
+      "request": {
+        "question": "Where is verifyAccessToken mapped?",
+        "terms": ["verifyAccessToken", "row.access_token_source"],
+        "termCase": "sensitive",
+        "anchors": [
+          {
+            "kind": "symbol",
+            "value": "verifyAccessToken"
+          }
+        ],
+        "layers": ["server"],
+        "limits": {
+          "timeoutMs": 30000,
+          "maxFiles": 20,
+          "maxConfirmed": 10,
+          "maxCandidates": 10
+        }
+      },
+      "expectations": {
+        "minConfirmed": 1,
+        "mustIncludeFile": "server/auth.ts",
+        "maxP95Ms": 15000,
+        "forbidPublicAbsolutePath": true
+      }
+    },
+    {
+      "id": "bench-02-file-anchor",
+      "path": "bench-02-file-anchor",
+      "languageFamily": "ts",
+      "request": {
+        "question": "Locate the checkout handler file",
+        "terms": ["checkoutTotal", "row.checkout_source_total"],
+        "termCase": "sensitive",
+        "anchors": [
+          {
+            "kind": "file",
+            "value": "server/handlers/checkout.ts"
+          }
+        ],
+        "layers": ["server"],
+        "limits": {
+          "timeoutMs": 30000,
+          "maxFiles": 20,
+          "maxConfirmed": 10,
+          "maxCandidates": 10
+        }
+      },
+      "expectations": {
+        "minConfirmed": 1,
+        "mustIncludeFile": "server/handlers/checkout.ts",
+        "maxP95Ms": 15000,
+        "forbidPublicAbsolutePath": true
+      }
+    },
+    {
+      "id": "bench-03-sql-table",
+      "path": "bench-03-sql-table",
+      "languageFamily": "sql",
+      "request": {
+        "question": "Where is bench_users table mapped?",
+        "terms": ["bench_users", "row.bench_users_source"],
+        "termCase": "insensitive",
+        "anchors": [
+          {
+            "kind": "table",
+            "value": "bench_users"
+          }
+        ],
+        "layers": ["db"],
+        "limits": {
+          "timeoutMs": 30000,
+          "maxFiles": 20,
+          "maxConfirmed": 10,
+          "maxCandidates": 10
+        }
+      },
+      "expectations": {
+        "minConfirmed": 1,
+        "mustIncludeFile": "db/migrations/001_users.sql",
+        "maxP95Ms": 15000,
+        "forbidPublicAbsolutePath": true
+      }
+    },
+    {
+      "id": "bench-04-nested-path-noise",
+      "path": "bench-04-nested-path-noise",
+      "languageFamily": "ts",
+      "request": {
+        "question": "Find ledger mapping under nested billing modules",
+        "terms": ["ledgerTarget", "row.ledger_source_root"],
+        "termCase": "sensitive",
+        "layers": ["server"],
+        "limits": {
+          "timeoutMs": 30000,
+          "maxFiles": 20,
+          "maxConfirmed": 10,
+          "maxCandidates": 10
+        }
+      },
+      "expectations": {
+        "minConfirmed": 1,
+        "mustIncludeFile": "server/modules/billing/v2/internal/ledger.ts",
+        "maxP95Ms": 15000,
+        "forbidPublicAbsolutePath": true
+      }
+    },
+    {
+      "id": "bench-05-unsupported-lang",
+      "path": "bench-05-unsupported-lang",
+      "languageFamily": "unsupported",
+      "request": {
+        "question": "Find the TypeScript mapping despite Rust stub",
+        "terms": ["primaryEntryPoint", "row.primary_entry_source"],
+        "termCase": "sensitive",
+        "layers": ["server"],
+        "limits": {
+          "timeoutMs": 30000,
+          "maxFiles": 20,
+          "maxConfirmed": 10,
+          "maxCandidates": 10
+        }
+      },
+      "expectations": {
+        "minConfirmed": 1,
+        "mustIncludeFile": "server/app.ts",
+        "maxP95Ms": 15000,
+        "forbidPublicAbsolutePath": true
+      }
+    },
+    {
+      "id": "bench-06-timeout-small",
+      "path": "bench-06-timeout-small",
+      "languageFamily": "js",
+      "request": {
+        "question": "Find pingHandler mapping in tiny repo",
+        "terms": ["pingHandler", "row.ping_handler_source"],
+        "termCase": "sensitive",
+        "layers": ["server"],
+        "limits": {
+          "timeoutMs": 5000,
+          "maxFiles": 5,
+          "maxConfirmed": 5,
+          "maxCandidates": 5
+        }
+      },
+      "expectations": {
+        "minConfirmed": 1,
+        "mustIncludeFile": "server/ping.js",
+        "maxP95Ms": 15000,
+        "forbidPublicAbsolutePath": true
+      }
+    },
+    {
+      "id": "bench-07-redaction-secret",
+      "path": "bench-07-redaction-secret",
+      "languageFamily": "mixed",
+      "request": {
+        "question": "Locate API mapping without leaking secret material",
+        "terms": ["benchApiTarget", "row.bench_api_source"],
+        "termCase": "sensitive",
+        "layers": ["server"],
+        "limits": {
+          "timeoutMs": 30000,
+          "maxFiles": 20,
+          "maxConfirmed": 10,
+          "maxCandidates": 10
+        }
+      },
+      "expectations": {
+        "minConfirmed": 1,
+        "mustIncludeFile": "server/config.ts",
+        "mustNotIncludeLiteral": "sk_live_bench_redact_9f3a2b1c0d",
+        "maxP95Ms": 15000,
+        "forbidPublicAbsolutePath": true
+      }
+    },
+    {
+      "id": "bench-08-ripgrep-only",
+      "path": "bench-08-ripgrep-only",
+      "languageFamily": "js",
+      "request": {
+        "question": "Ripgrep-only fetch mapping",
+        "terms": ["fetchBenchmarkPayload", "row.fetch_benchmark_source"],
+        "termCase": "sensitive",
+        "layers": ["server"],
+        "limits": {
+          "timeoutMs": 30000,
+          "maxFiles": 20,
+          "maxConfirmed": 10,
+          "maxCandidates": 10
+        }
+      },
+      "expectations": {
+        "minConfirmed": 1,
+        "mustIncludeFile": "server/fetch.js",
+        "maxP95Ms": 15000,
+        "forbidPublicAbsolutePath": true
+      }
+    },
+    {
+      "id": "bench-09-js-symbol",
+      "path": "bench-09-js-symbol",
+      "languageFamily": "js",
+      "request": {
+        "question": "Find renderBenchmarkChart mapping in client widget",
+        "terms": ["renderBenchmarkChart", "row.render_chart_source"],
+        "termCase": "sensitive",
+        "anchors": [
+          {
+            "kind": "symbol",
+            "value": "renderBenchmarkChart"
+          }
+        ],
+        "layers": ["client"],
+        "limits": {
+          "timeoutMs": 30000,
+          "maxFiles": 20,
+          "maxConfirmed": 10,
+          "maxCandidates": 10
+        }
+      },
+      "expectations": {
+        "minConfirmed": 1,
+        "mustIncludeFile": "client/widget.js",
+        "maxP95Ms": 15000,
+        "forbidPublicAbsolutePath": true
+      }
+    },
+    {
+      "id": "bench-10-mixed-layers",
+      "path": "bench-10-mixed-layers",
+      "languageFamily": "mixed",
+      "request": {
+        "question": "Find bench_record mapping across server and db layers",
+        "terms": ["bench_record", "row.bench_record_source"],
+        "termCase": "insensitive",
+        "layers": ["server", "db"],
+        "limits": {
+          "timeoutMs": 30000,
+          "maxFiles": 20,
+          "maxConfirmed": 10,
+          "maxCandidates": 10
+        }
+      },
+      "expectations": {
+        "minConfirmed": 1,
+        "mustIncludeFile": "db/schema.sql",
+        "maxP95Ms": 15000,
+        "forbidPublicAbsolutePath": true
+      }
+    },
+    {
+      "id": "bench-11-term-anchor",
+      "path": "bench-11-term-anchor",
+      "languageFamily": "ts",
+      "request": {
+        "question": "Confirm unique benchmark term anchor",
+        "terms": ["BENCH_UNIQUE_TERM_XYZ", "row.bench_unique_term_source"],
+        "termCase": "sensitive",
+        "anchors": [
+          {
+            "kind": "term",
+            "value": "BENCH_UNIQUE_TERM_XYZ"
+          }
+        ],
+        "layers": ["server"],
+        "limits": {
+          "timeoutMs": 30000,
+          "maxFiles": 20,
+          "maxConfirmed": 10,
+          "maxCandidates": 10
+        }
+      },
+      "expectations": {
+        "minConfirmed": 1,
+        "mustIncludeFile": "server/constants.ts",
+        "maxP95Ms": 15000,
+        "forbidPublicAbsolutePath": true
+      }
+    },
+    {
+      "id": "bench-12-route-anchor",
+      "path": "bench-12-route-anchor",
+      "languageFamily": "js",
+      "request": {
+        "question": "Find bench status route mapping",
+        "terms": ["benchRouteTarget", "row.bench_route_source", "/api/bench/status"],
+        "termCase": "sensitive",
+        "anchors": [
+          {
+            "kind": "route",
+            "value": "/api/bench/status"
+          }
+        ],
+        "layers": ["server"],
+        "limits": {
+          "timeoutMs": 30000,
+          "maxFiles": 20,
+          "maxConfirmed": 10,
+          "maxCandidates": 10
+        }
+      },
+      "expectations": {
+        "minConfirmed": 1,
+        "mustIncludeFile": "server/routes.js",
+        "maxP95Ms": 15000,
+        "forbidPublicAbsolutePath": true
+      }
+    }
+  ]
+}

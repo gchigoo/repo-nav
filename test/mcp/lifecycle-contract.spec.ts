@@ -438,7 +438,8 @@ describe.runIf(
         'real-close-and-tree-cleanup',
       );
     },
-    10_000,
+    // Allow slow darwin Nest boot; shutdown budget itself starts after probe arm.
+    30_000,
   );
 
   it(
@@ -451,7 +452,7 @@ describe.runIf(
       ).rejects.toThrow(/contextClosed/iu);
       recordPlatformAssertionMarker('F4-MCP-002', 'missing-close-negative');
     },
-    10_000,
+    30_000,
   );
 
   it(
@@ -464,7 +465,7 @@ describe.runIf(
       ).rejects.toThrow(/childrenCleaned/iu);
       recordPlatformAssertionMarker('F4-MCP-002', 'live-descendant-negative');
     },
-    10_000,
+    30_000,
   );
 
   it(
@@ -504,6 +505,6 @@ describe.runIf(
       expectProbeAuditCleaned(audit);
       recordPlatformAssertionMarker('F4-MCP-002', 'nonzero-cleanup');
     },
-    10_000,
+    30_000,
   );
 });

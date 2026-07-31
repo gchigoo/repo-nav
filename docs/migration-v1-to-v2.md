@@ -14,9 +14,15 @@ Production locate output is schema `2.0` only. There is no dual production schem
 | IDs / ordinals       | v1 discovery keys                                  | v2 registration ordinals                              |
 | file anchors         | Windows backslash accepted in some paths           | POSIX relative only; backslash rejected               |
 | unsupported language | mixed into coverage                                | capability owner fragment                             |
-| Node engines         | `>=20` historically                                | `^22.0.0 \|\| ^24.0.0`                                |
-| package exports      | deep/private imports possible                      | root + `package.json` only                            |
+| Node engines         | pre-v2 range (outside current support)             | `^22.0.0 \|\| ^24.0.0`                                |
+| package exports      | deep/private imports possible                      | root v2-only + `repo-nav/legacy-v1` + `package.json`  |
 | CLI Golden           | `repo-nav debug golden`                            | removed; use `npm run test:golden` in source checkout |
+
+## Package exports
+
+- `repo-nav` (root): v2 locate contracts, request parsers, and stable client/runtime APIs only.
+- `repo-nav/legacy-v1`: historical v1 contracts and helpers for migration or compatibility tests.
+- Deep imports outside these export surfaces are unsupported.
 
 ## Machine examples
 
@@ -42,4 +48,4 @@ v2 tool error:
 
 ## Install notes
 
-Installed package `engines.node` is exactly `^22.0.0 || ^24.0.0`. Node 20/23 are outside the declared engines range. Package `private:false` after owner publish authorization for the public beta.
+Installed package `engines.node` is exactly `^22.0.0 || ^24.0.0`. Node 22 and 24 are supported; other majors are outside the declared engines range. Install with `npm i -g repo-nav@beta`.

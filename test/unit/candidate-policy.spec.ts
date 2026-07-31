@@ -933,6 +933,55 @@ describe.runIf(selected('candidate-permutation', 'candidate-permutation'))(
         },
       });
     });
+
+    it('keeps symbol-anchor hit under maxFiles=1 instead of lexicographic noise', async () => {
+      const hits = [
+        {
+          file: 'server/alpha.fixture',
+          lines: [1, 1] as const,
+          symbol: 'alphaNoise',
+          matchedText: 'export const alpha = { hcpId: row.hcp_id };',
+          source: 'ripgrep' as const,
+          reasonCodes: ['LITERAL_TERM_HIT'] as const,
+        },
+        {
+          file: 'server/target-anchor.fixture',
+          lines: [1, 1] as const,
+          symbol: 'zetaAnchor',
+          matchedText: 'export function zetaAnchor() { return row.hcp_id; }',
+          source: 'ripgrep' as const,
+          reasonCodes: ['LITERAL_TERM_HIT', 'SYMBOL_SEARCH_HIT'] as const,
+        },
+      ] satisfies readonly BackendHit[];
+      const result = await createCanonicalLocateEngineHarnessV2(
+        [new OrderedFixtureBackend(hits)],
+        new NodeRepositoryReader(),
+      ).service.locate(
+        {
+          repoPath: candidateFixtureRoot,
+          question: 'authoritative expanded selection',
+          terms: ['zetaAnchor', 'hcp_id'],
+          termCase: 'sensitive',
+          layers: ['server'],
+          anchors: [{ kind: 'symbol', value: 'zetaAnchor' }],
+          limits: { maxFiles: 1 },
+        },
+        { signal: new AbortController().signal },
+      );
+      expect(result).toMatchObject({
+        ok: true,
+        evidence: {
+          confirmed: [
+            {
+              location: {
+                file: 'server/target-anchor.fixture',
+                symbol: 'zetaAnchor',
+              },
+            },
+          ],
+        },
+      });
+    });
   },
 );
 

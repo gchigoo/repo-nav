@@ -116,14 +116,21 @@ describe.runIf(scopeSelected)('F3-SCOPE-FOLD-001 scope-pre-cap-fold', () => {
     );
     expect(facts.complete).toBe(true);
 
-    // incomplete raw → empty safe pre-cap
+    // incomplete + 有输入：保留候选供 authoritative selection；空 incomplete 仍空池
     const incomplete = projectExpandedSafePreCapPoolV2(
       includedInputs,
       false,
       execution,
     );
-    expect(incomplete.candidates).toEqual([]);
+    expect(incomplete.candidates).toHaveLength(includedInputs.length);
     expect(incomplete.complete).toBe(false);
+    const emptyIncomplete = projectExpandedSafePreCapPoolV2(
+      [],
+      false,
+      execution,
+    );
+    expect(emptyIncomplete.candidates).toEqual([]);
+    expect(emptyIncomplete.complete).toBe(false);
   });
 
   it('applies fixed 800 cap atomically on safe groups', () => {

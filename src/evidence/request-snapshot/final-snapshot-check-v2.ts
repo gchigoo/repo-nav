@@ -95,6 +95,7 @@ export async function runFinalSnapshotCheckV2(input: {
   readonly evidencePool: PreRankingEvidencePoolV2;
   readonly eligiblePool: PreFinalEligibleDiscoveryPoolV2;
   readonly gitState: RepositoryGitStateV2;
+  readonly snapshotRef?: string;
   readonly signal: AbortSignal;
 }): Promise<TrustedFinalSnapshotPoolsV2> {
   const changed = new Set<string>();
@@ -221,6 +222,9 @@ export async function runFinalSnapshotCheckV2(input: {
       consistency,
       filesChecked,
       discardedEvidenceCount,
+      ...(input.snapshotRef !== undefined && input.snapshotRef.length > 0
+        ? { snapshotRef: input.snapshotRef }
+        : {}),
     }),
     finalStableEvidence,
   });

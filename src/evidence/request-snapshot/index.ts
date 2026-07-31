@@ -135,7 +135,9 @@ export {
 export {
   mapGitProcessResultToStateV2,
   probeRepositoryGitStateV2,
+  probeRepositoryGitStateDetailedV2,
   type RepositoryGitStateV2,
+  type RepositoryGitProbeResultV2,
 } from './repository-git-state-probe-v2.js';
 export {
   registerDerivedEvidenceProposalRefV2,
@@ -205,6 +207,7 @@ export {
   createTemporaryAllowAllScopeDecisionsV2,
   projectAndScopeFoldExpandedHitsV2,
 } from './expanded-lane-bridge-v2.js';
+export { resolveExactBackendHitsForDiscoverySelectionV2 } from './authoritative-discovery-hit-resolution-v2.js';
 export {
   registerDualLaneExecutionReceiptV2,
   readDualLaneExecutionReceiptV2,

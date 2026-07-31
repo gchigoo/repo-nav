@@ -33,10 +33,10 @@ import {
   type SnapshotFactsV2,
   type UnsafeToolErrorFactsV2,
 } from '../../contracts/v2/locate-fact-envelope-v2.js';
-import { DiscoveryHitSelectorV2 } from '../ranking/discovery-hit-selector-v2.js';
 import { EvidenceRankerV2 } from '../ranking/evidence-ranker-v2.js';
 import { normalizeAnchorIntentsV2 } from '../ranking/anchor-intent-normalizer-v2.js';
 import { requireEvidenceRankingOutcomeV2 } from '../ranking/evidence-ranking-outcome-v2.js';
+import { runAuthoritativeExpandedSelectionPhaseV2 } from './authoritative-expanded-selection-phase-v2.js';
 import type { LocateAnchor, TermCaseMode } from '../../contracts/request.js';
 import {
   REPOSITORY_READER,
@@ -74,9 +74,8 @@ import {
   evaluateExpandedCandidateProposalsV2,
   LegacyCandidateReservationV1,
   legacyMaxHitsFromPublicLimitsV2,
-  probeRepositoryGitStateV2,
+  probeRepositoryGitStateDetailedV2,
   buildStableEligibleScopeRecordsFromObservationV2,
-  projectAndScopeFoldExpandedHitsV2,
   registerDualLaneExecutionReceiptV2,
   searchBackendMultiViewV2,
   selectAndFreezeLegacyBackendHitsV1,
@@ -469,11 +468,12 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
 
     await beforeFinalSnapshotCheckForTestV2?.();
 
-    const gitState = await probeRepositoryGitStateV2(
+    const gitProbe = await probeRepositoryGitStateDetailedV2(
       legacy.evidence.repositoryRoot,
       new NodeSafeProcessRunner(),
       options.signal,
     );
+    const gitState = gitProbe.gitState;
 
     const confirmed = options.confirmed ?? legacy.evidence.confirmed;
     const candidates = options.candidates ?? legacy.evidence.candidates;
@@ -499,6 +499,7 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
       pools.evidence,
       pools.eligible,
       gitState,
+      gitProbe.snapshotRef,
     );
 
     const finalizeSync = (abortSource: LocateAbortSource) => {
@@ -840,11 +841,20 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
           codegraphResult.canSkipFallbackIfVerified === true &&
           codegraphResult.hits.length > 0
         ) {
-          const primarySelection = selectAndFreezeLegacyBackendHitsV1(
+          // legacy 仅 telemetry；skip-fallback 预检也走 authoritative expanded selection
+          void selectAndFreezeLegacyBackendHitsV1(
             [codegraphResult],
             limits.maxFiles,
             executionToken,
-          ).result;
+          );
+          const primarySelection = runAuthoritativeExpandedSelectionPhaseV2({
+            expandedResults: expandedBackendResults,
+            anchors: request.anchors ?? [],
+            termCase: mode,
+            maxFiles: limits.maxFiles,
+            layers: request.layers,
+            execution: executionToken,
+          });
           const primaryMerged = await verifyAndMergeBackendHits({
             repositoryRoot,
             hits: primarySelection.hits,
@@ -1000,67 +1010,41 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
       const backendResults = [codegraphResult, ripgrepResult].filter(
         (result): result is BackendSearchResult => result !== undefined,
       );
-      const selected = selectAndFreezeLegacyBackendHitsV1(
+      // legacy：telemetry；仅在 expanded selection 为空时作 incomplete/unsafe 兼容桥
+      const legacyFrozen = selectAndFreezeLegacyBackendHitsV1(
         backendResults,
         limits.maxFiles,
         executionToken,
-      ).result;
-      const filesTruncated = selected.filesTruncated;
-
-      // Expanded lane：raw → safe pre-cap → trusted F7 scope observation → fold（不影响 legacy）
-      // F2：read 前 selector 需要 matchedAnchorKeys；按 intent 与 safe file/symbol 对齐
-      const rankingIntents = normalizeAnchorIntentsV2(
-        request.anchors ?? [],
-        mode,
       );
-      const expandedFold = projectAndScopeFoldExpandedHitsV2({
+
+      const authoritativeSelection = runAuthoritativeExpandedSelectionPhaseV2({
         expandedResults: expandedBackendResults,
+        anchors: request.anchors ?? [],
+        termCase: mode,
+        maxFiles: limits.maxFiles,
+        layers: request.layers,
         execution: executionToken,
-        layerHint: request.layers?.[0] ?? 'server',
-        ...(request.layers === undefined
-          ? {}
-          : { requestedLayers: request.layers }),
-        resolveMatchedAnchorKeys: (safeFile, safeSymbol) => {
-          const keys: string[] = [];
-          const fileCmp = safeFile.toLocaleLowerCase('und');
-          const symbolCmp = safeSymbol.toLocaleLowerCase('und');
-          for (const intent of rankingIntents) {
-            const value = intent.caseSensitive
-              ? intent.value
-              : intent.comparisonValue;
-            if (intent.kind === 'file') {
-              const target = intent.caseSensitive ? safeFile : fileCmp;
-              if (target === value) {
-                keys.push(intent.canonicalKey);
-              }
-            } else if (
-              intent.kind === 'symbol' &&
-              safeSymbol.length > 0 &&
-              (intent.caseSensitive ? safeSymbol : symbolCmp) === value
-            ) {
-              keys.push(intent.canonicalKey);
-            }
-          }
-          return Object.freeze(keys);
-        },
       });
       const scopeObservation: TrustedScopeEligibilityObservationV2 =
-        expandedFold.observation;
-      // F2 discovery reservation：任何 reader verify 之前 bind ticket/proof
-      const discoverySelectionDraft = new DiscoveryHitSelectorV2().select(
-        expandedFold.foldedView,
-        rankingIntents,
-        limits.maxFiles,
-        executionToken,
+        authoritativeSelection.observation;
+      const discoverySelection = authoritativeSelection.boundSelection;
+      // complete expanded → authoritative；任一 available incomplete → legacy 兼容桥
+      const expandedIncomplete = expandedBackendResults.some(
+        (result) =>
+          result.health.state === 'available' && result.complete === false,
       );
-      const discoverySelection = new DiscoveryHitSelectorV2().bind(
-        discoverySelectionDraft,
-        executionToken,
-      ).bound;
+      const useAuthoritative =
+        !expandedIncomplete && authoritativeSelection.hits.length > 0;
+      const verifyHits = useAuthoritative
+        ? authoritativeSelection.hits
+        : legacyFrozen.result.hits;
+      const filesTruncated = useAuthoritative
+        ? authoritativeSelection.filesTruncated
+        : legacyFrozen.result.filesTruncated;
 
       const merged = await verifyAndMergeBackendHits({
         repositoryRoot,
-        hits: selected.hits,
+        hits: verifyHits,
         terms: termsForVerification,
         reader: requestReader,
         limits: verificationLimits,
@@ -1086,7 +1070,7 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
         },
         execution: executionToken,
         observation: scopeObservation,
-        foldedView: expandedFold.foldedView,
+        foldedView: authoritativeSelection.foldedView,
         boundSelection: discoverySelection,
         initialExclusions,
       });
@@ -1179,9 +1163,9 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
         sharedSearchMaxHits: lastSharedSearchMaxHits,
         expandedMaxHits: multiView.expandedMaxHits,
         legacyMaxHits: multiView.legacyMaxHits,
-        scopeFoldInvoked: expandedFold.scopeFoldInvoked,
-        scopeFoldCandidateCount: expandedFold.facts.candidates.length,
-        scopeFoldFilesTruncated: expandedFold.facts.filesTruncated,
+        scopeFoldInvoked: authoritativeSelection.scopeFoldInvoked,
+        scopeFoldCandidateCount: authoritativeSelection.scopeFoldCandidateCount,
+        scopeFoldFilesTruncated: authoritativeSelection.scopeFoldFilesTruncated,
         usedLegacyCandidateReservation: true,
         expandedProposalCount: expandedProposals.length,
         expandedEvaluatedDraftCount: expandedCandidateDrafts.length,
@@ -1324,7 +1308,7 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
           rawAnchors: request.anchors ?? [],
           termCase: mode,
           discoverySelection,
-          foldedView: expandedFold.foldedView,
+          foldedView: authoritativeSelection.foldedView,
           scopeObservation,
           backendExecutionContext,
           fallbackChecked,

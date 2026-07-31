@@ -575,6 +575,8 @@ const RepositorySnapshotCoverageV2Schema = z
     consistency: z.enum(['stable', 'changed', 'unknown']),
     filesChecked: z.int().nonnegative(),
     discardedEvidenceCount: z.int().nonnegative(),
+    /** 无绝对路径：`HEAD:<sha>` 或 `HEAD:<sha>+dirty:<fp>`；未知可省略 */
+    snapshotRef: z.string().max(128).optional(),
   })
   .readonly()
   .superRefine((snapshot, context) => {
@@ -595,6 +597,16 @@ const RepositorySnapshotCoverageV2Schema = z
       context.addIssue({
         code: 'custom',
         message: 'Unknown snapshots cannot report checked or discarded files.',
+      });
+    }
+    if (
+      snapshot.snapshotRef !== undefined &&
+      (/[\\/]/u.test(snapshot.snapshotRef) ||
+        /^[A-Za-z]:/u.test(snapshot.snapshotRef))
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'snapshotRef must not contain absolute or path separators.',
       });
     }
   });

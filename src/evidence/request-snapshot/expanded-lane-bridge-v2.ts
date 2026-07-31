@@ -75,15 +75,20 @@ export function projectAndScopeFoldExpandedHitsV2(input: {
 } {
   const rawHits: BackendHit[] = [];
   let complete = true;
+  let sawAvailable = false;
   for (const result of input.expandedResults) {
+    // unavailable/missing backend 不参与 expanded pool，也不毒化 fallback 完整集
     if (result.health.state !== 'available') {
-      complete = false;
       continue;
     }
+    sawAvailable = true;
     complete = complete && result.complete;
     for (const hit of result.hits) {
       rawHits.push(hit);
     }
+  }
+  if (!sawAvailable) {
+    complete = false;
   }
 
   const safeInputs: ExpandedSafeCandidateInputV2[] = [];

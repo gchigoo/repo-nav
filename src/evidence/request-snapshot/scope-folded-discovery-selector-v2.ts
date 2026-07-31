@@ -93,7 +93,8 @@ function foldWithDecisionsV2(
   decisions: readonly ScopeFoldCandidateDecisionV2[],
   execution: LocateExecutionTokenV2,
 ): TrustedScopeFoldedSelectorViewV2 {
-  if (!preCapPool.complete) {
+  // incomplete 且无候选：空 fold；有候选时仍 fold 供 authoritative selection
+  if (!preCapPool.complete && preCapPool.candidates.length === 0) {
     const proof = createOpaqueTokenV2<ScopeFoldedSafePoolProofV2>();
     const view = createOpaqueTokenV2<TrustedScopeFoldedSelectorViewV2>();
     const facts: ScopeFoldedSelectorFactsViewV2 = Object.freeze({

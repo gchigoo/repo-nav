@@ -96,6 +96,7 @@ Schema version：`2.0`。下方 machine-readable 区块由当前 Zod/JSON Schema
       "scope",
       "semanticClassification",
       "snapshot",
+      "snapshotRef",
       "status",
       "strategyComplete",
       "suggestedAction",

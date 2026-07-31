@@ -73,6 +73,9 @@ jobs:
 
       - name: Install host tools
         shell: bash
+        env:
+          # @vscode/ripgrep postinstall hits GitHub API; unauthenticated runners get 403.
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           TOOLS="${RUNNER_TEMP}/repo-nav-host-tools"

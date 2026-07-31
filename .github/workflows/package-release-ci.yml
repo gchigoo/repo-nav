@@ -1,0 +1,105 @@
+# F9 package/release gate — Linux Node 22 only (no six-cell matrix).
+# Action pins aligned with cross-platform-ci.yml (reviewed 2026-07-24):
+# - actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 (v7.0.0)
+# - actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 (v7.0.0)
+name: package-release-ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - repo-nav-public-beta
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: package-release-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package-release:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install
+        run: npm ci
+
+      - name: Install host tools
+        shell: bash
+        env:
+          # @vscode/ripgrep postinstall hits GitHub API; unauthenticated runners get 403.
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TOOLS="${RUNNER_TEMP}/repo-nav-host-tools"
+          mkdir -p "$TOOLS"
+          npm install --prefix "$TOOLS" --no-save --no-package-lock --no-fund --no-audit \
+            @vscode/ripgrep@1.15.9
+          RG_BIN="$TOOLS/node_modules/@vscode/ripgrep/bin"
+          echo "$RG_BIN" >> "$GITHUB_PATH"
+          "${RG_BIN}/rg" --version
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Build
+        run: npm run build
+
+      - name: Package smoke
+        run: npm run package:smoke
+
+      - name: Package closure check
+        run: npm run package:closure:check
+
+      - name: Security audit
+        run: npm run security:audit
+
+      - name: Security SBOM check
+        run: npm run security:sbom:check
+
+      - name: Real-repo benchmark gate
+        run: npm run benchmark:real-repos
+
+  macos-arm-smoke:
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install and build
+        run: |
+          npm ci
+          npm run build
+
+      - name: CLI help smoke
+        run: node dist/cli/main.js --help
+
+      - name: MCP entry smoke
+        run: test -f dist/main.js && node -e "import('node:fs').then(fs=>{if(!fs.readFileSync('dist/main.js','utf8').includes('bootstrap'))process.exit(1)})"

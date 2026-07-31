@@ -204,14 +204,15 @@ export interface ExpandedSafeCandidateInputV2 {
 }
 
 /**
- * 将 complete-safe expanded hits 投影为 pre-cap public-safe pool。
+ * 将 expanded hits 投影为 pre-cap public-safe pool。
+ * incomplete 仍保留候选供 authoritative selection；空 incomplete 保持空池。
  */
 export function projectExpandedSafePreCapPoolV2(
   inputs: readonly ExpandedSafeCandidateInputV2[],
   complete: boolean,
   execution: LocateExecutionTokenV2,
 ): PreCapPublicSafeDiscoveryPoolV2 {
-  if (!complete) {
+  if (!complete && inputs.length === 0) {
     return Object.freeze({
       candidates: Object.freeze([]),
       complete: false,
@@ -260,6 +261,6 @@ export function projectExpandedSafePreCapPoolV2(
   }
   return Object.freeze({
     candidates: Object.freeze(candidates),
-    complete: true,
+    complete,
   });
 }

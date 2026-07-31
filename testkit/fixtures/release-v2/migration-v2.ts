@@ -2,7 +2,8 @@
 export const MIGRATION_REQUIRED_PHRASES_V2 = Object.freeze([
   'schema `2.0` only',
   '^22.0.0 || ^24.0.0',
-  'private:false',
+  'repo-nav/legacy-v1',
+  'root v2-only',
   'debug golden',
 ] as const);
 

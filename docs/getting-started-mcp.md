@@ -1,15 +1,24 @@
 # RepoNav MCP 快速开始
 
-## 安装与构建
+## 安装
 
-要求 Node.js `^22.0.0 || ^24.0.0`。在仓库根目录执行：
+要求 Node.js `^22.0.0 || ^24.0.0`（不支持 Node 20/23）。
 
 ```powershell
-npm ci
-npm run build
+npm i -g repo-nav@beta
 ```
 
-把下面的 stdio 配置加入支持 MCP 的宿主；`{{REPO_ROOT}}` 替换为本仓库绝对路径。
+## MCP 宿主配置
+
+全局安装后，把下面的 stdio 配置加入支持 MCP 的宿主：
+
+```json
+{
+  "command": "repo-nav-mcp"
+}
+```
+
+源码仓调试时，`{{REPO_ROOT}}` 替换为本仓库绝对路径：
 
 ```json docs-smoke:mcp-config
 {
@@ -20,6 +29,10 @@ npm run build
 ```
 
 服务只发布只读工具 `repo_nav_locate`。宿主连接后先执行 `tools/list`，然后可发送以下调用。
+
+## 程序化 API
+
+根包导出（`repo-nav`）仅含 v2 契约与稳定客户端 API。v1 契约请从 `repo-nav/legacy-v1` 导入。
 
 ### 找到证据
 

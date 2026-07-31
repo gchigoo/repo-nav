@@ -357,6 +357,8 @@ async function runMcpLifecycleProcess(
     let stdoutRemainder = '';
     let shutdownTriggered = false;
     let completed = false;
+    // Probe cases measure shutdown budget from stdin close, not Nest boot.
+    let shutdownStartedAt = startedAt;
     let killTimeout: ReturnType<typeof setTimeout> | undefined;
     const armKillTimeout = (): void => {
       if (killTimeout !== undefined) {
@@ -390,6 +392,7 @@ async function runMcpLifecycleProcess(
               existsSync(lifecycleProcess.probe?.pidFile ?? '')
             ) {
               shutdownTriggered = true;
+              shutdownStartedAt = performance.now();
               armKillTimeout();
               child.stdin.end();
             }
@@ -520,7 +523,7 @@ async function runMcpLifecycleProcess(
         clearInterval(probePoll);
       }
       void (async () => {
-        const elapsedMs = performance.now() - startedAt;
+        const elapsedMs = performance.now() - shutdownStartedAt;
         const probeState =
           lifecycleProcess.probe === null
             ? 'no-probe'

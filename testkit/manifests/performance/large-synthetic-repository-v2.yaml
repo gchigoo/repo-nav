@@ -1,0 +1,7 @@
+schemaVersion: '1.0'
+fixture: large-synthetic-repository-v2
+owner: test/golden/large-synthetic-repository.spec.ts
+related:
+  - public-beta-release/large-release-boundaries
+  - testkit/fixtures/release-v2/large-release-v2.ts
+  - testkit/manifests/release-v2/release-boundary-mutations-v1.json

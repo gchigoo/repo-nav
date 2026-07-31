@@ -11,13 +11,13 @@ request:
     maxCandidates: 0
 expected:
   ok: true
-  status: ok
+  status: partial
   confirmed:
     - file: server/mapping.ts
       contains: 'targetField = row.source_field'
       role: value-mapping
-      reasonCodes: [DIRECT_ALIAS_MAPPING, EXACT_TERM_MATCH]
+      reasonCodes: [EXACT_TERM_MATCH, DIRECT_ALIAS_MAPPING]
   candidates: []
   forbiddenEvidenceIds: []
-  requiredCoverageCodes: []
+  requiredCoverageCodes: [MAX_CANDIDATES_REACHED]
   minimumExclusionCounts: {}

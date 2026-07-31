@@ -15,6 +15,10 @@ import {
   type RepositoryReader,
   type RepositoryReadLimits,
 } from '../contracts/index.js';
+import type {
+  VerifiedDiscoveryObservationCacheV2,
+  VerifiedDiscoveryObservationV2,
+} from './request-snapshot/verified-record-cache-v2.js';
 
 export interface DiscoveryRecord {
   readonly discoveryKey: string;
@@ -49,6 +53,8 @@ export interface VerifyAndMergeBackendHitsInput {
   readonly limits: RepositoryReadLimits;
   readonly maxMatchesPerHit: number;
   readonly signal: AbortSignal;
+  /** 请求级 observation cache：preverify 与最终 merge 共享同一实例。 */
+  readonly observationCache?: VerifiedDiscoveryObservationCacheV2 | undefined;
 }
 
 const REASON_PRIORITY = new Map<DiscoveryReasonCode, number>(
@@ -151,8 +157,10 @@ function reasonCompare(
   left: DiscoveryReasonCode,
   right: DiscoveryReasonCode,
 ): number {
-  return (REASON_PRIORITY.get(left) ?? Number.MAX_SAFE_INTEGER) -
-    (REASON_PRIORITY.get(right) ?? Number.MAX_SAFE_INTEGER);
+  return (
+    (REASON_PRIORITY.get(left) ?? Number.MAX_SAFE_INTEGER) -
+    (REASON_PRIORITY.get(right) ?? Number.MAX_SAFE_INTEGER)
+  );
 }
 
 function compareTerms(
@@ -201,6 +209,159 @@ function mergeRecord(
   });
 }
 
+function isFatalRepositoryAccessError(error: RepositoryAccessError): boolean {
+  return (
+    error.code === 'PATH_OUTSIDE_ROOT' ||
+    error.code === 'INVALID_RELATIVE_PATH' ||
+    error.code === 'INVALID_REPOSITORY'
+  );
+}
+
+/**
+ * 单 hit filesystem observation；不含 source/reason（merge 时按 hit 重放）。
+ */
+async function computeVerifiedDiscoveryObservationV2(
+  input: VerifyAndMergeBackendHitsInput,
+  hit: BackendHit,
+): Promise<VerifiedDiscoveryObservationV2> {
+  const expandWindow = async (
+    focusLocation: EvidenceLocation,
+  ): Promise<{
+    readonly location: EvidenceLocation;
+    readonly aborted: boolean;
+    readonly failure?: RepositoryAccessErrorCode;
+  }> => {
+    const [focusStart, focusEnd] = focusLocation.lines;
+    if (focusStart !== focusEnd) {
+      return { location: focusLocation, aborted: false };
+    }
+    const windowStart = Math.max(
+      1,
+      focusStart - input.limits.maxExcerptLines + 1,
+    );
+    if (windowStart === focusStart) {
+      return { location: focusLocation, aborted: false };
+    }
+    try {
+      const location = await input.reader.readRange(
+        input.repositoryRoot,
+        focusLocation.file,
+        [windowStart, focusEnd],
+        input.limits,
+        input.signal,
+      );
+      const focusLines = location.excerpt
+        .split('\n')
+        .slice(focusStart - windowStart);
+      return normalizeEvidenceExcerpt(focusLines.join('\n')) ===
+        normalizeEvidenceExcerpt(focusLocation.excerpt)
+        ? { location, aborted: false }
+        : { location: focusLocation, aborted: false };
+    } catch (error: unknown) {
+      if (!(error instanceof RepositoryAccessError)) {
+        throw error;
+      }
+      if (isFatalRepositoryAccessError(error)) {
+        throw error;
+      }
+      if (error.code === 'ABORTED') {
+        return { location: focusLocation, aborted: true };
+      }
+      return {
+        location: focusLocation,
+        aborted: false,
+        ...(error.code === 'MAX_EXCERPT_BYTES_REACHED'
+          ? { failure: error.code }
+          : {}),
+      };
+    }
+  };
+
+  try {
+    if (hit.lines !== undefined) {
+      const location = await input.reader.readRange(
+        input.repositoryRoot,
+        hit.file,
+        hit.lines,
+        input.limits,
+        input.signal,
+      );
+      if (!isCurrentLocation(location, hit, input.terms)) {
+        return Object.freeze({ kind: 'unverified' as const });
+      }
+      const expanded = await expandWindow(location);
+      return Object.freeze({
+        kind: 'verified' as const,
+        focusLocations: Object.freeze([location]),
+        expandedLocations: Object.freeze([expanded.location]),
+        operations: Object.freeze(['FILESYSTEM_READ_RANGE' as const]),
+        failures: Object.freeze(
+          expanded.failure === undefined ? [] : [expanded.failure],
+        ),
+        ...(expanded.aborted ? { aborted: true as const } : {}),
+      });
+    }
+
+    const locations = await input.reader.findMatches(
+      input.repositoryRoot,
+      hit.file,
+      input.terms,
+      hit.symbol,
+      input.maxMatchesPerHit,
+      input.limits,
+      input.signal,
+    );
+    if (locations.length === 0) {
+      return Object.freeze({ kind: 'unverified' as const });
+    }
+    const focusLocations: EvidenceLocation[] = [];
+    const expandedLocations: EvidenceLocation[] = [];
+    const failureCodes: RepositoryAccessErrorCode[] = [];
+    for (const location of locations) {
+      const expanded = await expandWindow(location);
+      focusLocations.push(location);
+      expandedLocations.push(expanded.location);
+      if (expanded.failure !== undefined) {
+        failureCodes.push(expanded.failure);
+      }
+      if (expanded.aborted) {
+        return Object.freeze({
+          kind: 'verified' as const,
+          focusLocations: Object.freeze(focusLocations),
+          expandedLocations: Object.freeze(expandedLocations),
+          operations: Object.freeze(['FILESYSTEM_FIND_MATCHES' as const]),
+          failures: Object.freeze(failureCodes),
+          aborted: true,
+        });
+      }
+    }
+    return Object.freeze({
+      kind: 'verified' as const,
+      focusLocations: Object.freeze(focusLocations),
+      expandedLocations: Object.freeze(expandedLocations),
+      operations: Object.freeze(['FILESYSTEM_FIND_MATCHES' as const]),
+      failures: Object.freeze(failureCodes),
+    });
+  } catch (error: unknown) {
+    if (!(error instanceof RepositoryAccessError)) {
+      throw error;
+    }
+    if (isFatalRepositoryAccessError(error)) {
+      throw error;
+    }
+    if (error.code === 'ABORTED') {
+      return Object.freeze({ kind: 'aborted' as const });
+    }
+    return Object.freeze({
+      kind: 'verified' as const,
+      focusLocations: Object.freeze([]),
+      expandedLocations: Object.freeze([]),
+      operations: Object.freeze([]),
+      failures: Object.freeze([error.code]),
+    });
+  }
+}
+
 export async function verifyAndMergeBackendHits(
   input: VerifyAndMergeBackendHitsInput,
 ): Promise<DiscoveryMergeResult> {
@@ -209,6 +370,16 @@ export async function verifyAndMergeBackendHits(
   let duplicateLocations = 0;
   let unverifiedLocations = 0;
   let aborted = false;
+
+  if (input.observationCache !== undefined) {
+    input.observationCache.assertSameBinding({
+      repositoryRoot: input.repositoryRoot,
+      terms: input.terms,
+      limits: input.limits,
+      maxMatches: input.maxMatchesPerHit,
+      signal: input.signal,
+    });
+  }
 
   const addRecord = (
     location: EvidenceLocation,
@@ -232,141 +403,59 @@ export async function verifyAndMergeBackendHits(
     records.set(incoming.discoveryKey, mergeRecord(current, incoming));
   };
 
-  const isFatal = (error: RepositoryAccessError): boolean =>
-    error.code === 'PATH_OUTSIDE_ROOT' ||
-    error.code === 'INVALID_RELATIVE_PATH' ||
-    error.code === 'INVALID_REPOSITORY';
-
-  const expandWindow = async (
-    focusLocation: EvidenceLocation,
-  ): Promise<{
-    readonly location: EvidenceLocation;
-    readonly aborted: boolean;
-    readonly failure?: RepositoryAccessErrorCode;
-  }> => {
-    const [focusStart, focusEnd] = focusLocation.lines;
-    if (focusStart !== focusEnd) {
-      return { location: focusLocation, aborted: false };
-    }
-    const windowStart = Math.max(1, focusStart - input.limits.maxExcerptLines + 1);
-    if (windowStart === focusStart) {
-      return { location: focusLocation, aborted: false };
-    }
-    try {
-      const location = await input.reader.readRange(
-        input.repositoryRoot,
-        focusLocation.file,
-        [windowStart, focusEnd],
-        input.limits,
-        input.signal,
-      );
-      const focusLines = location.excerpt.split('\n').slice(focusStart - windowStart);
-      return normalizeEvidenceExcerpt(focusLines.join('\n')) ===
-        normalizeEvidenceExcerpt(focusLocation.excerpt)
-        ? { location, aborted: false }
-        : { location: focusLocation, aborted: false };
-    } catch (error: unknown) {
-      if (!(error instanceof RepositoryAccessError)) {
-        throw error;
-      }
-      if (isFatal(error)) {
-        throw error;
-      }
-      if (error.code === 'ABORTED') {
-        return { location: focusLocation, aborted: true };
-      }
-      return {
-        location: focusLocation,
-        aborted: false,
-        ...(error.code === 'MAX_EXCERPT_BYTES_REACHED'
-          ? { failure: error.code }
-          : {}),
-      };
-    }
-  };
-
   for (const hit of input.hits) {
-    try {
-      if (hit.lines !== undefined) {
-        const location = await input.reader.readRange(
-          input.repositoryRoot,
-          hit.file,
-          hit.lines,
-          input.limits,
-          input.signal,
-        );
-        if (!isCurrentLocation(location, hit, input.terms)) {
-          unverifiedLocations += 1;
-          continue;
-        }
-        const expanded = await expandWindow(location);
-        addRecord(
-          expanded.location,
-          location,
-          hit,
-          ['FILESYSTEM_READ_RANGE'],
-        );
-        if (expanded.failure !== undefined) {
-          failures.push(
-            Object.freeze({ file: location.file, code: expanded.failure }),
+    const readKey = Object.freeze({
+      file: hit.file,
+      ...(hit.lines === undefined ? {} : { lines: hit.lines }),
+      ...(hit.matchedText === undefined
+        ? {}
+        : { matchedText: hit.matchedText }),
+      ...(hit.symbol === undefined ? {} : { symbol: hit.symbol }),
+    });
+    const observation =
+      input.observationCache === undefined
+        ? await computeVerifiedDiscoveryObservationV2(input, hit)
+        : await input.observationCache.getOrCompute(readKey, () =>
+            computeVerifiedDiscoveryObservationV2(input, hit),
           );
-        }
-        if (expanded.aborted) {
-          aborted = true;
-          break;
-        }
-        continue;
-      }
 
-      const locations = await input.reader.findMatches(
-        input.repositoryRoot,
-        hit.file,
-        input.terms,
-        hit.symbol,
-        input.maxMatchesPerHit,
-        input.limits,
-        input.signal,
-      );
-      if (locations.length === 0) {
-        unverifiedLocations += 1;
-        continue;
-      }
-      for (const location of locations) {
-        const expanded = await expandWindow(location);
-        addRecord(
-          expanded.location,
-          location,
-          hit,
-          expanded.location === location
-            ? ['FILESYSTEM_FIND_MATCHES']
-            : ['FILESYSTEM_READ_RANGE', 'FILESYSTEM_FIND_MATCHES'],
-        );
-        if (expanded.failure !== undefined) {
-          failures.push(
-            Object.freeze({ file: location.file, code: expanded.failure }),
-          );
-        }
-        if (expanded.aborted) {
-          aborted = true;
-          break;
-        }
-      }
-      if (aborted) {
-        break;
-      }
-    } catch (error: unknown) {
-      if (!(error instanceof RepositoryAccessError)) {
-        throw error;
-      }
-      if (isFatal(error)) {
-        throw error;
-      }
-      if (error.code === 'ABORTED') {
-        aborted = true;
-        break;
-      }
+    if (observation.kind === 'aborted') {
+      aborted = true;
+      break;
+    }
+    if (observation.kind === 'unverified') {
       unverifiedLocations += 1;
-      failures.push(Object.freeze({ file: hit.file, code: error.code }));
+      continue;
+    }
+
+    if (
+      observation.focusLocations.length === 0 &&
+      observation.failures.length > 0
+    ) {
+      unverifiedLocations += 1;
+      for (const code of observation.failures) {
+        failures.push(Object.freeze({ file: hit.file, code }));
+      }
+      continue;
+    }
+
+    for (let index = 0; index < observation.focusLocations.length; index += 1) {
+      const focusLocation = observation.focusLocations[index]!;
+      const expandedLocation = observation.expandedLocations[index]!;
+      const operations: readonly EvidenceOperationCode[] =
+        hit.lines !== undefined
+          ? ['FILESYSTEM_READ_RANGE']
+          : expandedLocation === focusLocation
+            ? ['FILESYSTEM_FIND_MATCHES']
+            : ['FILESYSTEM_READ_RANGE', 'FILESYSTEM_FIND_MATCHES'];
+      addRecord(expandedLocation, focusLocation, hit, operations);
+    }
+    for (const code of observation.failures) {
+      failures.push(Object.freeze({ file: hit.file, code }));
+    }
+    if (observation.aborted === true) {
+      aborted = true;
+      break;
     }
   }
 

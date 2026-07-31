@@ -7,9 +7,8 @@ import {
 import { dirname, resolve } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 
-import type { LocateResult } from '../../src/contracts/index.js';
+import type { LocateResultV2 } from '../../src/contracts/v2/locate-result-v2.js';
 
-const REPOSITORY_ROOT_PLACEHOLDER = '<REPOSITORY_ROOT>';
 const CASE_ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/u;
 
 export interface ProjectionComparison {
@@ -24,15 +23,30 @@ function expectedPath(caseId: string): string {
   return resolve(import.meta.dirname, '..', 'expected', `${caseId}.json`);
 }
 
-export function createStableGoldenProjection(result: LocateResult): unknown {
-  if (!result.ok) {
+/**
+ * Stabilize a v2 locate result for companion snapshot comparison.
+ * repositoryRef is already opaque (`local-repository`); normalize env-dependent
+ * snapshot.gitState so CI clean checkouts match local fixture probes.
+ */
+export function createStableGoldenProjection(result: LocateResultV2): unknown {
+  if (result.ok !== true) {
+    return result;
+  }
+  const snapshot = result.evidence.coverage.snapshot;
+  if (snapshot === undefined || snapshot.gitState === 'unknown') {
     return result;
   }
   return {
     ...result,
     evidence: {
       ...result.evidence,
-      repositoryRoot: REPOSITORY_ROOT_PLACEHOLDER,
+      coverage: {
+        ...result.evidence.coverage,
+        snapshot: {
+          ...snapshot,
+          gitState: 'unknown' as const,
+        },
+      },
     },
   };
 }
@@ -47,7 +61,7 @@ export function loadExpectedGoldenProjection(caseId: string): unknown {
 
 export function createMissingGoldenProjection(
   caseId: string,
-  result: LocateResult,
+  result: LocateResultV2,
 ): boolean {
   if (process.env['REPO_NAV_CREATE_MISSING_GOLDEN'] !== '1') {
     return false;
@@ -61,6 +75,26 @@ export function createMissingGoldenProjection(
     path,
     `${JSON.stringify(createStableGoldenProjection(result), null, 2)}\n`,
     { encoding: 'utf8', flag: 'wx' },
+  );
+  return true;
+}
+
+/**
+ * Overwrite an existing companion snapshot when REPO_NAV_OVERWRITE_GOLDEN=1.
+ */
+export function overwriteGoldenProjection(
+  caseId: string,
+  result: LocateResultV2,
+): boolean {
+  if (process.env['REPO_NAV_OVERWRITE_GOLDEN'] !== '1') {
+    return false;
+  }
+  const path = expectedPath(caseId);
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(
+    path,
+    `${JSON.stringify(createStableGoldenProjection(result), null, 2)}\n`,
+    'utf8',
   );
   return true;
 }
@@ -96,7 +130,7 @@ function firstDifference(expected: unknown, actual: unknown, path: string): stri
 
 export function compareGoldenProjection(
   expected: unknown,
-  actualResult: LocateResult,
+  actualResult: LocateResultV2,
 ): ProjectionComparison {
   const actual = createStableGoldenProjection(actualResult);
   return isDeepStrictEqual(expected, actual)

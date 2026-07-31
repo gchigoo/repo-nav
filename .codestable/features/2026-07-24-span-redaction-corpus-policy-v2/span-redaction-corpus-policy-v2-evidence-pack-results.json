@@ -1,0 +1,40 @@
+{
+  "gate_id": "evidence-pack",
+  "stage": "implementation.before_review",
+  "status": "passed",
+  "blocking": [],
+  "warnings": [],
+  "evidence": [
+    {
+      "out": ".codestable\\features\\2026-07-24-span-redaction-corpus-policy-v2\\span-redaction-corpus-policy-v2-evidence-pack.md",
+      "providers": {
+        "archguard": {
+          "status": "unavailable",
+          "reason": "archguard binary not found on PATH",
+          "warnings": []
+        },
+        "meta_cc": {
+          "status": "unavailable",
+          "reason": "meta-cc summary not found; realtime session collection is out of scope",
+          "warnings": []
+        }
+      }
+    }
+  ],
+  "providers": {},
+  "feature": "2026-07-24-span-redaction-corpus-policy-v2",
+  "inputs": {
+    "design": ".codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-design.md",
+    "checklist": ".codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-checklist.yaml",
+    "out": ".codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-evidence-pack.md",
+    "dod_results": ".codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-dod-results.json",
+    "gate_results": ".codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-gate-results.json"
+  },
+  "input_digests": {
+    "design": "f58f8593a356b48e8f68f206eba9a5cf3ff36e96c36e7dbada7cc634afa0e9ca",
+    "checklist": "2409173f7a27657b3d9727f812a2057a8a2b28bccc02cb7c93c4b4afe008ddc0",
+    "dod_results": "dac7d6f21e6879b9a7348a2465b71e440015c7135027224bc5aabcbc6b121737",
+    "gate_results": "aef712f0ea86998e32c6c139e490ea3827c98b8d31b6e6b60cc13e4ec81f1061",
+    "out": "4b264ff7999f7defdfe5381553682a2de72e5d649746d6ce221a0a7a4b24bb10"
+  }
+}

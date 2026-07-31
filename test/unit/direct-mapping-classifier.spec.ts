@@ -8,8 +8,12 @@ import {
 import {
   classifyDiscoveryRecords,
   resolveRepositoryLayer,
+  resolveRepositoryLayerLegacyForCharacterization,
 } from '../../src/evidence/direct-mapping-classifier.js';
 import type { DiscoveryRecord } from '../../src/evidence/discovery-record.js';
+import { EXISTING_LAYER_CHARACTERIZATION_V1 } from '../../testkit/fixtures/scope-v1/existing-layer-characterization-v1.js';
+import { CANDIDATE_CEILING_V1 } from '../../testkit/fixtures/scope-v1/candidate-ceiling-v1.js';
+import { V1_POLICY_DELTA_V1 } from '../../testkit/fixtures/scope-v1/v1-policy-delta-v1.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
 const classifierIdentity = {
@@ -68,7 +72,7 @@ describe.runIf(isSelected(classifierIdentity))('direct mapping classifier', () =
     expect(result.confirmed).toHaveLength(1);
     expect(result.confirmed[0]).toMatchObject({
       role: 'value-mapping',
-      reasonCodes: ['DIRECT_ALIAS_MAPPING', 'EXACT_TERM_MATCH'],
+      reasonCodes: ['EXACT_TERM_MATCH', 'DIRECT_ALIAS_MAPPING'],
     });
     expect(result.candidates).toEqual([]);
   });
@@ -321,6 +325,75 @@ describe.runIf(isSelected(classifierIdentity))('direct mapping classifier', () =
       role: 'reference',
       reasonCodes: ['EXACT_TERM_WITHOUT_DIRECT_MAPPING'],
     });
+  });
+});
+
+describe.runIf(
+  isSelected({
+    group: 'repository-scope-policy',
+    caseId: 'move-only-characterization',
+  }),
+)('F7-MOVE-001 move-only-characterization', () => {
+  it('keeps legacy characterization deep-exact after extract', () => {
+    for (const row of EXISTING_LAYER_CHARACTERIZATION_V1) {
+      expect(resolveRepositoryLayerLegacyForCharacterization(row.file)).toBe(
+        row.layer,
+      );
+    }
+    for (const delta of V1_POLICY_DELTA_V1) {
+      expect(resolveRepositoryLayerLegacyForCharacterization(delta.path)).toBe(
+        delta.legacy,
+      );
+      expect(resolveRepositoryLayer(delta.path)).toBe(delta.current);
+    }
+  });
+});
+
+describe.runIf(
+  isSelected({
+    group: 'language-capability-boundary',
+    caseId: 'move-only-characterization',
+  }),
+)('F8-MOVE-001 move-only-characterization', () => {
+  it('keeps maskNonCode/maskSqlNonCode legacy export parity after kernel extract', async () => {
+    const { maskNonCode, maskSqlNonCode } = await import(
+      '../../src/evidence/direct-mapping-classifier.js'
+    );
+    const { maskNonCode: kernelMask } = await import(
+      '../../src/evidence/language/ecmascript-lexical-kernel-v2.js'
+    );
+    const { maskSqlNonCode: kernelSql } = await import(
+      '../../src/evidence/language/sql-lexical-kernel-v2.js'
+    );
+    const sample = "const x = 'a'; // c\n/*b*/ y = 1;";
+    expect(maskNonCode(sample)).toBe(kernelMask(sample));
+    const sql = "select a AS b -- c\n/*x*/";
+    expect(maskSqlNonCode(sql)).toBe(kernelSql(sql));
+  });
+});
+
+describe.runIf(
+  isSelected({
+    group: 'repository-scope-policy',
+    caseId: 'explicit-test-docs',
+  }),
+)('F7-EXPLICIT-001 explicit-test-docs', () => {
+  it('keeps explicit test/docs searchable but candidate-only', () => {
+    const excerpt = CANDIDATE_CEILING_V1.mappingExcerpt;
+    const testResult = classifyDiscoveryRecords(
+      [record(CANDIDATE_CEILING_V1.explicitTestFile, excerpt, CANDIDATE_CEILING_V1.terms)],
+      { anchors: [], layers: ['test'], negativeTerms: [] },
+    );
+    expect(testResult.confirmed).toEqual([]);
+    expect(testResult.candidates).toHaveLength(1);
+    expect(testResult.candidates[0]?.evidenceClass).toBe('candidate');
+
+    const docsResult = classifyDiscoveryRecords(
+      [record(CANDIDATE_CEILING_V1.explicitDocsFile, excerpt, CANDIDATE_CEILING_V1.terms)],
+      { anchors: [], layers: ['docs'], negativeTerms: [] },
+    );
+    expect(docsResult.confirmed).toEqual([]);
+    expect(docsResult.candidates).toHaveLength(1);
   });
 });
 

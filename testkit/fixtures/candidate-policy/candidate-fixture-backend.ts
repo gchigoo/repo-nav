@@ -10,10 +10,14 @@ import type {
 
 export const candidateFixtureRoot = resolve(import.meta.dirname);
 const candidateFile = 'server/mapping.fixture';
+/** Normalize checkout line endings so Windows CRLF cannot break hit verification. */
 const candidateExcerpt = readFileSync(
   resolve(candidateFixtureRoot, candidateFile),
   'utf8',
-).trimEnd();
+)
+  .replaceAll('\r\n', '\n')
+  .replaceAll('\r', '\n')
+  .trimEnd();
 const candidateLines = candidateExcerpt.split('\n');
 const candidateLineIndex = candidateLines.findIndex((line) =>
   line.includes('hcpId: row.hcp_id'),

@@ -1,9 +1,9 @@
 {
   "ok": true,
   "evidence": {
-    "schemaVersion": "1.0",
+    "schemaVersion": "2.0",
     "status": "ok",
-    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "repositoryRef": "local-repository",
     "normalizedTerms": [
       {
         "value": "targetField",
@@ -17,10 +17,11 @@
     "confirmed": [
       {
         "evidenceClass": "confirmed",
-        "id": "evidence:v1:77dfe5388b635d56923956308f7bb6d1bbfea09f87e7cfb6b2100a9bd77e4892",
+        "id": "evidence:v2:0001",
         "role": "value-mapping",
         "location": {
           "file": "server/mapping.fixture",
+          "resolvable": true,
           "lines": [
             1,
             1
@@ -38,18 +39,19 @@
           ]
         },
         "reasonCodes": [
-          "DIRECT_ALIAS_MAPPING",
-          "EXACT_TERM_MATCH"
+          "EXACT_TERM_MATCH",
+          "DIRECT_ALIAS_MAPPING"
         ]
       }
     ],
     "candidates": [
       {
         "evidenceClass": "candidate",
-        "id": "evidence:v1:1e17327ca7531837b55a37d47cfbc51790097c96079bc3d6027dc42dd5a233e5",
+        "id": "evidence:v2:0002",
         "role": "reference",
         "location": {
           "file": "server/mapping.fixture",
+          "resolvable": true,
           "lines": [
             2,
             2
@@ -80,14 +82,47 @@
         {
           "backend": "ripgrep",
           "status": "used",
+          "completion": "complete",
+          "termination": "none",
           "hitCount": 2
         }
       ],
+      "strategyComplete": true,
       "fallbackChecked": false,
       "indexState": "unknown",
-      "indexFreshness": "not-applicable",
+      "indexFreshness": "unknown",
       "limitsReached": [],
-      "exclusionSummary": {}
+      "degradations": [],
+      "exclusionSummary": {},
+      "abortSource": "none",
+      "unsatisfiedAnchors": [],
+      "snapshot": {
+        "gitState": "unknown",
+        "consistency": "stable",
+        "filesChecked": 1,
+        "discardedEvidenceCount": 0
+      },
+      "scope": {
+        "requested": [],
+        "effective": [
+          "client",
+          "server",
+          "db",
+          "config",
+          "unknown"
+        ],
+        "policyVersion": "repo-scope-v1",
+        "unmatchedLayers": []
+      },
+      "capabilities": {
+        "textSearch": "supported-text-files",
+        "semanticClassification": [
+          "typescript",
+          "javascript",
+          "sql"
+        ],
+        "unsupportedLanguageHits": 0
+      }
     },
     "nextActions": [
       "CONFIRM_CANDIDATE"

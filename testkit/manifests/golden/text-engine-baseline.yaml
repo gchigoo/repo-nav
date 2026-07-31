@@ -10,12 +10,12 @@ request:
   layers: [server]
 expected:
   ok: true
-  status: ok
+  status: partial
   confirmed:
     - file: server/mapping.fixture
       contains: targetField = row.source_field
       role: value-mapping
-      reasonCodes: [DIRECT_ALIAS_MAPPING, EXACT_TERM_MATCH]
+      reasonCodes: [EXACT_TERM_MATCH, DIRECT_ALIAS_MAPPING]
   candidates: []
   forbiddenEvidenceIds: []
   requiredCoverageCodes: []

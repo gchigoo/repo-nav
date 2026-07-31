@@ -1,0 +1,232 @@
+feature: 2026-07-24-span-redaction-corpus-policy-v2
+created: '2026-07-24'
+steps:
+- id: S1
+  action: 按设计第 2.5 节拆分 SensitiveValuePolicyV2 内部职责并保持现有导出与行为不变
+  exit_signal: build typecheck 与既有 public-output-v2 unit Golden 全绿且 expected output 零更新
+  verification: npm run build && npm run typecheck && npm test -- --group public-output-v2 && npm run test:golden -- --group public-output-v2
+  artifacts: [public output policy facade, internal contract detector and materializer modules, zero-behavior-change evidence]
+  status: done
+- id: S2
+  action: 建立原始 UTF-16 span 校验 canonical reason 排序 overlap adjacent merge、单次 materialization 与线性放大上界
+  exit_signal: F1A-SPAN-001 REASON-001 AMPLIFICATION-001 通过，非法 span fail closed且每个 merged span 只产生一个 placeholder
+  verification: npm test -- --group public-output-v2 --case span-redaction --case redaction-amplification
+  artifacts: [SensitiveSpanV2, span validator, canonical merger, single materializer, Unicode fixture table, amplification formula evidence, runner registry entries]
+  status: done
+- id: S3
+  action: 实现 local assignment 与 response-wide propagation 分离、value reason registry、双 mode canonical entries、冻结 eligibility 与目标字段 matcher
+  exit_signal: F1A-LOCAL-001 ELIGIBILITY-001 TEXT-BOUNDARY-001 PATH-SEGMENT-001 全部通过，entry count bytes comparator exact且 file 命中只输出 whole-path placeholder
+  verification: npm test -- --group public-output-v2 --case corpus-policy --case corpus-boundaries
+  artifacts: [SensitiveCorpusV2, value reason registry, canonical entry comparator, propagation eligibility matrix, low-information fixture, boundary matcher cases, runner registry entries]
+  status: done
+- id: S4
+  action: 将 credential connection email phone 与 control detector 统一为原值 span producer并落实电话正负 truth table
+  exit_signal: F1A-PHONE-001 PHONE-NEG-001 及 fixed detector regression 全部通过
+  verification: npm test -- --group public-output-v2 --case phone-corpus-policy --case field-redaction
+  artifacts: [four-field adapter truth table, phone classifier truth table, high-confidence detector spans, cue and ambiguity fixtures, runner registry entries]
+  status: done
+- id: S5
+  action: 加固dormant assembler同次synthetic raw input到内部immutable corpus和single materialization以及private public-safe ranking-key seam，并完成current-run provenance superset mutation placeholder permutation forbidden over-redaction no-cutover与全量回归
+  exit_signal: dormant assembler不接受caller corpus且跨输入或clone corpus拒绝，任意合法corpus target不出现在safe key，synthetic各projection无raw eligible secret，source graph不import F1B F1C F2 F6且production仍为v1
+  verification: npm run build && npm run typecheck && npm test -- --group public-output-v2 && npm run test:golden -- --group public-output-v2 && npm test && npm run test:golden -- --all && npm run test:mcp -- --all && npm run test:docs
+  artifacts: [dormant assembler current-run internal corpus integration, corpus provenance hostile report, forward ABI ledger and current executable owner separation proof, PublicSafeRankingKeyV2 projection, safe-key superset mutation report, case and fixture ownership inventory, permutation and amplification Golden, forbidden and over-redaction report, no-cutover evidence, architecture check, scope and diff cleanliness evidence, aggregate command logs]
+  status: done
+checks:
+- id: C1
+  item: SensitiveSpanV2 使用原始 JavaScript string 的 0-based UTF-16 half-open 坐标且不得切开 surrogate pair
+  source: design §2.1 SensitiveSpanV2 / S2
+  status: passed
+- id: C2
+  item: CRLF 触及任一 code unit 时整对覆盖，emoji combining isolated surrogate LF CRLF 均有 blocking fixture
+  source: design §3.1 F1A-SPAN-001 / S2
+  status: passed
+- id: C3
+  item: span 按 start end reason enum 稳定排序，overlap 或 adjacent 合并且 reason set canonical union
+  source: design §2.2 span merge / S2
+  status: passed
+- id: C4
+  item: 所有 detector corpus matcher control matcher 只读原值且输出只 materialize 一次
+  source: design §2.2 single materialization / S2
+  status: passed
+- id: C5
+  item: local assignment 不受 corpus eligibility 影响，低熵值在原字段隐藏但不跨字段传播
+  source: design §3.1 F1A-LOCAL-001 / S3
+  status: passed
+- id: C6
+  item: generic assignment 传播严格满足 8 到 512 UTF-8 bytes、至少 4 distinct comparison-key code points、非纯数字和 frozen sentinel set
+  source: design §3.1 F1A-ELIGIBILITY-001 / S3
+  status: passed
+- id: C7
+  item: eligibility comparison key 可做 NFKC trim lower-case但真实 matcher 对原值 case-sensitive 且不 normalization
+  source: design §2.1 corpus canonical pipeline / S3
+  status: passed
+- id: C8
+  item: exact-text matcher 执行 Unicode Letter Number Mark Connector_Punctuation 外侧边界规则
+  source: design §3.1 F1A-TEXT-BOUNDARY-001 / S3
+  status: passed
+- id: C9
+  item: inherited path corpus 只匹配完整 POSIX segment并禁止任意 substring includes replaceAll
+  source: design §3.1 F1A-PATH-SEGMENT-001 / S3
+  status: passed
+- id: C10
+  item: 相同 corpus value 的多 reasons 以 set union 合并并按 enum 顺序输出，不受遍历顺序影响
+  source: design §2.1 corpus canonical pipeline / S3
+  status: passed
+- id: C11
+  item: literal placeholder 不被再次扫描，只有本次实际替换才生成精确 metadata
+  source: design §3.1 F1A-PLACEHOLDER-001 / S2 S5
+  status: passed
+- id: C12
+  item: phone accept 仅限允许标点和 10 到 15 位数字且覆盖 country code 3-3-4 及 cue cases
+  source: design §3.1 F1A-PHONE-001 / S4
+  status: passed
+- id: C13
+  item: ISO date datetime SemVer build release UUID YYYYMMDD timestamp 和短横线短数字组不得进入 phone corpus
+  source: design §3.1 F1A-PHONE-NEG-001 / S4
+  status: passed
+- id: C14
+  item: bare Unix 10 或 13 位 ambiguous 数值无 phone cue 时只允许上下文本地处理不得传播
+  source: design §2.2 phone local-only / S4
+  status: passed
+- id: C15
+  item: assembler unit Golden 共用同一 policy facade且不存在 production test 双 matcher
+  source: design §2.3 dormant assembler edge / S5
+  status: passed
+- id: C16
+  item: public schema reason enum placeholder ID status contract 均不改变
+  source: design §3.3 reverse scope / S5
+  status: passed
+- id: C17
+  item: F1A 不实现 aggregate budgets、rank budget order、snapshot scope language backend producer或production v2 cutover，只提供private public-safe key projection
+  source: design §3.3 reverse scope / S5
+  status: passed
+- id: C18
+  item: 不新增第三方扫描依赖、配置 sentinel、文件网络环境读取、日志或真实凭证 fixture
+  source: design §3.3 reverse scope / S5
+  status: passed
+- id: C19
+  item: synthetic structured text debug projection 同时通过 forbidden 与 over-redaction scan
+  source: design §3.1 F1A-PROJECTION-001 / S5
+  status: passed
+- id: C20
+  item: package service MCP CLI reachability 仍无 schema v2 output edge
+  source: design §3.1 F1A-NOCUTOVER-001 / S5
+  status: passed
+- id: C21
+  item: 同一合格 value 固定展开 exact-text 与 path-segment 两条 entry，reason union一致，count 和 totalUtf8Bytes 按展开后 entry 计量
+  source: design §2.1 corpus canonical pipeline / S3
+  status: passed
+- id: C22
+  item: corpus reason 只允许 SECRET_LIKE_VALUE CONNECTION_STRING PERSONAL_DATA，所有 entry 均满足 8 到 512 UTF-8 bytes
+  source: design §3.1 F1A-ELIGIBILITY-001 F1A-REASON-001 / S3 S4
+  status: passed
+- id: C23
+  item: term symbol excerpt file 四字段 detector control malformed oversized placeholder metadata 与 whole-path 行为符合 adapter truth table
+  source: design §2.1 four-field adapter truth table / S3 S4 S5
+  status: passed
+- id: C24
+  item: 输出满足每个 merged span 一个 placeholder及设计第 2.2 节 UTF-16 UTF-8 线性上界
+  source: design §3.1 F1A-AMPLIFICATION-001 / S2 S5
+  status: passed
+- id: C25
+  item: design §3.2的7个stable group/case均在runner registry登记，并逐项反查exact fixture assertion runner manifest contract或Golden owner，禁止same existing或抽象owner
+  source: design §3.2 case fixture ownership inventory / S2 S3 S4 S5
+  status: passed
+- id: C26
+  item: ACT-ARCH-CHECK 已核对 architecture 与当前代码事实并落盘 update 或 no-change 理由
+  source: design §3.5 Required Actions / S5
+  status: passed
+- id: C27
+  item: ACT-SCOPE-CHECK已冻结implementation preflight ambient baseline，使用machine-readable exact allow manifest与check-path root比较staged unstaged untracked changed paths且无夹带
+  source: design §3.5 Required Actions / S5
+  status: passed
+- id: C28
+  item: SensitiveSpanV2 reasonCodes 为非空 tuple且 empty-reason mutation 与非法坐标一样 fail closed
+  source: design §3.1 F1A-SPAN-001 / S2
+  status: passed
+- id: C29
+  item: PublicSafeRankingKeyV2复用正式local detector和POSIX parser，symbol达到8 UTF-8 bytes或file任一segment达到8 bytes时保守折叠，任意合法corpus entry mutation均不能让可能隐藏的raw code units进入key；当前只由synthetic caller views验证，F3 F2实际callsite为下游N/A
+  source: design §1 key decision 9 and §3.1 F1A-RANKKEY-001 / S5
+  status: passed
+- id: C30
+  item: ranking-key seam不收集实际corpus不读取retained arrays不执行cap ranking budget或ID，不接收matchedText或opaque identity，且raw file symbol matchedText不得作为secondary comparator或artifact
+  source: design §2.2 ranking-key constraints and §3.3 reverse scope / S5
+  status: passed
+- id: C31
+  item: dormant PublicResultAssemblerV2只接收同次synthetic raw input并内部构建immutable corpus，不能接收caller SensitiveCorpusV2，跨输入或clone corpus在字段materialization前拒绝
+  source: design current executable seam and S5
+  status: passed
+- id: C32
+  item: F1A当前source graph不import或调用F1B F1C F2 F6 owner文件类型guard accessor aggregator或trusted source core，全部当前stable owner路径均只属于F1A
+  source: design forward ABI ledger and reverse scope / S5
+  status: passed
+- id: C33
+  item: forward ABI ledger仅冻结后续F1B F1C F2 F6 owner边界，不属于F1A当前implementation stable case runner Required Artifacts或DoD，且不得被当前代码或测试预占
+  source: design forward ABI ledger / S5
+  status: passed
+dod:
+  commands:
+  - id: CMD-BUILD
+    command: npm run build
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-TYPECHECK
+    command: npm run typecheck
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-F1A-UNIT
+    command: npm test -- --group public-output-v2 --case span-redaction --case corpus-policy --case corpus-boundaries --case phone-corpus-policy --case redaction-amplification --case public-safe-ranking-key
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-V2-UNIT
+    command: npm test -- --group public-output-v2
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-V2-GOLDEN
+    command: npm run test:golden -- --group public-output-v2
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-NOCUTOVER
+    command: npm test -- --group public-output-v2 --case no-cutover-import-inventory
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-UNIT-ALL
+    command: npm test
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-GOLDEN-ALL
+    command: npm run test:golden -- --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-MCP-ALL
+    command: npm run test:mcp -- --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-DOCS
+    command: npm run test:docs
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-DOCTOR
+    command: python .codestable/tools/codestable-doctor.py --root .
+    core: false
+    failure_handling: document-baseline
+  - id: CMD-DIFF-CHECK
+    command: git diff --check
+    core: false
+    failure_handling: fix-or-block
+  - id: CMD-SPEC
+    command: python .codestable/tools/codestable-spec-governance.py --root . analyze
+    core: false
+    failure_handling: fix-or-block
+  - id: CMD-SCOPE-CHECK
+    command: python .codestable/tools/codestable-scope-gate.py --feature-dir .codestable/features/2026-07-24-span-redaction-corpus-policy-v2 --allow-file .codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-scope-allow.txt --check-path . --cleanliness-path src/evidence/public-output --cleanliness-path test/unit --cleanliness-path test/golden --cleanliness-path test/mcp --cleanliness-path testkit --stage implementation.before_review
+    core: true
+    failure_handling: fix-or-block
+  evidence_required: [command_output, diff_summary, span_fixture_matrix, corpus_truth_table, dormant_assembler_current_run_internal_corpus_provenance_report, forward_abi_ledger_current_executable_owner_separation_proof, four_field_adapter_truth_table, phone_truth_table, public_safe_ranking_key_superset_mutation_report, case_fixture_ownership_inventory, runner_registry_delta, amplification_report, permutation_report, forbidden_scan_report, over_redaction_report, no_cutover_report, architecture_check, scope_allow_manifest, full_changed_path_inventory, scope_cleanliness_evidence]
+  cleanliness:
+    debug_output: forbidden
+    temporary_todo_fixme: forbidden
+    commented_out_code: forbidden
+    unused_imports: forbidden
+    real_credentials: forbidden
+    caller_supplied_corpus_or_composer_redaction: forbidden

@@ -4,13 +4,13 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 
+import type { RepositoryEvidenceService } from '../../src/contracts/index.js';
 import {
   createMcpShutdownCoordinator,
   createMcpStartupShutdownController,
-  NodeMcpStdioHost,
   type McpShutdownReporter,
-  type RepositoryEvidenceService,
-} from '../../src/index.js';
+} from '../../src/mcp/mcp-shutdown-coordinator.js';
+import { NodeMcpStdioHost } from '../../src/mcp/mcp-stdio-host.js';
 import {
   McpLifecycleCaseSchema,
   McpLifecycleCaseRunner,
@@ -21,7 +21,43 @@ import {
   type McpLifecycleCase,
   type McpLifecycleProbeAudit,
 } from '../../testkit/contracts/index.js';
+import { recordPlatformAssertionMarker } from '../../testkit/testing/platform-contract.js';
 import { isSelected } from '../../testkit/testing/selection.js';
+
+function asLocateApplication(
+  service: RepositoryEvidenceService,
+): import('../../src/evidence/locate-execution/public-locate-execution-application-v2.js').PublicLocateExecutionApplicationV2 {
+  return {
+    async execute(rawRequest, context) {
+      const { safeParseLocateRequestV2 } = await import(
+        '../../src/contracts/locate-request-parse-v2.js'
+      );
+      const parsed = safeParseLocateRequestV2(rawRequest);
+      if (!parsed.success) {
+        return {
+          value: {
+            ok: false as const,
+            error: {
+              code: 'INVALID_INPUT' as const,
+              message: 'Locate request does not match the required schema.',
+              recoverable: true,
+            },
+          },
+          compactJson: '',
+          utf8Bytes: 0,
+        };
+      }
+      const value = await service.locate(parsed.data, context);
+      const compactJson = JSON.stringify(value);
+      return {
+        value,
+        compactJson,
+        utf8Bytes: Buffer.byteLength(compactJson, 'utf8'),
+      };
+    },
+  };
+}
+
 
 const manifestDirectory = resolve(
   import.meta.dirname,
@@ -169,10 +205,10 @@ describe.runIf(
 
   it('keeps a host closed when connect and close overlap', async () => {
     const host = new NodeMcpStdioHost({
-      locate: async () => {
+      async execute() {
         throw new Error('Not called by lifecycle test.');
       },
-    });
+    } as import('../../src/evidence/locate-execution/public-locate-execution-application-v2.js').PublicLocateExecutionApplicationV2);
     const privateHost = host as unknown as {
       server: {
         connect(): Promise<void>;
@@ -214,12 +250,12 @@ describe.runIf(
   });
 
   it('settles tracked calls and closes state even when the SDK server close fails', async () => {
-    const service: RepositoryEvidenceService = {
+    const service = {
       locate: async () => {
         throw new Error('Not called by lifecycle test.');
       },
     };
-    const host = new NodeMcpStdioHost(service);
+    const host = new NodeMcpStdioHost(asLocateApplication(service as RepositoryEvidenceService));
     const privateHost = host as unknown as {
       readonly server: { close(): Promise<void> };
       readonly trackedCalls: Set<{
@@ -315,7 +351,7 @@ describe.runIf(
   });
 
   it('returns one close promise and rejects reconnect after shutdown', async () => {
-    const service: RepositoryEvidenceService = {
+    const service = {
       locate: async () => ({
         ok: false,
         error: {
@@ -323,9 +359,9 @@ describe.runIf(
           message: 'Not called by lifecycle test.',
           recoverable: false,
         },
-      }),
+      }) as any as any,
     };
-    const host = new NodeMcpStdioHost(service);
+    const host = new NodeMcpStdioHost(asLocateApplication(service as RepositoryEvidenceService));
     const firstClose = host.close('eof');
     const secondClose = host.close('signal');
     expect(secondClose).toBe(firstClose);
@@ -397,6 +433,10 @@ describe.runIf(
       expect(observation.contextClosed).toBe(true);
       expect(observation.childrenCleaned).toBe(true);
       writeLifecycleReport('shutdown-cleanup-probe', observation);
+      recordPlatformAssertionMarker(
+        'F4-MCP-002',
+        'real-close-and-tree-cleanup',
+      );
     },
     10_000,
   );
@@ -409,6 +449,7 @@ describe.runIf(
           lifecycleCase,
         ),
       ).rejects.toThrow(/contextClosed/iu);
+      recordPlatformAssertionMarker('F4-MCP-002', 'missing-close-negative');
     },
     10_000,
   );
@@ -421,6 +462,7 @@ describe.runIf(
           lifecycleCase,
         ),
       ).rejects.toThrow(/childrenCleaned/iu);
+      recordPlatformAssertionMarker('F4-MCP-002', 'live-descendant-negative');
     },
     10_000,
   );
@@ -437,12 +479,14 @@ describe.runIf(
           },
         }).run({
           ...lifecycleCase,
+          // Budget starts after children.json; keep short once the probe is armed.
           expected: { ...lifecycleCase.expected, maxShutdownMs: 2_500 },
         }),
       ).rejects.toThrow(/exceeded/iu);
       expectProbeAuditCleaned(audit);
+      recordPlatformAssertionMarker('F4-MCP-002', 'timeout-cleanup');
     },
-    10_000,
+    30_000,
   );
 
   it(
@@ -458,6 +502,7 @@ describe.runIf(
         }).run(lifecycleCase),
       ).rejects.toThrow(/exit code 7/iu);
       expectProbeAuditCleaned(audit);
+      recordPlatformAssertionMarker('F4-MCP-002', 'nonzero-cleanup');
     },
     10_000,
   );

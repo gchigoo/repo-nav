@@ -43,7 +43,10 @@ const argvSchema = z
   )
   .max(256)
   .superRefine((argv, context) => {
-    if (argv.reduce((total, value) => total + utf8Length(value), 0) > 64 * 1024) {
+    if (
+      argv.reduce((total, value) => total + utf8Length(value), 0) >
+      64 * 1024
+    ) {
       context.addIssue({
         code: 'custom',
         message: 'argv exceeds 64 KiB in total.',
@@ -98,8 +101,14 @@ export const SafeProcessRequestSchema = z
     cwd: boundedString('cwd', 4096),
     env: envSchema.optional(),
     timeoutMs: z.int().min(100).max(30_000),
-    maxStdoutBytes: z.int().min(1024).max(8 * 1024 * 1024),
-    maxStderrBytes: z.int().min(1024).max(2 * 1024 * 1024),
+    maxStdoutBytes: z
+      .int()
+      .min(1024)
+      .max(8 * 1024 * 1024),
+    maxStderrBytes: z
+      .int()
+      .min(1024)
+      .max(2 * 1024 * 1024),
     terminateGraceMs: z.int().min(50).max(2_000),
   })
   .readonly();
@@ -139,3 +148,90 @@ export interface SafeProcessRunner {
     signal: AbortSignal,
   ): Promise<SafeProcessResult>;
 }
+
+/** Streaming consumer progress decision（F5）。 */
+export interface SafeStdoutConsumerDecisionV2 {
+  readonly consumedBytes: number;
+  readonly action: 'continue' | 'stop';
+}
+
+/** 同步 finalizer 判别联合；kernel 只验证 top-level wrapper。 */
+export type SafeStdoutConsumerFinalizationV2<TValue> = Readonly<
+  { ok: true; value: TValue } | { ok: false; kind: 'consumer-invalid' }
+>;
+
+export interface SafeStdoutConsumerV2<TPartial, TComplete> {
+  push(bytes: Uint8Array): SafeStdoutConsumerDecisionV2;
+  partial(): SafeStdoutConsumerFinalizationV2<TPartial>;
+  finish(): SafeStdoutConsumerFinalizationV2<TComplete>;
+  validatePartialValue(value: unknown): value is TPartial;
+  validateCompleteValue(value: unknown): value is TComplete;
+}
+
+export type SafeProcessStreamingFailureKindV2 =
+  | 'invalid-request'
+  | 'other-spawn-error'
+  | 'process-exit'
+  | 'aborted'
+  | 'timeout'
+  | 'stdout-limit'
+  | 'stderr-limit'
+  | 'consumer-stop'
+  | 'consumer-invalid'
+  | 'cleanup-invariant';
+
+export type SafeProcessNoChildResultV2 = Readonly<{
+  ok: false;
+  kind: 'invalid-request' | 'other-spawn-error' | 'aborted';
+  startState: 'no-child';
+  exitCode: null;
+  terminationSignal: null;
+  stdout: Readonly<{ kind: 'unavailable' }>;
+  stderr: Uint8Array;
+}>;
+
+export type SafeProcessStreamingResultV2<TPartial, TComplete> =
+  | SafeProcessNoChildResultV2
+  | Readonly<{
+      ok: true;
+      kind: 'completed';
+      startState: 'started';
+      exitCode: number;
+      terminationSignal: null;
+      stdout: Readonly<{ kind: 'complete'; value: TComplete }>;
+      stderr: Uint8Array;
+    }>
+  | Readonly<{
+      ok: false;
+      kind: 'process-exit';
+      startState: 'started';
+      exitCode: number | null;
+      terminationSignal: string | null;
+      stdout: Readonly<{ kind: 'unavailable' }>;
+      stderr: Uint8Array;
+    }>
+  | Readonly<{
+      ok: false;
+      kind: Exclude<
+        SafeProcessStreamingFailureKindV2,
+        'invalid-request' | 'other-spawn-error' | 'process-exit'
+      >;
+      startState: 'started';
+      exitCode: number | null;
+      terminationSignal: string | null;
+      stdout:
+        | Readonly<{ kind: 'partial'; value: TPartial }>
+        | Readonly<{ kind: 'unavailable' }>;
+      stderr: Uint8Array;
+    }>;
+
+export interface StreamingSafeProcessRunnerV2 extends SafeProcessRunner {
+  runStreaming<TPartial, TComplete>(
+    request: SafeProcessRequest,
+    signal: AbortSignal,
+    consumer: SafeStdoutConsumerV2<TPartial, TComplete>,
+  ): Promise<SafeProcessStreamingResultV2<TPartial, TComplete>>;
+}
+
+export const CLEANUP_INVARIANT_MESSAGE =
+  'Safe process cleanup invariant failed.';

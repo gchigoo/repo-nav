@@ -1,5 +1,3 @@
-import { extname, posix } from 'node:path';
-
 import {
   comparePublicEvidence,
   createEvidenceId,
@@ -12,6 +10,16 @@ import {
 } from '../contracts/index.js';
 import type { DiscoveryRecord } from './discovery-record.js';
 import { secondaryBackendCandidateReasons } from './candidate-policy.js';
+import {
+  legacyResolveRepositoryLayerV1,
+  resolveRepositoryLayerV1,
+  resolveRepositoryScopeV1,
+} from './scope/index.js';
+import { maskNonCode } from './language/ecmascript-lexical-kernel-v2.js';
+import { maskSqlNonCode } from './language/sql-lexical-kernel-v2.js';
+
+export { maskNonCode } from './language/ecmascript-lexical-kernel-v2.js';
+export { maskSqlNonCode } from './language/sql-lexical-kernel-v2.js';
 
 export interface ClassificationContext {
   readonly anchors: readonly NormalizedLocateAnchor[];
@@ -23,7 +31,9 @@ export interface ClassificationContext {
 export interface ClassificationResult {
   readonly confirmed: readonly ConfirmedEvidence[];
   readonly candidates: readonly CandidateEvidence[];
-  readonly exclusionSummary: Readonly<Partial<Record<ExclusionReasonCode, number>>>;
+  readonly exclusionSummary: Readonly<
+    Partial<Record<ExclusionReasonCode, number>>
+  >;
   readonly recordsClassified: number;
 }
 
@@ -42,23 +52,6 @@ type Classification =
       readonly canonicalSymbol?: string;
     };
 
-const TEST_SEGMENTS = new Set([
-  'test',
-  'tests',
-  '__tests__',
-  'spec',
-  'specs',
-  'fixtures',
-  '__fixtures__',
-]);
-const DOCS_SEGMENTS = new Set(['docs', 'documentation', 'examples']);
-const DOCS_EXTENSIONS = new Set(['.md', '.mdx', '.rst', '.adoc']);
-const TOP_LEVEL_LAYERS = new Set<RepoLayer>([
-  'client',
-  'server',
-  'db',
-  'config',
-]);
 const MAX_CLASSIFICATION_LINES = 12;
 const MAX_CLASSIFICATION_BYTES = 4 * 1024;
 
@@ -83,169 +76,17 @@ function containsTerm(excerpt: string, term: NormalizedSearchTerm): boolean {
   );
 }
 
+/**
+ * Compatible export：repo-scope-v1 layer classification。
+ * S1 characterization 另见 `legacyResolveRepositoryLayerV1`。
+ */
 export function resolveRepositoryLayer(file: string): RepoLayer {
-  const normalized = posix.normalize(file.replaceAll('\\', '/'));
-  const segments = normalized.split('/').map((segment) => segment.toLowerCase());
-  const basename = segments.at(-1) ?? '';
-  if (
-    segments.some((segment) => TEST_SEGMENTS.has(segment)) ||
-    basename.includes('.spec.') ||
-    basename.includes('.test.')
-  ) {
-    return 'test';
-  }
-  if (
-    segments.some((segment) => DOCS_SEGMENTS.has(segment)) ||
-    DOCS_EXTENSIONS.has(extname(basename).toLowerCase())
-  ) {
-    return 'docs';
-  }
-  const topLevel = segments[0] as RepoLayer | undefined;
-  return topLevel !== undefined && TOP_LEVEL_LAYERS.has(topLevel)
-    ? topLevel
-    : 'unknown';
+  return resolveRepositoryLayerV1(file);
 }
 
-export function maskNonCode(excerpt: string): string {
-  let state:
-    | 'code'
-    | 'line-comment'
-    | 'block-comment'
-    | 'single'
-    | 'double'
-    | 'template'
-    | 'regex' = 'code';
-  let escaped = false;
-  let regexCharacterClass = false;
-  let output = '';
-
-  for (let index = 0; index < excerpt.length; index += 1) {
-    const character = excerpt[index] ?? '';
-    const next = excerpt[index + 1] ?? '';
-    if (state === 'code') {
-      if (character === '/' && next === '/') {
-        state = 'line-comment';
-        output += '  ';
-        index += 1;
-      } else if (character === '/' && next === '*') {
-        state = 'block-comment';
-        output += '  ';
-        index += 1;
-      } else if (character === "'") {
-        state = 'single';
-        output += ' ';
-      } else if (character === '"') {
-        state = 'double';
-        output += ' ';
-      } else if (character === '`') {
-        state = 'template';
-        output += ' ';
-      } else if (character === '/' && startsRegexLiteral(excerpt, index)) {
-        state = 'regex';
-        regexCharacterClass = false;
-        output += ' ';
-      } else {
-        output += character;
-      }
-      continue;
-    }
-
-    if (state === 'line-comment') {
-      if (character === '\n') {
-        state = 'code';
-        output += '\n';
-      } else {
-        output += ' ';
-      }
-      continue;
-    }
-    if (state === 'block-comment') {
-      if (character === '*' && next === '/') {
-        state = 'code';
-        output += '  ';
-        index += 1;
-      } else {
-        output += character === '\n' ? '\n' : ' ';
-      }
-      continue;
-    }
-
-    output += character === '\n' ? '\n' : ' ';
-    if (escaped) {
-      escaped = false;
-    } else if (character === '\\') {
-      escaped = true;
-    } else if (state === 'regex' && character === '[') {
-      regexCharacterClass = true;
-    } else if (state === 'regex' && character === ']') {
-      regexCharacterClass = false;
-    } else if (state === 'regex' && character === '/' && !regexCharacterClass) {
-      state = 'code';
-    } else if (
-      (state === 'single' && character === "'") ||
-      (state === 'double' && character === '"') ||
-      (state === 'template' && character === '`')
-    ) {
-      state = 'code';
-    }
-  }
-  return output;
-}
-
-function startsRegexLiteral(source: string, slashIndex: number): boolean {
-  const prefix = source.slice(0, slashIndex).trimEnd();
-  if (prefix.length === 0) {
-    return true;
-  }
-  const previous = prefix.at(-1) ?? '';
-  if (/[[{(=,:;!?&|]/u.test(previous)) {
-    return true;
-  }
-  if (
-    /=>$/u.test(prefix) ||
-    endsWithStandaloneKeyword(prefix, /(?:do|else)$/u)
-  ) {
-    return true;
-  }
-  if (previous === ')' && followsControlHeader(prefix)) {
-    return true;
-  }
-  return endsWithStandaloneKeyword(
-    prefix,
-    /(?:await|case|delete|in|instanceof|new|of|return|throw|typeof|void|yield)$/u,
-  );
-}
-
-function endsWithStandaloneKeyword(
-  prefix: string,
-  pattern: RegExp,
-): boolean {
-  const match = pattern.exec(prefix);
-  if (match?.index === undefined) {
-    return false;
-  }
-  const before = prefix[match.index - 1];
-  return before === undefined || !/[.\p{L}\p{N}_$]/u.test(before);
-}
-
-function followsControlHeader(prefix: string): boolean {
-  let depth = 0;
-  for (let index = prefix.length - 1; index >= 0; index -= 1) {
-    const character = prefix[index] ?? '';
-    if (character === ')') {
-      depth += 1;
-    } else if (character === '(') {
-      depth -= 1;
-      if (depth === 0) {
-        return endsWithStandaloneKeyword(
-          prefix.slice(0, index).trimEnd(),
-          /(?:for|if|while|with)$/u,
-        );
-      }
-    }
-  }
-  return false;
-}
+/** @deprecated S1 characterization only — frozen pre-policy semantics. */
+export const resolveRepositoryLayerLegacyForCharacterization =
+  legacyResolveRepositoryLayerV1;
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
@@ -331,22 +172,20 @@ function hasObjectMapping(
 ): boolean {
   const focusOffset = Math.max(0, windowCode.length - focusCode.length);
   return termPairs(terms).some(([target, source]) =>
-    exactPairRanges(focusCode, target, source, '\\s*:\\s*').some(
-      (pair) => {
-        const pairStart = focusOffset + pair.start;
-        const openBrace = windowCode.lastIndexOf('{', pairStart);
-        const closeBrace = windowCode.lastIndexOf('}', pairStart);
-        if (openBrace < 0 || openBrace < closeBrace) {
-          return false;
-        }
-        const beforeOpen = windowCode.slice(0, openBrace).trimEnd();
-        return (
-          /\breturn$/iu.test(beforeOpen) ||
-          /=$/u.test(beforeOpen) ||
-          /[\p{L}_$][\p{L}\p{N}_$]*\s*\($/iu.test(beforeOpen)
-        );
-      },
-    ),
+    exactPairRanges(focusCode, target, source, '\\s*:\\s*').some((pair) => {
+      const pairStart = focusOffset + pair.start;
+      const openBrace = windowCode.lastIndexOf('{', pairStart);
+      const closeBrace = windowCode.lastIndexOf('}', pairStart);
+      if (openBrace < 0 || openBrace < closeBrace) {
+        return false;
+      }
+      const beforeOpen = windowCode.slice(0, openBrace).trimEnd();
+      return (
+        /\breturn$/iu.test(beforeOpen) ||
+        /=$/u.test(beforeOpen) ||
+        /[\p{L}_$][\p{L}\p{N}_$]*\s*\($/iu.test(beforeOpen)
+      );
+    }),
   );
 }
 
@@ -357,111 +196,6 @@ function containsSqlAlias(
   return termPairs(terms).some(([source, target]) =>
     exactPairMatches(sql, source, target, '\\s+AS\\s+'),
   );
-}
-
-export function maskSqlNonCode(sql: string): string {
-  let state:
-    | 'code'
-    | 'single'
-    | 'double'
-    | 'dollar'
-    | 'line-comment'
-    | 'block-comment' = 'code';
-  let dollarTag = '';
-  let blockCommentDepth = 0;
-  let output = '';
-  for (let index = 0; index < sql.length; index += 1) {
-    const character = sql[index] ?? '';
-    const next = sql[index + 1] ?? '';
-    if (state === 'code') {
-      if (character === '-' && next === '-') {
-        state = 'line-comment';
-        output += '  ';
-        index += 1;
-      } else if (character === '/' && next === '*') {
-        state = 'block-comment';
-        blockCommentDepth = 1;
-        output += '  ';
-        index += 1;
-      } else if (character === "'") {
-        state = 'single';
-        output += ' ';
-      } else if (character === '"') {
-        state = 'double';
-        output += ' ';
-      } else if (character === '$') {
-        const tag = /^\$(?:[\p{L}_][\p{L}\p{N}_]*)?\$/u.exec(
-          sql.slice(index),
-        )?.[0];
-        if (tag === undefined) {
-          output += character;
-        } else {
-          state = 'dollar';
-          dollarTag = tag;
-          output += ' '.repeat(tag.length);
-          index += tag.length - 1;
-        }
-      } else {
-        output += character;
-      }
-      continue;
-    }
-    if (state === 'line-comment') {
-      if (character === '\n') {
-        state = 'code';
-        output += '\n';
-      } else {
-        output += ' ';
-      }
-      continue;
-    }
-    if (state === 'block-comment') {
-      if (character === '/' && next === '*') {
-        blockCommentDepth += 1;
-        output += '  ';
-        index += 1;
-      } else if (character === '*' && next === '/') {
-        blockCommentDepth -= 1;
-        if (blockCommentDepth === 0) {
-          state = 'code';
-        }
-        output += '  ';
-        index += 1;
-      } else {
-        output += character === '\n' ? '\n' : ' ';
-      }
-      continue;
-    }
-    if (state === 'dollar') {
-      if (sql.startsWith(dollarTag, index)) {
-        output += ' '.repeat(dollarTag.length);
-        index += dollarTag.length - 1;
-        state = 'code';
-        dollarTag = '';
-      } else {
-        output += character === '\n' ? '\n' : ' ';
-      }
-      continue;
-    }
-    output += character === '\n' ? '\n' : ' ';
-    if (character === '\\' && next !== '') {
-      output += next === '\n' ? '\n' : ' ';
-      index += 1;
-      continue;
-    }
-    if (
-      (state === 'single' && character === "'") ||
-      (state === 'double' && character === '"')
-    ) {
-      if (next === character) {
-        output += ' ';
-        index += 1;
-      } else {
-        state = 'code';
-      }
-    }
-  }
-  return output;
 }
 
 function sqlCallArguments(excerpt: string): readonly string[] {
@@ -530,10 +264,9 @@ function symbolDefinitionRole(
 ): ConfirmedEvidence['role'] | undefined {
   const token = tokenPattern(symbol);
   if (
-    new RegExp(
-      `\\b(?:class|interface|enum)\\s+${token}[^{};]*\\{`,
-      'u',
-    ).test(code) ||
+    new RegExp(`\\b(?:class|interface|enum)\\s+${token}[^{};]*\\{`, 'u').test(
+      code,
+    ) ||
     new RegExp(`\\btype\\s+${token}[^;=]*=\\s*\\{`, 'u').test(code)
   ) {
     return 'definition';
@@ -576,7 +309,7 @@ function classifyRecord(
     return {
       evidenceClass: 'confirmed',
       role: 'value-mapping',
-      reasonCodes: ['DIRECT_ALIAS_MAPPING', 'EXACT_TERM_MATCH'],
+      reasonCodes: ['EXACT_TERM_MATCH', 'DIRECT_ALIAS_MAPPING'],
       ...(record.canonicalSymbols[0] === undefined
         ? {}
         : { canonicalSymbol: record.canonicalSymbols[0] }),
@@ -597,7 +330,11 @@ function classifyRecord(
         (left, right) =>
           (left.role === 'execution-site' ? 0 : 1) -
             (right.role === 'execution-site' ? 0 : 1) ||
-          (left.symbol === right.symbol ? 0 : left.symbol < right.symbol ? -1 : 1),
+          (left.symbol === right.symbol
+            ? 0
+            : left.symbol < right.symbol
+              ? -1
+              : 1),
       );
     const primaryDefinition = definitions[0];
     if (primaryDefinition !== undefined && !forceCandidate) {
@@ -613,7 +350,10 @@ function classifyRecord(
       evidenceClass: 'candidate',
       role: 'reference',
       reasonCodes: ['SYMBOL_REFERENCE_ONLY'],
-      promotionRequirements: ['DIRECT_REFERENCE_REQUIRED', 'CALL_PATH_REQUIRED'],
+      promotionRequirements: [
+        'DIRECT_REFERENCE_REQUIRED',
+        'CALL_PATH_REQUIRED',
+      ],
       ...(primarySymbol === undefined
         ? {}
         : { canonicalSymbol: primarySymbol }),
@@ -669,7 +409,9 @@ function addExclusion(
 export function classifyDiscoveryRecords(
   records: readonly DiscoveryRecord[],
   context: ClassificationContext,
-  initialExclusions: Readonly<Partial<Record<ExclusionReasonCode, number>>> = {},
+  initialExclusions: Readonly<
+    Partial<Record<ExclusionReasonCode, number>>
+  > = {},
 ): ClassificationResult {
   const confirmed: ConfirmedEvidence[] = [];
   const candidates: CandidateEvidence[] = [];
@@ -679,28 +421,27 @@ export function classifyDiscoveryRecords(
   let recordsClassified = 0;
 
   for (const record of records) {
-    if (context.negativeTerms.some((term) => containsTerm(record.focusExcerpt, term))) {
+    if (
+      context.negativeTerms.some((term) =>
+        containsTerm(record.focusExcerpt, term),
+      )
+    ) {
       addExclusion(exclusionSummary, 'NEGATIVE_TERM_MATCH');
       continue;
     }
 
     const layer = resolveRepositoryLayer(record.location.file);
+    const resolvedScope = resolveRepositoryScopeV1(context.layers);
+    const included = resolvedScope.effective.includes(layer);
     const isTestOrDocs = layer === 'test' || layer === 'docs';
-    const layerRequested = context.layers.includes(layer);
-    if (
-      (isTestOrDocs && !layerRequested) ||
-      (context.layers.length > 0 && !layerRequested)
-    ) {
+    if (!included) {
       addExclusion(exclusionSummary, 'OUTSIDE_LAYER_HINT');
       continue;
     }
 
     recordsClassified += 1;
-    const classification = classifyRecord(
-      record,
-      context,
-      isTestOrDocs,
-    );
+    // 显式 test/docs = candidate-only hard ceiling
+    const classification = classifyRecord(record, context, isTestOrDocs);
     if (classification === undefined) {
       addExclusion(exclusionSummary, 'UNVERIFIED_FILE_CONTENT');
       continue;

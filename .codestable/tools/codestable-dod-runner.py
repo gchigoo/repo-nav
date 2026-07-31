@@ -8,9 +8,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
-if os.environ.get("PYTHONDONTWRITEBYTECODE") != "1":
-    os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
-    os.execvpe(sys.executable, [sys.executable, *sys.argv], os.environ)
+# Avoid os.execvpe re-exec: on Windows CI it can ACCESS_VIOLATION (0xC0000005).
+os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 sys.dont_write_bytecode = True
 
 from codestable_gate_common import gate_result, load_yaml, main_exit, parse_args, repo_root, run_command

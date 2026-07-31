@@ -1,0 +1,351 @@
+feature: 2026-07-24-input-abort-contract-v2
+created: '2026-07-24'
+steps:
+- id: S1
+  action: 落地raw request guard并拆分filesystem和semantic schemas，更新MCP CLI input surface并证明question不干预
+  exit_signal: repoPath和file anchor exact preserve且非法路径fail closed，question optional，terms语义不变，terms negative anchors及layers 7或8 count在element前短路且raw guard及transport docs一致
+  verification: npm test -- --group input-abort-contract-v2 --case repository-path-input --case file-anchor-input --case semantic-input --case question-non-interference --case raw-budget --case cli-input-contract && npm run test:mcp -- --all
+  artifacts: [raw budget table, filesystem path matrix, semantic normalization table, question non-interference report, MCP CLI schema help diff]
+  status: done
+- id: S2
+  action: 实现拥有caller listener和deadline timer的closeable abort coordinator及last-await finalization latch
+  exit_signal: close前first-writer生效，close时冻结source清资源，close后abort不改当前response且同步finalize无await
+  verification: npm test -- --group input-abort-contract-v2 --case abort-first-writer --case finalization-latch
+  artifacts: [abort race table, latch barrier report, timer listener cleanup counters, synchronous finalize inventory]
+  status: done
+- id: S3
+  action: 冻结F2/F1 core与contribution输入ABI，证明F6不导入F2 core accessor且只接testkit合法验证的core，再集中聚合F5 trace与F2 facts为backend/request-outcome/status/proof；F8-only production mount只作为forward exact ABI，不作为F6已执行证据
+  exit_signal: direct harness中F2 source/core/contribution provenance有效且F6 aggregation truth table唯一；production F2 core accessor与F1C registrar importer均为0，F6无materialization token/accessor import；attempt index strategy limits degradations exclusions status nextActions全表唯一，clone/cross-execution在读取前拒绝；F1C composer/schema/1MiB只验证接口兼容性并明确defer到F8
+  verification: npm test -- --group input-abort-contract-v2 --case backend-attempt-aggregation --case index-observation-matrix --case contribution-trust --case public-materialization-order --case strategy-completeness --case status-priority --case next-action-policy
+  artifacts: [attempt and index table, contribution trust matrix, materialization ordering report, strategy table, limit degradation exclusion table, status priority table, next-action table]
+  status: done
+- id: S4
+  action: 以direct integration harness接入materialized evidence core与双fragment同proof，冻结F6 aggregator owner/status seam与future F8 production mount ABI；F6本项不执行F1C finalizer/composer或real envelope insertion
+  exit_signal: clone cross-execution fragment或core contribution swap均fail closed；direct harness证明backend request-outcome status proof exact once，production importer inventory证明F2 core accessor仍为0且F1C registrar未被F6导入；任一v2 shadow failure不阻断v1 exact object
+  verification: npm test -- --group input-abort-contract-v2 --case outcome-proof --case aggregator-owner-direct-integration --case v1-compatibility
+  artifacts: [proof mutation report, aggregator direct integration inventory, future F8 mount ABI report, v1 parity and caller synthesis Golden, no-cutover report]
+  status: done
+- id: S5
+  action: 完成large bounded和六格input abort latch cases及全量architecture scope review QA acceptance
+  exit_signal: 全套core命令与F4六格markers通过，bounded hash稳定，无path question abort reason或placeholder owner泄漏
+  verification: npm test && npm run test:golden -- --all && npm run test:mcp -- --all && npm run test:docs && npm run test:platform
+  artifacts: [large permutation report, six-cell markers, architecture update, compatibility docs, scope inventory, review QA acceptance]
+  status: done
+checks:
+- id: C1
+  item: raw guard先以descriptor读取root和terms negativeTerms anchors layers array length，layers 7通过8在读取poison element前拒绝，再调用F1B guardCompactJsonDataV2递归计量完整raw graph后进入strict Zod
+  source: design key decision 1 / F6-RAW-001
+  status: passed
+- id: C2
+  item: repoPath只校验nonempty NUL和4096bytes并逐code-unit保留，不调用NFKC trim
+  source: design key decision 2 / F6-INPUT-001
+  status: passed
+- id: C3
+  item: relative repoPath只在reader root resolver用process cwd resolve后执行realpath readable directory校验且不输出raw path
+  source: design key decision 2
+  status: passed
+- id: C4
+  item: file anchor在normalization前拒绝backslash NUL POSIX Windows absolute drive UNC empty dot dotdot和trailing segments及512bytes N加1
+  source: design key decision 3 / F6-FILE-001
+  status: passed
+- id: C5
+  item: 合法file anchor exact preserve且caseSensitive true，dedupe按exact code units
+  source: design key decisions 3 and 4
+  status: passed
+- id: C6
+  item: question optional，存在时NFKC trim且nonempty和4096bytes，缺失不补placeholder
+  source: design key decision 4 / F6-SEMANTIC-001
+  status: passed
+- id: C7
+  item: terms negativeTerms与nonfile anchors保持NFKC trim smart case count byte和dedupe规则
+  source: design key decision 4
+  status: passed
+- id: C8
+  item: F2 anchor requestIndex继续绑定dedupe后首次raw index且F6 file semantics替换旧backslash normalize seam
+  source: design key decision 4
+  status: passed
+- id: C9
+  item: SearchPlanInputV2类型不含question displayIntent且backend classifier ranker ID builder无question import或读取
+  source: design key decision 5 / F6-QUESTION-001
+  status: passed
+- id: C10
+  item: missing及不同Unicode secret-like question产生相同normalized terms argv selection ranking outcomes IDs
+  source: F6-QUESTION-001
+  status: passed
+- id: C11
+  item: MCP schema和CLI parser help把question改optional且file backslash拒绝，output仍schemaVersion1.0
+  source: design key decision 6 / F6-TRANSPORT-001
+  status: passed
+- id: C12
+  item: execution context显式命名callerSignal且MCP SDK cancel host shutdown与CLI interrupt都映射caller
+  source: design key decision 7
+  status: passed
+- id: C13
+  item: coordinator同步处理preaborted caller并拥有唯一deadline timer caller listener和内部signal
+  source: design key decision 8 / F6-ABORT-001
+  status: passed
+- id: C14
+  item: caller deadline在close前first-writer-wins且backend local timeout output early-stop不写coordinator source
+  source: design key decision 8 / F6-ABORT-001
+  status: passed
+- id: C15
+  item: closeFinalization只成功一次并原子冻结source clear timer remove listener返回同execution no-own-property token
+  source: design key decision 9
+  status: passed
+- id: C16
+  item: forged cloned cross-execution close token或close后live source查询在owner聚合前fail closed
+  source: design key decision 9 / F6-TRUST-001
+  status: passed
+- id: C17
+  item: 最后一次await严格为F3 snapshot finalCheck且随后purge rank source corpus materialization field-budget core aggregation owner finalizer composer ID schema serializer路径完全同步无I/O timer或Promise
+  source: design key decision 10 / F6-LATCH-001
+  status: passed
+- id: C18
+  item: latch前abort分别cancelled timeout，close后abort不改变当前response，snapshot未完成records不能绕过final check
+  source: design key decision 10 / F6-LATCH-001
+  status: passed
+- id: C19
+  item: coordinator创建后的tool error early return均dispose清timer listener且tool error无envelope
+  source: design key decision 11
+  status: passed
+- id: C20
+  item: aggregator只接收同execution F5 BackendExecutionTraceV2并先调用require accessor，再接fallback token F2 outcome exact F3 snapshotProof及已经由F8 aggregation wrapper通过F2 no-source accessor验证的F1 materialized core、F3-owned contribution、resolved limits和finalized decision；F6只调用F2 ranking fragment-budget与F3 observation accessors，F1 contribution必须与verified core同一identity且F6不导入F1 contribution accessor、F2 materialization token/core accessor；读取snapshot字段前必须以proof和execution调用F3 accessor，不接收caller status limit exclusion arrays
+  source: design key decision 12
+  status: passed
+- id: C21
+  item: caller在backend启动前取消时outcomes空且未启动或skipped backend不进入attempts
+  source: design key decisions 12 and 13 / F6-ATTEMPT-001
+  status: passed
+- id: C22
+  item: F5 trace accessor每backend最多一个outcome并保持真实启动顺序，duplicate backend trace clone cross-execution或attempt field mutation拒绝
+  source: design key decision 14
+  status: passed
+- id: C23
+  item: F5 trace accessor直接返回逐union member不含retainedHits和selectionEligibility且exact匹配BackendAttemptV2的BackendExecutionTelemetryViewV2数组，F6无outcome accessor、hits或eligibility删除重解释路径并exact复制attempt fields；六种CodeGraph observation严格映射固定index state freshness矩阵
+  source: design key decision 14 / F6-INDEX-001
+  status: passed
+- id: C24
+  item: primary verified complete可skip fallback时strategy complete，否则只有required且complete equivalent fallback使strategy complete
+  source: design key decision 13 / F6-STRATEGY-001
+  status: passed
+- id: C25
+  item: fallbackChecked只表示trusted decision branch实际求值且fallback token必须绑定same F5 trace execution，不得由outcome存在与否猜造
+  source: design key decision 13
+  status: passed
+- id: C26
+  item: F2 trusted budget与F3 trusted read-limit facts映射对应limits，只有deadline映射TIMEOUT且output或local timeout不自造limit
+  source: design key decision 15
+  status: passed
+- id: C27
+  item: limits unique并按enum order且MAX_BACKEND在完整fallback后仍保留，F3 exclusion零count省略并按enum order
+  source: design key decision 15
+  status: passed
+- id: C28
+  item: complete equivalent fallback可省primary early-stop output degradation但保留attempt和limit，backend timeout process error不另造degradation
+  source: design key decision 16
+  status: passed
+- id: C29
+  item: F2 source stage从exact normalized terms F2 ranking与F3 stable proof构造unsafe source，第一项element-aware操作由F1B先做shallow count type再做field 4MiB gate，随后F2 strict schema exact pairing并经F1C neutral registrar登记；F1只从source内部构建并guard corpus后一次span materialize，再逐字段应用F1B budget且只在replacement完成后冻结core contribution并登记neutral materialization token；F8 aggregation wrapper是F2 core accessor唯一runtime caller并把core交给F6，只有F6消费最终locationRedacted加入degradation并派生status
+  source: design key decision 16 / F6-MATERIALIZE-001
+  status: passed
+- id: C30
+  item: post-field-budget materialized evidence core保持F2 retained顺序和private record refs且不含status coverage ID，oversized file replacement也投影locationRedacted；source core ranking proof或execution swap由F8唯一core accessor在调用F6前拒绝，contribution snapshot proof或execution swap由F6 owner accessors在读取值前拒绝，F6 source graph无materialization token/core accessor import
+  source: design key decisions 16 and 19 / F6-MATERIALIZE-001
+  status: passed
+- id: C31
+  item: 当前只有F1 materialization与F3 snapshot各自独占contribution type strict schema factory accessor与private registry；F6 required tuple严格为两项canonical order，第0项与F2-verified core contribution同一identity且不重复调用F1 accessor，第1项exact调用F3 accessor，F6不得重复声明branch
+  source: design key decision 19 / F6-CONTRIB-001
+  status: passed
+- id: C32
+  item: 当前F6 source type test graph只import F1 materialization contribution/core type与F3 snapshot owner type accessor fixture，不import F1 contribution accessor或F2 core accessor/token；missing extra duplicate clone cross-execution source proof swap拒绝且不补optional placeholder
+  source: design key decision 19 / F6-CONTRIB-001
+  status: passed
+- id: C33
+  item: status严格按caller deadline backend-unavailable partial ok no-result优先级唯一派生
+  source: design key decision 17 / F6-STATUS-001
+  status: passed
+- id: C34
+  item: F3 snapshot contribution的read limits和四类exclusion count必须来自same snapshot proof并与snapshot changed discarded count一致
+  source: design keys 15 and 19 / F6-CONTRIB-001
+  status: passed
+- id: C35
+  item: backend-unavailable要求零materialized evidence strategy incomplete且所有已启动可用策略均unavailable或failed，used incomplete应为partial
+  source: design key decision 17
+  status: passed
+- id: C36
+  item: BUDGET_EXCEEDED或UNVERIFIED anchor及非空degradation在前三优先级未命中时强制partial，NOT_FOUND不强制
+  source: design key decision 17
+  status: passed
+- id: C37
+  item: v2 caller为cancelled无TIMEOUT和retry，仅允许candidate action
+  source: design key decisions 17 and 18 / F6-NEXT-001
+  status: passed
+- id: C38
+  item: v2 deadline为timeout且有TIMEOUT，仅timeoutMs低于maximum时加入RETRY_WITH_HIGHER_LIMIT
+  source: design key decisions 17 and 18
+  status: passed
+- id: C39
+  item: no-result candidate initialize和partial request-budget actions严格按truth table去重enum order，backend caps local timeout不retry
+  source: design key decision 18 / F6-NEXT-001
+  status: passed
+- id: C40
+  item: materialized evidence core contributions backend和request-outcome fragments statusV2与exact inputs由同一private aggregation proof绑定且proof不含不产生legacy projection；F6 acceptance仅direct-test此proof且production F2 core accessor importer为0；future F8唯一wrapper把opaque identity exact双fragment与statusV2一起提交F1C completion-bearing aggregation registrar
+  source: design key decision 19 / F6-TRUST-001
+  status: passed
+- id: C41
+  item: clone cross-execution fragment core contribution source aggregation identity statusV2 swap及attempt status limit action篡改在F6 direct harness读取前拒绝；future F8 mount还必须在F1C complete-envelope registrar和finalizer前复验，F6 acceptance不得把未来composer serializer计入已执行证据
+  source: design key decisions 19 and 20 / F6-TRUST-001
+  status: passed
+- id: C42
+  item: F5 trace accessor在F6 owner边界前逐union member移除retainedHits selectionEligibility，F6只构造public-neutral BackendAttemptV2数组；materialized composer只合并已经通过public-field budgets的core与owner、exact复制该数组和registered statusV2并按F2顺序分配ID ordinal，composer serializer均不得接收或strip internal outcome、构建corpus redact替换字段canonicalize coverage加入LOCATION_REDACTED或derive status，schema只验证不修正
+  source: design key decision 20 / F6-MATERIALIZE-001
+  status: passed
+- id: C43
+  item: canonical executor既有legacy lane是v1唯一来源，caller deadline都投影v1 timeout且caller旧TIMEOUT仅在legacy视图；v1 projector返回exact object引用而F6不得重建 clone parse redact
+  source: design key decision 21 / F6-V1-001
+  status: passed
+- id: C44
+  item: 其他非input-migrationv1 success no-result partial unavailable IDs order coverage nextActions deep exact，source corpus materialization contribution aggregation owner missing composer serializer每类v2 failure都只使shadow失败且不阻断v1
+  source: design key decision 21 / F6-V1-001
+  status: passed
+- id: C45
+  item: F6 direct integration harness真实产生backend request-outcome status与proof但不写canonical envelope；production import graph中F2 core accessor与F1C aggregation registrar caller均为0；future F8是唯一production mount owner并保持MCP CLI不可达v2 projector
+  source: design key decision 22 / F6-ENVELOPE-001
+  status: passed
+- id: C46
+  item: 当前F1 F3只能提交同execution trusted typed contributions而不能构造或替换request-outcome owner；未来child revision也不得获得fragment construction authority
+  source: design key decisions 19 and 22
+  status: passed
+- id: C47
+  item: F1B accepted JSON subset parity覆盖unknown keys dense arrays accessors extra keys toJSON symbol nonenumerable cycle BigInt function nonfinite lone surrogate和minus zero
+  source: design key decision 1 / F6-RAW-001
+  status: passed
+- id: C48
+  item: F6三项ID加入F4 closed union并以exact unit group case三OS fixture assertionOwner和九个required markers在六格执行
+  source: design key decision 23 / platform ownership
+  status: passed
+- id: C49
+  item: large max outcomes anchors exclusions聚合有界且五次permutation hash稳定无raw值artifact
+  source: F6-LARGE-001
+  status: passed
+- id: C50
+  item: architecture compatibility docs scope manifest runner registry review QA acceptance全部闭环
+  source: required actions and artifacts
+  status: passed
+- id: C51
+  item: SnapshotTrustProofV2在F6仅为无own-property token，Object.keys spread JSON为空且stable keys changed set observation ledger canonical maps和bound selection不可访问；F6读取snapshot contribution前只能调用F3 owner accessor
+  source: design opaque snapshot proof boundary / F6-TRUST-001
+  status: passed
+- id: C52
+  item: F4 self-test覆盖F6未扩union漏fixture owner wrong-path zero-marker错tuple重复case缩小OS且三个assertion owner均位于test/unit，不创建test/platform
+  source: design key decision 23 / F6-INPUT-001 F6-ABORT-001 F6-LATCH-001
+  status: passed
+- id: C53
+  item: design §3.2的19个stable ID各自只出现一行并映射唯一exact group case fixture assertion runner manifest contract或Golden owner，禁止same existing抽象owner且unknown duplicate zero-run fail closed；三个platform case还须与F6-INPUT-001 F6-ABORT-001 F6-LATCH-001 exact tuple一致
+  source: design §3.2 case fixture ownership inventory / S1 S2 S3 S4 S5
+  status: passed
+dod:
+  commands:
+  - id: CMD-BUILD
+    command: npm run build
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-TYPECHECK
+    command: npm run typecheck
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-F6-UNIT
+    command: npm test -- --group input-abort-contract-v2
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-UPSTREAM-REGRESSION
+    command: npm test -- --group locate-status --group streaming-ripgrep --group request-snapshot-cache --group relevance-ranking-budget --group canonical-locate-bridge --group public-output-v2
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-UNIT-ALL
+    command: npm test
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-F6-GOLDEN
+    command: npm run test:golden -- --group input-abort-contract-v2
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-GOLDEN-ALL
+    command: npm run test:golden -- --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-MCP-ALL
+    command: npm run test:mcp -- --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-DOCS
+    command: npm run test:docs
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-PLATFORM
+    command: npm run test:platform
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-YAML
+    command: python .codestable/tools/validate-yaml.py --file .codestable/features/2026-07-24-input-abort-contract-v2/input-abort-contract-v2-checklist.yaml --yaml-only
+    core: false
+    failure_handling: fix-or-block
+  - id: CMD-DOD-GATE
+    command: python .codestable/tools/codestable-dod-contract-gate.py --design .codestable/features/2026-07-24-input-abort-contract-v2/input-abort-contract-v2-design.md --stage design
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-SCOPE-CHECK
+    command: python .codestable/tools/codestable-scope-gate.py --feature-dir .codestable/features/2026-07-24-input-abort-contract-v2 --allow-file .codestable/features/2026-07-24-input-abort-contract-v2/input-abort-contract-v2-scope-allow.txt --check-path . --cleanliness-path src/contracts --cleanliness-path src/evidence --cleanliness-path src/mcp --cleanliness-path tools/cli --cleanliness-path test/unit --cleanliness-path test/golden --cleanliness-path test/mcp --cleanliness-path testkit --stage implementation.before_review
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-SPEC
+    command: python .codestable/tools/codestable-spec-governance.py --root . analyze
+    core: false
+    failure_handling: fix-or-block
+  - id: CMD-DIFF-CHECK
+    command: git diff --check
+    core: false
+    failure_handling: fix-or-block
+  actions:
+  - id: A1
+    action: 更新architecture记录raw guard input latch、F6 aggregator direct integration acceptance、F2 core accessor production importer仍为0、future F8-only core accessor与F1C complete-envelope mount、aggregator accepted和real envelope mounted两个独立gate及legacy exact projector删除条件
+    owner: feature implementer
+    blocking: true
+  - id: A2
+    action: 更新v1-to-v2 compatibility MCP schema CLI help并明确input先迁移output仍v1
+    owner: feature implementer
+    blocking: true
+  - id: A3
+    action: 创建exact scope allow manifest并以CMD-SCOPE-CHECK对check-path根目录执行scope gate
+    owner: feature implementer
+    blocking: true
+  - id: A4
+    action: owner授权后取得F4同revision六格F6 platform markers
+    owner: repository owner
+    blocking: true
+  required_artifacts:
+  - raw budget and F1B compact JSON parity plus filesystem semantic and question non-interference tables
+  - MCP CLI schema help compatibility diff
+  - abort first-writer latch and cleanup reports
+  - backend trace index strategy limit degradation exclusion status next-action truth tables
+  - F2 unsafe source strict schema exact pairing F1C neutral source/materialization registrar and F1 internal corpus materialized core plus current F1 materialization and F3 snapshot two-contribution mutation reports
+  - source 4MiB corpus single span materialization public-field budgets core contribution freeze F8-only no-source core accessor and F6 no-accessor-import aggregation F1C composer ID public schema serialized 1MiB ordering and corpus provenance report
+  - materialized composer and strict serializer zero-redaction zero-status-derivation report
+  - request outcome aggregation proof mutation report
+  - aggregator owner direct integration inventory, zero production core-accessor and registrar importer report, future F8 mount ABI, and v1 exact-reference isolation Golden
+  - large bounded permutation plus F4 closed union three exact unit binding owner-path mutations and nine-marker six-cell reports
+  - 19 stable ID exact group case fixture assertion runner manifest contract and Golden ownership inventory
+  - runner registry delta
+  - architecture and compatibility updates
+  - scope allow manifest and full changed-path inventory
+  - review QA acceptance
+  cleanliness:
+    filesystem_nfkc_trim_or_backslash_repair: forbidden
+    question_in_search_plan_ranking_or_id: forbidden
+    await_or_io_after_finalization_latch: forbidden
+    second_request_outcome_owner_or_mapper: forbidden
+    serializer_redaction_coverage_canonicalization_or_status_derivation: forbidden
+    raw_path_question_abort_reason_or_backend_output_artifact: forbidden
+    placeholder_owner_or_fake_completeness: forbidden
+    premature_v2_transport: forbidden
+    debug_output_todo_fixme_commented_code: forbidden

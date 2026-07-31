@@ -1,0 +1,26 @@
+# F8 language-capability-boundary implementation scope
+.codestable/features/2026-07-24-language-capability-boundary
+.codestable/roadmap/repo-nav-public-beta
+.codestable/architecture/system-repo-nav-foundation.md
+src/evidence/language/
+src/evidence/direct-mapping-classifier.ts
+src/evidence/candidate-policy.ts
+src/evidence/candidate-policy/
+src/evidence/request-snapshot/
+src/evidence/scope/
+src/evidence/request-outcome/
+src/evidence/public-output/
+src/evidence/canonical/
+src/evidence/locate-execution/
+src/evidence/evidence.module.ts
+src/evidence/ranking/
+src/contracts/v2/
+test/unit/
+test/golden/
+testkit/fixtures/language-capability-v2/
+testkit/fixtures/request-outcome-v2/
+testkit/fixtures/scope-v1/
+testkit/runners/runner-registry.ts
+testkit/contracts/
+testkit/testing/
+testkit/manifests/

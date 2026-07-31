@@ -1,11 +1,12 @@
 import { setTimeout as delay } from 'node:timers/promises';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect } from 'vitest';
 
 import {
   connectMcpStdioFixture,
   type McpStdioFixtureSession,
 } from '../../testkit/contracts/index.js';
+import { platformContractIt } from '../../testkit/testing/platform-contract.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
 const identity = {
@@ -35,59 +36,74 @@ function cancellationArguments(): Readonly<Record<string, unknown>> {
 }
 
 describe.runIf(isSelected(identity))('MCP request cancellation cleanup', () => {
-  it('does not lose cancellation sent before the handler starts work', async () => {
-    const session = await connectMcpStdioFixture();
-    const controller = new AbortController();
-    try {
-      const call = session.client.callTool(
-        { name: 'repo_nav_locate', arguments: cancellationArguments() },
-        undefined,
-        { signal: controller.signal },
-      );
-      controller.abort();
-      await expect(call).rejects.toThrow();
-      await delay(100);
+  platformContractIt(
+    'F4-MCP-001',
+    'pre-handler-cancel',
+    'does not lose cancellation sent before the handler starts work',
+    async () => {
+      const session = await connectMcpStdioFixture();
+      const controller = new AbortController();
+      try {
+        const call = session.client.callTool(
+          { name: 'repo_nav_locate', arguments: cancellationArguments() },
+          undefined,
+          { signal: controller.signal },
+        );
+        controller.abort();
+        await expect(call).rejects.toThrow();
+        await delay(100);
 
-      const stderr = session.readStderr();
-      expect(
-        stderr.length === 0 ||
-          (stderr.includes('MCP_FIXTURE_STARTED') &&
-            stderr.includes('MCP_FIXTURE_ABORTED')),
-      ).toBe(true);
-    } finally {
-      await session.close();
-    }
-  });
+        const stderr = session.readStderr();
+        expect(
+          stderr.length === 0 ||
+            (stderr.includes('MCP_FIXTURE_STARTED') &&
+              stderr.includes('MCP_FIXTURE_ABORTED')),
+        ).toBe(true);
+      } finally {
+        await session.close();
+      }
+    },
+  );
 
-  it('propagates the SDK request signal to the application service', async () => {
-    const session = await connectMcpStdioFixture();
-    const controller = new AbortController();
-    try {
-      const call = session.client.callTool(
-        { name: 'repo_nav_locate', arguments: cancellationArguments() },
-        undefined,
-        { signal: controller.signal },
-      );
+  platformContractIt(
+    'F4-MCP-001',
+    'inflight-signal',
+    'propagates the SDK request signal to the application service',
+    async () => {
+      const session = await connectMcpStdioFixture();
+      const controller = new AbortController();
+      try {
+        const call = session.client.callTool(
+          { name: 'repo_nav_locate', arguments: cancellationArguments() },
+          undefined,
+          { signal: controller.signal },
+        );
+        await waitForStderr(session, 'MCP_FIXTURE_STARTED');
+        controller.abort();
+        await expect(call).rejects.toThrow();
+        await waitForStderr(session, 'MCP_FIXTURE_ABORTED');
+      } finally {
+        await session.close();
+      }
+    },
+  );
+
+  platformContractIt(
+    'F4-MCP-001',
+    'eof-abort',
+    'aborts an in-flight locate when stdin reaches EOF',
+    async () => {
+      const session = await connectMcpStdioFixture();
+      const call = session.client
+        .callTool({
+          name: 'repo_nav_locate',
+          arguments: cancellationArguments(),
+        })
+        .catch(() => undefined);
       await waitForStderr(session, 'MCP_FIXTURE_STARTED');
-      controller.abort();
-      await expect(call).rejects.toThrow();
-      await waitForStderr(session, 'MCP_FIXTURE_ABORTED');
-    } finally {
       await session.close();
-    }
-  });
-
-  it('aborts an in-flight locate when stdin reaches EOF', async () => {
-    const session = await connectMcpStdioFixture();
-    const call = session.client
-      .callTool({
-        name: 'repo_nav_locate',
-        arguments: cancellationArguments(),
-      })
-      .catch(() => undefined);
-    await waitForStderr(session, 'MCP_FIXTURE_STARTED');
-    await session.close();
-    await call;
-    expect(session.readStderr()).toContain('MCP_FIXTURE_ABORTED');
-  });
+      await call;
+      expect(session.readStderr()).toContain('MCP_FIXTURE_ABORTED');
+    },
+  );
 });

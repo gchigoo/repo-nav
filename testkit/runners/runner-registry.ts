@@ -5,6 +5,309 @@ export interface RunnerSelectionRegistry {
   readonly cases: ReadonlySet<string>;
 }
 
+/**
+ * Exact owner-file registration for platform contract surface/group/case tuples.
+ * Paths are repository-relative POSIX paths.
+ */
+export const PLATFORM_CASE_OWNER_REGISTRATION: Readonly<
+  Record<string, readonly string[]>
+> = Object.freeze({
+  'unit/cross-platform-baseline/repository-path-invalid-input': Object.freeze([
+    'test/unit/cross-platform-platform.spec.ts',
+  ]),
+  'unit/cross-platform-baseline/repository-path-posix-symlink-escape':
+    Object.freeze(['test/unit/cross-platform-platform.spec.ts']),
+  'unit/cross-platform-baseline/repository-path-windows-reparse-escape':
+    Object.freeze(['test/unit/cross-platform-platform.spec.ts']),
+  'unit/cross-platform-baseline/repository-path-error-redaction': Object.freeze([
+    'test/unit/cross-platform-platform.spec.ts',
+  ]),
+  'unit/cross-platform-baseline/process-caller-abort-tree-cleanup':
+    Object.freeze(['test/unit/cross-platform-platform.spec.ts']),
+  'unit/cross-platform-baseline/process-timeout-tree-cleanup': Object.freeze([
+    'test/unit/cross-platform-platform.spec.ts',
+  ]),
+  'unit/cross-platform-baseline/process-stdout-n-plus-one-boundary':
+    Object.freeze(['test/unit/cross-platform-platform.spec.ts']),
+  'unit/cross-platform-baseline/process-stderr-n-plus-one-boundary':
+    Object.freeze(['test/unit/cross-platform-platform.spec.ts']),
+  'unit/cross-platform-baseline/process-cleanup-invariant-fault': Object.freeze([
+    'test/unit/cross-platform-platform.spec.ts',
+  ]),
+  'mcp/mcp-surface/request-cancellation-cleanup': Object.freeze([
+    'test/mcp/request-cancellation.spec.ts',
+  ]),
+  'mcp/lifecycle/shutdown-cleanup-probe': Object.freeze([
+    'test/mcp/lifecycle-contract.spec.ts',
+  ]),
+  'unit/cross-platform-ci-contract/workflow-matrix-contract': Object.freeze([
+    'test/unit/cross-platform-ci-contract.spec.ts',
+  ]),
+  'unit/cross-platform-ci-contract/runtime-cell-contract': Object.freeze([
+    'test/unit/cross-platform-ci-contract.spec.ts',
+  ]),
+  'unit/cross-platform-ci-contract/safe-platform-report': Object.freeze([
+    'test/unit/platform-evidence-report.spec.ts',
+  ]),
+  'unit/cross-platform-ci-contract/synthetic-extension-protocol': Object.freeze([
+    'test/unit/cross-platform-ci-contract.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/process-n-plus-one-boundary': Object.freeze([
+    'test/unit/safe-process-streaming-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/process-terminal-races': Object.freeze([
+    'test/unit/safe-process-streaming-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/consumer-progress-contract': Object.freeze([
+    'test/unit/safe-process-streaming-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/buffered-compatibility-projection': Object.freeze([
+    'test/unit/safe-process-streaming-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/stream-consumer-finalizer-and-process-exit':
+    Object.freeze(['test/unit/safe-process-streaming-v2.spec.ts']),
+  'unit/streaming-ripgrep/stream-consumer-progress-and-boundary': Object.freeze([
+    'test/unit/safe-process-streaming-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/json-line-partitions': Object.freeze([
+    'test/unit/ripgrep-json-line-consumer-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/json-line-invalid': Object.freeze([
+    'test/unit/ripgrep-json-line-consumer-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/protocol-fsm-and-offsets': Object.freeze([
+    'test/unit/ripgrep-json-line-consumer-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/ripgrep-json-stream-protocol': Object.freeze([
+    'test/unit/ripgrep-json-line-consumer-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/max-hits-groups': Object.freeze([
+    'test/unit/ripgrep-streaming-backend-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/multi-view-cap-and-order': Object.freeze([
+    'test/unit/ripgrep-streaming-backend-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/exit-outcome-table': Object.freeze([
+    'test/unit/ripgrep-streaming-backend-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/outcome-schema': Object.freeze([
+    'test/unit/backend-execution-outcome-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/codegraph-outcome-trace': Object.freeze([
+    'test/unit/backend-execution-trace-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/physical-start-authority': Object.freeze([
+    'test/unit/backend-physical-attempt-executor-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/eligibility-gate': Object.freeze([
+    'test/unit/canonical-locate-execution.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/v1-parity-and-trace': Object.freeze([
+    'test/unit/canonical-locate-execution.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/backend-trace-closure': Object.freeze([
+    'test/unit/backend-execution-trace-v2.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/real-cleanup': Object.freeze([
+    'test/unit/process-cleanup.spec.ts',
+  ]),
+  'unit/streaming-ripgrep/ripgrep-early-stop-tree-cleanup': Object.freeze([
+    'test/unit/process-cleanup.spec.ts',
+  ]),
+  'golden/streaming-ripgrep/large-streaming-ripgrep': Object.freeze([
+    'test/golden/large-streaming-ripgrep.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/repository-path-input': Object.freeze([
+    'test/unit/locate-request-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/file-anchor-input': Object.freeze([
+    'test/unit/locate-request-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/semantic-input': Object.freeze([
+    'test/unit/locate-request-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/question-non-interference': Object.freeze([
+    'test/unit/locate-request-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/raw-budget': Object.freeze([
+    'test/unit/locate-request-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/platform-input-boundary': Object.freeze([
+    'test/unit/locate-request-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/cli-input-contract': Object.freeze([
+    'test/unit/cli-input-contract-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/abort-first-writer': Object.freeze([
+    'test/unit/locate-abort-coordinator-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/platform-abort-first-writer': Object.freeze([
+    'test/unit/locate-abort-coordinator-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/finalization-latch': Object.freeze([
+    'test/unit/canonical-locate-finalization-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/platform-finalization-latch': Object.freeze([
+    'test/unit/canonical-locate-finalization-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/backend-attempt-aggregation': Object.freeze([
+    'test/unit/request-outcome-aggregator-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/index-observation-matrix': Object.freeze([
+    'test/unit/request-outcome-aggregator-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/strategy-completeness': Object.freeze([
+    'test/unit/request-outcome-aggregator-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/contribution-trust': Object.freeze([
+    'test/unit/request-outcome-aggregator-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/public-materialization-order': Object.freeze([
+    'test/unit/request-outcome-aggregator-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/status-priority': Object.freeze([
+    'test/unit/request-outcome-aggregator-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/next-action-policy': Object.freeze([
+    'test/unit/request-outcome-aggregator-v2.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/aggregator-owner-direct-integration':
+    Object.freeze(['test/unit/request-outcome-aggregator-v2.spec.ts']),
+  'unit/input-abort-contract-v2/outcome-proof': Object.freeze([
+    'test/unit/canonical-locate-facts-bridge.spec.ts',
+  ]),
+  'unit/input-abort-contract-v2/v1-compatibility': Object.freeze([
+    'test/unit/canonical-locate-execution.spec.ts',
+  ]),
+  'golden/input-abort-contract-v2/v1-compatibility': Object.freeze([
+    'test/golden/input-abort-contract-v2.spec.ts',
+  ]),
+  'golden/input-abort-contract-v2/large-request-outcome-permutation':
+    Object.freeze(['test/golden/large-synthetic-repository.spec.ts']),
+  'golden/repository-scope-policy/v1-compatibility': Object.freeze([
+    'test/golden/repository-scope-policy.spec.ts',
+  ]),
+  'golden/repository-scope-policy/large-scope-permutation': Object.freeze([
+    'test/golden/repository-scope-policy.spec.ts',
+  ]),
+  'mcp/input-abort-contract-v2/mcp-input-and-cancel': Object.freeze([
+    'test/mcp/request-cancellation-v2.spec.ts',
+  ]),
+  'unit/repository-scope-policy/move-only-characterization': Object.freeze([
+    'test/unit/direct-mapping-classifier.spec.ts',
+  ]),
+  'unit/repository-scope-policy/path-comparison': Object.freeze([
+    'test/unit/repository-scope-policy.spec.ts',
+  ]),
+  'unit/repository-scope-policy/test-priority': Object.freeze([
+    'test/unit/repository-scope-policy.spec.ts',
+  ]),
+  'unit/repository-scope-policy/docs-priority': Object.freeze([
+    'test/unit/repository-scope-policy.spec.ts',
+  ]),
+  'unit/repository-scope-policy/explicit-prefix-priority': Object.freeze([
+    'test/unit/repository-scope-policy.spec.ts',
+  ]),
+  'unit/repository-scope-policy/ordinary-segment-priority': Object.freeze([
+    'test/unit/repository-scope-policy.spec.ts',
+  ]),
+  'unit/repository-scope-policy/request-scope': Object.freeze([
+    'test/unit/repository-scope-policy.spec.ts',
+  ]),
+  'unit/repository-scope-policy/priority': Object.freeze([
+    'test/unit/repository-scope-policy.spec.ts',
+  ]),
+  'unit/repository-scope-policy/explicit-test-docs': Object.freeze([
+    'test/unit/direct-mapping-classifier.spec.ts',
+  ]),
+  'unit/repository-scope-policy/pre-budget-selection': Object.freeze([
+    'test/unit/repository-scope-selection.spec.ts',
+  ]),
+  'unit/repository-scope-policy/safe-key-collision': Object.freeze([
+    'test/unit/repository-scope-selection.spec.ts',
+  ]),
+  'unit/repository-scope-policy/filter-counts': Object.freeze([
+    'test/unit/repository-scope-integration.spec.ts',
+  ]),
+  'unit/repository-scope-policy/unmatched-stable-pool': Object.freeze([
+    'test/unit/repository-scope-integration.spec.ts',
+  ]),
+  'unit/repository-scope-policy/candidate-pool': Object.freeze([
+    'test/unit/candidate-policy.spec.ts',
+  ]),
+  'unit/repository-scope-policy/scope-bound-evidence-materializer-v2':
+    Object.freeze(['test/unit/scope-bound-evidence-materializer-v2.spec.ts']),
+  'unit/repository-scope-policy/trust-proof': Object.freeze([
+    'test/unit/repository-scope-trust.spec.ts',
+  ]),
+  'unit/repository-scope-policy/real-owner-envelope': Object.freeze([
+    'test/unit/repository-scope-trust.spec.ts',
+  ]),
+  'unit/repository-scope-policy/v1-compatibility': Object.freeze([
+    'test/unit/repository-scope-trust.spec.ts',
+  ]),
+  'unit/repository-scope-policy/large-scope-permutation': Object.freeze([
+    'test/unit/repository-scope-trust.spec.ts',
+  ]),
+  'unit/repository-scope-policy/platform-path-flavor-and-priority':
+    Object.freeze(['test/unit/scope-policy-platform.spec.ts']),
+  'unit/language-capability-boundary/move-only-characterization': Object.freeze([
+    'test/unit/direct-mapping-classifier.spec.ts',
+    'test/unit/candidate-policy.spec.ts',
+  ]),
+  'unit/language-capability-boundary/extension-registry': Object.freeze([
+    'test/unit/language-adapter-registry-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/typescript-adapter': Object.freeze([
+    'test/unit/language-evidence-adapters-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/javascript-adapter': Object.freeze([
+    'test/unit/language-evidence-adapters-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/one-time-lexical-facts': Object.freeze([
+    'test/unit/language-lexical-facts-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/embedded-sql-completeness': Object.freeze([
+    'test/unit/language-evidence-adapters-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/sql-adapter': Object.freeze([
+    'test/unit/language-evidence-adapters-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/fallback-literal': Object.freeze([
+    'test/unit/language-evidence-adapters-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/scope-candidate-ceiling': Object.freeze([
+    'test/unit/language-capability-integration-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/adapter-product-table': Object.freeze([
+    'test/unit/language-capability-integration-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/stable-eligible-count': Object.freeze([
+    'test/unit/language-capability-integration-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/capability-proof': Object.freeze([
+    'test/unit/canonical-locate-facts-bridge.spec.ts',
+  ]),
+  'unit/language-capability-boundary/capability-contribution': Object.freeze([
+    'test/unit/language-capability-integration-v2.spec.ts',
+  ]),
+  'unit/language-capability-boundary/real-complete-shadow': Object.freeze([
+    'test/unit/canonical-locate-execution.spec.ts',
+    'test/unit/di.spec.ts',
+  ]),
+  'unit/language-capability-boundary/language-extension-and-fallback':
+    Object.freeze(['test/unit/language-capability-platform.spec.ts']),
+  'unit/public-beta-release/package-install-and-bin-smoke': Object.freeze([
+    'test/unit/public-beta-release-platform.spec.ts',
+  ]),
+  'golden/language-capability-boundary/v2-shadow-and-v1-parity': Object.freeze([
+    'test/golden/language-capability-boundary.spec.ts',
+  ]),
+  'golden/language-capability-boundary/large-adapter-set': Object.freeze([
+    'test/golden/large-synthetic-repository.spec.ts',
+  ]),
+});
+
 export const RUNNER_GROUP_ALIASES: Readonly<
   Record<RunnerSurface, Readonly<Record<string, readonly string[]>>>
 > = Object.freeze({
@@ -65,12 +368,36 @@ export const RUNNER_SELECTIONS: Readonly<
       'debug-cli-locate',
       'debug-cli-probe',
       'debug-cli-golden',
+      'public-output-v2',
+      'canonical-locate-bridge',
+      'request-snapshot-cache',
+      'relevance-ranking-budget',
+      'cross-platform-ci-contract',
+      'cross-platform-baseline',
+      'streaming-ripgrep',
+      'input-abort-contract-v2',
+      'repository-scope-policy',
+      'language-capability-boundary',
+      'public-beta-release',
     ]),
     cases: new Set([
       'runner-smoke',
       'term-case-parity',
       'scope-gate-runtime',
       'di-assembly',
+      'canonical-fact-contract',
+      'canonical-required-owner-finalizer',
+      'canonical-materialization-seam',
+      'canonical-single-execution',
+      'canonical-v1-projector-parity',
+      'canonical-v1-shadow-isolation',
+      'canonical-term-case-parity',
+      'canonical-real-shadow-no-cutover',
+      'canonical-synthetic-shadow-serialization',
+      'canonical-safe-error-serialization',
+      'canonical-di-wiring',
+      'canonical-transport-reachability',
+      'canonical-package-declaration-boundary',
       'windows-reparse-policy',
       'reader-limits',
       'reader-failures',
@@ -104,6 +431,177 @@ export const RUNNER_SELECTIONS: Readonly<
       'debug-cli-locate',
       'debug-cli-probe',
       'debug-cli-golden',
+      'schema-contract-families',
+      'field-redaction',
+      'location-redaction',
+      'span-redaction',
+      'corpus-policy',
+      'corpus-boundaries',
+      'phone-corpus-policy',
+      'redaction-amplification',
+      'public-safe-ranking-key',
+      'assembler-allowlist',
+      'ordinal-ids',
+      'derived-status',
+      'safe-errors',
+      'synthetic-parity',
+      'no-cutover-import-inventory',
+      'resource-budget-primitives',
+      'raw-resource-budgets',
+      'corpus-resource-budgets',
+      'public-field-resource-budgets',
+      'serialized-resource-budget',
+      'maximum-structure-budget',
+      'resource-budget-ordering',
+      'resource-budget-projection',
+      'resource-budget-legacy-isolation',
+      'workflow-matrix-contract',
+      'runtime-cell-contract',
+      'safe-platform-report',
+      'synthetic-extension-protocol',
+      'repository-path-invalid-input',
+      'repository-path-posix-symlink-escape',
+      'repository-path-windows-reparse-escape',
+      'repository-path-error-redaction',
+      'process-caller-abort-tree-cleanup',
+      'process-timeout-tree-cleanup',
+      'process-stdout-n-plus-one-boundary',
+      'process-stderr-n-plus-one-boundary',
+      'process-cleanup-invariant-fault',
+      'anchor-intent-normalization',
+      'discovery-anchor-file-reservation',
+      'match-priority-truth-table',
+      'real-classifier-ranking',
+      'public-safe-ranking-order',
+      'anchor-satisfaction-truth-table',
+      'anchor-record-reservation',
+      'cross-file-round-robin',
+      'unsatisfied-anchor-ledger',
+      'ranking-permutation',
+      'ranking-trust-finalizer',
+      'public-materialization-source-stage',
+      'public-materialization-real-adapter',
+      'ranking-real-envelope',
+      'v1-no-cutover',
+      'request-file-cache-single-decode',
+      'request-file-cache-canonical-alias',
+      'discovery-reservation-budget-independence',
+      'scope-pre-cap-fold',
+      'legacy-scope-policy-pool',
+      'verified-record-cache-preverification-reuse',
+      'pre-ranking-stable-pool',
+      'snapshot-v1-parity',
+      'snapshot-coverage-truth-table',
+      'snapshot-outcome-contribution',
+      'snapshot-mutation-purge',
+      'snapshot-failure-and-abort-purge',
+      'snapshot-v1-mutation-precedence',
+      'snapshot-trust-finalizer',
+      'producer-basis-receipts',
+      'verified-language-consumer-carrier',
+      'scope-coverage-basis',
+      'snapshot-git-state',
+      'snapshot-real-envelope',
+      'executor-dual-lane-wiring',
+      'process-n-plus-one-boundary',
+      'process-terminal-races',
+      'consumer-progress-contract',
+      'buffered-compatibility-projection',
+      'stream-consumer-finalizer-and-process-exit',
+      'stream-consumer-progress-and-boundary',
+      'json-line-partitions',
+      'json-line-invalid',
+      'protocol-fsm-and-offsets',
+      'ripgrep-json-stream-protocol',
+      'max-hits-groups',
+      'multi-view-cap-and-order',
+      'exit-outcome-table',
+      'outcome-schema',
+      'codegraph-outcome-trace',
+      'physical-start-authority',
+      'eligibility-gate',
+      'v1-parity-and-trace',
+      'backend-trace-closure',
+      'real-cleanup',
+      'ripgrep-early-stop-tree-cleanup',
+      'repository-path-input',
+      'file-anchor-input',
+      'semantic-input',
+      'question-non-interference',
+      'raw-budget',
+      'platform-input-boundary',
+      'cli-input-contract',
+      'abort-first-writer',
+      'platform-abort-first-writer',
+      'finalization-latch',
+      'platform-finalization-latch',
+      'backend-attempt-aggregation',
+      'index-observation-matrix',
+      'strategy-completeness',
+      'contribution-trust',
+      'public-materialization-order',
+      'status-priority',
+      'next-action-policy',
+      'aggregator-owner-direct-integration',
+      'outcome-proof',
+      'v1-compatibility',
+      'mcp-input-and-cancel',
+      'move-only-characterization',
+      'path-comparison',
+      'test-priority',
+      'docs-priority',
+      'explicit-prefix-priority',
+      'ordinary-segment-priority',
+      'request-scope',
+      'priority',
+      'explicit-test-docs',
+      'pre-budget-selection',
+      'safe-key-collision',
+      'filter-counts',
+      'unmatched-stable-pool',
+      'candidate-pool',
+      'scope-bound-evidence-materializer-v2',
+      'trust-proof',
+      'real-owner-envelope',
+      'large-scope-permutation',
+      'platform-path-flavor-and-priority',
+      'move-only-characterization',
+      'extension-registry',
+      'typescript-adapter',
+      'javascript-adapter',
+      'one-time-lexical-facts',
+      'embedded-sql-completeness',
+      'sql-adapter',
+      'fallback-literal',
+      'scope-candidate-ceiling',
+      'adapter-product-table',
+      'stable-eligible-count',
+      'capability-proof',
+      'capability-contribution',
+      'real-complete-shadow',
+      'language-extension-and-fallback',
+      'v2-shadow-and-v1-parity',
+      'large-adapter-set',
+      'projector-cutover',
+      'transport-receipt-parity',
+      'single-execution',
+      'failure-order',
+      'no-v1-runtime',
+      'version-sources',
+      'node-range-declared',
+      'cli-runtime-closure',
+      'package-api',
+      'package-metadata',
+      'quality-gates',
+      'package-install-and-bin-smoke',
+      'package-reproducibility',
+      'installed-closure',
+      'installed-audit',
+      'installed-sbom',
+      'security-document',
+      'migration-document',
+      'real-consumer-read-only',
+      'release-readiness',
     ]),
   }),
   golden: Object.freeze({
@@ -122,9 +620,31 @@ export const RUNNER_SELECTIONS: Readonly<
       'final-status',
       'verification-contract',
       'performance',
+      'public-output-v2',
+      'canonical-locate-bridge',
+      'request-snapshot-cache',
+      'relevance-ranking-budget',
+      'streaming-ripgrep',
+      'input-abort-contract-v2',
+      'repository-scope-policy',
+      'language-capability-boundary',
+      'public-beta-release',
     ]),
     cases: new Set([
       'runner-smoke',
+      'large-release-boundaries',
+      'canonical-v1-bridge-parity',
+      'snapshot-mutation-golden',
+      'z-target-small-budget',
+      'multi-anchor-round-robin',
+      'large-ranking-permutation',
+      'large-repository-request-cache',
+      'large-streaming-ripgrep',
+      'large-request-outcome-permutation',
+      'large-scope-permutation',
+      'v2-shadow-and-v1-parity',
+      'large-adapter-set',
+      'v1-compatibility',
       'manifest-schema',
       'evaluator-smoke',
       'source-field-mapping',
@@ -162,13 +682,23 @@ export const RUNNER_SELECTIONS: Readonly<
       'security-family-contract',
       'final-status-family-contract',
       'contract-code-probes',
+      'public-output-v2-projection',
+      'public-output-v2-determinism',
+      'redaction-amplification',
     ]),
   }),
   mcp: Object.freeze({
-    groups: new Set(['runner-smoke', 'mcp-surface', 'protocol', 'lifecycle']),
+    groups: new Set([
+      'runner-smoke',
+      'mcp-surface',
+      'protocol',
+      'lifecycle',
+      'input-abort-contract-v2',
+    ]),
     cases: new Set([
       'runner-smoke',
       'lifecycle-manifest-schema',
+      'mcp-input-and-cancel',
       'initialize-tools-capability',
       'tool-list-schema',
       'single-tool-readonly',

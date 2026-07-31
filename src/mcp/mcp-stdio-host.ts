@@ -2,25 +2,23 @@ import { Inject, Injectable, type OnModuleDestroy } from '@nestjs/common';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
 
 import {
-  LocateRequestSchema,
-  type LocateRequest,
-  type RepositoryEvidenceService,
-} from '../contracts/index.js';
-import { REPOSITORY_EVIDENCE_SERVICE } from '../runtime/tokens.js';
+  PUBLIC_LOCATE_EXECUTION_APPLICATION_V2,
+  type PublicLocateExecutionApplicationV2,
+} from '../evidence/locate-execution/public-locate-execution-application-v2.js';
+import { createTrustedSerializedPublicToolErrorV2 } from '../evidence/canonical/trusted-serialized-locate-result-v2.js';
+import { issueLocateProjectionExecutionCapabilityV2 } from '../evidence/locate-execution/locate-projection-execution-capability-v2.js';
 import {
-  internalLocateError,
-  invalidLocateInput,
-  serializeLocateToolOutput,
-} from './locate-tool-output.js';
+  promoteTrustedSerializedPublicToolErrorV2,
+  requirePublicLocateTransportValueV2,
+} from '../evidence/locate-execution/public-locate-transport-registry-v2.js';
+import { serializeLocateTransportView } from './locate-tool-output.js';
 import { createRepoNavMcpServer } from './repo-nav-mcp-server.js';
 
 export type McpShutdownReason =
-  | 'eof'
-  | 'signal'
-  | 'transport-error'
-  | 'bootstrap-error';
+  'eof' | 'signal' | 'transport-error' | 'bootstrap-error';
 
 export interface McpStdioHost {
   connect(): Promise<void>;
@@ -48,6 +46,24 @@ function createTrackedCall(): TrackedLocateCall {
   };
 }
 
+function internalErrorTransportView() {
+  const capability = issueLocateProjectionExecutionCapabilityV2();
+  const serialized = createTrustedSerializedPublicToolErrorV2(
+    'INTERNAL_ERROR',
+    undefined,
+    capability,
+  );
+  const bundle = promoteTrustedSerializedPublicToolErrorV2(
+    serialized,
+    capability,
+  );
+  return requirePublicLocateTransportValueV2(
+    bundle.value,
+    bundle.receipt,
+    capability,
+  );
+}
+
 @Injectable()
 export class NodeMcpStdioHost implements McpStdioHost, OnModuleDestroy {
   private readonly server: Server;
@@ -60,8 +76,8 @@ export class NodeMcpStdioHost implements McpStdioHost, OnModuleDestroy {
   private transportErrorHandler: (() => void) | undefined;
 
   public constructor(
-    @Inject(REPOSITORY_EVIDENCE_SERVICE)
-    private readonly evidenceService: RepositoryEvidenceService,
+    @Inject(PUBLIC_LOCATE_EXECUTION_APPLICATION_V2)
+    private readonly locateApplication: PublicLocateExecutionApplicationV2,
   ) {
     this.server = createRepoNavMcpServer(
       async (argumentsValue, signal) =>
@@ -81,9 +97,7 @@ export class NodeMcpStdioHost implements McpStdioHost, OnModuleDestroy {
 
   public connect(): Promise<void> {
     if (this.state !== 'idle') {
-      return Promise.reject(
-        new Error('MCP stdio host can only connect once.'),
-      );
+      return Promise.reject(new Error('MCP stdio host can only connect once.'));
     }
     this.state = 'connecting';
     this.connectPromise = this.performConnect();
@@ -123,26 +137,13 @@ export class NodeMcpStdioHost implements McpStdioHost, OnModuleDestroy {
     sdkSignal: AbortSignal,
   ): Promise<CallToolResult> {
     if (this.state === 'closing' || this.state === 'closed') {
-      return serializeLocateToolOutput(internalLocateError());
+      return serializeLocateTransportView(internalErrorTransportView());
     }
-    const parsed = LocateRequestSchema.safeParse(argumentsValue);
-    if (!parsed.success) {
-      return serializeLocateToolOutput(
-        invalidLocateInput(this.requiresAdditionalTerm(argumentsValue)),
-      );
-    }
-    return await this.executeTrackedLocate(parsed.data, sdkSignal);
-  }
-
-  private requiresAdditionalTerm(
-    argumentsValue: Readonly<Record<string, unknown>> | undefined,
-  ): boolean {
-    const terms = argumentsValue?.terms;
-    return terms === undefined || (Array.isArray(terms) && terms.length === 0);
+    return await this.executeTrackedLocate(argumentsValue, sdkSignal);
   }
 
   private async executeTrackedLocate(
-    request: LocateRequest,
+    rawRequest: Readonly<Record<string, unknown>> | undefined,
     sdkSignal: AbortSignal,
   ): Promise<CallToolResult> {
     const tracked = createTrackedCall();
@@ -160,12 +161,14 @@ export class NodeMcpStdioHost implements McpStdioHost, OnModuleDestroy {
       abort();
     }
     try {
-      const result = await this.evidenceService.locate(request, {
-        signal: tracked.controller.signal,
+      // SDK cancel and host shutdown both map to callerSignal.
+      const view = await this.locateApplication.execute(rawRequest, {
+        callerSignal: tracked.controller.signal,
       });
-      return serializeLocateToolOutput(result);
+      return serializeLocateTransportView(view);
     } catch {
-      return serializeLocateToolOutput(internalLocateError());
+      // Unexpected transport failure — protocol-level, not a trusted public result.
+      throw new McpError(ErrorCode.InternalError, 'Locate transport failed.');
     } finally {
       sdkSignal.removeEventListener('abort', abort);
       this.shutdownController.signal.removeEventListener('abort', abort);

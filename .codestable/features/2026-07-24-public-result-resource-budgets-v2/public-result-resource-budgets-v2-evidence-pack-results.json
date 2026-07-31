@@ -1,0 +1,40 @@
+{
+  "gate_id": "evidence-pack",
+  "stage": "implementation.before_review",
+  "status": "passed",
+  "blocking": [],
+  "warnings": [],
+  "evidence": [
+    {
+      "out": ".codestable\\features\\2026-07-24-public-result-resource-budgets-v2\\public-result-resource-budgets-v2-evidence-pack.md",
+      "providers": {
+        "archguard": {
+          "status": "unavailable",
+          "reason": "archguard binary not found on PATH",
+          "warnings": []
+        },
+        "meta_cc": {
+          "status": "unavailable",
+          "reason": "meta-cc summary not found; realtime session collection is out of scope",
+          "warnings": []
+        }
+      }
+    }
+  ],
+  "providers": {},
+  "feature": "2026-07-24-public-result-resource-budgets-v2",
+  "inputs": {
+    "design": ".codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-design.md",
+    "checklist": ".codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-checklist.yaml",
+    "out": ".codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-evidence-pack.md",
+    "dod_results": ".codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-dod-results.json",
+    "gate_results": ".codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-gate-results.json"
+  },
+  "input_digests": {
+    "design": "e84998f79382e5167dd0abd1b80c9f300094047e9992e05b7d8fa6b1f061afbf",
+    "checklist": "b51868bb008d7654ed75989b6e9538aaf8cd7ec269251efdc015b61d5ea3873b",
+    "dod_results": "2948c89be553aaa76d3985d48431215adb9a07c939b3afa642d6884b4c2a1996",
+    "gate_results": "51a98f6687098ee595f0670ac1b4d76d45bde6963fb205b14b8a39ae364b2564",
+    "out": "c7ec473ce0498a90541044f5113e000989de95c26e4338f4a57037bd01516871"
+  }
+}

@@ -3,3 +3,7 @@ dist/
 /coverage/
 *.tsbuildinfo
 test-artifacts/
+artifacts/
+
+# F9 owner runtime (must stay untracked)
+.codestable/runtime/

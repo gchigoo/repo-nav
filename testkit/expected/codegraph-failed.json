@@ -1,9 +1,9 @@
 {
   "ok": true,
   "evidence": {
-    "schemaVersion": "1.0",
-    "status": "ok",
-    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "schemaVersion": "2.0",
+    "status": "partial",
+    "repositoryRef": "local-repository",
     "normalizedTerms": [
       {
         "value": "targetField",
@@ -17,10 +17,11 @@
     "confirmed": [
       {
         "evidenceClass": "confirmed",
-        "id": "evidence:v1:8f906341a202cb2348faa31a69c4740a8b01d2964d0b77bd720f4d6ba3ea2ce3",
+        "id": "evidence:v2:0001",
         "role": "value-mapping",
         "location": {
           "file": "server/mapping.ts",
+          "resolvable": true,
           "lines": [
             1,
             2
@@ -38,8 +39,8 @@
           ]
         },
         "reasonCodes": [
-          "DIRECT_ALIAS_MAPPING",
-          "EXACT_TERM_MATCH"
+          "EXACT_TERM_MATCH",
+          "DIRECT_ALIAS_MAPPING"
         ]
       }
     ],
@@ -49,21 +50,65 @@
         {
           "backend": "codegraph",
           "status": "failed",
+          "completion": "incomplete",
+          "termination": "process-error",
           "reasonCode": "BACKEND_PROCESS_FAILED",
           "hitCount": 0
         },
         {
           "backend": "ripgrep",
           "status": "used",
+          "completion": "complete",
+          "termination": "none",
           "hitCount": 1
         }
       ],
+      "strategyComplete": false,
       "fallbackChecked": true,
-      "indexState": "error",
+      "indexState": "unknown",
       "indexFreshness": "unknown",
-      "limitsReached": [],
-      "exclusionSummary": {}
+      "limitsReached": [
+        "MAX_CANDIDATES_REACHED"
+      ],
+      "degradations": [],
+      "exclusionSummary": {},
+      "abortSource": "none",
+      "unsatisfiedAnchors": [],
+      "snapshot": {
+        "gitState": "unknown",
+        "consistency": "stable",
+        "filesChecked": 1,
+        "discardedEvidenceCount": 0
+      },
+      "scope": {
+        "requested": [],
+        "effective": [
+          "client",
+          "server",
+          "db",
+          "config",
+          "unknown"
+        ],
+        "policyVersion": "repo-scope-v1",
+        "unmatchedLayers": [
+          "client",
+          "db",
+          "config",
+          "unknown"
+        ]
+      },
+      "capabilities": {
+        "textSearch": "supported-text-files",
+        "semanticClassification": [
+          "typescript",
+          "javascript",
+          "sql"
+        ],
+        "unsupportedLanguageHits": 0
+      }
     },
-    "nextActions": []
+    "nextActions": [
+      "RETRY_WITH_HIGHER_LIMIT"
+    ]
   }
 }

@@ -1,0 +1,73 @@
+{
+  "gate_id": "scope-gate",
+  "stage": "acceptance.final",
+  "status": "passed",
+  "blocking": [],
+  "warnings": [],
+  "evidence": [
+    {
+      "changed_files": [
+        ".codestable/architecture/system-repo-nav-foundation.md",
+        "testkit/runners/runner-registry.ts",
+        ".codestable/features/2026-07-23-public-output-boundary-v2/approval-report.md",
+        ".codestable/features/2026-07-23-public-output-boundary-v2/goal-plan.md",
+        ".codestable/features/2026-07-23-public-output-boundary-v2/goal-protocol.md",
+        ".codestable/features/2026-07-23-public-output-boundary-v2/goal-state.yaml",
+        ".codestable/features/2026-07-23-public-output-boundary-v2/implementation-scope.txt",
+        ".codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-acceptance.md",
+        ".codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-case-inventory.md",
+        ".codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-checklist.yaml",
+        ".codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-design-review.md",
+        ".codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-design.md",
+        ".codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-evidence-pack.md",
+        ".codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-forbidden-scan-report.md",
+        ".codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-implementation.md",
+        ".codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-no-cutover-report.md",
+        ".codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-qa.md",
+        ".codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-review.md",
+        ".codestable/roadmap/repo-nav-public-beta/approval-report.md",
+        ".codestable/roadmap/repo-nav-public-beta/public-contract-v2.md",
+        ".codestable/roadmap/repo-nav-public-beta/repo-nav-public-beta-items.yaml",
+        ".codestable/roadmap/repo-nav-public-beta/repo-nav-public-beta-roadmap-review.md",
+        ".codestable/roadmap/repo-nav-public-beta/repo-nav-public-beta-roadmap.md",
+        ".codestable/roadmap/repo-nav-public-beta/threat-model.md",
+        ".codestable/roadmap/repo-nav-public-beta/v1-to-v2-compatibility.md",
+        "src/contracts/v2/locate-result-v2.ts",
+        "src/evidence/public-output/public-result-assembler-v2.ts",
+        "src/evidence/public-output/sensitive-value-policy-v2.ts",
+        "src/evidence/public-output/synthetic-locate-projection-v2.ts",
+        "test/golden/public-output-v2.spec.ts",
+        "test/unit/public-output-v2-contract.spec.ts",
+        "test/unit/public-output-v2-errors-projection.spec.ts",
+        "test/unit/public-output-v2-no-cutover.spec.ts",
+        "test/unit/public-output-v2-redaction.spec.ts",
+        "test/unit/public-result-assembler-v2.spec.ts",
+        "testkit/contracts/public-output-v2-import-inventory.ts",
+        "testkit/fixtures/public-output-v2/synthetic-locate-v2.ts"
+      ],
+      "ignored_machine_artifacts": [
+        ".codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-dod-results.json",
+        ".codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-evidence-pack-results.json",
+        ".codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-gate-results.json"
+      ],
+      "allowed_prefixes": [
+        ".codestable/features/2026-07-23-public-output-boundary-v2",
+        ".codestable/features/2026-07-23-public-output-boundary-v2",
+        ".codestable/architecture/system-repo-nav-foundation.md",
+        ".codestable/roadmap/repo-nav-public-beta",
+        "src/contracts/v2",
+        "src/evidence/public-output",
+        "test/unit/public-output-v2-contract.spec.ts",
+        "test/unit/public-output-v2-errors-projection.spec.ts",
+        "test/unit/public-output-v2-no-cutover.spec.ts",
+        "test/unit/public-output-v2-redaction.spec.ts",
+        "test/unit/public-result-assembler-v2.spec.ts",
+        "test/golden/public-output-v2.spec.ts",
+        "testkit/contracts/public-output-v2-import-inventory.ts",
+        "testkit/fixtures/public-output-v2",
+        "testkit/runners/runner-registry.ts"
+      ]
+    }
+  ],
+  "providers": {}
+}

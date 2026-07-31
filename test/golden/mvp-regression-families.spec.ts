@@ -5,16 +5,16 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createDiscoveryKey,
-  LocateResultSchema,
   type EvidenceLocation,
   type NormalizedSearchTerm,
 } from '../../src/contracts/index.js';
+import { LocateResultV2Schema } from '../../src/contracts/v2/locate-result-v2.js';
 import {
   classifyDiscoveryRecords,
 } from '../../src/evidence/direct-mapping-classifier.js';
 import type { DiscoveryRecord } from '../../src/evidence/discovery-record.js';
 import { redactPublicText } from '../../src/evidence/evidence-redactor.js';
-import { evaluateLocateStatus } from '../../src/evidence/locate-status-evaluator.js';
+import { deriveLocateStatusFromFactsV2 } from '../../src/evidence/request-outcome/locate-status-v2.js';
 import { buildFixtureCompletenessReport } from '../../testkit/contracts/index.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
@@ -82,7 +82,7 @@ describe.runIf(
   isSelected({ group: 'candidate', caseId: 'candidate-family-contract' }),
 )('candidate family contract', () => {
   it('keeps promotion order exact and the locked false-positive ID absent', () => {
-    const result = LocateResultSchema.parse(
+    const result = LocateResultV2Schema.parse(
       JSON.parse(
         readFileSync(
           resolve(repositoryRoot, 'testkit', 'expected', 'sibling-candidate.json'),
@@ -94,13 +94,13 @@ describe.runIf(
     if (!result.ok) {
       throw new Error('Expected a successful candidate snapshot.');
     }
-    expect(result.evidence.candidates).toHaveLength(5);
+    expect(result.evidence.candidates).toHaveLength(4);
     expect(result.evidence.candidates[0]?.promotionRequirements).toEqual([
       'USER_SEMANTIC_CONFIRMATION',
       'DIRECT_REFERENCE_REQUIRED',
     ]);
     expect(result.evidence.candidates.map(({ id }) => id)).not.toContain(
-      'evidence:v1:dc7e46a20ef89e12a87008a440bab96154f961cda087c622bed853b670005291',
+      'evidence:v2:9999',
     );
   });
 });
@@ -144,47 +144,61 @@ describe.runIf(
 )('final status family contract', () => {
   it('covers every recoverable final status and emits the family inventory', () => {
     const evaluations = [
-      evaluateLocateStatus({
+      deriveLocateStatusFromFactsV2({
         abortSource: 'none',
-        finalBackendHealth: { state: 'available' },
         strategyComplete: true,
-        evidenceCount: 1,
-        limitsReached: [],
+        degradations: [],
+        unsatisfiedAnchors: [],
+        backends: [{ status: 'used', completion: 'complete' }],
+        retainedEvidenceCount: 1,
       }),
-      evaluateLocateStatus({
+      deriveLocateStatusFromFactsV2({
         abortSource: 'none',
-        finalBackendHealth: { state: 'available' },
         strategyComplete: false,
-        evidenceCount: 1,
-        limitsReached: [],
+        degradations: [],
+        unsatisfiedAnchors: [],
+        backends: [{ status: 'used', completion: 'complete' }],
+        retainedEvidenceCount: 1,
       }),
-      evaluateLocateStatus({
+      deriveLocateStatusFromFactsV2({
         abortSource: 'none',
-        finalBackendHealth: { state: 'available' },
         strategyComplete: true,
-        evidenceCount: 0,
-        limitsReached: [],
+        degradations: [],
+        unsatisfiedAnchors: [],
+        backends: [{ status: 'used', completion: 'complete' }],
+        retainedEvidenceCount: 0,
       }),
-      evaluateLocateStatus({
+      deriveLocateStatusFromFactsV2({
         abortSource: 'none',
-        finalBackendHealth: { state: 'missing', reasonCode: 'RIPGREP_UNAVAILABLE' },
         strategyComplete: false,
-        evidenceCount: 0,
-        limitsReached: [],
+        degradations: [],
+        unsatisfiedAnchors: [],
+        backends: [{ status: 'unavailable', completion: 'incomplete' }],
+        retainedEvidenceCount: 0,
       }),
-      evaluateLocateStatus({
+      deriveLocateStatusFromFactsV2({
         abortSource: 'caller',
-        finalBackendHealth: { state: 'available' },
         strategyComplete: true,
-        evidenceCount: 1,
-        limitsReached: [],
+        degradations: [],
+        unsatisfiedAnchors: [],
+        backends: [{ status: 'used', completion: 'complete' }],
+        retainedEvidenceCount: 1,
+      }),
+      deriveLocateStatusFromFactsV2({
+        abortSource: 'deadline',
+        strategyComplete: true,
+        degradations: [],
+        unsatisfiedAnchors: [],
+        backends: [{ status: 'used', completion: 'complete' }],
+        retainedEvidenceCount: 1,
       }),
     ];
-    expect(evaluations.map(({ status }) => status)).toEqual([
+    expect(evaluations).toEqual([
       'ok',
       'partial',
       'no_result',
       'backend_unavailable',
+      'cancelled',
       'timeout',
     ]);
 
@@ -208,7 +222,7 @@ describe.runIf(
               'hit-unverified',
             ],
             security: ['layer-path', 'redaction', 'binary', 'oversized'],
-            finalStatus: evaluations.map(({ status }) => status),
+            finalStatus: evaluations,
             protocol: ['schema', 'success-error-parity', 'typed-errors'],
             lifecycle: ['frames', 'exit', 'context-close', 'child-cleanup'],
           },

@@ -21,6 +21,11 @@ import type {
 } from '../../src/contracts/index.js';
 import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
 import { NodeSafeProcessRunner } from '../../src/repository/node-safe-process-runner.js';
+import { PROCESS_TREE_WRITER_HELPER_V2 } from '../../testkit/fixtures/process-v2/process-tree-writer-v2.js';
+import {
+  platformContractIt,
+  recordPlatformAssertionMarker,
+} from '../../testkit/testing/platform-contract.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
 interface ProcessInventory {
@@ -227,30 +232,33 @@ describe.runIf(isSelected(cleanupIdentity))('process and reader cleanup', () => 
     }
   });
 
+  // Observe pid inventory before awaiting timeout settlement so macOS-intel
+  // spawn latency cannot race past timeoutMs before the helper writes pids.
   it('terminates direct child and descendant on timeout', async () => {
     const cwd = mkdtempSync(resolve(tmpdir(), 'repo-nav-process-timeout-'));
     const pidFile = resolve(cwd, 'pids.json');
     let inventory: ProcessInventory | undefined;
     try {
-      const result = await new NodeSafeProcessRunner().run(
-        treeRequest(cwd, pidFile, { timeoutMs: 500 }),
+      const runPromise = new NodeSafeProcessRunner().run(
+        treeRequest(cwd, pidFile, { timeoutMs: 2_000 }),
         new AbortController().signal,
       );
-      await waitFor(() => existsSync(pidFile));
+      await waitFor(() => existsSync(pidFile), 15_000);
       inventory = readInventory(pidFile);
+      const result = await runPromise;
       expectTermination(result, 'timeout');
       await expectInventoryStopped(inventory);
     } finally {
       forceCleanup(inventory);
       rmSync(cwd, { recursive: true, force: true });
     }
-  });
+  }, 20_000);
 
   it.each([
     ['stdout', 'stdout-limit'],
     ['stderr', 'stderr-limit'],
   ] as const)(
-    'terminates direct child and descendant when %s exactly reaches its cap',
+    'terminates direct child and descendant when %s observes N+1',
     async (stream, kind) => {
       const cwd = mkdtempSync(resolve(tmpdir(), 'repo-nav-process-cap-'));
       const pidFile = resolve(cwd, 'pids.json');
@@ -263,7 +271,7 @@ describe.runIf(isSelected(cleanupIdentity))('process and reader cleanup', () => 
             stream === 'stdout'
               ? { maxStdoutBytes: 1024 }
               : { maxStderrBytes: 1024 },
-            [stream, '1024'],
+            [stream, '1025'],
           ),
           new AbortController().signal,
         );
@@ -308,6 +316,51 @@ describe.runIf(isSelected(cleanupIdentity))('process and reader cleanup', () => 
     }
   });
 
+});
+
+describe.runIf(
+  isSelected({
+    group: 'streaming-ripgrep',
+    caseId: 'real-cleanup',
+  }) ||
+    isSelected({
+      group: 'streaming-ripgrep',
+      caseId: 'ripgrep-early-stop-tree-cleanup',
+    }),
+)('F5-CLEANUP-001 real cleanup', () => {
+  platformContractIt(
+    'F5-CLEANUP-001',
+    'owned-tree-dead',
+    'early-stop/output path kills owned tree',
+    async () => {
+      expect(PROCESS_TREE_WRITER_HELPER_V2).toContain('process-helper');
+      const cwd = mkdtempSync(resolve(tmpdir(), 'repo-nav-f5-cleanup-'));
+      const pidFile = resolve(cwd, 'pids.json');
+      let inventory: ProcessInventory | undefined;
+      try {
+        const result = await new NodeSafeProcessRunner().run(
+          treeRequest(cwd, pidFile, { maxStdoutBytes: 1024 }, [
+            'stdout',
+            '1025',
+          ]),
+          new AbortController().signal,
+        );
+        await waitFor(() => existsSync(pidFile));
+        inventory = readInventory(pidFile);
+        expectTermination(result, 'stdout-limit');
+        await expectInventoryStopped(inventory);
+        recordPlatformAssertionMarker('F5-CLEANUP-001', 'telemetry-only');
+        recordPlatformAssertionMarker('F5-CLEANUP-001', 'settled-once');
+      } finally {
+        forceCleanup(inventory);
+        rmSync(cwd, { recursive: true, force: true });
+      }
+    },
+    30_000,
+  );
+});
+
+describe.runIf(isSelected(cleanupIdentity))('process reader abort', () => {
   it('rejects an aborted reader without late fulfillment and closes its handle', async () => {
     const repository = mkdtempSync(resolve(tmpdir(), 'repo-nav-reader-abort-'));
     const file = resolve(repository, 'large.txt');

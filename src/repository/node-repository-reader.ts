@@ -1,13 +1,3 @@
-import { constants } from 'node:fs';
-import {
-  access,
-  open,
-  realpath,
-  stat,
-  type FileHandle,
-} from 'node:fs/promises';
-import { isAbsolute, posix, relative, resolve, sep } from 'node:path';
-
 import { Injectable } from '@nestjs/common';
 
 import {
@@ -17,47 +7,20 @@ import {
   type RepositoryReader,
   type RepositoryReadLimits,
 } from '../contracts/index.js';
+import { VerifiedTextFileSourceV2 } from './verified-text-file-source-v2.js';
 
-interface VerifiedTextFile {
-  readonly relativeFile: string;
-  readonly lines: readonly string[];
-}
-
-type VerifiedFileOperation<T> = (
-  handle: FileHandle,
-  canonicalRelativeFile: string,
-  fileSize: number,
-) => Promise<T>;
-
-const READ_CHUNK_BYTES = 64 * 1024;
-
+/**
+ * 无状态 one-shot RepositoryReader；安全 open/decode 委托 VerifiedTextFileSourceV2。
+ */
 @Injectable()
 export class NodeRepositoryReader implements RepositoryReader {
+  private readonly source = new VerifiedTextFileSourceV2();
+
   public async resolveRoot(
     repoPath: string,
     signal: AbortSignal,
   ): Promise<string> {
-    this.assertNotAborted(signal);
-    try {
-      const repositoryRoot = await realpath(repoPath);
-      this.assertNotAborted(signal);
-      const rootStat = await stat(repositoryRoot);
-      this.assertNotAborted(signal);
-      if (!rootStat.isDirectory()) {
-        throw new RepositoryAccessError('INVALID_REPOSITORY');
-      }
-      await access(repositoryRoot, constants.R_OK);
-      this.assertNotAborted(signal);
-      return repositoryRoot;
-    } catch (error: unknown) {
-      if (error instanceof RepositoryAccessError) {
-        throw error;
-      }
-      if (signal.aborted) {
-        throw new RepositoryAccessError('ABORTED');
-      }
-      throw new RepositoryAccessError('INVALID_REPOSITORY');
-    }
+    return this.source.resolveRoot(repoPath, signal);
   }
 
   public async readRange(
@@ -67,7 +30,7 @@ export class NodeRepositoryReader implements RepositoryReader {
     limits: RepositoryReadLimits,
     signal: AbortSignal,
   ): Promise<EvidenceLocation> {
-    const file = await this.readVerifiedText(
+    const file = await this.source.readVerifiedText(
       repositoryRoot,
       relativeFile,
       limits,
@@ -110,7 +73,7 @@ export class NodeRepositoryReader implements RepositoryReader {
     limits: RepositoryReadLimits,
     signal: AbortSignal,
   ): Promise<EvidenceLocation> {
-    const file = await this.readVerifiedText(
+    const file = await this.source.readVerifiedText(
       repositoryRoot,
       relativeFile,
       limits,
@@ -173,7 +136,7 @@ export class NodeRepositoryReader implements RepositoryReader {
     if (!Number.isSafeInteger(maxMatches) || maxMatches < 1) {
       throw new RepositoryAccessError('INVALID_LINE_RANGE', relativeFile);
     }
-    const file = await this.readVerifiedText(
+    const file = await this.source.readVerifiedText(
       repositoryRoot,
       relativeFile,
       limits,
@@ -188,9 +151,9 @@ export class NodeRepositoryReader implements RepositoryReader {
       const termMatches = terms.some((term) =>
         term.caseSensitive
           ? excerpt.includes(term.value)
-          : excerpt.toLocaleLowerCase('und').includes(
-              term.value.toLocaleLowerCase('und'),
-            ),
+          : excerpt
+              .toLocaleLowerCase('und')
+              .includes(term.value.toLocaleLowerCase('und')),
       );
       if (!symbolMatches && !termMatches) {
         continue;
@@ -212,197 +175,6 @@ export class NodeRepositoryReader implements RepositoryReader {
     return Object.freeze(matches);
   }
 
-  private async readVerifiedText(
-    repositoryRoot: string,
-    relativeFile: string,
-    limits: RepositoryReadLimits,
-    signal: AbortSignal,
-  ): Promise<VerifiedTextFile> {
-    this.assertValidLimits(limits, relativeFile);
-    return await this.withVerifiedFile(
-      repositoryRoot,
-      relativeFile,
-      signal,
-      async (handle, canonicalRelativeFile, fileSize) => {
-        if (fileSize > limits.maxFileBytes) {
-          throw new RepositoryAccessError(
-            'MAX_FILE_BYTES_REACHED',
-            canonicalRelativeFile,
-          );
-        }
-        const content = await this.readBounded(
-          handle,
-          canonicalRelativeFile,
-          limits.maxFileBytes,
-          signal,
-        );
-        if (content.includes(0)) {
-          throw new RepositoryAccessError('BINARY_FILE', canonicalRelativeFile);
-        }
-
-        let text: string;
-        try {
-          text = new TextDecoder('utf-8', { fatal: true }).decode(content);
-        } catch {
-          throw new RepositoryAccessError('BINARY_FILE', canonicalRelativeFile);
-        }
-        this.assertNotAborted(signal, canonicalRelativeFile);
-        return {
-          relativeFile: canonicalRelativeFile,
-          lines: Object.freeze(
-            text.replaceAll('\r\n', '\n').replaceAll('\r', '\n').split('\n'),
-          ),
-        };
-      },
-    );
-  }
-
-  private async readBounded(
-    handle: FileHandle,
-    relativeFile: string,
-    maxFileBytes: number,
-    signal: AbortSignal,
-  ): Promise<Uint8Array> {
-    const chunks: Buffer[] = [];
-    let totalBytes = 0;
-
-    while (totalBytes <= maxFileBytes) {
-      this.assertNotAborted(signal, relativeFile);
-      const remaining = maxFileBytes + 1 - totalBytes;
-      const chunk = Buffer.allocUnsafe(Math.min(READ_CHUNK_BYTES, remaining));
-      const { bytesRead } = await handle.read(
-        chunk,
-        0,
-        chunk.byteLength,
-        totalBytes,
-      );
-      this.assertNotAborted(signal, relativeFile);
-      if (bytesRead === 0) {
-        break;
-      }
-      chunks.push(chunk.subarray(0, bytesRead));
-      totalBytes += bytesRead;
-    }
-
-    if (totalBytes > maxFileBytes) {
-      throw new RepositoryAccessError('MAX_FILE_BYTES_REACHED', relativeFile);
-    }
-    return Buffer.concat(chunks, totalBytes);
-  }
-
-  private async withVerifiedFile<T>(
-    repositoryRoot: string,
-    relativeFile: string,
-    signal: AbortSignal,
-    operation: VerifiedFileOperation<T>,
-  ): Promise<T> {
-    const canonicalRelativeFile = this.validateRelativeFile(relativeFile);
-    this.assertNotAborted(signal, canonicalRelativeFile);
-
-    let resolvedRoot: string;
-    try {
-      resolvedRoot = await realpath(repositoryRoot);
-    } catch {
-      throw new RepositoryAccessError('INVALID_REPOSITORY');
-    }
-    this.assertNotAborted(signal, canonicalRelativeFile);
-
-    const targetPath = resolve(
-      resolvedRoot,
-      ...canonicalRelativeFile.split('/'),
-    );
-    let resolvedTarget: string;
-    try {
-      resolvedTarget = await realpath(targetPath);
-    } catch {
-      throw new RepositoryAccessError('FILE_UNREADABLE', canonicalRelativeFile);
-    }
-    this.assertInsideRoot(resolvedRoot, resolvedTarget, canonicalRelativeFile);
-    this.assertNotAborted(signal, canonicalRelativeFile);
-
-    let handle: FileHandle | undefined;
-    try {
-      handle = await open(resolvedTarget, 'r');
-      this.assertNotAborted(signal, canonicalRelativeFile);
-      const handleStat = await handle.stat();
-      this.assertNotAborted(signal, canonicalRelativeFile);
-      if (!handleStat.isFile()) {
-        throw new RepositoryAccessError(
-          'NOT_REGULAR_FILE',
-          canonicalRelativeFile,
-        );
-      }
-
-      const targetAfterOpen = await realpath(targetPath);
-      this.assertInsideRoot(
-        resolvedRoot,
-        targetAfterOpen,
-        canonicalRelativeFile,
-      );
-      this.assertNotAborted(signal, canonicalRelativeFile);
-      return await operation(handle, canonicalRelativeFile, handleStat.size);
-    } catch (error: unknown) {
-      if (error instanceof RepositoryAccessError) {
-        throw error;
-      }
-      if (signal.aborted) {
-        throw new RepositoryAccessError('ABORTED', canonicalRelativeFile);
-      }
-      throw new RepositoryAccessError('FILE_UNREADABLE', canonicalRelativeFile);
-    } finally {
-      await handle?.close();
-    }
-  }
-
-  private validateRelativeFile(relativeFile: string): string {
-    if (
-      relativeFile.length === 0 ||
-      relativeFile.includes('\\') ||
-      posix.isAbsolute(relativeFile) ||
-      isAbsolute(relativeFile) ||
-      posix.normalize(relativeFile) !== relativeFile ||
-      relativeFile === '..' ||
-      relativeFile.startsWith('../')
-    ) {
-      throw new RepositoryAccessError(
-        'INVALID_RELATIVE_PATH',
-        relativeFile.length === 0 ? undefined : relativeFile,
-      );
-    }
-    return relativeFile;
-  }
-
-  private assertInsideRoot(
-    repositoryRoot: string,
-    targetPath: string,
-    relativeFile: string,
-  ): void {
-    const pathFromRoot = relative(repositoryRoot, targetPath);
-    if (
-      pathFromRoot === '..' ||
-      pathFromRoot.startsWith(`..${sep}`) ||
-      isAbsolute(pathFromRoot)
-    ) {
-      throw new RepositoryAccessError('PATH_OUTSIDE_ROOT', relativeFile);
-    }
-  }
-
-  private assertValidLimits(
-    limits: RepositoryReadLimits,
-    relativeFile: string,
-  ): void {
-    if (
-      !Number.isSafeInteger(limits.maxFileBytes) ||
-      !Number.isSafeInteger(limits.maxExcerptBytes) ||
-      !Number.isSafeInteger(limits.maxExcerptLines) ||
-      limits.maxFileBytes < 1 ||
-      limits.maxExcerptBytes < 1 ||
-      limits.maxExcerptLines < 1
-    ) {
-      throw new RepositoryAccessError('INVALID_LINE_RANGE', relativeFile);
-    }
-  }
-
   private assertExcerptWithinLimit(
     excerpt: string,
     relativeFile: string,
@@ -416,10 +188,7 @@ export class NodeRepositoryReader implements RepositoryReader {
     }
   }
 
-  private assertNotAborted(
-    signal: AbortSignal,
-    relativeFile?: string,
-  ): void {
+  private assertNotAborted(signal: AbortSignal, relativeFile?: string): void {
     if (signal.aborted) {
       throw new RepositoryAccessError('ABORTED', relativeFile);
     }

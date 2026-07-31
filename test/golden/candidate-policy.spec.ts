@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 
-import { RepositoryEvidenceEngine } from '../../src/evidence/repository-evidence-engine.js';
+import { createCanonicalLocateEngineHarnessV2 } from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
 import {
   assertGoldenCase,
@@ -26,7 +26,7 @@ const CASE_IDS = [
 ] as const;
 const EXPECTED_CANDIDATES = [
   { symbol: 'sourceAlias', reasonCodes: ['ALIAS_SOURCE_NEIGHBOR'] },
-  { symbol: 'hcp_name', reasonCodes: ['SAME_SCOPE_SIMILAR_IDENTIFIER'] },
+  { symbol: 'hcpId', reasonCodes: ['SAME_SCOPE_SIMILAR_IDENTIFIER'] },
   {
     symbol: 'hcpName',
     reasonCodes: [
@@ -41,7 +41,6 @@ const EXPECTED_CANDIDATES = [
       'SAME_ENTITY_SIBLING',
     ],
   },
-  { symbol: 'hcp_email', reasonCodes: ['SAME_SCOPE_SIMILAR_IDENTIFIER'] },
 ] as const;
 
 function loadCase(caseId: (typeof CASE_IDS)[number]): GoldenSuccessCase {
@@ -55,17 +54,16 @@ function loadCase(caseId: (typeof CASE_IDS)[number]): GoldenSuccessCase {
 }
 
 async function observe(goldenCase: GoldenSuccessCase): Promise<GoldenObservation> {
-  const engine = new RepositoryEvidenceEngine(
-    [new CandidateFixtureBackend()],
+  const engine = createCanonicalLocateEngineHarnessV2([new CandidateFixtureBackend()],
     new NodeRepositoryReader(),
-  );
+  ).service;
   const result = await engine.locate(goldenCase.request, {
     signal: new AbortController().signal,
   });
   return {
-    result,
+    result: result as any,
     mcpIsError: !result.ok,
-    structuredContent: result,
+    structuredContent: result as any,
     textContent: JSON.stringify(result),
   };
 }

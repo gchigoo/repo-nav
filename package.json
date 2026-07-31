@@ -1,24 +1,73 @@
 {
   "name": "repo-nav",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.2.0-beta.1",
+  "private": false,
   "type": "module",
   "description": "Deterministic repository evidence service for local MCP clients.",
+  "license": "MIT",
+  "packageManager": "npm@11.12.1",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "bin": {
     "repo-nav-mcp": "dist/main.js",
-    "repo-nav": "dist/tools/cli/main.js"
+    "repo-nav": "dist/cli/main.js"
   },
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "README.md",
+    "SECURITY.md",
+    "LICENSE",
+    "docs/getting-started-mcp.md",
+    "docs/debug-cli.md",
+    "docs/reference/repo-nav-locate.md",
+    "docs/migration-v1-to-v2.md"
+  ],
   "engines": {
-    "node": ">=20.0.0"
+    "node": "^22.0.0 || ^24.0.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gchigoo/repo-nav.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gchigoo/repo-nav/issues"
+  },
+  "homepage": "https://github.com/gchigoo/repo-nav#readme",
+  "keywords": [
+    "repository-navigation",
+    "mcp",
+    "code-search",
+    "developer-tools"
+  ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && tsc -p tsconfig.cli.json",
+    "clean": "node tools/release/clean-build-output.mjs",
+    "build": "npm run clean && tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint --max-warnings=0 .",
+    "format:check": "prettier --check \"src/**/*.{ts,json,md,mjs}\" \"tools/release/**/*.{mjs,json}\" \"docs/**/*.md\" \"README.md\" \"SECURITY.md\" \"*.mjs\" \"package.json\" \"tsconfig*.json\" --ignore-path .prettierignore",
     "test": "tsx testkit/runners/unit-runner.ts",
     "test:golden": "tsx testkit/runners/golden-runner.ts",
     "test:mcp": "npm run build --silent && tsx testkit/runners/mcp-runner.ts",
     "test:docs": "npm run build --silent && tsx testkit/docs/docs-smoke-runner.ts",
-    "repo-nav": "node dist/tools/cli/main.js"
+    "test:platform": "node --import tsx tools/ci/run-platform-contracts.mjs",
+    "package:metadata:check": "node tools/release/check-package-metadata.mjs",
+    "package:lock:check": "node tools/release/check-package-lock.mjs",
+    "package:emit:check": "node tools/release/check-package-emit.mjs",
+    "package:dry-run": "node tools/release/pack-candidate.mjs --dry-run",
+    "package:smoke": "node tools/release/pack-candidate.mjs --smoke",
+    "package:closure:check": "node tools/release/verify-installed-closure.mjs",
+    "security:audit": "node tools/release/audit-installed-closure.mjs",
+    "security:sbom:check": "node tools/release/verify-installed-sbom.mjs",
+    "release:owner-actions:check": "node tools/release/check-owner-actions.mjs",
+    "repo-nav": "node dist/cli/main.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",
@@ -29,12 +78,21 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@eslint/js": "9.39.5",
     "@nestjs/testing": "11.1.28",
     "@types/node": "24.13.3",
     "ajv": "8.20.0",
+    "eslint": "9.39.5",
+    "globals": "^16.2.0",
+    "npm": "11.12.1",
+    "prettier": "3.9.6",
     "tsx": "4.23.0",
     "typescript": "5.8.3",
+    "typescript-eslint": "8.65.0",
     "vitest": "4.1.10",
     "yaml": "2.9.0"
+  },
+  "overrides": {
+    "fast-uri": "4.1.1"
   }
 }

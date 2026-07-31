@@ -34,7 +34,9 @@ export function createPublicToolError(
     code,
     message: SAFE_PUBLIC_ERROR_MESSAGES[code],
     recoverable: ERROR_RECOVERABILITY[code],
-    ...(approvedAction === undefined ? {} : { suggestedAction: approvedAction }),
+    ...(approvedAction === undefined
+      ? {}
+      : { suggestedAction: approvedAction }),
   });
 }
 
@@ -52,5 +54,8 @@ export function applyPublicErrorPolicy(result: LocateResult): LocateResult {
   if (result.ok) {
     return result;
   }
-  return createPublicErrorResult(result.error.code, result.error.suggestedAction);
+  return createPublicErrorResult(
+    result.error.code,
+    result.error.suggestedAction,
+  );
 }

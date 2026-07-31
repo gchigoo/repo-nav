@@ -1,9 +1,9 @@
 {
   "ok": true,
   "evidence": {
-    "schemaVersion": "1.0",
+    "schemaVersion": "2.0",
     "status": "ok",
-    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "repositoryRef": "local-repository",
     "normalizedTerms": [
       {
         "value": "targetField",
@@ -17,10 +17,11 @@
     "confirmed": [
       {
         "evidenceClass": "confirmed",
-        "id": "evidence:v1:77dfe5388b635d56923956308f7bb6d1bbfea09f87e7cfb6b2100a9bd77e4892",
+        "id": "evidence:v2:0001",
         "role": "value-mapping",
         "location": {
           "file": "server/mapping.fixture",
+          "resolvable": true,
           "lines": [
             1,
             1
@@ -38,8 +39,8 @@
           ]
         },
         "reasonCodes": [
-          "DIRECT_ALIAS_MAPPING",
-          "EXACT_TERM_MATCH"
+          "EXACT_TERM_MATCH",
+          "DIRECT_ALIAS_MAPPING"
         ]
       }
     ],
@@ -49,22 +50,53 @@
         {
           "backend": "ripgrep",
           "status": "used",
+          "completion": "complete",
+          "termination": "none",
           "hitCount": 6
         }
       ],
+      "strategyComplete": true,
       "fallbackChecked": false,
       "indexState": "unknown",
-      "indexFreshness": "not-applicable",
+      "indexFreshness": "unknown",
       "limitsReached": [],
+      "degradations": [],
       "exclusionSummary": {
         "DUPLICATE_LOCATION": 1,
         "UNVERIFIED_FILE_CONTENT": 1,
         "NEGATIVE_TERM_MATCH": 1,
         "OUTSIDE_LAYER_HINT": 3
+      },
+      "abortSource": "none",
+      "unsatisfiedAnchors": [],
+      "snapshot": {
+        "gitState": "unknown",
+        "consistency": "stable",
+        "filesChecked": 1,
+        "discardedEvidenceCount": 0
+      },
+      "scope": {
+        "requested": [],
+        "effective": [
+          "client",
+          "server",
+          "db",
+          "config",
+          "unknown"
+        ],
+        "policyVersion": "repo-scope-v1",
+        "unmatchedLayers": []
+      },
+      "capabilities": {
+        "textSearch": "supported-text-files",
+        "semanticClassification": [
+          "typescript",
+          "javascript",
+          "sql"
+        ],
+        "unsupportedLanguageHits": 0
       }
     },
-    "nextActions": [
-      "CONFIRM_CANDIDATE"
-    ]
+    "nextActions": []
   }
 }

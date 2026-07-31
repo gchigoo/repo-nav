@@ -1,0 +1,128 @@
+roadmap: repo-nav-public-beta
+created: 2026-07-23
+items:
+- slug: public-output-boundary-v2
+  description: 建立 raw/public 模型分离、字段级脱敏、逻辑 repository ref、请求内公共 ID、strict success
+    error schema 与 locate 输出通道 forbidden scan
+  depends_on: []
+  status: done
+  feature: 2026-07-23-public-output-boundary-v2
+  minimal_loop: false
+  notes: 通过 internal test seam 建立 dormant v2 边界但不切换生产 v1；2026-07-23 beta 复审发现的低熵 corpus、placeholder
+    放大和资源上限缺口由后续 corrective items 处理，不改写本条历史验收
+- slug: span-redaction-corpus-policy-v2
+  description: 用基于原始字段 span 的单次物化替换递归字符串替换，并为跨字段 corpus 建立传播资格、匹配边界、电话负样本和多 reason
+    稳定规则
+  depends_on:
+  - public-output-boundary-v2
+  status: done
+  feature: 2026-07-24-span-redaction-corpus-policy-v2
+  minimal_loop: false
+  notes: 2026-07-27 acceptance passed；本地 assignment 始终脱敏；通用 assignment 只有满足传播资格才进入
+    corpus；placeholder 永不二次扫描，路径不得按任意子串命中
+- slug: public-result-resource-budgets-v2
+  description: 为 raw contract、corpus、公共字段和完整序列化响应建立数量与 UTF-8 字节硬上限，并对 N/N+1 和超限 fail-closed
+    行为提供回归证据
+  depends_on:
+  - span-redaction-corpus-policy-v2
+  status: done
+  feature: 2026-07-24-public-result-resource-budgets-v2
+  minimal_loop: true
+  notes: 2026-07-28 acceptance passed；raw/corpus/public/serialized N/N+1 fail-closed；dormant
+    assembler 已接线；minimal_loop 关闭
+- slug: canonical-locate-facts-bridge
+  description: 建立typed partial fact envelope、four-prerequisite admission token、source/materialization
+    registrars、aggregation fresh-completion registrar、只消费completion token的finalizer、v1
+    adapter与不可达transport的v2 shadow
+  depends_on:
+  - public-result-resource-budgets-v2
+  status: done
+  feature: 2026-07-24-canonical-locate-facts-bridge
+  minimal_loop: false
+  notes: 2026-07-28 acceptance passed；production仍v1；test-only v2 shadow；four-prerequisite
+    admission + completion-token finalizer
+- slug: request-snapshot-cache
+  description: 在单一canonical execution内建立legacy-compatible与expanded-v2双lane、raw locator/legacy
+    adapter、scope-folded public-safe selector、请求级snapshot/cache与typed stable trust
+    pool，并在公共组装前丢弃变化文件证据
+  depends_on:
+  - canonical-locate-facts-bridge
+  status: done
+  feature: 2026-07-24-request-snapshot-cache
+  minimal_loop: false
+  notes: 2026-07-28 acceptance passed；request-local snapshot/decode reuse/final purge；production仍v1；Pre-F5单process双视图
+- slug: relevance-ranking-budget
+  description: 在F3 trusted stable pool上实现case-aware anchor、priority-descending结构排序、collision-atomic预算与round-robin，并以唯一two-stage
+    factory完成F1B source preflight、F1 materialization及F1C source/materialization registration
+  depends_on:
+  - request-snapshot-cache
+  status: done
+  feature: 2026-07-24-relevance-ranking-budget
+  minimal_loop: false
+  notes: 2026-07-28 acceptance passed；selector/ranker/F1 materializer/F2 stages dormant；production
+    仍 v1；F8 accessor runtime importer=0；architecture 已回写
+- slug: cross-platform-ci-baseline
+  description: 建立受支持 Node 22/24 与 Windows Linux macOS 的 build typecheck unit Golden
+    MCP docs 和进程路径验证矩阵
+  depends_on:
+  - public-output-boundary-v2
+  status: done
+  feature: 2026-07-24-cross-platform-ci-baseline
+  minimal_loop: false
+  notes: 2026-07-28 acceptance passed；remote run 30323465951 六格+aggregate 全绿；main
+    ruleset required check=cross-platform-required；F5 admission 已满足
+- slug: streaming-ripgrep
+  description: 修正 N+1 输出上限语义，流式解析 ripgrep JSON，在达到 maxHits 或 stdout 上限时保留 bounded
+    attempt telemetry，并输出带 complete-safe-set 或 telemetry-only eligibility 的统一 BackendExecutionOutcomeV2
+  depends_on:
+  - cross-platform-ci-baseline
+  - relevance-ranking-budget
+  status: done
+  feature: 2026-07-24-streaming-ripgrep
+  minimal_loop: false
+  notes: 2026-07-28 acceptance passed；单一 kernel N+1 + ripgrep-stream multi-view + F3
+    handoff/F6 no-hits seam；CodeGraph/v1 bare runner 与远程六格 F5 marker 为 residual
+- slug: input-abort-contract-v2
+  description: 将question定义为可选说明文本，拆分filesystem path normalization，并以direct integration
+    seam聚合backend/request-outcome/status/proof；real envelope mount由F8唯一完成
+  depends_on:
+  - streaming-ripgrep
+  status: done
+  feature: 2026-07-24-input-abort-contract-v2
+  minimal_loop: false
+  notes: 2026-07-28 acceptance passed；raw guard + abort latch + RequestOutcomeAggregatorV2
+    direct seam；production F2 core accessor importer=0；F8-only mount；REV-003/013 与远程六格为 residual
+- slug: repository-scope-policy
+  description: 统一 basename extension nested segment prefix 及冲突优先级、显式 test docs 请求以及
+    confirmed candidate 共用的 scope decision
+  depends_on:
+  - input-abort-contract-v2
+  status: done
+  feature: 2026-07-24-repository-scope-policy
+  minimal_loop: false
+  notes: test 优先于 docs 再优先于 production prefix segment；test docs 即使显式请求仍保持 fail-closed，不直接提升为
+    confirmed；acceptance 2026-07-28 passed；远程六格 F7 marker deferred
+- slug: language-capability-boundary
+  description: 引入TypeScript JavaScript SQL与unsupported fallback adapters，并以唯一ready
+    provider执行four-prerequisite admission、F2两段、F6 aggregation、F1C fresh complete-envelope
+    finalization，装配首个complete real-v2 shadow
+  depends_on:
+  - repository-scope-policy
+  status: done
+  feature: 2026-07-24-language-capability-boundary
+  minimal_loop: false
+  notes: 2026-07-28 acceptance passed；language adapters + capability mount + accepted
+    complete-real shadow；production 仍 v1；empty-ranking seal / aggregation harness /
+    远程六格 F8 marker deferred；F9 cutover 需独立授权
+- slug: public-beta-release
+  description: 原子切换生产 locate schema v2，并补齐版本来源 Node engines license security metadata
+    lint format migration guide package dry-run 与 beta release gate
+  depends_on:
+  - request-snapshot-cache
+  - streaming-ripgrep
+  - language-capability-boundary
+  status: done
+  feature: 2026-07-24-public-beta-release
+  minimal_loop: false
+  notes: 2026-07-31 acceptance passed；production v2 cutover + 0.2.0-beta.1 candidate（private:true
+    保留）；F9-PACK-001 六格 + owner gates + real-consumer ctxline；不 publish/tag/merge main

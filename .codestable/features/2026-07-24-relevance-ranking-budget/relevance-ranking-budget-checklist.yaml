@@ -1,0 +1,393 @@
+feature: 2026-07-24-relevance-ranking-budget
+created: '2026-07-24'
+steps:
+- id: S1
+  action: 冻结anchor intent key、F3 complete-safe-set public-safe candidate origin与读取前safe等价类maxFiles reservation和typed selection绑定
+  exit_signal: selector签名只接收F3 opaque scope-folded token anchors maxFiles execution并在任何观察前调用accessor，qualified跨kind origins不丢且只过滤membership，telemetry prefix不可见，safe collision整组装入或deferred，exact selection在read前绑定ticket和typed proof且零I/O
+  verification: npm test -- --group relevance-ranking-budget --case anchor-intent-normalization --case discovery-anchor-file-reservation
+  artifacts: [anchor intent normalization table, F3 opaque selector pre-observation report, validated safe candidate origin report, raw-order forbidden report, safe-equivalence reservation matrix, opaque tracking proof, permutation logs]
+  status: done
+- id: S2
+  action: 接入F1A PublicSafeRankingKeyV2并实现结构化逐component safe ordering classes、collision exclusion、固定MatchPriority与真实classifier
+  exit_signal: ordering key不含matched anchors或term count且不join serialize，raw discoveryKey hash不参与comparator，priority严格descending且其余scalar vector ascending，跨tier 100必须先于40；distinct完整safe collision整组selection-ambiguous并保留proof-bound pre-exclusion anchor relation，aliases bucket正确，逆序输入与delimiter多字节vector边界负例通过
+  verification: npm test -- --group relevance-ranking-budget --case match-priority-truth-table --case real-classifier-ranking --case public-safe-ranking-order --case anchor-satisfaction-truth-table
+  artifacts: [public-safe ranking-key report, raw comparator forbidden scan, MatchPriority constants, real classifier integration coverage, discriminated ranking fact builder, anchor matcher, tier truth table, satisfaction truth table, negative mutation report]
+  status: done
+- id: S3
+  action: 实现per-anchor reservation、按F3无payloadbucket object分桶的round-robin、safe collision budget facts与proof-bound completeness ledger
+  exit_signal: 每轮每bucket一条，aliases合桶，head collision全排除但collision-anchor relation留在private proof，删除替换cross-execution relation失败；unobserved直接incomplete且unrelated mutation不污染，BUDGET NOT_FOUND UNVERIFIED矩阵稳定
+  verification: npm test -- --group relevance-ranking-budget --case anchor-record-reservation --case cross-file-round-robin --case unsatisfied-anchor-ledger --case ranking-permutation
+  artifacts: [anchor record reservation report, opaque-file per-class round-robin sequences, budget boundary facts, tracked-file outcome and unrelated-mutation ledger matrix, seeded permutation report]
+  status: done
+- id: S4
+  action: 将exact ranking derivations注册为opaque outcome、F6 fragment-budget accessor与future F8 retained-stable-ref least-privilege accessor，闭合source materialization proofs schema core contribution ABI；实现并direct-test只含createSource和materialize的F2 zero-arg stages，createSource先消费F1C opaque four-prerequisite token，再按F1B shallow/raw source preflight、strict schema、F1 unique corpus/single materialization/public-field budgets与F1C exact registrars固定接线；real F2 shadow仍因scope/capability prerequisite missing而停止；F2 acceptance冻结两个accessor的future exact allowlist但production runtime importer必须为0
+  exit_signal: exact ABI compile fixture闭合且F2 stages无aggregate；F2 current production对core和retained accessors importer count均为0，future allowlist只允许F8 aggregation wrapper与capability-coverage模块；selector rank outcome source materialization各trust gate与N+1 zero-element-read、4MiB poison通过，direct harness以synthetic four-prerequisite token取得真实F1C source/materialization tokens，real shadow缺scope/capability时callbacks registrars tokens全0；backend/request-outcome缺失不作为pre-stage blocker而由future aggregation补齐，任一失败later stage为0且production v1 deep exact
+  verification: npm run typecheck && npm test -- --group relevance-ranking-budget --case ranking-trust-finalizer --case public-materialization-source-stage --case public-materialization-real-adapter --case ranking-real-envelope --case v1-no-cutover && npm test -- --group request-snapshot-cache --group canonical-locate-bridge
+  artifacts: [full-input RankingTrustProof and opaque outcome registry, F6 fragment-budget and F8 retained-stable-ref least-privilege accessor report, closed ranking source materialization ABI compile fixture, F1B shallow N+1 zero-element-read then raw 4MiB strict-schema poison report, caller-corpus forbidden and unique corpus report, F1 single materializer core-contribution provenance, distinct-wrapper stable-record and term-provenance pairing matrix, F1C exact source-materialization registrar token chain direct harness, F2-stage missing-first callback registrar token zero report, F8 exact-once acquisition delegation contract, no-aggregate later-stage-zero report, real envelope owner inventory, v1 exact parity and no-cutover report]
+  status: done
+- id: S5
+  action: 完成z-target和multi-anchor Golden、large五轮permutation、exact v1-no-cutover、full regressions、architecture与完整scope hardening
+  exit_signal: 所有核心命令通过且19项Stable ID一对一owner闭环、Golden由truth assertions支撑、package transport仍不可达v2、architecture与scope全部闭环
+  verification: npm run build && npm run typecheck && npm test && npm run test:golden -- --all && npm run test:mcp -- --all && npm run test:docs
+  artifacts: [z-target Golden, multi-anchor Golden, large five-run report, full command logs, package reachability report, architecture update, scope allow manifest, full changed-path inventory, review QA acceptance]
+  status: done
+checks:
+- id: C1
+  item: normalizeAnchorIntentsV2同时保留首次exact normalized value与case-aware comparisonValue，insensitive用toLocaleLowerCase und；kind byte case byte UTF-8 byte length和comparisonValue bytes结构编码去重并保留首次requestIndex与value，Foo foo insensitive只保留首个且现有normalizeLocateAnchors投影value保持legacy exact
+  source: design §1 key decision 1 / F2-ANCHOR-001
+  status: passed
+- id: C2
+  item: rank regular terms按normalized comparison value和case去重稳定排序但不改变backend和legacy term原顺序
+  source: design §1 key decision 2 / F2-PERM-001
+  status: passed
+- id: C3
+  item: selector只接收F3 TrustedScopeFoldedSelectorViewV2 token anchorIntents maxFiles execution，caller不能提供或过滤eligible hits；F3已绑定scope observation fold与fixed 800 cap，被排除hit不可见且不占reservation
+  source: design §1 key decision 3 / F2-DISCOVERY-001
+  status: passed
+- id: C4
+  item: F3 accessor验证exact selector token与execution后才返回只有opaque hit locator refs safeKey lines source origins的facts且origin canonical union不丢；semantic identity raw path symbol不在F2 type
+  source: design §1 key decision 4 / F2-PERM-001
+  status: passed
+- id: C5
+  item: anchor到candidate关系只读取matchedAnchorKeys，不接收reason raw matchedText file symbol或display且不生成tier satisfaction或confirmed
+  source: design §1 key decision 5 / F2-DISCOVERY-001
+  status: passed
+- id: C6
+  item: unique anchor count小于等于maxFiles使用canonical anchor key遍历safe file lines safe symbol source结构化selector等价类，matchedAnchorKeys只过滤membership且querySeedKeys和origins不进入key，input raw或origin permutation不改变selected opaque ref集合
+  source: design §1 key decision 6 / F2-DISCOVERY-001
+  status: passed
+- id: C7
+  item: unique anchor count大于maxFiles时仅读取前reservation按首次requestIndex遍历并通过coverage标记budget deferred
+  source: design §1 key decision 6 / F2-DISCOVERY-001
+  status: passed
+- id: C8
+  item: 每anchor优先复用已选opaque locator ref，否则只在剩余容量容纳整个safe等价类时加入全组，no-hit不消耗容量
+  source: design §1 key decision 6 / F2-DISCOVERY-001
+  status: passed
+- id: C9
+  item: anchor reservation后只按safe等价类补齐opaque locator refs，不能整组装入则全组略过且filesTruncated true，F3 ticket私下解析raw locator
+  source: design §1 key decision 7 / F2-DISCOVERY-001
+  status: passed
+- id: C10
+  item: EvidenceRankerV2在读取records outcomes completeness前用exact pool facts opaque SnapshotTrustProofV2 BoundSafeDiscoverySelectionV2及typed proof通过F3 trust lookup，view无identity canonical discovery string或private ledger
+  source: design §1 key decision 8 / F2-TRUST-001
+  status: passed
+- id: C11
+  item: 每条record只取命中的最高固定MatchPriority但保留全部matched anchor keys且不公开priority
+  source: design §1 key decision 9 / F2-TIER-001
+  status: passed
+- id: C12
+  item: tier100只要求exact file中的verified record并允许candidate class record使file anchor达到confirmed satisfaction
+  source: design §1 key decisions 10 and 17 / F2-TIER-001
+  status: passed
+- id: C13
+  item: tier96要求direct confirmed definition或execution及exact backend canonical symbol，derived location symbol不得冒充
+  source: design §1 key decision 10 / F2-TIER-001
+  status: passed
+- id: C14
+  item: tier95和94分别要求direct confirmed route definition execution与table definition value mapping以及verified exact matched term
+  source: design §1 key decision 10 / F2-TIER-001
+  status: passed
+- id: C15
+  item: tier92适用于exact term anchor verified literal而semantic confirmed与candidate satisfaction仍按class reason独立判断
+  source: design §1 key decisions 10 and 17 / F2-SAT-001
+  status: passed
+- id: C16
+  item: tier88和87只用于exact symbol reference related candidate及route table exact verified candidate且derived只表达candidate relation
+  source: design §1 key decision 10 / F2-TIER-001
+  status: passed
+- id: C17
+  item: tier80要求非explicit-anchor direct CodeGraph structured symbol fact，tier70和60只数direct matchedTerms与regular request terms交集
+  source: design §1 key decision 11 / F2-TIER-001
+  status: passed
+- id: C18
+  item: tier40只接受SECONDARY_BACKEND_HIT candidate且未命中更高tier，generic derived relation无anchor match时ineligible并无隐式tier0
+  source: design §1 key decision 11 / F2-TIER-001
+  status: passed
+- id: C19
+  item: 完整ordering key是tier safe file lineStart lineEnd safe symbol class role reason operation source canonical vectors的结构化只读值，不含matched anchor keys或regular term count且禁止join JSON或自由字符串codec，distinct recordRefs碰撞全部selection-ambiguous
+  source: design §1 key decision 12 / F2-PERM-001
+  status: passed
+- id: C20
+  item: final anchor reservation按canonical anchor key且每anchor最多新增一record，已选record和shared record可覆盖多个anchor
+  source: design §1 key decision 13 / F2-BUDGET-001
+  status: passed
+- id: C21
+  item: 同anchor先尝试confirmed satisfaction再candidate保底但record始终消费自己的class budget，maxCandidates0不创建dummy
+  source: design §1 key decision 14 / F2-BUDGET-001
+  status: passed
+- id: C22
+  item: anchor额外records全部回普通pool不得独占剩余容量
+  source: design §1 key decisions 13 and 15 / F2-BUDGET-001
+  status: passed
+- id: C23
+  item: confirmed与candidate按F3无payloadfileBucketRef object identity分桶且只判membership，每轮按唯一safe head排序每bucket最多一条，aliases共享object
+  source: design §1 key decision 15 / F2-RR-001
+  status: passed
+- id: C24
+  item: final arrays先输出各class按safe comparator排序的anchor records再追加round-robin，assembler只按该顺序materialize并分配ID且不得post-corpus重排
+  source: design §1 key decision 16 / F2-RR-001
+  status: passed
+- id: C25
+  item: 五类anchor satisfaction只从最终retained arrays按冻结role class reason focus谓词重算且不使用读取前reservation声明满足
+  source: design §1 key decision 17 / F2-SAT-001
+  status: passed
+- id: C26
+  item: candidate satisfaction唯一使用UNVERIFIED并使结果至少partial，file anchor不产生candidate satisfaction
+  source: design §1 key decisions 17 and 18 / F2-LEDGER-001
+  status: passed
+- id: C27
+  item: none在matching stable被budget或safe collision移除 selector deferred global truncation F3 proof incomplete或tracked ref purged时使用BUDGET_EXCEEDED
+  source: design §1 key decision 18 / F2-LEDGER-001
+  status: passed
+- id: C28
+  item: F3 anchorCompleteness对任一selected unobserved直接派生incomplete且caller无complete boolean，global snapshot changed不污染unrelated anchor，只有proof complete无match才NOT_FOUND
+  source: design §1 key decision 18 / F2-LEDGER-001
+  status: passed
+- id: C29
+  item: unsatisfiedAnchors对dedup intents唯一并按首次requestIndex升序，confirmed anchors完全省略
+  source: design §1 key decision 18 / F2-LEDGER-001
+  status: passed
+- id: C30
+  item: EvidenceBudgetFactsV2分别记录真实maxFiles maxConfirmed maxCandidates preRankingPoolTruncated、F3 safeSelectorCollision与F2 safeOrderingCollision并只供F6按明确OR公式聚合，两个collision来源不得混用
+  source: design §1 key decision 19 / F2-BUDGET-001
+  status: passed
+- id: C31
+  item: ranking confirmed candidates严格等于retained TrustedStableRecordViewV2映射的exact draft refs且保持class互斥 recordRef唯一，object refs不进入fragment
+  source: design §2.1 contracts / F2-TRUST-001
+  status: passed
+- id: C32
+  item: RankingTrustProof绑定exact opaque outcome fragment pool facts SnapshotTrustProofV2 bound selection ticket typed proof trusted view terms anchors limits execution structured safe ordering collision refs proof completeness trace retained refs和budget facts并拒绝selector snapshot selection outcome clone、reservation篡改、cross-pool ticket execution或伪造ledger
+  source: design §1 key decision 20 / F2-TRUST-001
+  status: passed
+- id: C33
+  item: EvidenceRankingOutcomeV2以frozen no-own-property token创建；F6唯一requireEvidenceRankingOutcomeV2 accessor只返回fragment budget；future allowlist中的requireEvidenceRankingRetainedDecisionViewV2只返回confirmed candidate StableRecordRefV2 arrays并在F2 acceptance没有production importer，F8 acceptance才允许capability-coverage模块成为唯一consumer；二者在暴露前验证exact snapshot proof与execution，retained accessor不能返回raw draft file bucket budget trace或source proof且F6 package不能import，F8不能导入owner-private source view
+  source: design §1 key decisions 20 and 21 / F2-TRUST-001
+  status: passed
+- id: C34
+  item: real canonical success在snapshot后只add一次ranking owner；F2 zero-arg两段factory由direct harness以synthetic four-prerequisite token取得并登记真实F1C source materialization tokens，但F2-stage real shadow因缺scope capability两个prerequisite先返回canonical missing且source materialization callbacks、三个F1C registrars与stage tokens全0；backend request-outcome缺失不阻止source且只能由future aggregation产生；F2不实现aggregate，只有F8补齐four-prerequisite后可exact一次取得并委托两段
+  source: design §1 key decision 21 / F2-ENVELOPE-001
+  status: passed
+- id: C35
+  item: F2 selector ranker ledger proof仅作用expanded v2 facts，legacy继续使用F3 legacy view并保持v1 IDs order status limits coverage deep exact
+  source: design §1 key decision 22 / F2-V1-001
+  status: passed
+- id: C36
+  item: package barrels dist declarations service MCP CLI docs在F9前均不可达v2 assembler或ranking private types
+  source: design §1 key decisions 21 and 22 / F2-V1-001
+  status: passed
+- id: C37
+  item: F5只有complete-safe-set backend或完整fallback outcome可进入F3 pool和selector，telemetry-only retained hits永不进入ranking；F6只经requireEvidenceRankingOutcomeV2消费fragment/budget且aggregator直接接收已验证core，不导入materialization token accessor；F2 acceptance时core与retained accessors production importer均为0并冻结future exact allowlist，F8 acceptance才分别增加exact aggregation wrapper与capability-coverage模块各一个consumer，accepted orchestrator F6 package及其他F8 F9均不得导入；后续owner不得导入raw source view、重做ranking、修改tier、构建caller corpus、复制source materializer或替换materialized fields
+  source: design §1 key decision 23 / F2-ENVELOPE-001
+  status: passed
+- id: C38
+  item: z-target small budget Golden同时断言truth fixture IDs tier ledger和limits而非只更新snapshot
+  source: design §3.2 Golden ownership / F2-DISCOVERY-001
+  status: passed
+- id: C39
+  item: raw backend fields arrival query origins terms anchors safe-collapsed与same-tier records permutations除approved大于maxFiles差异外产生同一selection retained order ledger和budget facts
+  source: design §1 decisions 2 4 6 12 / F2-PERM-001
+  status: passed
+- id: C40
+  item: large synthetic五轮证明rank零reader backend调用且结果hash ledger稳定并无request state残留
+  source: design §3.1 F2-LARGE-001 / S5
+  status: passed
+- id: C41
+  item: design §3.2的19个Stable ID一对一映射唯一group/case fixture assertion runner manifest contract或Golden owner，typecheck ABI由tsconfig和type-spec直接拥有，其余case登记runner registry与coverage ownership，禁止same existing或抽象owner且unknown selector仍失败
+  source: design §3.2 inventory / S5
+  status: passed
+- id: C42
+  item: ACT-ARCH-UPDATE记录expanded intent provenance selector tracking safe-key ranker opaque buckets anchor-specific purge full trust assembler保序 owner fragment和F9 legacy删除条件并通过cs-arch check
+  source: design §3.5 Required Actions / S5
+  status: passed
+- id: C43
+  item: ACT-SCOPE-CHECK使用implementation时ambient baseline exact allow manifest与check-path root对账全部staged unstaged untracked
+  source: design §3.5 Required Actions / S5
+  status: passed
+- id: C44
+  item: 禁止概率confidence locale sort raw signal artifact raw file symbol matchedText comparator absolute canonical path discoveryKey content hash second read post-ID或post-corpus reorder和production v2 edge
+  source: design §1 cleanliness and §3.3 / S5
+  status: passed
+- id: C45
+  item: implementation admission在span-redaction-corpus-policy-v2、public-result-resource-budgets-v2、canonical-locate-facts-bridge和request-snapshot-cache acceptance done前保持阻塞且safe-key guards neutral tokens intent-provenance tracking接口变化必须重跑对应F1A F1B F1C F3和F2 design review
+  source: design §1 dependencies / dependency gate
+  status: passed
+- id: C46
+  item: public-safe ranking order覆盖7 8 512 513 UTF-8 bytes multi-byte local control、两个raw paths同placeholder、symbols同token及raw lexical与safe order相反，任何合法corpus可能隐藏的code units均不进入key
+  source: design §1 key decision 12 and §3.1 F2-SAFEKEY-001 / S2
+  status: passed
+- id: C47
+  item: real backend verification current classifier和F3 pool integration不用手写draft即可覆盖实际可达的96 95 94 92 80 40及candidate tiers，不可达格明确dependency-dormant
+  source: design §3.1 F2-CLASSIFIER-001 / S2
+  status: passed
+- id: C48
+  item: StableRecordRankingFactV2为eligible或ineligible判别联合且ineligible不携带伪priority或隐式零分
+  source: design §2.1 contracts / F2-TIER-001
+  status: passed
+- id: C49
+  item: tracking outcomes与anchorCompleteness只经同proof TrustedSnapshotRankingViewV2读取，unobserved直接incomplete，alias purge同target且unrelated changed target不改变其他anchor ledger
+  source: design §1 key decisions 8 and 18 / F2-LEDGER-001
+  status: passed
+- id: C50
+  item: safe-key policy和无payloadopaque refs均为private deep seam，canonical与discovery metadata只在F3 private trust domain且token映射只在WeakMap，不进入ranking fragment public result日志Golden或package declarations
+  source: design §1 key decisions 12 and 15 / §3.3 reverse scope
+  status: passed
+- id: C51
+  item: public-contract pre-ID safe expanded cap equality-only identity typed selection proof structured ordering collision exclusion proof completeness与partial-telemetry-only增量进入epic统一owner确认，未确认前F2 implementation保持阻塞
+  source: design §4 architecture and unified approval boundary
+  status: passed
+- id: C52
+  item: safe-equivalent distinct locator group在remaining maxFiles不足时全部deferred，不得从group中按arrival raw locator symbol matchedText或discoveryKey挑选
+  source: design §1 key decisions 6-7 / F2-DISCOVERY-001
+  status: passed
+- id: C53
+  item: distinct stable record完整safe ordering key collision全部标selection-ambiguous且不进入anchor reservation或round-robin，但private fact与RankingTrustProof保留pre-exclusion priority orderingKey matchedAnchorKeys和collision-anchor relation；删除替换cross-execution relation失败，budget和anchor completeness诚实记录
+  source: design §1 key decisions 12 and 18 / F2-SAFEKEY-001
+  status: passed
+- id: C54
+  item: OpaqueFileBucketRefV2与StableRecordRefV2只能按object identity使用，不枚举序列化反射或写入artifact，branded string不是合法identity
+  source: design §1 key decisions 8 and 15 / F2-TRUST-001
+  status: passed
+- id: C55
+  item: F2不接收ExpandedBackendHitV2 PreCapPublicSafeDiscoveryPoolV2 folded pool结构 candidate array caller eligibility或caller-ownedExpandedDiscoveryCompletenessV2，类型与forbidden import mutation必须阻止回退
+  source: design §4 architecture and unified approval boundary
+  status: passed
+- id: C56
+  item: SafeDiscoverySelectionDraftV2绑定exact opaque selector view canonical anchor keys selected refs与reserved no-hit budget-deferred状态，F3返回的ticket和SafeDiscoverySelectionProofV2不由F2复制或手写
+  source: design §1 key decisions 6 and 8 / F2-DISCOVERY-001 and F2-TRUST-001
+  status: passed
+- id: C57
+  item: delimiter多字节空vector与vector-boundary mutation证明PublicSafeEvidenceOrderingKeyV2逐component equality和comparison无编码碰撞
+  source: design §1 key decision 12 / F2-SAFEKEY-001
+  status: passed
+- id: C58
+  item: selector与ranker对telemetry-only raw prefix执行零membership零record观察，完整fallback作为独立complete-safe-set进入相同safe pool contract
+  source: design §1 key decision 23 / F2-DISCOVERY-001
+  status: passed
+- id: C59
+  item: DiscoveryHitSelectorV2在任何branch length iteration safeKey或candidate count前调用readScopeFoldedSelectorFactsV2，selector token clone mapping cross-execution使pre-observation spy保持零且不产draft
+  source: design §1 key decisions 3-4 / F2-DISCOVERY-001
+  status: passed
+- id: C60
+  item: EvidenceRankingInputV2与RankingTrustProofV2各自只声明一次exact SnapshotTrustProofV2并携带execution，proof只提交F3 owner accessor；F2不能直接读取stable keys changed set observation ledger或canonical maps
+  source: design §1 key decisions 8 and 20 / F2-TRUST-001
+  status: passed
+- id: C61
+  item: F2-ABI-001 typecheck fixture锁定EvidenceRankingInputV2和RankingTrustProofV2 snapshotProof各exact一次、opaque outcome与F6 fragment-budget accessor及future F8 retained-stable-ref accessor、RankedUnsafeEvidenceRefV2、两种proof、strict UnsafePublicMaterializationSourceV2Schema、MaterializedPublicTermV2 MaterializedEvidenceWithoutIdentityV2 TrustedMaterializedEvidenceCoreV2 PublicMaterializationContributionV2及F1 materializer contribution accessor exact shape，zero-arg F2 factory及Pick port仅createSource materialize，requireF2MaterializedEvidenceCoreV2只接materialization input execution；F2 current import graph两个future accessors均0 runtime consumer且allowlist精确冻结F8 aggregation wrapper和capability-coverage模块，surplus aggregate caller source、任何现存consumer、F6或accepted-orchestrator import或放宽类型必须编译失败
+  source: design §2.1 contracts and §3.1 F2-ABI-001 / S4
+  status: passed
+- id: C62
+  item: createSource先只恢复同input execution的opaque F2 outcome、F3 snapshot proof及source container array identity descriptor，不读length或迭代elements；第一项element-aware操作为F1B preflight，先shallow count type使N+1 getter iterator调用0，再raw field segment和4MiB bounded compact，随后strict source schema与canonical terms、ranked stable refs class order count pairing，最后经registerTrustedLocateProjectionSourceV2登记evidence-only source；任何poison extra key或caller corpus coverage status ID注入固定invalid-facts且later stages为0
+  source: design §1 key decision 21 / F2-SOURCE-001
+  status: passed
+- id: C63
+  item: materialize只接受同input execution已登记source token并exact一次调用F1 materializePublicEvidenceV2，API内部唯一收集normalized terms confirmed candidates corpus，经F1B corpus guard后single span materialize和public-field budgets，caller不能提交空删项重排clone或cross-execution corpus；通过后必须投影F1C neutral identity-value registration并调用registerTrustedLocateProjectionMaterializationV2
+  source: design §1 key decision 21 / F2-MATERIALIZATION-001
+  status: passed
+- id: C64
+  item: TrustedMaterializedEvidenceCoreV2在全部whole-field replacement后才冻结；raw与materialized wrapper object必须distinct，evidence仅按StableRecordRefV2 identity class order count与F2 ranked refs配对，term按source provenance index配对且无ID coverage status；F1 contribution proof accessor绑定source proof和execution，F1C registration把recordRef变为identity并只交无ID value，locationRedacted同时覆盖敏感路径整体隐藏与oversized file replacement
+  source: design §1 key decision 21 / F2-MATERIALIZATION-001
+  status: passed
+- id: C65
+  item: requireF2MaterializedEvidenceCoreV2 exact只接materialization input execution并在暴露任一field前从F2 WeakMap反向恢复sourceToken source core及核对F1C F2 F1 provenance；F2 acceptance production runtime importer count为0且compile inventory仅登记future F8 aggregation wrapper，F8 acceptance才把0变1并把返回core交给只接core的F6真实aggregate；F6不得导入该accessor，F2 package source graph没有aggregate placeholder、F6业务聚合、F8 owner或production consumer
+  source: design §1 key decisions 21 and 23 / F2-ENVELOPE-001
+  status: passed
+- id: C66
+  item: CMD-F2-UNIT以exact --case v1-no-cutover执行F2-V1-001并同时覆盖source/materialization cases，不能只用full unit MCP docs或aggregate no-cutover命令替代
+  source: design §3.2 owner inventory and §3.5 commands / F2-V1-001
+  status: passed
+dod:
+  commands:
+  - id: CMD-BUILD
+    command: npm run build
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-TYPECHECK
+    command: npm run typecheck
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-F2-UNIT
+    command: npm test -- --group relevance-ranking-budget --case anchor-intent-normalization --case discovery-anchor-file-reservation --case match-priority-truth-table --case real-classifier-ranking --case public-safe-ranking-order --case anchor-satisfaction-truth-table --case anchor-record-reservation --case cross-file-round-robin --case unsatisfied-anchor-ledger --case ranking-permutation --case ranking-trust-finalizer --case public-materialization-source-stage --case public-materialization-real-adapter --case ranking-real-envelope --case v1-no-cutover
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-F2-GOLDEN
+    command: npm run test:golden -- --group relevance-ranking-budget --case z-target-small-budget --case multi-anchor-round-robin --case large-ranking-permutation
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-F3
+    command: npm test -- --group request-snapshot-cache
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-F1C
+    command: npm test -- --group canonical-locate-bridge
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-PUBLIC-V2
+    command: npm test -- --group public-output-v2 --case public-safe-ranking-key && npm test -- --group public-output-v2 && npm run test:golden -- --group public-output-v2
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-UNIT-ALL
+    command: npm test
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-GOLDEN-ALL
+    command: npm run test:golden -- --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-MCP-ALL
+    command: npm run test:mcp -- --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-DOCS
+    command: npm run test:docs
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-PACKAGE-NOCUTOVER
+    command: npm run build && npm test -- --group canonical-locate-bridge --case canonical-package-declaration-boundary --case canonical-transport-reachability
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-DOCTOR
+    command: python .codestable/tools/codestable-doctor.py --root .
+    core: false
+    failure_handling: document-baseline
+  - id: CMD-SPEC
+    command: python .codestable/tools/codestable-spec-governance.py --root . analyze
+    core: false
+    failure_handling: fix-or-block
+  - id: CMD-DIFF-CHECK
+    command: git diff --check
+    core: false
+    failure_handling: fix-or-block
+  - id: CMD-SCOPE-CHECK
+    command: python .codestable/tools/codestable-scope-gate.py --feature-dir .codestable/features/2026-07-24-relevance-ranking-budget --allow-file .codestable/features/2026-07-24-relevance-ranking-budget/relevance-ranking-budget-scope-allow.txt --check-path . --cleanliness-path src/contracts/request.ts --cleanliness-path src/contracts/v2 --cleanliness-path src/evidence/direct-mapping-classifier.ts --cleanliness-path src/evidence/request-snapshot --cleanliness-path src/evidence/ranking --cleanliness-path src/evidence/public-output --cleanliness-path src/evidence/canonical --cleanliness-path src/evidence/locate-execution --cleanliness-path test/unit --cleanliness-path test/golden --cleanliness-path testkit --stage implementation.before_review
+    core: true
+    failure_handling: fix-or-block
+  evidence_required: [anchor_intent_normalization_table, F3_opaque_scope_folded_selector_pre_observation_report, validated_safe_candidate_and_origin_union_report, raw_order_and_matched_text_forbidden_report, safe_equivalence_file_reservation_matrix, opaque_tracking_and_bucket_object_report, public_safe_ordering_collision_report, real_classifier_integration_coverage, MatchPriority_truth_table, anchor_satisfaction_truth_table, anchor_record_reservation_report, opaque_file_per_class_round_robin_sequences, proof_bound_completeness_and_unrelated_mutation_ledger_matrix, evidence_budget_facts_report, opaque_snapshot_proof_and_full_exact_input_ranking_trust_mutation_report, opaque_ranking_outcome_F6_fragment_budget_and_F8_retained_stable_ref_accessor_report, closed_ranking_source_materialization_ABI_compile_fixture, F1B_shallow_N_plus_1_zero_element_read_then_raw_4MiB_strict_schema_poison_report, caller_corpus_forbidden_and_unique_corpus_report, F1_single_materializer_core_contribution_provenance, distinct_wrapper_stable_record_and_term_provenance_pairing_matrix, F1C_exact_source_materialization_registrar_token_chain_direct_harness, F2_stage_missing_first_callback_registrar_token_zero_report, F8_exact_once_stage_acquisition_delegation_contract, no_aggregate_later_stage_zero_report, assembler_order_preservation_report, real_envelope_owner_inventory, v1_exact_case_and_deep_no_cutover_report, z_target_and_multi_anchor_golden, large_five_run_permutation_report, nineteen_stable_ID_runner_registry_fixture_ownership_delta, package_reachability_report, architecture_update, scope_allow_manifest, full_changed_path_inventory, command_output, review_report, qa_report, acceptance_report]
+  cleanliness:
+    debug_output: forbidden
+    temporary_todo_fixme: forbidden
+    commented_out_code: forbidden
+    unused_imports: forbidden
+    probability_score_or_confidence: forbidden
+    locale_dependent_sort: forbidden
+    raw_ranking_signal_values_in_artifacts: forbidden
+    raw_file_or_symbol_comparator: forbidden
+    raw_matched_text_or_discovery_key_comparator: forbidden
+    query_or_anchor_raw_values_in_provenance_artifacts: forbidden
+    absolute_or_canonical_path_output: forbidden
+    content_or_git_hash_tiebreak: forbidden
+    filesystem_or_backend_io_during_rank: forbidden
+    implicit_unapproved_priority_tier: forbidden
+    post_id_refill_or_reorder: forbidden
+    post_corpus_assembler_reorder: forbidden
+    caller_supplied_corpus: forbidden
+    source_guard_or_schema_order_bypass: forbidden
+    duplicate_or_parallel_materializer: forbidden
+    f2_aggregate_placeholder: forbidden
+    f2_shadow_stage_token_before_owner_completeness: forbidden
+    f8_raw_ranking_source_view_import: forbidden
+    f8_duplicate_source_or_materializer: forbidden
+    materialized_core_accessor_caller_source_argument: forbidden
+    raw_materialized_wrapper_identity_reuse: forbidden
+    placeholder_owner_facts: forbidden
+    production_v2_transport_edge: forbidden

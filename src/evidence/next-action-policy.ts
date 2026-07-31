@@ -17,7 +17,9 @@ export interface NextActionPolicyInput {
   readonly initializeCodeGraph?: boolean;
 }
 
-function schemaOrder(values: readonly NextActionCode[]): readonly NextActionCode[] {
+function schemaOrder(
+  values: readonly NextActionCode[],
+): readonly NextActionCode[] {
   const present = new Set(values);
   return Object.freeze(NEXT_ACTION_CODES.filter((code) => present.has(code)));
 }

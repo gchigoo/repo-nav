@@ -1,9 +1,9 @@
 {
   "ok": true,
   "evidence": {
-    "schemaVersion": "1.0",
-    "status": "ok",
-    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "schemaVersion": "2.0",
+    "status": "partial",
+    "repositoryRef": "local-repository",
     "normalizedTerms": [
       {
         "value": "opaqueSearchTerm",
@@ -14,10 +14,11 @@
     "candidates": [
       {
         "evidenceClass": "candidate",
-        "id": "evidence:v1:f5d3c005b84c7be06b4690201b238b508f4356602ac52d6413016103a974c029",
+        "id": "evidence:v2:0001",
         "role": "related",
         "location": {
           "file": "server/secondary.ts",
+          "resolvable": true,
           "lines": [
             1,
             1
@@ -47,21 +48,51 @@
         {
           "backend": "codegraph",
           "status": "used",
+          "completion": "complete",
+          "termination": "none",
           "hitCount": 2
         },
         {
           "backend": "ripgrep",
           "status": "used",
+          "completion": "complete",
+          "termination": "none",
           "hitCount": 2
         }
       ],
+      "strategyComplete": false,
       "fallbackChecked": true,
-      "indexState": "available",
+      "indexState": "unknown",
       "indexFreshness": "unknown",
       "limitsReached": [],
-      "exclusionSummary": {
-        "DUPLICATE_LOCATION": 1,
-        "UNVERIFIED_FILE_CONTENT": 2
+      "degradations": [],
+      "exclusionSummary": {},
+      "abortSource": "none",
+      "unsatisfiedAnchors": [],
+      "snapshot": {
+        "gitState": "unknown",
+        "consistency": "stable",
+        "filesChecked": 3,
+        "discardedEvidenceCount": 0
+      },
+      "scope": {
+        "requested": [
+          "server"
+        ],
+        "effective": [
+          "server"
+        ],
+        "policyVersion": "repo-scope-v1",
+        "unmatchedLayers": []
+      },
+      "capabilities": {
+        "textSearch": "supported-text-files",
+        "semanticClassification": [
+          "typescript",
+          "javascript",
+          "sql"
+        ],
+        "unsupportedLanguageHits": 0
       }
     },
     "nextActions": [

@@ -1,0 +1,23 @@
+# F1A implementation scope + frozen ambient goal-package baseline
+.codestable/features/2026-07-24-span-redaction-corpus-policy-v2
+src/evidence/public-output
+test/unit/public-output-v2-redaction.spec.ts
+test/unit/public-output-v2-no-cutover.spec.ts
+test/golden/public-output-v2.spec.ts
+testkit/runners/runner-registry.ts
+testkit/fixtures/public-output-v2
+# ambient baseline frozen at F1A implementation preflight
+.codestable/.gitignore
+.codestable/reference
+.codestable/roadmap/repo-nav-public-beta
+.codestable/runtime-manifest.json
+.codestable/features/2026-07-24-canonical-locate-facts-bridge
+.codestable/features/2026-07-24-cross-platform-ci-baseline
+.codestable/features/2026-07-24-input-abort-contract-v2
+.codestable/features/2026-07-24-language-capability-boundary
+.codestable/features/2026-07-24-public-beta-release
+.codestable/features/2026-07-24-public-result-resource-budgets-v2
+.codestable/features/2026-07-24-relevance-ranking-budget
+.codestable/features/2026-07-24-repository-scope-policy
+.codestable/features/2026-07-24-request-snapshot-cache
+.codestable/features/2026-07-24-streaming-ripgrep

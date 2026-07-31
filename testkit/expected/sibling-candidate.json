@@ -1,9 +1,9 @@
 {
   "ok": true,
   "evidence": {
-    "schemaVersion": "1.0",
-    "status": "ok",
-    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "schemaVersion": "2.0",
+    "status": "partial",
+    "repositoryRef": "local-repository",
     "normalizedTerms": [
       {
         "value": "hcpId",
@@ -17,15 +17,27 @@
     "confirmed": [
       {
         "evidenceClass": "confirmed",
-        "id": "evidence:v1:62e1feff7679d9edc33886234cdd7553cdd7ea2fc1bac4a24ac699321efdf359",
+        "id": "evidence:v2:0001",
         "role": "value-mapping",
         "location": {
           "file": "server/mapping.fixture",
+          "resolvable": true,
           "lines": [
             1,
             7
           ],
-          "excerpt": "export function mapCandidate(row: SourceRow) {\n  const sourceAlias = hcpId;\n  const unrelatedToken = row.other_value;\n  return {\n    hcpName: row.hcp_name,\n    hcpEmail: row.hcp_email,\n    hcpId: row.hcp_id,"
+          "excerpt": "export function mapCandidate(row: SourceRow) {\n  const sourceAlias = hcpId;\n  const unrelatedToken = [REDACTED];\n  return {\n    hcpName: row.hcp_name,\n    hcpEmail: row.hcp_email,\n    hcpId: row.hcp_id,",
+          "redaction": {
+            "applied": true,
+            "fields": [
+              {
+                "field": "excerpt",
+                "reasonCodes": [
+                  "SECRET_LIKE_VALUE"
+                ]
+              }
+            ]
+          }
         },
         "provenance": {
           "discoveredBy": [
@@ -38,18 +50,19 @@
           ]
         },
         "reasonCodes": [
-          "DIRECT_ALIAS_MAPPING",
-          "EXACT_TERM_MATCH"
+          "EXACT_TERM_MATCH",
+          "DIRECT_ALIAS_MAPPING"
         ]
       }
     ],
     "candidates": [
       {
         "evidenceClass": "candidate",
-        "id": "evidence:v1:0d70e3d0539bdc86f2954b491b72e59924134f3765febf3e58e016500754b88d",
+        "id": "evidence:v2:0002",
         "role": "related",
         "location": {
           "file": "server/mapping.fixture",
+          "resolvable": true,
           "symbol": "sourceAlias",
           "lines": [
             2,
@@ -76,16 +89,17 @@
       },
       {
         "evidenceClass": "candidate",
-        "id": "evidence:v1:65ae9cb4cfd7b948e166501ae2d2f964e1a32d6d3ec0f9970d3a959227e63670",
+        "id": "evidence:v2:0003",
         "role": "related",
         "location": {
           "file": "server/mapping.fixture",
-          "symbol": "hcp_name",
+          "resolvable": true,
+          "symbol": "hcpId",
           "lines": [
-            5,
-            5
+            2,
+            2
           ],
-          "excerpt": "hcp_name"
+          "excerpt": "hcpId"
         },
         "provenance": {
           "discoveredBy": [
@@ -93,7 +107,7 @@
           ],
           "verifiedBy": "filesystem",
           "operations": [
-            "FILESYSTEM_FIND_MATCHES"
+            "FILESYSTEM_READ_RANGE"
           ]
         },
         "reasonCodes": [
@@ -106,10 +120,11 @@
       },
       {
         "evidenceClass": "candidate",
-        "id": "evidence:v1:d5c205be88a84efabccbbee5d77af9dac2c8d6a2c4a721397b426aa91f2af9ef",
+        "id": "evidence:v2:0004",
         "role": "related",
         "location": {
           "file": "server/mapping.fixture",
+          "resolvable": true,
           "symbol": "hcpName",
           "lines": [
             5,
@@ -137,10 +152,11 @@
       },
       {
         "evidenceClass": "candidate",
-        "id": "evidence:v1:1a5c0131501ae49c39ec6ea0445022f372ab35f811381f765bac524b0db502e6",
+        "id": "evidence:v2:0005",
         "role": "related",
         "location": {
           "file": "server/mapping.fixture",
+          "resolvable": true,
           "symbol": "hcpEmail",
           "lines": [
             6,
@@ -165,36 +181,6 @@
           "USER_SEMANTIC_CONFIRMATION",
           "DIRECT_REFERENCE_REQUIRED"
         ]
-      },
-      {
-        "evidenceClass": "candidate",
-        "id": "evidence:v1:8ec28d67114194f728001c11db69ae649668c5d131c2a069a15898be10d601c9",
-        "role": "related",
-        "location": {
-          "file": "server/mapping.fixture",
-          "symbol": "hcp_email",
-          "lines": [
-            6,
-            6
-          ],
-          "excerpt": "hcp_email"
-        },
-        "provenance": {
-          "discoveredBy": [
-            "filesystem"
-          ],
-          "verifiedBy": "filesystem",
-          "operations": [
-            "FILESYSTEM_FIND_MATCHES"
-          ]
-        },
-        "reasonCodes": [
-          "SAME_SCOPE_SIMILAR_IDENTIFIER"
-        ],
-        "promotionRequirements": [
-          "USER_SEMANTIC_CONFIRMATION",
-          "DIRECT_REFERENCE_REQUIRED"
-        ]
       }
     ],
     "coverage": {
@@ -202,14 +188,47 @@
         {
           "backend": "ripgrep",
           "status": "used",
+          "completion": "complete",
+          "termination": "none",
           "hitCount": 1
         }
       ],
+      "strategyComplete": true,
       "fallbackChecked": false,
       "indexState": "unknown",
-      "indexFreshness": "not-applicable",
+      "indexFreshness": "unknown",
       "limitsReached": [],
-      "exclusionSummary": {}
+      "degradations": [
+        "SEMANTIC_LANGUAGE_UNSUPPORTED"
+      ],
+      "exclusionSummary": {},
+      "abortSource": "none",
+      "unsatisfiedAnchors": [],
+      "snapshot": {
+        "gitState": "unknown",
+        "consistency": "stable",
+        "filesChecked": 1,
+        "discardedEvidenceCount": 0
+      },
+      "scope": {
+        "requested": [
+          "server"
+        ],
+        "effective": [
+          "server"
+        ],
+        "policyVersion": "repo-scope-v1",
+        "unmatchedLayers": []
+      },
+      "capabilities": {
+        "textSearch": "supported-text-files",
+        "semanticClassification": [
+          "typescript",
+          "javascript",
+          "sql"
+        ],
+        "unsupportedLanguageHits": 17
+      }
     },
     "nextActions": [
       "CONFIRM_CANDIDATE"

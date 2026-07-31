@@ -48,7 +48,7 @@ describe.runIf(
         },
         {
           role: 'related',
-          symbol: 'hcp_name',
+          symbol: 'hcpId',
           reasonCodes: ['SAME_SCOPE_SIMILAR_IDENTIFIER'],
         },
         {
@@ -66,11 +66,6 @@ describe.runIf(
             'SAME_SCOPE_SIMILAR_IDENTIFIER',
             'SAME_ENTITY_SIBLING',
           ],
-        },
-        {
-          role: 'related',
-          symbol: 'hcp_email',
-          reasonCodes: ['SAME_SCOPE_SIMILAR_IDENTIFIER'],
         },
       ]);
       expect(

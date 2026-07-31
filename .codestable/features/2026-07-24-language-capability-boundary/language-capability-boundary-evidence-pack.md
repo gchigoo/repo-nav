@@ -1,0 +1,304 @@
+---
+doc_type: feature-evidence-pack
+feature: language-capability-boundary
+status: generated
+---
+
+# language-capability-boundary evidence pack
+
+## 1. Scope
+
+- Design: `.codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-design.md`
+- Checklist: `.codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-checklist.yaml`
+
+## 2. DoD Results
+
+```json
+{
+  "gate_id": "dod-runner",
+  "stage": "implementation.before_review",
+  "status": "passed",
+  "blocking": [],
+  "warnings": [],
+  "evidence": [
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.1.0 build\n> tsc -p tsconfig.build.json && tsc -p tsconfig.cli.json\n\n",
+      "stderr": "",
+      "id": "CMD-BUILD",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.1.0 typecheck\n> tsc -p tsconfig.json --noEmit\n\n",
+      "stderr": "",
+      "id": "CMD-TYPECHECK",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm test -- --group language-capability-boundary",
+      "exit_code": 0,
+      "stdout": "(1 test | 1 skipped)\n ↓ test/unit/codegraph-query-planner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/codegraph-backend.spec.ts (8 tests | 8 skipped)\n ↓ test/unit/cross-platform-platform.spec.ts (9 tests | 9 skipped)\n ↓ test/unit/discovery-reservation-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/backend-physical-attempt-executor-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/discovery-scope-fold-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/evidence-merge.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/backend-execution-trace-v2.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/locate-abort-coordinator-v2.spec.ts (2 tests | 2 skipped)\n ✓ test/unit/language-adapter-registry-v2.spec.ts (1 test) 11ms\n ✓ test/unit/direct-mapping-classifier.spec.ts (37 tests | 36 skipped) 8ms\n ↓ test/unit/final-snapshot-check.spec.ts (4 tests | 4 skipped)\n ✓ test/unit/language-capability-platform.spec.ts (1 test) 9ms\n ↓ test/unit/platform-evidence-report.spec.ts (1 test | 1 skipped)\n ✓ test/unit/language-lexical-facts-v2.spec.ts (1 test) 10ms\n ↓ test/unit/locate-request-v2.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/output-guardrails.spec.ts (7 tests | 7 skipped)\n ✓ test/unit/language-evidence-adapters-v2.spec.ts (5 tests) 26ms\n ✓ test/unit/language-capability-integration-v2.spec.ts (4 tests) 16ms\n ↓ test/unit/pre-ranking-evidence-pool.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/public-output-v2-contract.spec.ts (25 tests | 25 skipped)\n ↓ test/unit/executor-dual-lane-wiring-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/repository-git-state-probe.spec.ts (1 test | 1 skipped)\n ↓ test/unit/public-result-assembler-v2.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/public-output-v2-errors-projection.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/process-cleanup.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/candidate-policy.spec.ts (38 tests | 38 skipped)\n ↓ test/unit/public-output-v2-redaction.spec.ts (19 tests | 19 skipped)\n ↓ test/unit/locate-status-evaluator.spec.ts (13 tests | 13 skipped)\n ↓ test/unit/public-output-v2-no-cutover.spec.ts (5 tests | 5 skipped)\n ✓ test/unit/canonical-locate-facts-bridge.spec.ts (13 tests | 12 skipped) 14ms\n ↓ test/unit/repository-scope-integration.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/repository-reader.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/repository-safety.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/repository-scope-selection.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/repository-scope-policy.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/runner-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/unit/debug-cli-shell.spec.ts (10 tests | 10 skipped)\n ↓ test/unit/ripgrep-json-line-consumer-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/relevance-ranking-budget.spec.ts (15 tests | 15 skipped)\n ✓ test/unit/di.spec.ts (4 tests | 3 skipped) 71ms\n ↓ test/unit/request-snapshot-capability-seams-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/scope-gate.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/request-snapshot-cache.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/public-result-resource-budgets-v2.spec.ts (16 tests | 16 skipped)\n ↓ test/unit/canonical-locate-execution.spec.ts (10 tests | 10 skipped)\n ↓ test/unit/ripgrep-backend.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/scope-bound-evidence-materializer-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/repository-scope-trust.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/snapshot-outcome-contribution-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/request-outcome-aggregator-v2.spec.ts (8 tests | 8 skipped)\n ↓ test/unit/verified-record-cache.spec.ts (1 test | 1 skipped)\n ↓ test/unit/scope-policy-platform.spec.ts (1 test | 1 skipped)\n ↓ test/unit/ripgrep-streaming-backend-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/safe-process-runner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/safe-process-streaming-v2.spec.ts (9 tests | 9 skipped)\n\n Test Files  8 passed | 56 skipped (64)\n      Tests  15 passed | 382 skipped (397)\n   Start at  21:42:26\n   Duration  4.69s (transform 17.20s, setup 0ms, import 56.77s, tests 164ms, environment 22ms)\n\n",
+      "stderr": "",
+      "id": "CMD-F8-UNIT",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm test -- --group direct-mapping-classifier --group candidate-truth-table --group candidate-discovery --group candidate-context --group candidate-classification --group candidate-budget --group candidate-permutation --group request-snapshot-cache --group repository-scope-policy --group input-abort-contract-v2 --group canonical-locate-bridge",
+      "exit_code": 0,
+      "stdout": "d)\n ↓ test/unit/language-capability-platform.spec.ts (1 test | 1 skipped)\n ↓ test/unit/language-evidence-adapters-v2.spec.ts (5 tests | 5 skipped)\n ✓ test/unit/direct-mapping-classifier.spec.ts (37 tests | 3 skipped) 110ms\n ✓ test/unit/discovery-reservation-v2.spec.ts (1 test) 7ms\n ↓ test/unit/language-capability-integration-v2.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/evidence-merge.spec.ts (6 tests | 6 skipped)\n ✓ test/unit/discovery-scope-fold-v2.spec.ts (3 tests) 27ms\n ↓ test/unit/cross-platform-platform.spec.ts (9 tests | 9 skipped)\n ✓ test/unit/locate-abort-coordinator-v2.spec.ts (2 tests) 10ms\n ↓ test/unit/platform-evidence-report.spec.ts (1 test | 1 skipped)\n ✓ test/unit/locate-request-v2.spec.ts (6 tests) 31ms\n ↓ test/unit/output-guardrails.spec.ts (7 tests | 7 skipped)\n ✓ test/unit/final-snapshot-check.spec.ts (4 tests) 165ms\n ↓ test/unit/public-output-v2-contract.spec.ts (25 tests | 25 skipped)\n ✓ test/unit/repository-git-state-probe.spec.ts (1 test) 6ms\n ↓ test/unit/public-result-assembler-v2.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/public-output-v2-errors-projection.spec.ts (4 tests | 4 skipped)\n ✓ test/unit/canonical-locate-facts-bridge.spec.ts (13 tests | 1 skipped) 60ms\n ✓ test/unit/pre-ranking-evidence-pool.spec.ts (3 tests) 13ms\n ↓ test/unit/process-cleanup.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/locate-status-evaluator.spec.ts (13 tests | 13 skipped)\n ↓ test/unit/public-output-v2-redaction.spec.ts (19 tests | 19 skipped)\n ✓ test/unit/executor-dual-lane-wiring-v2.spec.ts (1 test) 357ms\n     ✓ consumes expandedMaxHits=800 via shared search and runs scope fold + legacy reservation  354ms\n ✓ test/unit/di.spec.ts (4 tests | 3 skipped) 42ms\n ↓ test/unit/debug-cli-shell.spec.ts (10 tests | 10 skipped)\n ✓ test/unit/repository-scope-integration.spec.ts (2 tests) 16ms\n ↓ test/unit/repository-reader.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/repository-safety.spec.ts (5 tests | 5 skipped)\n ✓ test/unit/repository-scope-selection.spec.ts (2 tests) 16ms\n ↓ test/unit/relevance-ranking-budget.spec.ts (15 tests | 15 skipped)\n ↓ test/unit/runner-smoke.spec.ts (1 test | 1 skipped)\n ✓ test/unit/repository-scope-policy.spec.ts (7 tests) 15ms\n ↓ test/unit/ripgrep-json-line-consumer-v2.spec.ts (3 tests | 3 skipped)\n ✓ test/unit/request-snapshot-capability-seams-v2.spec.ts (3 tests) 12ms\n ↓ test/unit/public-result-resource-budgets-v2.spec.ts (16 tests | 16 skipped)\n ✓ test/unit/request-snapshot-cache.spec.ts (3 tests) 72ms\n ↓ test/unit/scope-gate.spec.ts (2 tests | 2 skipped)\n ✓ test/unit/candidate-policy.spec.ts (38 tests) 1809ms\n     ✓ produces sibling candidates from the real single-line RipgrepBackend path  321ms\n     ✓ emits one confirmed evidence for an occurrence that also matches candidate terms  314ms\n     ✓ is invariant to backend hit order before maxFiles selection  363ms\n ↓ test/unit/ripgrep-backend.spec.ts (6 tests | 6 skipped)\n ✓ test/unit/scope-bound-evidence-materializer-v2.spec.ts (1 test) 13ms\n ✓ test/unit/request-outcome-aggregator-v2.spec.ts (8 tests) 63ms\n ✓ test/unit/public-output-v2-no-cutover.spec.ts (5 tests | 3 skipped) 1350ms\n     ✓ keeps production roots free of shadow/composer/schema runtime edges  1346ms\n ✓ test/unit/verified-record-cache.spec.ts (1 test) 13ms\n ↓ test/unit/safe-process-runner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/ripgrep-streaming-backend-v2.spec.ts (3 tests | 3 skipped)\n ✓ test/unit/snapshot-outcome-contribution-v2.spec.ts (1 test) 13ms\n ✓ test/unit/canonical-locate-execution.spec.ts (10 tests | 2 skipped) 625ms\n     ✓ keeps no-mutation deep-exact on NodeRepositoryReader snapshot path  412ms\n ✓ test/unit/scope-policy-platform.spec.ts (1 test) 4ms\n ↓ test/unit/safe-process-streaming-v2.spec.ts (9 tests | 9 skipped)\n ✓ test/unit/repository-scope-trust.spec.ts (4 tests) 101ms\n\n Test Files  29 passed | 35 skipped (64)\n      Tests  156 passed | 241 skipped (397)\n   Start at  21:42:32\n   Duration  5.24s (transform 16.83s, setup 0ms, import 55.87s, tests 4.99s, environment 15ms)\n\n",
+      "stderr": "",
+      "id": "CMD-UPSTREAM-REGRESSION",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "stdout": "ntegration-v2.spec.ts (4 tests) 24ms\n ✓ test/unit/output-guardrails.spec.ts (7 tests) 26ms\n ✓ test/unit/public-output-v2-contract.spec.ts (25 tests) 91ms\n ✓ test/unit/language-lexical-facts-v2.spec.ts (1 test) 10ms\n ✓ test/unit/language-evidence-adapters-v2.spec.ts (5 tests) 33ms\n ✓ test/unit/public-output-v2-errors-projection.spec.ts (4 tests) 47ms\n ✓ test/unit/public-result-assembler-v2.spec.ts (7 tests) 117ms\n ✓ test/unit/public-output-v2-redaction.spec.ts (19 tests) 178ms\n ✓ test/unit/debug-cli-shell.spec.ts (10 tests) 34ms\n ✓ test/unit/runner-smoke.spec.ts (1 test) 5ms\n ✓ test/unit/ripgrep-json-line-consumer-v2.spec.ts (3 tests) 11ms\n ✓ test/unit/repository-reader.spec.ts (6 tests) 214ms\n ✓ test/unit/repository-safety.spec.ts (5 tests) 138ms\n ✓ test/unit/candidate-policy.spec.ts (38 tests) 2666ms\n     ✓ produces sibling candidates from the real single-line RipgrepBackend path  948ms\n     ✓ keeps confirmed identity unchanged when only the candidate window expands  300ms\n     ✓ emits one confirmed evidence for an occurrence that also matches candidate terms  359ms\n     ✓ keeps confirmed evidence stable when maxCandidates is 0  386ms\n     ✓ is invariant to backend hit order before maxFiles selection  372ms\n ✓ test/unit/ripgrep-backend.spec.ts (6 tests) 292ms\n ✓ test/unit/canonical-locate-execution.spec.ts (10 tests) 1628ms\n     ✓ keeps no-mutation deep-exact on NodeRepositoryReader snapshot path  958ms\n     ✓ purges mutated evidence and elevates v1 status to at least partial  333ms\n ✓ test/unit/ripgrep-streaming-backend-v2.spec.ts (3 tests) 329ms\n ✓ test/unit/relevance-ranking-budget.spec.ts (15 tests) 618ms\n     ✓ does not export F2 stages from package root  539ms\n ✓ test/unit/scope-gate.spec.ts (2 tests) 1194ms\n     ✓ passes shell metacharacters to git as literal path arguments  869ms\n     ✓ blocks when git status cannot inspect the current directory  322ms\n ✓ test/unit/locate-status-evaluator.spec.ts (13 tests) 2059ms\n     ✓ distinguishes its own deadline from a caller abort  1022ms\n     ✓ retains verification completed before the abort  1006ms\n ✓ test/unit/safe-process-runner.spec.ts (6 tests) 1921ms\n     ✓ preserves special argv boundaries without a shell  333ms\n     ✓ terminates the tree on stdout N+1 overflow  404ms\n     ✓ terminates the tree on stderr N+1 overflow  391ms\n ✓ test/unit/codegraph-live-smoke.spec.ts (1 test) 4344ms\n     ✓ indexes, probes, queries, and removes only the temporary repository  4341ms\n ✓ test/unit/safe-process-streaming-v2.spec.ts (9 tests) 2599ms\n     ✓ succeeds at exact N and limits on N+1 for stdout/stderr  967ms\n     ✓ accepts continue-full and rejects invalid decisions  922ms\n     ✓ projects kernel settlements to legacy SafeProcessResult rows  385ms\n ✓ test/unit/public-result-resource-budgets-v2.spec.ts (16 tests) 3047ms\n     ✓ F1B-RAW-FIELD-001 file/symbol/excerpt and spaced 400k excerpt  2501ms\n ✓ test/unit/cross-platform-platform.spec.ts (9 tests | 1 skipped) 11486ms\n     ✓ proves abort, single settlement, and owned tree death  2803ms\n     ✓ proves timeout, single settlement, and owned tree death  2125ms\n     ✓ keeps exact-N success and N+1 stdout-limit  1666ms\n     ✓ keeps exact-N success and N+1 stderr-limit  1522ms\n     ✓ records fixed invariant, direct child death, and descendant observation  3324ms\n ✓ test/unit/process-cleanup.spec.ts (7 tests) 12155ms\n     ✓ terminates direct child and descendant on caller abort and settles once  2393ms\n     ✓ terminates direct child and descendant on timeout  1878ms\n     ✓ terminates direct child and descendant when stdout observes N+1  1450ms\n     ✓ terminates direct child and descendant when stderr observes N+1  1409ms\n     ✓ rejects within a fixed cleanup deadline when tree termination fails  3281ms\n     ✓ early-stop/output path kills owned tree  1623ms\n\n Test Files  64 passed (64)\n      Tests  396 passed | 1 skipped (397)\n   Start at  21:42:38\n   Duration  16.84s (transform 17.84s, setup 0ms, import 55.73s, tests 50.45s, environment 14ms)\n\n",
+      "stderr": "",
+      "id": "CMD-UNIT-ALL",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run test:golden -- --group language-capability-boundary",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.1.0 test:golden\n> tsx testkit/runners/golden-runner.ts --group language-capability-boundary\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ↓ test/golden/runner-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/golden/large-streaming-ripgrep.spec.ts (1 test | 1 skipped)\n ↓ test/golden/public-output-v2.spec.ts (7 tests | 7 skipped)\n ↓ test/golden/relevance-ranking-budget.spec.ts (3 tests | 3 skipped)\n ↓ test/golden/request-snapshot-cache.spec.ts (2 tests | 2 skipped)\n ↓ test/golden/golden-contract.spec.ts (5 tests | 5 skipped)\n ↓ test/golden/mvp-evaluator.spec.ts (8 tests | 8 skipped)\n ↓ test/golden/fixture-completeness.spec.ts (3 tests | 3 skipped)\n ↓ test/golden/text-engine-classifier.spec.ts (6 tests | 6 skipped)\n ↓ test/golden/mvp-regression-families.spec.ts (5 tests | 5 skipped)\n ↓ test/golden/input-abort-contract-v2.spec.ts (1 test | 1 skipped)\n ✓ test/golden/language-capability-boundary.spec.ts (1 test) 5ms\n ↓ test/golden/repository-scope-policy.spec.ts (2 tests | 2 skipped)\n ↓ test/golden/output-guardrails.spec.ts (8 tests | 8 skipped)\n ↓ test/golden/canonical-locate-bridge.spec.ts (1 test | 1 skipped)\n ✓ test/golden/large-synthetic-repository.spec.ts (3 tests | 2 skipped) 6ms\n ↓ test/golden/candidate-policy.spec.ts (3 tests | 3 skipped)\n ↓ test/golden/codegraph-fallback.spec.ts (11 tests | 11 skipped)\n ↓ test/golden/text-evidence-engine.spec.ts (14 tests | 14 skipped)\n\n Test Files  2 passed | 17 skipped (19)\n      Tests  2 passed | 83 skipped (85)\n   Start at  21:42:57\n   Duration  2.70s (transform 8.63s, setup 0ms, import 28.25s, tests 11ms, environment 4ms)\n\n",
+      "stderr": "",
+      "id": "CMD-F8-GOLDEN",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run test:golden -- --all",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.1.0 test:golden\n> tsx testkit/runners/golden-runner.ts --all\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ✓ test/golden/runner-smoke.spec.ts (1 test) 5ms\n ✓ test/golden/large-streaming-ripgrep.spec.ts (1 test) 9ms\n ✓ test/golden/public-output-v2.spec.ts (7 tests) 73ms\n ✓ test/golden/relevance-ranking-budget.spec.ts (3 tests) 33ms\n ✓ test/golden/request-snapshot-cache.spec.ts (2 tests) 103ms\n ✓ test/golden/golden-contract.spec.ts (5 tests) 65ms\n ✓ test/golden/mvp-evaluator.spec.ts (8 tests) 116ms\n ✓ test/golden/fixture-completeness.spec.ts (3 tests) 184ms\n ✓ test/golden/text-engine-classifier.spec.ts (6 tests | 1 skipped) 65ms\n ✓ test/golden/mvp-regression-families.spec.ts (5 tests) 128ms\n ✓ test/golden/input-abort-contract-v2.spec.ts (1 test) 30ms\n ✓ test/golden/language-capability-boundary.spec.ts (1 test) 5ms\n ✓ test/golden/canonical-locate-bridge.spec.ts (1 test) 15ms\n ✓ test/golden/repository-scope-policy.spec.ts (2 tests) 35ms\n ✓ test/golden/output-guardrails.spec.ts (8 tests) 64ms\n ✓ test/golden/candidate-policy.spec.ts (3 tests) 687ms\n     ✓ matches the bounded candidate policy manifest  383ms\n ✓ test/golden/codegraph-fallback.spec.ts (11 tests) 1605ms\n     ✓ matches the explicit fallback transition contract  403ms\n ✓ test/golden/text-evidence-engine.spec.ts (14 tests) 2156ms\n     ✓ matches its versioned status and coverage manifest  330ms\n     ✓ confirms a multiline mapping through the real ripgrep-to-reader chain  417ms\n     ✓ keeps multiple canonical symbol facts stable across anchor permutations  558ms\n ✓ test/golden/large-synthetic-repository.spec.ts (3 tests) 3105ms\n     ✓ keeps five real-engine projections stable and records environment-aware timing  3095ms\n\n Test Files  19 passed (19)\n      Tests  84 passed | 1 skipped (85)\n   Start at  21:43:01\n   Duration  5.37s (transform 7.80s, setup 0ms, import 26.33s, tests 8.48s, environment 4ms)\n\n",
+      "stderr": "",
+      "id": "CMD-GOLDEN-ALL",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run test:mcp -- --all",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.1.0 test:mcp\n> npm run build --silent && tsx testkit/runners/mcp-runner.ts --all\n\n\n RUN  v4.1.10 D:/Personal/repo-nav-worktrees/repo-nav-public-beta\n\n ✓ test/mcp/runner-smoke.spec.ts (1 test) 4ms\n ✓ test/mcp/request-cancellation-v2.spec.ts (1 test) 7ms\n ✓ test/mcp/redaction-output-parity.spec.ts (1 test) 1556ms\n     ✓ keeps forbidden values out of structured, text, stdout protocol, and stderr  1555ms\n ✓ test/mcp/mcp-golden-adapter.spec.ts (1 test) 1579ms\n     ✓ feeds both success and error transport observations to the shared evaluator  1577ms\n ✓ test/mcp/candidate-minimal-loop.spec.ts (1 test) 2107ms\n     ✓ returns confirmed and bounded candidates with transport parity  2105ms\n ✓ test/mcp/tool-output-parity.spec.ts (2 tests) 2944ms\n     ✓ returns one confirmed mapping through real stdio  1611ms\n     ✓ keeps all recoverable statuses out of the MCP error channel  1330ms\n ✓ test/mcp/tool-surface.spec.ts (8 tests) 283ms\n ✓ test/mcp/request-cancellation.spec.ts (3 tests) 4184ms\n     ✓ does not lose cancellation sent before the handler starts work  1635ms\n     ✓ propagates the SDK request signal to the application service  1334ms\n     ✓ aborts an in-flight locate when stdin reaches EOF  1213ms\n ✓ test/mcp/tool-error-parity.spec.ts (4 tests) 5053ms\n     ✓ maps schema-invalid objects to typed parity output  1589ms\n     ✓ preserves the typed code while sanitizing unsafe detail  1339ms\n     ✓ preserves the typed code while sanitizing unsafe detail  1197ms\n     ✓ turns thrown failures into safe typed parity output  925ms\n ✓ test/mcp/lifecycle-contract.spec.ts (18 tests) 12106ms\n     ✓ accepts only real MCP frames on stdout and propagates clean exit  655ms\n     ✓ treats an SDK transport parse failure as fatal without stdout pollution  584ms\n     ✓ drives graceful shutdown through stdin within the manifest budget  488ms\n     ✓ observes the real Nest context hook and direct/descendant process cleanup  1676ms\n     ✓ fails when the real context close marker is deliberately skipped  1453ms\n     ✓ fails when an actual descendant tree is deliberately left running  2988ms\n     ✓ cleans both child PIDs and the probe directory after a forced timeout  3364ms\n     ✓ cleans both child PIDs and the probe directory after a nonzero exit  831ms\n\n Test Files  10 passed (10)\n      Tests  40 passed (40)\n   Start at  21:43:15\n   Duration  17.22s (transform 3.77s, setup 0ms, import 16.05s, tests 29.82s, environment 2ms)\n\n",
+      "stderr": "",
+      "id": "CMD-MCP-ALL",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run test:docs",
+      "exit_code": 0,
+      "stdout": "\n> repo-nav@0.1.0 test:docs\n> npm run build --silent && tsx testkit/docs/docs-smoke-runner.ts\n\nDocs smoke passed: test-artifacts/docs/docs-smoke-v1.json\n",
+      "stderr": "",
+      "id": "CMD-DOCS",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run test:platform",
+      "exit_code": 0,
+      "stdout": "unit/discovery-scope-fold-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/backend-physical-attempt-executor-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/backend-execution-trace-v2.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/evidence-merge.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/scope-policy-platform.spec.ts (1 test | 1 skipped)\n ↓ test/unit/direct-mapping-classifier.spec.ts (37 tests | 37 skipped)\n ↓ test/unit/locate-abort-coordinator-v2.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/final-snapshot-check.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/language-adapter-registry-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/platform-evidence-report.spec.ts (1 test | 1 skipped)\n ↓ test/unit/output-guardrails.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/language-lexical-facts-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/locate-request-v2.spec.ts (6 tests | 6 skipped)\n ✓ test/unit/language-capability-platform.spec.ts (1 test) 12ms\n ↓ test/unit/executor-dual-lane-wiring-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/language-evidence-adapters-v2.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/language-capability-integration-v2.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/pre-ranking-evidence-pool.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/public-output-v2-contract.spec.ts (25 tests | 25 skipped)\n ↓ test/unit/candidate-policy.spec.ts (38 tests | 38 skipped)\n ↓ test/unit/repository-git-state-probe.spec.ts (1 test | 1 skipped)\n ↓ test/unit/process-cleanup.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/public-output-v2-errors-projection.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/public-result-assembler-v2.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/locate-status-evaluator.spec.ts (13 tests | 13 skipped)\n ↓ test/unit/canonical-locate-facts-bridge.spec.ts (13 tests | 13 skipped)\n ↓ test/unit/public-output-v2-redaction.spec.ts (19 tests | 19 skipped)\n ↓ test/unit/public-output-v2-no-cutover.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/repository-scope-integration.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/repository-scope-selection.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/repository-scope-policy.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/debug-cli-shell.spec.ts (10 tests | 10 skipped)\n ↓ test/unit/di.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/repository-safety.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/repository-reader.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/runner-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/unit/ripgrep-json-line-consumer-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/relevance-ranking-budget.spec.ts (15 tests | 15 skipped)\n ↓ test/unit/canonical-locate-execution.spec.ts (10 tests | 10 skipped)\n ↓ test/unit/scope-gate.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/request-snapshot-capability-seams-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/public-result-resource-budgets-v2.spec.ts (16 tests | 16 skipped)\n ↓ test/unit/verified-record-cache.spec.ts (1 test | 1 skipped)\n ↓ test/unit/request-snapshot-cache.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/scope-bound-evidence-materializer-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/ripgrep-backend.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/snapshot-outcome-contribution-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/repository-scope-trust.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/safe-process-runner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/ripgrep-streaming-backend-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/request-outcome-aggregator-v2.spec.ts (8 tests | 8 skipped)\n ↓ test/unit/safe-process-streaming-v2.spec.ts (9 tests | 9 skipped)\n\n Test Files  1 passed | 63 skipped (64)\n      Tests  1 passed | 396 skipped (397)\n   Start at  21:46:05\n   Duration  4.69s (transform 18.29s, setup 5.11s, import 52.20s, tests 12ms, environment 13ms)\n\nplatform contracts passed: F4-MCP-001, F4-MCP-002, F4-PATH-001, F4-PATH-003, F4-PATH-004, F4-PROC-001, F4-PROC-002, F4-PROC-003, F4-PROC-004, F4-PROC-005, F5-CLEANUP-001, F5-PROC-001, F5-PROC-003, F5-RG-001, F6-ABORT-001, F6-INPUT-001, F6-LATCH-001, F7-SCOPE-001, F8-LANG-001\n",
+      "stderr": "",
+      "id": "CMD-PLATFORM",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "python .codestable/tools/validate-yaml.py --file .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-checklist.yaml --yaml-only",
+      "exit_code": 0,
+      "stdout": "Validated 1 file(s): 1 passed, 0 failed.\n\n  ✓ .codestable\\features\\2026-07-24-language-capability-boundary\\language-capability-boundary-checklist.yaml\n\nAll files valid.\n",
+      "stderr": "",
+      "id": "CMD-YAML",
+      "core": false,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "python .codestable/tools/codestable-dod-contract-gate.py --design .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-design.md --stage design",
+      "exit_code": 0,
+      "stdout": "{\n  \"gate_id\": \"dod-contract-gate\",\n  \"stage\": \"design\",\n  \"status\": \"passed\",\n  \"blocking\": [],\n  \"warnings\": [],\n  \"evidence\": [\n    {\n      \"design\": \".codestable\\\\features\\\\2026-07-24-language-capability-boundary\\\\language-capability-boundary-design.md\",\n      \"checked_block\": \"DoD Contract\",\n      \"structure_checks\": {\n        \"validation command id\": [\n          \"CMD-\"\n        ],\n        \"command core marker\": [\n          \"core\",\n          \"核心性\"\n        ],\n        \"failure handling marker\": [\n          \"failure_handling\",\n          \"失败处理\"\n        ]\n      },\n      \"strength\": \"minimal DoD Contract section check\"\n    }\n  ],\n  \"providers\": {}\n}\n",
+      "stderr": "",
+      "id": "CMD-DOD-GATE",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "npm run build && npm test -- --group canonical-locate-bridge --case canonical-package-declaration-boundary --case canonical-transport-reachability",
+      "exit_code": 0,
+      "stdout": "query-planner.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/codegraph-backend.spec.ts (8 tests | 8 skipped)\n ↓ test/unit/cross-platform-platform.spec.ts (9 tests | 9 skipped)\n ↓ test/unit/evidence-merge.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/discovery-scope-fold-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/backend-physical-attempt-executor-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/backend-execution-trace-v2.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/language-adapter-registry-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/direct-mapping-classifier.spec.ts (37 tests | 37 skipped)\n ↓ test/unit/final-snapshot-check.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/locate-abort-coordinator-v2.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/language-capability-platform.spec.ts (1 test | 1 skipped)\n ↓ test/unit/language-lexical-facts-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/platform-evidence-report.spec.ts (1 test | 1 skipped)\n ↓ test/unit/locate-request-v2.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/output-guardrails.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/language-capability-integration-v2.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/language-evidence-adapters-v2.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/executor-dual-lane-wiring-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/pre-ranking-evidence-pool.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/public-output-v2-contract.spec.ts (25 tests | 25 skipped)\n ↓ test/unit/candidate-policy.spec.ts (38 tests | 38 skipped)\n ↓ test/unit/repository-git-state-probe.spec.ts (1 test | 1 skipped)\n ↓ test/unit/canonical-locate-facts-bridge.spec.ts (13 tests | 13 skipped)\n ↓ test/unit/public-output-v2-errors-projection.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/process-cleanup.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/public-result-assembler-v2.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/locate-status-evaluator.spec.ts (13 tests | 13 skipped)\n ↓ test/unit/public-output-v2-redaction.spec.ts (19 tests | 19 skipped)\n ↓ test/unit/debug-cli-shell.spec.ts (10 tests | 10 skipped)\n ↓ test/unit/di.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/repository-reader.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/repository-scope-integration.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/repository-safety.spec.ts (5 tests | 5 skipped)\n ↓ test/unit/repository-scope-selection.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/repository-scope-policy.spec.ts (7 tests | 7 skipped)\n ↓ test/unit/runner-smoke.spec.ts (1 test | 1 skipped)\n ↓ test/unit/ripgrep-json-line-consumer-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/request-snapshot-capability-seams-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/relevance-ranking-budget.spec.ts (15 tests | 15 skipped)\n ↓ test/unit/scope-gate.spec.ts (2 tests | 2 skipped)\n ↓ test/unit/public-result-resource-budgets-v2.spec.ts (16 tests | 16 skipped)\n ↓ test/unit/request-snapshot-cache.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/canonical-locate-execution.spec.ts (10 tests | 10 skipped)\n ↓ test/unit/verified-record-cache.spec.ts (1 test | 1 skipped)\n ↓ test/unit/ripgrep-backend.spec.ts (6 tests | 6 skipped)\n ↓ test/unit/ripgrep-streaming-backend-v2.spec.ts (3 tests | 3 skipped)\n ↓ test/unit/snapshot-outcome-contribution-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/scope-bound-evidence-materializer-v2.spec.ts (1 test | 1 skipped)\n ↓ test/unit/request-outcome-aggregator-v2.spec.ts (8 tests | 8 skipped)\n ↓ test/unit/safe-process-runner.spec.ts (6 tests | 6 skipped)\n ✓ test/unit/public-output-v2-no-cutover.spec.ts (5 tests | 3 skipped) 1082ms\n     ✓ keeps production roots free of shadow/composer/schema runtime edges  1079ms\n ↓ test/unit/scope-policy-platform.spec.ts (1 test | 1 skipped)\n ↓ test/unit/repository-scope-trust.spec.ts (4 tests | 4 skipped)\n ↓ test/unit/safe-process-streaming-v2.spec.ts (9 tests | 9 skipped)\n\n Test Files  2 passed | 62 skipped (64)\n      Tests  3 passed | 394 skipped (397)\n   Start at  21:46:18\n   Duration  4.82s (transform 19.52s, setup 0ms, import 58.49s, tests 1.09s, environment 13ms)\n\n",
+      "stderr": "",
+      "id": "CMD-PACKAGE-BOUNDARY",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "python .codestable/tools/codestable-scope-gate.py --feature-dir .codestable/features/2026-07-24-language-capability-boundary --allow-file .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-scope-allow.txt --check-path . --cleanliness-path src/evidence/language --cleanliness-path src/evidence/direct-mapping-classifier.ts --cleanliness-path src/evidence/candidate-policy.ts --cleanliness-path src/evidence/request-snapshot --cleanliness-path src/evidence/scope --cleanliness-path src/evidence/request-outcome --cleanliness-path src/evidence/public-output --cleanliness-path src/evidence/canonical --cleanliness-path src/evidence/evidence.module.ts --cleanliness-path src/contracts/v2 --cleanliness-path test/unit --cleanliness-path test/golden --cleanliness-path testkit --stage implementation.before_review",
+      "exit_code": 0,
+      "stdout": "pping-classifier.spec.ts\",\n        \"test/unit/public-output-v2-no-cutover.spec.ts\",\n        \"test/unit/repository-scope-trust.spec.ts\",\n        \"test/unit/request-outcome-aggregator-v2.spec.ts\",\n        \"testkit/contracts/platform-contract.ts\",\n        \"testkit/contracts/public-output-v2-import-inventory.ts\",\n        \"testkit/fixtures/request-outcome-v2/build-aggregation-harness-v2.ts\",\n        \"testkit/fixtures/scope-v1/canonical-execution-v1.ts\",\n        \"testkit/runners/runner-registry.ts\",\n        \".codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-qa.md\",\n        \".codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-review.md\",\n        \".codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-scope-allow.txt\",\n        \"src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.ts\",\n        \"src/evidence/language/build-execution-capability-coverage-v2.ts\",\n        \"src/evidence/language/capability-coverage-v2.ts\",\n        \"src/evidence/language/ecmascript-lexical-kernel-v2.ts\",\n        \"src/evidence/language/embedded-sql-literal-decoder-v2.ts\",\n        \"src/evidence/language/fallback-language-policy-v2.ts\",\n        \"src/evidence/language/identifier-structure-kernel-v2.ts\",\n        \"src/evidence/language/index.ts\",\n        \"src/evidence/language/javascript-language-adapter-v2.ts\",\n        \"src/evidence/language/language-adapter-kinds-v2.ts\",\n        \"src/evidence/language/language-adapter-producer-v2.ts\",\n        \"src/evidence/language/language-adapter-registry-v2.ts\",\n        \"src/evidence/language/language-capability-observation-v2.ts\",\n        \"src/evidence/language/language-lexical-coordinator-v2.ts\",\n        \"src/evidence/language/language-scope-producer-v2.ts\",\n        \"src/evidence/language/sql-language-adapter-v2.ts\",\n        \"src/evidence/language/sql-lexical-kernel-v2.ts\",\n        \"src/evidence/language/typescript-language-adapter-v2.ts\",\n        \"src/evidence/request-snapshot/capability-classification-views-v2.ts\",\n        \"test/golden/language-capability-boundary.spec.ts\",\n        \"test/unit/language-adapter-registry-v2.spec.ts\",\n        \"test/unit/language-capability-integration-v2.spec.ts\",\n        \"test/unit/language-capability-platform.spec.ts\",\n        \"test/unit/language-evidence-adapters-v2.spec.ts\",\n        \"test/unit/language-lexical-facts-v2.spec.ts\",\n        \"testkit/fixtures/language-capability-v2/extension-matrix-v2.ts\",\n        \"testkit/fixtures/language-capability-v2/move-only-characterization-v2.ts\",\n        \"testkit/testing/complete-real-locate-shadow-stage-probe-v2.ts\"\n      ],\n      \"ignored_machine_artifacts\": [\n        \".codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-gate-results.json\"\n      ],\n      \"allowed_prefixes\": [\n        \".codestable/features/2026-07-24-language-capability-boundary\",\n        \".codestable/features/2026-07-24-language-capability-boundary\",\n        \".codestable/roadmap/repo-nav-public-beta\",\n        \".codestable/architecture/system-repo-nav-foundation.md\",\n        \"src/evidence/language/\",\n        \"src/evidence/direct-mapping-classifier.ts\",\n        \"src/evidence/candidate-policy.ts\",\n        \"src/evidence/candidate-policy/\",\n        \"src/evidence/request-snapshot/\",\n        \"src/evidence/scope/\",\n        \"src/evidence/request-outcome/\",\n        \"src/evidence/public-output/\",\n        \"src/evidence/canonical/\",\n        \"src/evidence/locate-execution/\",\n        \"src/evidence/evidence.module.ts\",\n        \"src/evidence/ranking/\",\n        \"src/contracts/v2/\",\n        \"test/unit/\",\n        \"test/golden/\",\n        \"testkit/fixtures/language-capability-v2/\",\n        \"testkit/fixtures/request-outcome-v2/\",\n        \"testkit/fixtures/scope-v1/\",\n        \"testkit/runners/runner-registry.ts\",\n        \"testkit/contracts/\",\n        \"testkit/testing/\",\n        \"testkit/manifests/\"\n      ]\n    }\n  ],\n  \"providers\": {}\n}\n",
+      "stderr": "",
+      "id": "CMD-SCOPE-CHECK",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "python .codestable/tools/codestable-spec-governance.py --root . analyze",
+      "exit_code": 0,
+      "stdout": "OK: True\n",
+      "stderr": "",
+      "id": "CMD-SPEC",
+      "core": false,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "warning: in the working copy of '.codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-checklist.yaml', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'src/evidence/candidate-policy/apply-candidate-policy.ts', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'src/evidence/direct-mapping-classifier.ts', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'src/evidence/locate-execution/canonical-locate-executor-v2.ts', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'src/evidence/request-snapshot/index.ts', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'test/golden/large-synthetic-repository.spec.ts', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'test/unit/canonical-locate-facts-bridge.spec.ts', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'testkit/fixtures/request-outcome-v2/build-aggregation-harness-v2.ts', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'testkit/runners/runner-registry.ts', CRLF will be replaced by LF the next time Git touches it\n",
+      "id": "CMD-DIFF-CHECK",
+      "core": false,
+      "failure_handling": "fix-or-block"
+    }
+  ],
+  "providers": {}
+}
+```
+
+## 3. Validation Commands
+
+Extracted from checklist `dod.commands`; see DoD Results for command status.
+
+## 4. Scope And Cleanliness
+
+Design bytes: 92912
+Checklist bytes: 34837
+
+## 5. Residual Risks
+
+- none
+
+## 6. Provider Signals
+
+```json
+{
+  "archguard": {
+    "status": "skipped",
+    "reason": "archguard collection disabled",
+    "warnings": []
+  },
+  "meta_cc": {
+    "status": "skipped",
+    "reason": "meta-cc collection disabled",
+    "warnings": []
+  }
+}
+```
+
+## 7. Gate Results
+
+```json
+{
+  "gate_id": "scope-gate",
+  "stage": "implementation.before_review",
+  "status": "passed",
+  "blocking": [],
+  "warnings": [],
+  "evidence": [
+    {
+      "changed_files": [
+        ".codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-checklist.yaml",
+        "src/evidence/candidate-policy/apply-candidate-policy.ts",
+        "src/evidence/canonical/locate-projection-preparation-port-v2.ts",
+        "src/evidence/canonical/locate-projection-stage-registrar-v2.ts",
+        "src/evidence/direct-mapping-classifier.ts",
+        "src/evidence/evidence.module.ts",
+        "src/evidence/locate-execution/canonical-locate-executor-v2.ts",
+        "src/evidence/public-output/f2-locate-projection-stages-v2.ts",
+        "src/evidence/request-outcome/request-outcome-aggregator-v2.ts",
+        "src/evidence/request-outcome/request-outcome-contribution-registry-v2.ts",
+        "src/evidence/request-snapshot/index.ts",
+        "test/golden/large-synthetic-repository.spec.ts",
+        "test/unit/canonical-locate-execution.spec.ts",
+        "test/unit/canonical-locate-facts-bridge.spec.ts",
+        "test/unit/di.spec.ts",
+        "test/unit/direct-mapping-classifier.spec.ts",
+        "test/unit/public-output-v2-no-cutover.spec.ts",
+        "test/unit/repository-scope-trust.spec.ts",
+        "test/unit/request-outcome-aggregator-v2.spec.ts",
+        "testkit/contracts/platform-contract.ts",
+        "testkit/contracts/public-output-v2-import-inventory.ts",
+        "testkit/fixtures/request-outcome-v2/build-aggregation-harness-v2.ts",
+        "testkit/fixtures/scope-v1/canonical-execution-v1.ts",
+        "testkit/runners/runner-registry.ts",
+        ".codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-qa.md",
+        ".codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-review.md",
+        ".codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-scope-allow.txt",
+        "src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.ts",
+        "src/evidence/language/build-execution-capability-coverage-v2.ts",
+        "src/evidence/language/capability-coverage-v2.ts",
+        "src/evidence/language/ecmascript-lexical-kernel-v2.ts",
+        "src/evidence/language/embedded-sql-literal-decoder-v2.ts",
+        "src/evidence/language/fallback-language-policy-v2.ts",
+        "src/evidence/language/identifier-structure-kernel-v2.ts",
+        "src/evidence/language/index.ts",
+        "src/evidence/language/javascript-language-adapter-v2.ts",
+        "src/evidence/language/language-adapter-kinds-v2.ts",
+        "src/evidence/language/language-adapter-producer-v2.ts",
+        "src/evidence/language/language-adapter-registry-v2.ts",
+        "src/evidence/language/language-capability-observation-v2.ts",
+        "src/evidence/language/language-lexical-coordinator-v2.ts",
+        "src/evidence/language/language-scope-producer-v2.ts",
+        "src/evidence/language/sql-language-adapter-v2.ts",
+        "src/evidence/language/sql-lexical-kernel-v2.ts",
+        "src/evidence/language/typescript-language-adapter-v2.ts",
+        "src/evidence/request-snapshot/capability-classification-views-v2.ts",
+        "test/golden/language-capability-boundary.spec.ts",
+        "test/unit/language-adapter-registry-v2.spec.ts",
+        "test/unit/language-capability-integration-v2.spec.ts",
+        "test/unit/language-capability-platform.spec.ts",
+        "test/unit/language-evidence-adapters-v2.spec.ts",
+        "test/unit/language-lexical-facts-v2.spec.ts",
+        "testkit/fixtures/language-capability-v2/extension-matrix-v2.ts",
+        "testkit/fixtures/language-capability-v2/move-only-characterization-v2.ts",
+        "testkit/testing/complete-real-locate-shadow-stage-probe-v2.ts"
+      ],
+      "ignored_machine_artifacts": [],
+      "allowed_prefixes": [
+        ".codestable/features/2026-07-24-language-capability-boundary",
+        ".codestable/features/2026-07-24-language-capability-boundary",
+        ".codestable/roadmap/repo-nav-public-beta",
+        ".codestable/architecture/system-repo-nav-foundation.md",
+        "src/evidence/language/",
+        "src/evidence/direct-mapping-classifier.ts",
+        "src/evidence/candidate-policy.ts",
+        "src/evidence/candidate-policy/",
+        "src/evidence/request-snapshot/",
+        "src/evidence/scope/",
+        "src/evidence/request-outcome/",
+        "src/evidence/public-output/",
+        "src/evidence/canonical/",
+        "src/evidence/locate-execution/",
+        "src/evidence/evidence.module.ts",
+        "src/evidence/ranking/",
+        "src/contracts/v2/",
+        "test/unit/",
+        "test/golden/",
+        "testkit/fixtures/language-capability-v2/",
+        "testkit/fixtures/request-outcome-v2/",
+        "testkit/fixtures/scope-v1/",
+        "testkit/runners/runner-registry.ts",
+        "testkit/contracts/",
+        "testkit/testing/",
+        "testkit/manifests/"
+      ]
+    }
+  ],
+  "providers": {}
+}
+```

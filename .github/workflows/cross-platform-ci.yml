@@ -1,0 +1,181 @@
+# F4 cross-platform blocking matrix.
+# Action pins (reviewed 2026-07-24; setup-python added 2026-07-28 for Windows gate):
+# - actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 (v7.0.0)
+# - actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 (v5.6.0)
+# - actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 (v7.0.0)
+# - actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 (v5.0.0)
+name: cross-platform-ci
+
+on:
+  pull_request:
+  merge_group:
+    types:
+      - checks_requested
+  push:
+    branches:
+      - main
+      - repo-nav-public-beta
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cross-platform-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  platform-matrix:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - cellId: linux-node22
+            runner: ubuntu-24.04
+            nodeMajor: 22
+          - cellId: linux-node24
+            runner: ubuntu-24.04
+            nodeMajor: 24
+          - cellId: windows-node22
+            runner: windows-2025
+            nodeMajor: 22
+          - cellId: windows-node24
+            runner: windows-2025
+            nodeMajor: 24
+          - cellId: macos-intel-node22
+            runner: macos-15-intel
+            nodeMajor: 22
+          - cellId: macos-intel-node24
+            runner: macos-15-intel
+            nodeMajor: 24
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Setup Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.nodeMajor }}
+          package-manager-cache: false
+
+      - id: install
+        name: Install
+        run: npm ci
+
+      - name: Install host tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOOLS="${RUNNER_TEMP}/repo-nav-host-tools"
+          mkdir -p "$TOOLS"
+          npm install --prefix "$TOOLS" --no-save --no-package-lock --no-fund --no-audit \
+            @vscode/ripgrep@1.15.9 \
+            @colbymchenry/codegraph@1.1.6
+          BIN_DIR="$TOOLS/node_modules/.bin"
+          RG_BIN="$TOOLS/node_modules/@vscode/ripgrep/bin"
+          CG_SHIM="$TOOLS/node_modules/@colbymchenry/codegraph/npm-shim.js"
+          if [[ "${RUNNER_OS}" == "Windows" ]]; then
+            echo "$(cygpath -w "$RG_BIN")" >> "$GITHUB_PATH"
+            echo "$(cygpath -w "$BIN_DIR")" >> "$GITHUB_PATH"
+            "${RG_BIN}/rg.exe" --version
+            node "$(cygpath -w "$CG_SHIM")" --version
+          else
+            echo "$RG_BIN" >> "$GITHUB_PATH"
+            echo "$BIN_DIR" >> "$GITHUB_PATH"
+            "${RG_BIN}/rg" --version
+            node "$CG_SHIM" --version
+          fi
+
+      - id: runtime
+        name: Runtime probe
+        run: node --import tsx tools/ci/run-platform-contracts.mjs --runtime-probe --cell ${{ matrix.cellId }}
+
+      - id: build
+        name: Build
+        run: npm run build
+
+      - id: typecheck
+        name: Typecheck
+        run: npm run typecheck
+
+      - id: unit
+        name: Unit tests
+        run: npm test
+
+      - id: golden
+        name: Golden tests
+        run: npm run test:golden -- --all
+
+      - id: mcp
+        name: MCP tests
+        run: npm run test:mcp -- --all
+
+      - id: docs
+        name: Docs smoke
+        run: npm run test:docs
+
+      - id: platform
+        name: Platform contracts
+        run: npm run test:platform
+
+      - id: report
+        name: Write core-command report
+        if: always()
+        shell: bash
+        run: |
+          node --import tsx tools/ci/write-platform-report.mjs \
+            --cell "${{ matrix.cellId }}" \
+            --output "test-artifacts/platform/core-command-${{ matrix.cellId }}.json" \
+            --workflow-run-id "${{ github.run_id }}" \
+            --run-attempt "${{ github.run_attempt }}" \
+            --workflow-sha "${{ github.workflow_sha }}" \
+            --source-sha "${{ github.sha }}" \
+            --event-name "${{ github.event_name }}" \
+            --summary "test-artifacts/platform/safe-summary.json" \
+            --outcome "install=${{ steps.install.outcome }}" \
+            --outcome "runtime=${{ steps.runtime.outcome }}" \
+            --outcome "build=${{ steps.build.outcome }}" \
+            --outcome "typecheck=${{ steps.typecheck.outcome }}" \
+            --outcome "unit=${{ steps.unit.outcome }}" \
+            --outcome "golden=${{ steps.golden.outcome }}" \
+            --outcome "mcp=${{ steps.mcp.outcome }}" \
+            --outcome "docs=${{ steps.docs.outcome }}" \
+            --outcome "platform=${{ steps.platform.outcome }}"
+
+      - name: Upload safe core-command report
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: cross-platform-baseline-${{ matrix.cellId }}-${{ github.run_attempt }}
+          path: test-artifacts/platform/core-command-${{ matrix.cellId }}.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - id: assert-cell
+        name: Assert cell report
+        if: always()
+        run: node --import tsx tools/ci/assert-platform-contract.mjs --cell-report test-artifacts/platform/core-command-${{ matrix.cellId }}.json
+
+  cross-platform-required:
+    name: cross-platform-required
+    runs-on: ubuntu-24.04
+    needs:
+      - platform-matrix
+    if: always()
+    steps:
+      - name: Require matrix success
+        shell: bash
+        run: |
+          if [ "${{ needs.platform-matrix.result }}" != "success" ]; then
+            echo "platform-matrix result must be success; got ${{ needs.platform-matrix.result }}"
+            exit 1
+          fi

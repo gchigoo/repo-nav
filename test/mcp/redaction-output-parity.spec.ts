@@ -48,10 +48,15 @@ describe.runIf(
       const evidence = parity.output.evidence.confirmed[0];
       expect(evidence?.location.redaction).toEqual({
         applied: true,
-        reasonCodes: [
-          'SECRET_LIKE_VALUE',
-          'CONNECTION_STRING',
-          'PERSONAL_DATA',
+        fields: [
+          {
+            field: 'excerpt',
+            reasonCodes: [
+              'SECRET_LIKE_VALUE',
+              'CONNECTION_STRING',
+              'PERSONAL_DATA',
+            ],
+          },
         ],
       });
       expect(

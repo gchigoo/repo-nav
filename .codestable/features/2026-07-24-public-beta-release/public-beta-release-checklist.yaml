@@ -1,0 +1,495 @@
+feature: 2026-07-24-public-beta-release
+created: '2026-07-24'
+steps:
+- id: S1
+  action: 只把唯一production projector切到V2并让其在EvidenceModule内注入F8 ACCEPTED_COMPLETE_REAL_LOCATE_SHADOW_ORCHESTRATOR_V2对应ready singleton及调用accepted accessor，F1C capability及private internal token在validation前issue，valid request把同一capability传给canonical executor与projector，加入transport receipt并删除legacy lane double-redaction synthetic seam
+  exit_signal: F9只internal deep import F8 DI token orchestrator interface attempt accessor且不import F8 zero-argument factory provider descriptor、F1C createRequiredOwnerFinalizerV2 createMaterializedLocateResultComposerV2、internal execution token accessor或stage dependency，不重登记ready provider；F8先恢复same token再执行七stage exact call order，invalid ingress issue-validation-error counters、fail-closed、single execution、receipt hostile matrix、transport parity与no-v1 reachability全部通过
+  verification: npm test -- --group public-beta-release --case projector-cutover --case transport-receipt-parity --case single-execution --case failure-order --case no-v1-runtime
+  artifacts: [F8 accepted orchestration signature and call-order hash, v2 cutover truth table, request receipt hostile matrix, trusted compact JSON parity, legacy deletion graph]
+  status: done
+- id: S2
+  action: 把production CLI迁入fresh单一src build，落0.2.0-beta.1、Node engines、pinned npm、single npm-shrinkwrap、exports files metadata与owner-selected license及conditional NOTICE且保持private true
+  exit_signal: manifest shrinkwrap serverInfo two bin versions exact，empty outDir source-to-emit no-map LF和stale-v1 mutation通过，MIT或Apache no-NOTICE分支无NOTICE，Apache required分支generated NOTICE exact，root declaration只含F1C approved API
+  verification: npm run build && npm run package:metadata:check && npm run package:lock:check && npm run package:emit:check && npm test -- --group public-beta-release --case version-sources --case cli-runtime-closure --case package-api
+  artifacts: [CLI move characterization, version engine npm and shrinkwrap parity, fresh emit closure, public declaration closure, owner license evidence]
+  status: done
+- id: S3
+  action: 接入exact typed ESLint与Prettier，先由F9 design/checklist固定tuple raw bytes生成并验证ReleaseDesignRevisionV1，再按绑定该revision的exact-one owner preflight生成LICENSE conditional NOTICE SECURITY，完成public docs并用synthetic fixtures自测four-graph audit SBOM tooling但不冒充candidate证据
+  exit_signal: lint format零warning；design revision的tracked-clean regular-file、固定顺序、byte length、raw sha256、self-excluding compact hash及BOM LF-CRLF reorder dirty symlink-reparse mutation全部通过；license和security内容与current-design preflight exact，tooling mutation self-test与docs smoke通过，无未冻结candidate的audit SBOM或freshness结论
+  verification: npm run lint && npm run format:check && node tools/release/owner-action-schema.mjs --preflight .codestable/runtime/public-beta-release-owner-preflight.json && npm run test:docs
+  artifacts: [quality logs, ReleaseDesignRevisionV1 raw-byte manifest and mutation proof, owner preflight content proof, four-graph audit SBOM tooling mutation self-test, SECURITY channel proof, migration docs smoke]
+  status: done
+- id: S4
+  action: 用positive和conditional NOTICE allowlist从两个fresh source copy生成actual tgz与semantic manifest，再用semantic root sentinel完成四图和ReleaseCandidateIdentityV1，在same candidate执行audit canonical SBOM exact numeric large边界及F4 F9-PACK-001五marker加candidate semantic closure三hash六格
+  exit_signal: source到semantic到closure到candidate无hash cycle，tarball budgets shrinkwrap LF no-map runtime closure two-run hash和12类large N-Nplus1通过，high critical为0，SBOM full graph exact；Node22 24三OS safe cell reports的workflowRunId与runAttempt逐格exact相同，passedAssertionMarkers集合按固定顺序exact等于五个requiredAssertionIds，candidate semantic closure三hash逐格一致，sixCellEvidenceSha256按schemaVersion run cells可重算
+  verification: npm run package:dry-run && npm run package:smoke && npm run package:closure:check && npm run security:audit && npm run security:sbom:check && npm run test:golden -- --group public-beta-release --case large-release-boundaries && npm run test:platform && node tools/ci/run-platform-contracts.mjs --self-test
+  artifacts: [tarball N and N plus one, fresh source-to-emit manifests, two-run semantic manifest, production closure and candidate identity, actual-consumer audit report, canonical CycloneDX proof, clean install bin MCP smoke, large counters, five-marker and three-hash six-cell safe reports, PublicBetaSixCellEvidenceV1]
+  status: done
+- id: S5
+  action: 校验exact-one owner preflight与same-candidate machine license security advisory actions，严格校验未跟踪RealConsumerConfirmationV1的canonical repository path candidate branch HEAD intent request policy owner time与self-excluding decision hash，再以git rev-parse解析index执行全工作树before-after postcondition的installed MCP E2E，生成SanitizedRealConsumerEvidenceV1，运行21-ID跨surface aggregate并生成candidate-evidence-bound private true publish false readiness
+  exit_signal: confirmation与target逐字段exact且拒绝placeholder extra alias symlink-reparse swap future或过期输入；branch HEAD resolved index tracked untracked ignored和codegraph exact不变，confirmation≤evidence≤24小时且same candidate，sanitized evidence schema与self-excluding hash拒绝identity path branch HEAD request file hash分量或raw output，semantic closure audit SBOM six-cell real-consumer hashes都绑定同candidate，full aggregate通过，runtime actions confirmation tgz均未进artifact，无外部发布动作
+  verification: npm run release:owner-actions:check && node tools/release/run-real-consumer-e2e.mjs --confirmation .codestable/runtime/public-beta-real-consumer-confirmation.json && node tools/release/run-public-beta-release-contracts.mjs --all
+  artifacts: [machine owner action verdicts, real consumer aggregate before-after equality, sanitized E2E, full aggregate logs, release readiness, scope inventory, review QA acceptance]
+  status: done
+checks:
+- id: C1
+  item: F9 implementation前F1A F1B F1C F3 F2 F4 F5 F6 F7 F8均为current-revision done且各自独立review QA acceptance通过
+  source: design key decision 1
+  status: passed
+- id: C2
+  item: F8真实六owner完整shadow已通过且无placeholder owner dependency-gated N/A或synthetic value冒充production fact
+  source: design key decision 1 / F9-CUTOVER-001
+  status: passed
+- id: C3
+  item: LOCATE_RESULT_PROJECTOR唯一production binding原子从V1切为V2，不存在并行provider env request backend transport条件选择
+  source: design key decision 2 / F9-CUTOVER-001
+  status: passed
+- id: C4
+  item: CanonicalLocateExecutionV2删除legacyV1Projection与optional compatibility slot，builder caller和tests同revision迁移
+  source: design key decision 3 / F9-NO-V1-001
+  status: passed
+- id: C5
+  item: v2 projector constructor只注入F8 ACCEPTED_COMPLETE_REAL_LOCATE_SHADOW_ORCHESTRATOR_V2对应AcceptedCompleteRealLocateShadowOrchestratorV2 ready singleton，以input execution exact ABI对success只调用projectAcceptedExecution一次和requireAcceptedCompleteRealLocateShadowV2一次；F9不import createAcceptedCompleteRealLocateShadowOrchestratorV2 provider descriptor、F1C createRequiredOwnerFinalizerV2 createMaterializedLocateResultComposerV2、internal execution token accessor owner materializer aggregation finalized facts composer schema serializer counter probe
+  source: design key decision 4 / F9-CUTOVER-001
+  status: passed
+- id: C6
+  item: accepted七stage顺序固定为source materialization aggregation owner-finalization composition schema serialization-budget，每stage最多一次且失败后所有later stage零调用
+  source: design key decision 4 / F9-FAIL-CLOSED-001
+  status: passed
+- id: C7
+  item: canonical与invalid-input四类tool error只经唯一strict v2 factory，message recoverable suggestedAction exact且无exception path root backend stage size detail
+  source: design key decision 5 / F9-FAIL-CLOSED-001
+  status: passed
+- id: C8
+  item: 唯一application在任何request validation前调用F1C issuer创建并保留无own-property projection capability及private internal token，valid request以same capability调用canonical executor和projector且executor登记exact input，success由F8内部恢复same token并产accepted view，error只经F1C fixed-safe factory和common accessor，两条promotion都把exact value compact JSON byte和F1B proof绑定opaque receipt及same capability
+  source: design key decision 6 / F9-TRANSPORT-001
+  status: passed
+- id: C9
+  item: MCP structuredContent使用exact value，text使用已预算compact JSON且parse deep equal，isError exact等于not ok
+  source: design key decisions 6 and 7 / F9-TRANSPORT-001
+  status: passed
+- id: C10
+  item: debug CLI locate stdout使用同一compact JSON加一个换行，success类退出0 tool error退出3 transport unexpected退出1 syntax usage退出2
+  source: design key decision 7 / F9-TRANSPORT-001
+  status: passed
+- id: C11
+  item: 已识别debug locate的request schema错误返回v2 INVALID_INPUT而非CLI私有error，capability issue与validation各1，executor F8七stage均0，F1C error factory internal serializer common accessor和F9 promotion各1且使用同capability
+  source: design key decisions 5 and 7 / F9-FAIL-CLOSED-001
+  status: passed
+- id: C12
+  item: v1 projector redactor error mapper locate output schema与synthetic-only projector seam从production runtime DI package root declaration不可达
+  source: design key decision 8 / F9-NO-V1-001
+  status: passed
+- id: C13
+  item: deliberate v1 import provider flag dynamic import或fallback mutation返回从production root到forbidden module的完整runtime path
+  source: design key decision 8 / F9-NO-V1-001
+  status: passed
+- id: C14
+  item: package.json是唯一version authoring source且target exact 0.2.0-beta.1，npm-shrinkwrap根两处 serverInfo repo-nav与repo-nav-mcp probes一致且package-lock不存在
+  source: design key decision 9 / F9-VERSION-001
+  status: passed
+- id: C15
+  item: runtime package metadata loader只读取bounded name version并在missing malformed extra invalid时fixed startup failure，不泄露resolved path
+  source: design key decision 9 / F9-VERSION-001
+  status: passed
+- id: C16
+  item: package engines README migration workflow installed metadata literal exact为caret22 or caret24，semver边界21 false 22 true 23 false 24 true 25 false且不声称install hard fail
+  source: design key decision 10 / F9-NODE-001
+  status: passed
+- id: C17
+  item: tools CLI move到src CLI后只有tsconfig build一次编译且无dist src duplicate tree，move前后help locate probe approved behavior deep exact
+  source: design key decision 11 / F9-CLI-CLOSURE-001
+  status: passed
+- id: C18
+  item: public debug golden命令从parser help docs package移除并在migration指出source checkout使用npm run test golden，production CLI无testkit import
+  source: design key decision 11 / F9-CLI-CLOSURE-001
+  status: passed
+- id: C19
+  item: package main types exports只开放root和package json，root exact等于F1C accepted public manifest且deep private imports失败
+  source: design key decision 12 / F9-PACKAGE-API-001
+  status: passed
+- id: C20
+  item: dist index declaration dependency closure不含private executor projector fact proof registrar concrete facade testkit redactor helper
+  source: design key decision 12 / F9-PACKAGE-API-001
+  status: passed
+- id: C21
+  item: repository bugs homepage keywords metadata exact且不虚构author funding organization support SLA或npm ownership
+  source: design key decision 13 / F9-METADATA-001
+  status: passed
+- id: C22
+  item: packageManager和devDependency exact pin npm11.12.1，release命令只调用local npm CLI；single shrinkwrap同revision同步且bin exact，无双lock或手改graph
+  source: design key decisions 11 and 13 / F9-METADATA-001
+  status: passed
+- id: C23
+  item: package files positive allowlist只含dist js dts README SECURITY LICENSE四份public docs及npm自动package json和npm-shrinkwrap json；NOTICE初次pack仅在current-design Apache preflight noticeRequired true时条件允许且必须存在，candidate冻结后final action必须逐字段匹配并确认hash，其他分支必须不存在
+  source: design key decision 14 / F9-PACK-001
+  status: passed
+- id: C24
+  item: tarball禁止codestable github src tools test testkit artifacts node_modules maps dangling sourceMappingURL tsconfig logs confirmation secrets absolute paths与CRLF packaged text
+  source: design key decision 14 / F9-PACK-001
+  status: passed
+- id: C25
+  item: tarball entries512 packed1.5MiB unpacked4MiB each512KiB边界N通过N加一整包失败且不截断
+  source: design key decision 14 / F9-PACK-001
+  status: passed
+- id: C26
+  item: 两个fresh source copy均先清空outDir，non-declaration source与js dts exact bijection，stale-v1 synthetic emit mutation被clean删除且两次pack install manifest exact
+  source: design key decision 15 / F9-PACK-REPRO-001
+  status: passed
+- id: C27
+  item: 六个F4 cell的workflowRunId runAttempt workflowSha sourceSha eventName与revision逐格exact相同，passedAssertionMarkers按固定顺序exact等于tarball-allowlist-exact package-bins-executable node-engine-range-declared mcp-v2-installed-parity package-runtime-closure，candidate-id semantic-manifest production-closure三项contract evidence hash逐格一致并与同一ReleaseCandidateIdentityV1重算相等；sixCellEvidenceSha256只覆盖strict compact的schemaVersion run cells并排除自身，不以raw tgz header hash mode mtime uid gid作为跨OS真值
+  source: design key decisions 15 and 24 / F9-PACK-REPRO-001 F9-PACK-001
+  status: passed
+- id: C28
+  item: actual tgz在clean temp project用pinned npm ignore-scripts no-audit no-fund安装并生成consumer package-lock，cwd PATH隔离且checkout dist src tools test testkit不可达
+  source: design key decision 16 / F9-INSTALL-001
+  status: passed
+- id: C29
+  item: candidate root identity为semantic sentinel，root tgz consumer locks提供normalized install key name version integrity edge authority，npm ls只供topology status并以lock path和ancestor resolution关联；peer optional link dedupe multiedge规则后semantic production multigraph exact，raw tgz SRI只作同cell验证，installed bins root import MCP v2全部只用production dependencies
+  source: design key decision 16 / F9-INSTALL-001
+  status: passed
+- id: C30
+  item: eslint eslint-js typescript-eslint prettier exact pin为9.39.5 9.39.5 8.65.0 3.9.6且npm-shrinkwrap一致
+  source: design key decision 17 / F9-QUALITY-001
+  status: passed
+- id: C31
+  item: ESLint flat typed strict stylistic projectService no-explicit-any unused-disable zero-warning覆盖全部TS和release MJS
+  source: design key decision 17 / F9-QUALITY-001
+  status: passed
+- id: C32
+  item: Prettier check覆盖TS root JSON MD MJS public docs workflow YAML并排除codestable snapshots dist node_modules artifacts且只检查不自动写
+  source: design key decision 17 / F9-QUALITY-001
+  status: passed
+- id: C33
+  item: audit在actual installed consumer lock上用pinned npm omit-dev audit-level-high执行且high critical为0，fast-uri受影响版本不在四图，不使用force legacy-peer-deps suppression
+  source: design key decision 18 / F9-AUDIT-001
+  status: passed
+- id: C34
+  item: moderate low逐项machine action绑定ReleaseCandidateIdentityV1与exact auditReportSha256并记录advisory ID resolved version runtime reachability disposition owner verified-at且不可达不标记fixed
+  source: design key decision 18 / F9-AUDIT-001
+  status: passed
+- id: C35
+  item: deterministic CycloneDX1.5从canonical installed graph生成并验证root name version purl bom-ref full component和edge set，npm SBOM仅differential且ajv fast-uri类遗漏阻断
+  source: design key decision 19 / F9-SBOM-001
+  status: passed
+- id: C36
+  item: exact-one license和security owner preflight绑定design hash仅授权开工及生成内容；final machine owner actions绑定same candidate、引用各自preflight hash并逐字段exact，MIT含year holder，Apache required含nonempty attribution和generated LF NOTICE hash，false分支无NOTICE字段，package SPDX与官方LICENSE exact且不推导private removal
+  source: design key decision 20 / F9-METADATA-001
+  status: passed
+- id: C37
+  item: package private字段在F9 acceptance仍exact true，删除或false mutation阻断readiness
+  source: design key decisions 20 and 25 / F9-RELEASE-001
+  status: passed
+- id: C38
+  item: SECURITY supported table exact beta supported old unsupported，禁止public issue提交漏洞secret；内容先来自current-design security preflight，readiness只接受与其逐字段exact且same-candidate fresh final action确认的public-safe private channel text
+  source: design key decision 21 / F9-SECURITY-001
+  status: passed
+- id: C39
+  item: SECURITY不含虚构email account SLA或未启用GitHub advisory入口，channel不可用时block并回design delta
+  source: design key decision 21 / F9-SECURITY-001
+  status: passed
+- id: C40
+  item: migration逐项覆盖schema error status ID Node path scope language package API与CLI Golden removal，machine examples通过v1 fixture和v2 strict schemas
+  source: design key decision 22 / F9-MIGRATION-001
+  status: passed
+- id: C41
+  item: README MCP CLI locate reference只描述v2与Node22 24 installed package，不保留Node20或双production schema
+  source: design key decision 22 / F9-MIGRATION-001
+  status: passed
+- id: C42
+  item: 未跟踪RealConsumerConfirmationV1 strict字段exact为schemaVersion candidate repository canonicalRepositoryPath branch headSha intent intentId requestSha256 expectedSchemaVersion sensitiveOutputPolicy owner verified_at decisionSha256；path经realpath与git show-toplevel为同一canonical code-unit root且非alias symlink junction reparse，branch HEAD intent request policy逐字段绑定same candidate，decisionSha256对排除自身的schema字段序compact JSON计算；missing extra placeholder wrong-candidate future过期 path alias branch HEAD request policy swap均在启动前失败，随后canonical snapshot覆盖status-v2 ls-files与git rev-parse path-format absolute git-path index解析的regular index及除git外所有tracked untracked ignored和codegraph entries
+  source: design key decision 23 / F9-REAL-MCP-001
+  status: passed
+- id: C43
+  item: real consumer使用same-candidate actual installed tgz且不初始化索引不写target，confirmation verified_at不晚于evidence verified_at且两者在readiness时均≤24小时并绑定同一candidate intent与canonical target authority；结束后branch HEAD resolved index tracked untracked ignored和codegraph aggregate及分量before-after exact，运行中root或index authority替换失败
+  source: design key decision 23 / F9-REAL-MCP-001
+  status: passed
+- id: C44
+  item: synthetic temp Git fixture覆盖普通checkout linked worktree index missing symlink reparse run中替换，并对tracked untracked ignored codegraph write和resolved index mutation均阻断；SanitizedRealConsumerEvidenceV1只含schemaVersion exact candidate confirmationDecisionSha256 intentId fixed policy verified_at semanticManifestSha256 stable counts booleans aggregate equality与self-excluding evidenceSha256，strict schema拒绝owner path branch HEAD request hash文件或snapshot hash分量stdout stderr raw output
+  source: design keys decisions 23 and 26 / F9-REAL-MCP-001
+  status: passed
+- id: C45
+  item: F4 closed union与registry同revision新增F9-PACK-001 exact group case OS fixture assertion owner、五requiredAssertionIds和candidate-id semantic-manifest production-closure三个requiredEvidenceHashIds，engine marker名为node-engine-range-declared
+  source: design key decision 24 / F9-PACK-001
+  status: passed
+- id: C46
+  item: F9 platform assertion owner与三个PlatformEvidenceHashOwner均固定test unit public-beta-release-platform spec，fixture为testkit fixtures release-v2 package-install-v2；actual tgz install semantic manifest production closure验证完成后才各调用一次recordPlatformContractEvidenceHash且不能用expected fixture或env伪回填
+  source: design key decision 24 / F9-PACK-001
+  status: passed
+- id: C47
+  item: union binding fixture assertion或evidence declared owner wrong-path private runner actualOwner不等、zero-marker、marker missing extra reorder、evidence invalid duplicate unknown hash wrong-tuple、workflowRunId或runAttempt跨格拼接或缩小OS mutation在self-test失败；五marker在Node22 24三OS非零且engine marker只验declared semver边界，F4 report的passedAssertionMarkers与F9 contractEvidenceHashes子集每格分别exact五项和三项
+  source: design key decision 24 / F9-PACK-001
+  status: passed
+- id: C48
+  item: readiness包含完整ReleaseCandidateIdentityV1、semantic manifest closure audit SBOM six-cell real-consumer evidence hashes、fresh candidate-bound owner actions、node range private true与publishPerformed false并重验所有association
+  source: design key decision 25 / F9-RELEASE-001
+  status: passed
+- id: C49
+  item: npm registry404 local pack roadmap done不能证明name ownership，publish前需live authenticated identity与ownership独立验证
+  source: design key decision 25 / F9-RELEASE-001
+  status: passed
+- id: C50
+  item: private removal npm publish dry-run actual publish tag push GitHub Release分别需要新owner批准且任一批准不推导下一项
+  source: design key decision 25 / F9-RELEASE-001
+  status: passed
+- id: C51
+  item: F9实现和acceptance期间publish tag push release调用计数均为0且未读取打印npm token或user identity
+  source: design key decisions 25 and 26 / F9-RELEASE-001
+  status: passed
+- id: C52
+  item: release artifacts只含version case IDs counts relative entries hashes advisory IDs booleans且通过path consumer output credential forbidden scan
+  source: design key decision 26
+  status: passed
+- id: C53
+  item: 所有release spawn使用argv与shell false，stderr固定scrub且不进入LocateResultV2或committed artifact
+  source: design key decision 26
+  status: passed
+- id: C54
+  item: actual upstream owner accessor proof composer serializer signatures漂移时F9 block并回对应feature完成修订和独立review
+  source: design non-obvious dependencies
+  status: passed
+- id: C55
+  item: roadmap architecture public contract compatibility threat migration README与items同步production v2 package security和release governance现状
+  source: required actions
+  status: passed
+- id: C56
+  item: exact scope allow manifest覆盖全部staged unstaged untracked并排除tgz SBOM temp consumer confirmation与任何ambient changes
+  source: CMD-SCOPE
+  status: passed
+- id: C57
+  item: design review QA acceptance reports与hash覆盖F9及同revision F4 child extension，旧F4或上游hash不得冒充当前gate
+  source: Design Review QA Acceptance DoD
+  status: passed
+- id: C58
+  item: F1C projection ABI capability-internal-token-canonical-input registry fixed-safe error factory common serialized accessor、finalizer/composer zero-argument acquisition factories与F8 exact owner文件的internal DI token accepted orchestrator interface attempt accessor zero-argument factory same-token recovery exact callback context七stage顺序及EvidenceModule唯一non-exported provider已由current-revision acceptance冻结；F9依赖图只含F8 DI token success interface accessor和F1C error factory serialized accessor及F9 promotions，不含F8 factory provider descriptor、F1C createRequiredOwnerFinalizerV2 createMaterializedLocateResultComposerV2或internal token accessor，signature drift回上游重审
+  source: design key decisions 2 and 4 / F9-CUTOVER-001
+  status: passed
+- id: C59
+  item: transport accessor必须同时验证exact value opaque receipt expected execution capability，clone stale registered value receipt-value swap cross-execution均在暴露value JSON bytes前失败且不重试serializer
+  source: design key decision 6 / F9-TRANSPORT-001
+  status: passed
+- id: C60
+  item: 21个stable ID各自具有design表中exact fixture assertion surface command runner manifest与只含文件路径的contract owners；release-case-manifest-v2 json与run-public-beta-release-contracts --all跨unit docs Golden MCP platform package security real-consumer逐项执行，零次重复错误surface漏项或alias均失败
+  source: design stable case ownership / CMD-F9-CASE-AGGREGATE
+  status: passed
+- id: C61
+  item: tsconfig build显式sourceMap false declarationMap false newLine lf，gitattributes固定packaged text LF且emit gate拒绝map sourceMappingURL CRLF orphan emit missing emit与第二dist tree
+  source: design key decisions 14 and 15 / F9-PACK-001 F9-PACK-REPRO-001
+  status: passed
+- id: C62
+  item: package-lock不得与npm-shrinkwrap并存，root override不算consumer authority；root使用semantic manifest sentinel，lock graphs拥有path integrity，npm-ls缺integrity或dedup空对象合法但必须唯一关联；full optional applicability进入跨OS production closure hash，各cell inapplicable absence只进入cell projection hash，peer optional link multiedge或任一semantic node edge root metadata漂移均在audit前失败
+  source: design key decisions 9 and 18 / F9-VERSION-001 F9-INSTALL-001
+  status: passed
+- id: C63
+  item: exact-one owner preflight与candidate-bound license security-channel advisory-disposition通过strict schema hash association freshness exact-set校验；final license和security内容字段与各自preflight deep-exact，license candidate不超时但candidate drift失效，security≤7天，advisory绑定exact audit hash，action files保持未跟踪不进入package artifact或stage
+  source: required actions / CMD-OWNER-ACTIONS
+  status: passed
+- id: C64
+  item: F9-LARGE-001 mutation manifest固定entries512、packed1572864、unpacked4194304、file524288、declaration files512 edges2048、production nodes512 edges2048、SBOM components512 edges2048 bytes2097152、public JSON1048576及各N加一和五次permutation，N通过N加一fail closed且package closure SBOM public hashes稳定
+  source: design stable cases / CMD-LARGE
+  status: passed
+- id: C65
+  item: real-consumer snapshot聚合前保存完整分量但artifact只输出aggregate equality，branch HEAD经git rev-parse解析的index worktree与codegraph任一写入都fail closed且synthetic mutation不触碰真实target
+  source: design key decision 23 / F9-REAL-MCP-001
+  status: passed
+- id: C66
+  item: RELEASE_DESIGN_REVISION_PATHS_V1按固定顺序只含F9 design与checklist，要求Git tracked clean regular non-symlink-reparse并读取working-tree raw bytes不规范化BOM Unicode LF-CRLF或尾空白；ReleaseDesignRevisionV1 entries记录path byteLength sha256且designRevisionSha256对排除自身的schemaVersion algorithm sha256-raw-bytes-v1 entries strict compact JSON计算，missing extra reorder任一byte dirty index worktree或self-hash mutation均失败；release-candidate-source-paths-v1正向包含package build release test platform inputs并排除post-candidate CodeStable lifecycle artifacts，manifest自身进入source hash；ReleaseCandidateIdentityV1按source tree到不含closure的semantic manifest到以semantic root为sentinel的production closure再到candidate ID顺序组成且无hash cycle；全部证据携带同一identity，same-version不同candidate或hash混用失败
+  source: design key decision 27 / F9-RELEASE-001
+  status: passed
+- id: C67
+  item: testkit contracts platform-evidence-report与tools ci assert-public-beta-package-evidence只接受canonical六cell同workflowRunId和runAttempt safe reports，要求九项commands成功 F9 required case存在、五个passedAssertionMarkers按固定顺序exact、revision逐格相同且三个evidence hash与same candidate exact；漏格 extra report 跨run或attempt拼接 marker missing extra reorder revision或hash漂移均失败，输出strict PublicBetaSixCellEvidenceV1并以schemaVersion run cells重算hash且不含raw tgz SRI或report正文
+  source: design key decision 24 / F9-PACK-001
+  status: passed
+- id: C68
+  item: counting backend与reader及deliberate projector failure证明每个request的CanonicalLocateExecutorV2和repository execution都exact一次，projector stage或transport失败不得重试repository
+  source: design key decisions 2 and 4 / F9-SINGLE-EXEC-001
+  status: passed
+dod:
+  commands:
+  - id: CMD-BUILD
+    command: npm run build
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-TYPECHECK
+    command: npm run typecheck
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-LINT
+    command: npm run lint
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-FORMAT
+    command: npm run format:check
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-F9-UNIT
+    command: npm test -- --group public-beta-release
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-F9-CASE-AGGREGATE
+    command: node tools/release/run-public-beta-release-contracts.mjs --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-UPSTREAM-UNIT
+    command: npm test
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-GOLDEN
+    command: npm run test:golden -- --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-MCP
+    command: npm run test:mcp -- --all
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-DOCS
+    command: npm run test:docs
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-PLATFORM
+    command: npm run test:platform
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-METADATA
+    command: npm run package:metadata:check
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-LOCK
+    command: npm run package:lock:check
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-EMIT
+    command: npm run package:emit:check
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-PACK-DRY
+    command: npm run package:dry-run
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-PACK-SMOKE
+    command: npm run package:smoke
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-PROD-CLOSURE
+    command: npm run package:closure:check
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-AUDIT
+    command: npm run security:audit
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-SBOM
+    command: npm run security:sbom:check
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-LARGE
+    command: npm run test:golden -- --group public-beta-release --case large-release-boundaries
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-OWNER-ACTIONS
+    command: npm run release:owner-actions:check
+    core: true
+    failure_handling: block-owner-action
+  - id: CMD-NO-V1
+    command: npm test -- --group public-beta-release --case no-v1-runtime
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-REAL-CONSUMER
+    command: node tools/release/run-real-consumer-e2e.mjs --confirmation .codestable/runtime/public-beta-real-consumer-confirmation.json
+    core: true
+    failure_handling: block-owner-confirmation
+  - id: CMD-F4-REGISTRY
+    command: node tools/ci/run-platform-contracts.mjs --self-test
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-YAML
+    command: python .codestable/tools/validate-yaml.py --file .codestable/features/2026-07-24-public-beta-release/public-beta-release-checklist.yaml --yaml-only
+    core: false
+    failure_handling: fix-or-block
+  - id: CMD-DOD-GATE
+    command: python .codestable/tools/codestable-dod-contract-gate.py --design .codestable/features/2026-07-24-public-beta-release/public-beta-release-design.md --stage design
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-SPEC
+    command: python .codestable/tools/codestable-spec-governance.py --root . analyze
+    core: false
+    failure_handling: fix-or-block
+  - id: CMD-DOCTOR
+    command: python .codestable/tools/codestable-doctor.py --root .
+    core: false
+    failure_handling: record-baseline-or-block-new-regression
+  - id: CMD-SCOPE
+    command: python .codestable/tools/codestable-scope-gate.py --feature-dir .codestable/features/2026-07-24-public-beta-release --allow-file .codestable/features/2026-07-24-public-beta-release/public-beta-release-scope-allow.txt --check-path . --cleanliness-path src --cleanliness-path tools --cleanliness-path test --cleanliness-path testkit --cleanliness-path docs --cleanliness-path .github --stage implementation.before_review
+    core: true
+    failure_handling: fix-or-block
+  - id: CMD-DIFF-CHECK
+    command: git diff --check
+    core: false
+    failure_handling: fix-or-block
+  actions:
+  - id: A1
+    action: 先按固定F9 design-checklist tuple与raw-byte算法生成验证ReleaseDesignRevisionV1并冻结current design revision；owner再创建绑定其designRevisionSha256的owner-preflight JSON，license项由MIT year holder或Apache NOTICE decision attribution授权生成LICENSE NOTICE，security项提供live private channel public-safe text授权生成SECURITY；preflight不进入readiness
+    owner: repository owner
+    blocking: true
+  - id: A2
+    action: candidate freeze后owner action JSON针对exact ReleaseCandidateIdentity再次确认license和security并引用各自preflight hash，choice year holder noticeRequired attributions或channelType publicSafeText逐字段exact；security≤7天，Apache required NOTICE含generated hash
+    owner: repository owner
+    blocking: true
+  - id: A3
+    action: actual consumer audit的每个moderate low advisory写入same candidate及audit report hash、exact machine disposition owner和verified-at
+    owner: repository owner
+    blocking: true
+  - id: A4
+    action: 更新architecture public contract compatibility threat roadmap migration README记录accepted-orchestration receipt fresh-build shrinkwrap actual-closure security governance
+    owner: feature implementer
+    blocking: true
+  - id: A5
+    action: 取得F9-PACK-001 exact tuple五marker和candidate-id semantic-manifest production-closure三hash的Node22 24三OS safe reports，逐格对账同一workflowRunId runAttempt revision与same candidate，并由assert-public-beta-package-evidence生成按schemaVersion run cells可重算的six-cell hash
+    owner: feature implementer
+    blocking: true
+  - id: A6
+    action: owner按strict RealConsumerConfirmationV1创建绑定same candidate canonical repository path branch HEAD intent request hash fixed sensitive policy且≤24小时的未跟踪confirmation，runner验证self-excluding decision hash并获准以git rev-parse解析index执行全工作树before-after postcondition installed MCP E2E和SanitizedRealConsumerEvidenceV1
+    owner: repository owner
+    blocking: true
+  - id: A7
+    action: acceptance重验candidate与semantic closure audit SBOM six-cell real-consumer hashes和freshness，确认private true且publish tag push release计数为0
+    owner: feature acceptor
+    blocking: true
+  - id: A8
+    action: 创建exact allow manifest并对账root changed paths，清理tgz SBOM temp owner-actions confirmation
+    owner: feature implementer
+    blocking: true
+  required_artifacts:
+  - upstream F1A through F8 current-revision acceptance inventory
+  - F1C two-argument projector capability-internal-token-canonical-input registry plus fixed-safe error factory common serialized accessor and finalizer composer zero-argument acquisition factories, F8 exact internal DI token same-token accepted orchestrator interface attempt accessor signature call-order hash zero-argument factory EvidenceModule unique non-exported provider acceptance plus F9 only-token-injection no-factory-provider-descriptor no-F1C-finalizer-composer-acquisition-import no-internal-token-or-stage-dependency graph
+  - pre-validation capability invalid-input counters single-execution stage-failure v2 truth request-receipt hostile matrix and trusted service MCP CLI compact JSON parity
+  - legacy field projector redactor synthetic seam deletion and runtime DI package mutation graph
+  - ReleaseDesignRevisionV1 exact two-path raw-byte manifest self-excluding hash freeze and BOM LF-CRLF reorder dirty symlink-reparse mutation proof
+  - version Node manifest single-shrinkwrap pinned-npm server bin parity and fresh source-to-emit CLI closure
+  - F1C approved root export declaration closure plus exact-one owner preflight and same-candidate approved license conditional NOTICE with field-equality proof
+  - candidate-bound preflight-equal fresh security-channel and audit-hash-bound advisory-disposition owner actions
+  - typed lint format semantic-root lock-identity npm-ls-topology four-graph actual-consumer audit canonical installed SBOM security migration and docs evidence
+  - exact release-candidate-source-path manifest plus positive and conditional-NOTICE tarball LF no-map stale-output boundaries two-fresh-run semantic manifests acyclic source-semantic-closure-candidate identity and actual clean install smoke
+  - F9 exact tuple five-marker plus candidate semantic closure three-hash same-workflowRunId same-runAttempt six-cell safe reports and recomputable schemaVersion-run-cells PublicBetaSixCellEvidenceV1
+  - release-case-manifest-v2 exact 21-ID cross-surface aggregate execution
+  - exact numeric release-boundary mutation manifest N and N plus one counters and stable hashes
+  - strict RealConsumerConfirmationV1 decision hash and canonical-path mutations plus normal and linked-worktree resolved-index mutations and same-candidate full-worktree-before-after readonly SanitizedRealConsumerEvidenceV1 schema hash and forbidden-field proof
+  - candidate-and-evidence-hash-bound private-true publish-false release readiness
+  - roadmap architecture contract threat compatibility scope review QA acceptance
+  cleanliness:
+    v1_runtime_projector_redactor_or_fallback: forbidden
+    v2_transport_recompute_redact_status_or_stringify_authority: forbidden
+    f9_direct_f1c_success_stage_schema_or_serializer_import: forbidden
+    package_source_test_testkit_map_or_dev_runtime_dependency: forbidden
+    package_lock_or_dual_install_lock: forbidden
+    unpinned_release_npm_or_root_override_as_consumer_authority: forbidden
+    stale_emit_dangling_source_map_or_crlf_packaged_text: forbidden
+    unapproved_license_or_private_false: forbidden
+    missing_unexpected_or_drifted_notice: forbidden
+    publish_tag_push_release_action: forbidden
+    raw_tgz_sbom_consumer_confirmation_or_temp_output: forbidden
+    owner_action_file_or_advisory_disposition_file: forbidden
+    consumer_path_remote_branch_terms_or_result: forbidden
+    npm_identity_token_or_environment_dump: forbidden
+    placeholder_owner_or_dependency_gated_complete: forbidden
+    same_version_cross_candidate_or_stale_evidence_mix: forbidden

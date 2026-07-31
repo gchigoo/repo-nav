@@ -144,6 +144,7 @@ function buildVitestInvocation(
       'run',
       '--config',
       resolve(repositoryRoot, 'vitest.config.ts'),
+      '--testTimeout=30000',
     ],
     environment: {
       ...process.env,
@@ -151,6 +152,7 @@ function buildVitestInvocation(
       REPO_NAV_TEST_GROUPS: serializeSelection(selectedGroups),
       REPO_NAV_TEST_CASES: serializeSelection(selectedCases),
       REPO_NAV_REPORT_PERFORMANCE: selection.reportPerformance ? '1' : '0',
+      REPO_NAV_REPOSITORY_ROOT: repositoryRoot,
     },
     selection,
   };

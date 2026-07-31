@@ -1,0 +1,57 @@
+{
+  "gate_id": "scope-gate",
+  "stage": "acceptance",
+  "status": "passed",
+  "blocking": [],
+  "warnings": [],
+  "evidence": [
+    {
+      "changed_files": [
+        ".codestable/architecture/system-repo-nav-foundation.md",
+        ".codestable/features/2026-07-24-public-beta-release/public-beta-release-checklist.yaml",
+        ".codestable/features/2026-07-24-public-beta-release/public-beta-release-scope-allow.txt",
+        ".codestable/roadmap/repo-nav-public-beta/goal-features/public-beta-release.md",
+        ".codestable/roadmap/repo-nav-public-beta/repo-nav-public-beta-items.yaml",
+        ".codestable/roadmap/repo-nav-public-beta/repo-nav-public-beta-roadmap.md",
+        "src/evidence/locate-execution/canonical-locate-executor-v2.ts",
+        "src/evidence/locate-execution/register-production-accepted-projection-seams-v2.ts",
+        "src/evidence/public-output/sensitive-corpus-v2.ts",
+        "src/process/backend-execution-context-v2.ts",
+        "test/unit/cross-platform-platform.spec.ts",
+        "test/unit/public-beta-release-package.spec.ts",
+        ".codestable/features/2026-07-24-public-beta-release/public-beta-release-acceptance.md",
+        ".codestable/features/2026-07-24-public-beta-release/public-beta-release-dod-upstream-retry.json",
+        ".codestable/features/2026-07-24-public-beta-release/public-beta-release-evidence-pack.md"
+      ],
+      "ignored_machine_artifacts": [
+        ".codestable/features/2026-07-24-public-beta-release/public-beta-release-dod-results.json",
+        ".codestable/features/2026-07-24-public-beta-release/public-beta-release-evidence-pack-results.json",
+        ".codestable/features/2026-07-24-public-beta-release/public-beta-release-gate-results.json"
+      ],
+      "allowed_prefixes": [
+        ".codestable/features/2026-07-24-public-beta-release",
+        ".codestable/architecture/system-repo-nav-foundation.md",
+        ".codestable/features/2026-07-24-public-beta-release",
+        ".codestable/roadmap/repo-nav-public-beta",
+        ".codestable/runtime/public-beta-release-owner-preflight.json",
+        ".gitattributes",
+        ".prettierignore",
+        ".prettierrc.json",
+        "LICENSE",
+        "SECURITY.md",
+        "README.md",
+        "docs/",
+        "eslint.config.mjs",
+        "npm-shrinkwrap.json",
+        "package.json",
+        "src/",
+        "test/",
+        "testkit/",
+        "tools/release/",
+        "tsconfig.build.json",
+        "vitest.config.ts"
+      ]
+    }
+  ],
+  "providers": {}
+}

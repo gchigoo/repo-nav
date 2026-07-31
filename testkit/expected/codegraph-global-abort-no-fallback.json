@@ -1,9 +1,9 @@
 {
   "ok": true,
   "evidence": {
-    "schemaVersion": "1.0",
-    "status": "timeout",
-    "repositoryRoot": "<REPOSITORY_ROOT>",
+    "schemaVersion": "2.0",
+    "status": "cancelled",
+    "repositoryRef": "local-repository",
     "normalizedTerms": [
       {
         "value": "targetField",
@@ -16,18 +16,55 @@
       "backends": [
         {
           "backend": "codegraph",
-          "status": "failed",
+          "status": "used",
+          "completion": "incomplete",
+          "termination": "aborted",
           "reasonCode": "BACKEND_ABORTED",
           "hitCount": 0
         }
       ],
+      "strategyComplete": false,
       "fallbackChecked": false,
-      "indexState": "error",
+      "indexState": "unknown",
       "indexFreshness": "unknown",
-      "limitsReached": [
-        "TIMEOUT_REACHED"
-      ],
-      "exclusionSummary": {}
+      "limitsReached": [],
+      "degradations": [],
+      "exclusionSummary": {},
+      "abortSource": "caller",
+      "unsatisfiedAnchors": [],
+      "snapshot": {
+        "gitState": "unknown",
+        "consistency": "unknown",
+        "filesChecked": 0,
+        "discardedEvidenceCount": 0
+      },
+      "scope": {
+        "requested": [],
+        "effective": [
+          "client",
+          "server",
+          "db",
+          "config",
+          "unknown"
+        ],
+        "policyVersion": "repo-scope-v1",
+        "unmatchedLayers": [
+          "client",
+          "server",
+          "db",
+          "config",
+          "unknown"
+        ]
+      },
+      "capabilities": {
+        "textSearch": "supported-text-files",
+        "semanticClassification": [
+          "typescript",
+          "javascript",
+          "sql"
+        ],
+        "unsupportedLanguageHits": 0
+      }
     },
     "nextActions": []
   }

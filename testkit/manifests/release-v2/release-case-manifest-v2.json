@@ -1,0 +1,470 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "id": "F9-CUTOVER-001",
+      "group": "public-beta-release",
+      "case": "projector-cutover",
+      "surface": "unit",
+      "commandId": "CMD-F9-UNIT",
+      "fixture": [
+        "testkit/fixtures/release-v2/cutover-truth-v2.ts"
+      ],
+      "assertion": [
+        "test/unit/public-beta-release-cutover.spec.ts",
+        "test/unit/di.spec.ts"
+      ],
+      "runner": [
+        "testkit/runners/runner-registry.ts",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "src/evidence/locate-execution/public-locate-execution-application-v2.ts",
+        "src/evidence/locate-execution/v2-locate-result-projector.ts",
+        "src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.ts",
+        "src/evidence/evidence.module.ts"
+      ]
+    },
+    {
+      "id": "F9-TRANSPORT-001",
+      "group": "public-beta-release",
+      "case": "transport-receipt-parity",
+      "surface": "unit",
+      "commandId": "CMD-F9-UNIT",
+      "fixture": [
+        "testkit/fixtures/release-v2/transport-receipt-v2.ts"
+      ],
+      "assertion": [
+        "test/unit/public-beta-release-transport.spec.ts"
+      ],
+      "runner": [
+        "testkit/runners/runner-registry.ts",
+        "testkit/runners/mcp-runner.ts",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "src/evidence/locate-execution/public-locate-execution-application-v2.ts",
+        "src/evidence/locate-execution/public-locate-transport-registry-v2.ts"
+      ]
+    },
+    {
+      "id": "F9-SINGLE-EXEC-001",
+      "group": "public-beta-release",
+      "case": "single-execution",
+      "surface": "unit",
+      "commandId": "CMD-F9-UNIT",
+      "fixture": [
+        "testkit/fixtures/release-v2/single-execution-v2.ts"
+      ],
+      "assertion": [
+        "test/unit/public-beta-release-cutover.spec.ts"
+      ],
+      "runner": [
+        "testkit/runners/runner-registry.ts",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "src/evidence/locate-execution/canonical-locate-executor-v2.ts"
+      ]
+    },
+    {
+      "id": "F9-FAIL-CLOSED-001",
+      "group": "public-beta-release",
+      "case": "failure-order",
+      "surface": "unit",
+      "commandId": "CMD-F9-UNIT",
+      "fixture": [
+        "testkit/fixtures/release-v2/cutover-failure-order-v2.ts"
+      ],
+      "assertion": [
+        "test/unit/public-beta-release-cutover.spec.ts"
+      ],
+      "runner": [
+        "testkit/runners/runner-registry.ts",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "src/evidence/locate-execution/public-locate-execution-application-v2.ts",
+        "src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.ts",
+        "src/evidence/canonical/trusted-serialized-locate-result-v2.ts",
+        "src/evidence/locate-execution/v2-locate-result-projector.ts",
+        "testkit/testing/complete-real-locate-shadow-stage-probe-v2.ts"
+      ]
+    },
+    {
+      "id": "F9-NO-V1-001",
+      "group": "public-beta-release",
+      "case": "no-v1-runtime",
+      "surface": "unit",
+      "commandId": "CMD-F9-UNIT",
+      "fixture": [
+        "testkit/fixtures/release-v2/runtime-graph-mutations-v2.ts"
+      ],
+      "assertion": [
+        "test/unit/public-beta-release-boundary.spec.ts"
+      ],
+      "runner": [
+        "testkit/runners/runner-registry.ts",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "src/index.ts",
+        "src/evidence/evidence.module.ts",
+        "tools/release/assert-production-runtime-boundary.mjs"
+      ]
+    },
+    {
+      "id": "F9-VERSION-001",
+      "group": "public-beta-release",
+      "case": "version-sources",
+      "surface": "unit",
+      "commandId": "CMD-F9-UNIT",
+      "fixture": [
+        "testkit/fixtures/release-v2/version-sources-v2.ts"
+      ],
+      "assertion": [
+        "test/unit/public-beta-release-metadata.spec.ts"
+      ],
+      "runner": [
+        "testkit/runners/runner-registry.ts",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "package.json",
+        "npm-shrinkwrap.json",
+        "src/runtime/package-metadata.ts"
+      ]
+    },
+    {
+      "id": "F9-NODE-001",
+      "group": "public-beta-release",
+      "case": "node-range-declared",
+      "surface": "unit",
+      "commandId": "CMD-F9-UNIT",
+      "fixture": [
+        "testkit/fixtures/release-v2/node-range-v2.ts"
+      ],
+      "assertion": [
+        "test/unit/public-beta-release-metadata.spec.ts"
+      ],
+      "runner": [
+        "testkit/runners/runner-registry.ts",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "package.json",
+        ".github/workflows/cross-platform-ci.yml"
+      ]
+    },
+    {
+      "id": "F9-CLI-CLOSURE-001",
+      "group": "public-beta-release",
+      "case": "cli-runtime-closure",
+      "surface": "unit",
+      "commandId": "CMD-F9-UNIT",
+      "fixture": [
+        "testkit/fixtures/release-v2/cli-closure-v2.ts"
+      ],
+      "assertion": [
+        "test/unit/public-beta-release-cli-closure.spec.ts"
+      ],
+      "runner": [
+        "testkit/runners/runner-registry.ts",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "src/cli/main.ts",
+        "src/cli/execute.ts",
+        "tsconfig.build.json"
+      ]
+    },
+    {
+      "id": "F9-PACKAGE-API-001",
+      "group": "public-beta-release",
+      "case": "package-api",
+      "surface": "unit",
+      "commandId": "CMD-F9-UNIT",
+      "fixture": [
+        "testkit/fixtures/release-v2/package-api-snapshot-v2.ts"
+      ],
+      "assertion": [
+        "test/unit/public-beta-release-package-api.spec.ts"
+      ],
+      "runner": [
+        "testkit/runners/runner-registry.ts",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "src/index.ts",
+        "package.json"
+      ]
+    },
+    {
+      "id": "F9-METADATA-001",
+      "group": "public-beta-release",
+      "case": "package-metadata",
+      "surface": "unit",
+      "commandId": "CMD-F9-UNIT",
+      "fixture": [
+        "testkit/fixtures/release-v2/package-metadata-v2.ts"
+      ],
+      "assertion": [
+        "test/unit/public-beta-release-metadata.spec.ts"
+      ],
+      "runner": [
+        "testkit/runners/runner-registry.ts",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "package.json",
+        "tools/release/check-package-metadata.mjs"
+      ]
+    },
+    {
+      "id": "F9-QUALITY-001",
+      "group": "public-beta-release",
+      "case": "quality-gates",
+      "surface": "unit",
+      "commandId": "CMD-F9-UNIT",
+      "fixture": [
+        "testkit/fixtures/release-v2/quality-config-v2.ts"
+      ],
+      "assertion": [
+        "test/unit/public-beta-release-quality.spec.ts"
+      ],
+      "runner": [
+        "testkit/runners/runner-registry.ts",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "eslint.config.mjs",
+        ".prettierrc.json"
+      ]
+    },
+    {
+      "id": "F9-PACK-001",
+      "group": "public-beta-release",
+      "case": "package-install-and-bin-smoke",
+      "surface": "unit",
+      "commandId": "CMD-F9-UNIT",
+      "fixture": [
+        "testkit/fixtures/release-v2/package-allowlist-v2.ts",
+        "testkit/fixtures/release-v2/package-install-v2.ts"
+      ],
+      "assertion": [
+        "test/unit/public-beta-release-package.spec.ts",
+        "test/unit/public-beta-release-platform.spec.ts"
+      ],
+      "runner": [
+        "testkit/runners/runner-registry.ts",
+        "testkit/contracts/platform-contract.ts",
+        "testkit/contracts/platform-evidence-report.ts",
+        "tools/ci/run-platform-contracts.mjs",
+        "tools/ci/assert-public-beta-package-evidence.mjs",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "tools/release/pack-candidate.mjs",
+        "testkit/contracts/platform-contract.ts",
+        "testkit/contracts/platform-evidence-report.ts",
+        "tools/ci/assert-public-beta-package-evidence.mjs"
+      ]
+    },
+    {
+      "id": "F9-PACK-REPRO-001",
+      "group": "public-beta-release",
+      "case": "package-reproducibility",
+      "surface": "unit",
+      "commandId": "CMD-F9-UNIT",
+      "fixture": [
+        "testkit/fixtures/release-v2/reproducibility-v2.ts"
+      ],
+      "assertion": [
+        "test/unit/public-beta-release-package.spec.ts"
+      ],
+      "runner": [
+        "testkit/runners/runner-registry.ts",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "tools/release/build-package-candidate.mjs",
+        "testkit/manifests/release-v2/release-candidate-source-paths-v1.json",
+        ".gitattributes",
+        "tsconfig.build.json"
+      ]
+    },
+    {
+      "id": "F9-INSTALL-001",
+      "group": "public-beta-release",
+      "case": "installed-closure",
+      "surface": "unit",
+      "commandId": "CMD-F9-UNIT",
+      "fixture": [
+        "testkit/fixtures/release-v2/package-install-v2.ts"
+      ],
+      "assertion": [
+        "test/unit/public-beta-release-install.spec.ts"
+      ],
+      "runner": [
+        "testkit/runners/runner-registry.ts",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "tools/release/verify-installed-closure.mjs"
+      ]
+    },
+    {
+      "id": "F9-AUDIT-001",
+      "group": "public-beta-release",
+      "case": "installed-audit",
+      "surface": "unit",
+      "commandId": "CMD-F9-UNIT",
+      "fixture": [
+        "testkit/fixtures/release-v2/dependency-closure-v2.ts"
+      ],
+      "assertion": [
+        "test/unit/public-beta-release-security.spec.ts"
+      ],
+      "runner": [
+        "testkit/runners/runner-registry.ts",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "tools/release/audit-installed-closure.mjs"
+      ]
+    },
+    {
+      "id": "F9-SBOM-001",
+      "group": "public-beta-release",
+      "case": "installed-sbom",
+      "surface": "unit",
+      "commandId": "CMD-F9-UNIT",
+      "fixture": [
+        "testkit/fixtures/release-v2/dependency-closure-v2.ts"
+      ],
+      "assertion": [
+        "test/unit/public-beta-release-security.spec.ts"
+      ],
+      "runner": [
+        "testkit/runners/runner-registry.ts",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "tools/release/generate-installed-sbom.mjs",
+        "tools/release/verify-installed-sbom.mjs"
+      ]
+    },
+    {
+      "id": "F9-SECURITY-001",
+      "group": "public-beta-release",
+      "case": "security-document",
+      "surface": "docs",
+      "commandId": "CMD-DOCS",
+      "fixture": [
+        "testkit/fixtures/release-v2/security-metadata-v2.ts"
+      ],
+      "assertion": [
+        "test/docs/public-beta-release.spec.ts",
+        "test/unit/public-beta-release-docs.spec.ts"
+      ],
+      "runner": [
+        "testkit/docs/docs-smoke-runner.ts",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "SECURITY.md",
+        "tools/release/owner-action-schema.mjs"
+      ]
+    },
+    {
+      "id": "F9-MIGRATION-001",
+      "group": "public-beta-release",
+      "case": "migration-document",
+      "surface": "docs",
+      "commandId": "CMD-DOCS",
+      "fixture": [
+        "testkit/fixtures/release-v2/migration-v2.ts"
+      ],
+      "assertion": [
+        "test/docs/public-beta-release.spec.ts",
+        "test/unit/public-beta-release-docs.spec.ts"
+      ],
+      "runner": [
+        "testkit/docs/docs-smoke-runner.ts",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "docs/migration-v1-to-v2.md"
+      ]
+    },
+    {
+      "id": "F9-REAL-MCP-001",
+      "group": "public-beta-release",
+      "case": "real-consumer-read-only",
+      "surface": "unit",
+      "commandId": "CMD-F9-UNIT",
+      "fixture": [
+        "testkit/fixtures/release-v2/real-consumer-confirmation-schema-v2.ts",
+        "testkit/fixtures/release-v2/git-index-layout-v2.ts"
+      ],
+      "assertion": [
+        "test/unit/public-beta-real-consumer-gate.spec.ts"
+      ],
+      "runner": [
+        "tools/release/run-real-consumer-e2e.mjs",
+        "testkit/runners/runner-registry.ts",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "tools/release/real-consumer-contracts.mjs",
+        "tools/release/real-consumer-snapshot.mjs",
+        "tools/release/run-real-consumer-e2e.mjs"
+      ]
+    },
+    {
+      "id": "F9-LARGE-001",
+      "group": "public-beta-release",
+      "case": "large-release-boundaries",
+      "surface": "golden",
+      "commandId": "CMD-LARGE",
+      "fixture": [
+        "testkit/fixtures/release-v2/large-release-v2.ts",
+        "testkit/manifests/release-v2/release-boundary-mutations-v1.json"
+      ],
+      "assertion": [
+        "test/golden/large-synthetic-repository.spec.ts"
+      ],
+      "runner": [
+        "testkit/runners/golden-runner.ts",
+        "testkit/manifests/performance/large-synthetic-repository-v2.yaml",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "tools/release/release-boundaries-v1.mjs"
+      ]
+    },
+    {
+      "id": "F9-RELEASE-001",
+      "group": "public-beta-release",
+      "case": "release-readiness",
+      "surface": "unit",
+      "commandId": "CMD-F9-UNIT",
+      "fixture": [
+        "testkit/fixtures/release-v2/release-readiness-v2.ts"
+      ],
+      "assertion": [
+        "test/unit/public-beta-release-readiness.spec.ts"
+      ],
+      "runner": [
+        "testkit/runners/runner-registry.ts",
+        "testkit/manifests/coverage/fixture-ownership.yaml"
+      ],
+      "contractOwners": [
+        "tools/release/design-revision.mjs",
+        "tools/release/create-release-readiness.mjs",
+        "tools/release/owner-action-schema.mjs",
+        "testkit/manifests/release-v2/release-candidate-source-paths-v1.json"
+      ]
+    }
+  ]
+}

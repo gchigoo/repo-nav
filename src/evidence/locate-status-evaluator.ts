@@ -18,8 +18,7 @@ export const LOCATE_TRANSITION_ROW_IDS = Object.freeze([
   'verified-no-result',
 ] as const);
 
-export type LocateTransitionRowId =
-  (typeof LOCATE_TRANSITION_ROW_IDS)[number];
+export type LocateTransitionRowId = (typeof LOCATE_TRANSITION_ROW_IDS)[number];
 
 export interface LocateStatusEvaluationInput {
   readonly abortSource: LocateAbortSource;

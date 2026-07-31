@@ -12,12 +12,12 @@
         "repoPath": {
           "type": "string",
           "minLength": 1,
-          "description": "repoPath must remain non-empty after NFKC normalization and trimming; runtime validation limits it to 4096 UTF-8 bytes."
+          "description": "repoPath is a raw filesystem string preserved without NFKC/trim; runtime validation rejects NUL and values over 4096 UTF-8 bytes."
         },
         "question": {
           "type": "string",
           "minLength": 1,
-          "description": "question must remain non-empty after NFKC normalization and trimming; runtime validation limits it to 4096 UTF-8 bytes."
+          "description": "Optional display-only question; when present must remain non-empty after NFKC/trim (max 4096 UTF-8 bytes). Omitted question does not affect search plan."
         },
         "terms": {
           "readOnly": true,
@@ -44,7 +44,6 @@
           "maxItems": 16,
           "type": "array",
           "items": {
-            "readOnly": true,
             "type": "object",
             "properties": {
               "kind": {
@@ -68,7 +67,7 @@
               "value"
             ],
             "additionalProperties": false,
-            "$comment": "Runtime validation additionally rejects absolute and repository-escaping file anchor values."
+            "$comment": "Runtime validation rejects file-anchor backslashes, absolute paths, and repository escape; file values are preserved exactly."
           }
         },
         "layers": {
@@ -130,7 +129,6 @@
       },
       "required": [
         "repoPath",
-        "question",
         "terms"
       ],
       "additionalProperties": false,
@@ -153,7 +151,7 @@
               "properties": {
                 "schemaVersion": {
                   "type": "string",
-                  "const": "1.0"
+                  "const": "2.0"
                 },
                 "status": {
                   "type": "string",
@@ -162,16 +160,18 @@
                     "partial",
                     "no_result",
                     "backend_unavailable",
-                    "timeout"
+                    "timeout",
+                    "cancelled"
                   ]
                 },
-                "repositoryRoot": {
+                "repositoryRef": {
                   "type": "string",
-                  "minLength": 1
+                  "const": "local-repository"
                 },
                 "normalizedTerms": {
                   "readOnly": true,
                   "minItems": 1,
+                  "maxItems": 16,
                   "type": "array",
                   "items": {
                     "readOnly": true,
@@ -183,6 +183,37 @@
                       },
                       "caseSensitive": {
                         "type": "boolean"
+                      },
+                      "redaction": {
+                        "readOnly": true,
+                        "type": "object",
+                        "properties": {
+                          "applied": {
+                            "type": "boolean",
+                            "const": true
+                          },
+                          "reasonCodes": {
+                            "readOnly": true,
+                            "minItems": 1,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "SECRET_LIKE_VALUE",
+                                "CONNECTION_STRING",
+                                "PERSONAL_DATA",
+                                "BINARY_OR_OVERSIZED_CONTENT",
+                                "UNTRUSTED_CONTROL_CHARACTERS"
+                              ]
+                            },
+                            "uniqueItems": true
+                          }
+                        },
+                        "required": [
+                          "applied",
+                          "reasonCodes"
+                        ],
+                        "additionalProperties": false
                       }
                     },
                     "required": [
@@ -194,6 +225,7 @@
                 },
                 "confirmed": {
                   "readOnly": true,
+                  "maxItems": 20,
                   "type": "array",
                   "items": {
                     "readOnly": true,
@@ -205,7 +237,7 @@
                       },
                       "id": {
                         "type": "string",
-                        "pattern": "^evidence:v1:[a-f0-9]{64}$"
+                        "pattern": "^evidence:v2:\\d{4,}$"
                       },
                       "role": {
                         "type": "string",
@@ -224,6 +256,9 @@
                           "file": {
                             "type": "string",
                             "minLength": 1
+                          },
+                          "resolvable": {
+                            "type": "boolean"
                           },
                           "symbol": {
                             "type": "string",
@@ -260,31 +295,57 @@
                                 "type": "boolean",
                                 "const": true
                               },
-                              "reasonCodes": {
+                              "fields": {
                                 "readOnly": true,
                                 "minItems": 1,
                                 "type": "array",
                                 "items": {
-                                  "type": "string",
-                                  "enum": [
-                                    "SECRET_LIKE_VALUE",
-                                    "CONNECTION_STRING",
-                                    "PERSONAL_DATA",
-                                    "BINARY_OR_OVERSIZED_CONTENT"
-                                  ]
-                                },
-                                "uniqueItems": true
+                                  "readOnly": true,
+                                  "type": "object",
+                                  "properties": {
+                                    "field": {
+                                      "type": "string",
+                                      "enum": [
+                                        "file",
+                                        "symbol",
+                                        "excerpt"
+                                      ]
+                                    },
+                                    "reasonCodes": {
+                                      "readOnly": true,
+                                      "minItems": 1,
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SECRET_LIKE_VALUE",
+                                          "CONNECTION_STRING",
+                                          "PERSONAL_DATA",
+                                          "BINARY_OR_OVERSIZED_CONTENT",
+                                          "UNTRUSTED_CONTROL_CHARACTERS"
+                                        ]
+                                      },
+                                      "uniqueItems": true
+                                    }
+                                  },
+                                  "required": [
+                                    "field",
+                                    "reasonCodes"
+                                  ],
+                                  "additionalProperties": false
+                                }
                               }
                             },
                             "required": [
                               "applied",
-                              "reasonCodes"
+                              "fields"
                             ],
                             "additionalProperties": false
                           }
                         },
                         "required": [
                           "file",
+                          "resolvable",
                           "lines",
                           "excerpt"
                         ],
@@ -363,6 +424,7 @@
                 },
                 "candidates": {
                   "readOnly": true,
+                  "maxItems": 20,
                   "type": "array",
                   "items": {
                     "readOnly": true,
@@ -374,7 +436,7 @@
                       },
                       "id": {
                         "type": "string",
-                        "pattern": "^evidence:v1:[a-f0-9]{64}$"
+                        "pattern": "^evidence:v2:\\d{4,}$"
                       },
                       "role": {
                         "type": "string",
@@ -393,6 +455,9 @@
                           "file": {
                             "type": "string",
                             "minLength": 1
+                          },
+                          "resolvable": {
+                            "type": "boolean"
                           },
                           "symbol": {
                             "type": "string",
@@ -429,31 +494,57 @@
                                 "type": "boolean",
                                 "const": true
                               },
-                              "reasonCodes": {
+                              "fields": {
                                 "readOnly": true,
                                 "minItems": 1,
                                 "type": "array",
                                 "items": {
-                                  "type": "string",
-                                  "enum": [
-                                    "SECRET_LIKE_VALUE",
-                                    "CONNECTION_STRING",
-                                    "PERSONAL_DATA",
-                                    "BINARY_OR_OVERSIZED_CONTENT"
-                                  ]
-                                },
-                                "uniqueItems": true
+                                  "readOnly": true,
+                                  "type": "object",
+                                  "properties": {
+                                    "field": {
+                                      "type": "string",
+                                      "enum": [
+                                        "file",
+                                        "symbol",
+                                        "excerpt"
+                                      ]
+                                    },
+                                    "reasonCodes": {
+                                      "readOnly": true,
+                                      "minItems": 1,
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SECRET_LIKE_VALUE",
+                                          "CONNECTION_STRING",
+                                          "PERSONAL_DATA",
+                                          "BINARY_OR_OVERSIZED_CONTENT",
+                                          "UNTRUSTED_CONTROL_CHARACTERS"
+                                        ]
+                                      },
+                                      "uniqueItems": true
+                                    }
+                                  },
+                                  "required": [
+                                    "field",
+                                    "reasonCodes"
+                                  ],
+                                  "additionalProperties": false
+                                }
                               }
                             },
                             "required": [
                               "applied",
-                              "reasonCodes"
+                              "fields"
                             ],
                             "additionalProperties": false
                           }
                         },
                         "required": [
                           "file",
+                          "resolvable",
                           "lines",
                           "excerpt"
                         ],
@@ -516,7 +607,8 @@
                             "SAME_SCOPE_SIMILAR_IDENTIFIER",
                             "SAME_ENTITY_SIBLING",
                             "ALIAS_SOURCE_NEIGHBOR",
-                            "SECONDARY_BACKEND_HIT"
+                            "SECONDARY_BACKEND_HIT",
+                            "UNSUPPORTED_LANGUAGE_LITERAL"
                           ]
                         },
                         "uniqueItems": true
@@ -530,7 +622,8 @@
                           "enum": [
                             "USER_SEMANTIC_CONFIRMATION",
                             "DIRECT_REFERENCE_REQUIRED",
-                            "CALL_PATH_REQUIRED"
+                            "CALL_PATH_REQUIRED",
+                            "SUPPORTED_LANGUAGE_ADAPTER_REQUIRED"
                           ]
                         },
                         "uniqueItems": true
@@ -554,6 +647,7 @@
                   "properties": {
                     "backends": {
                       "readOnly": true,
+                      "maxItems": 2,
                       "type": "array",
                       "items": {
                         "readOnly": true,
@@ -571,8 +665,25 @@
                             "enum": [
                               "used",
                               "unavailable",
-                              "skipped",
                               "failed"
+                            ]
+                          },
+                          "completion": {
+                            "type": "string",
+                            "enum": [
+                              "complete",
+                              "incomplete"
+                            ]
+                          },
+                          "termination": {
+                            "type": "string",
+                            "enum": [
+                              "none",
+                              "timeout",
+                              "output-limit",
+                              "early-stop",
+                              "aborted",
+                              "process-error"
                             ]
                           },
                           "reasonCode": {
@@ -596,10 +707,15 @@
                         "required": [
                           "backend",
                           "status",
+                          "completion",
+                          "termination",
                           "hitCount"
                         ],
                         "additionalProperties": false
                       }
+                    },
+                    "strategyComplete": {
+                      "type": "boolean"
                     },
                     "fallbackChecked": {
                       "type": "boolean"
@@ -624,6 +740,7 @@
                     },
                     "limitsReached": {
                       "readOnly": true,
+                      "minItems": 0,
                       "type": "array",
                       "items": {
                         "type": "string",
@@ -633,7 +750,23 @@
                           "MAX_CANDIDATES_REACHED",
                           "MAX_FILE_BYTES_REACHED",
                           "MAX_EXCERPT_BYTES_REACHED",
+                          "MAX_BACKEND_HITS_REACHED",
                           "TIMEOUT_REACHED"
+                        ]
+                      }
+                    },
+                    "degradations": {
+                      "readOnly": true,
+                      "minItems": 0,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "SNAPSHOT_CHANGED",
+                          "SEMANTIC_LANGUAGE_UNSUPPORTED",
+                          "BACKEND_EARLY_STOPPED",
+                          "PROCESS_OUTPUT_LIMIT_REACHED",
+                          "LOCATION_REDACTED"
                         ]
                       }
                     },
@@ -646,28 +779,243 @@
                           "NEGATIVE_TERM_MATCH",
                           "OUTSIDE_LAYER_HINT",
                           "DUPLICATE_LOCATION",
-                          "UNVERIFIED_FILE_CONTENT"
+                          "UNVERIFIED_FILE_CONTENT",
+                          "SNAPSHOT_CHANGED"
                         ]
                       },
                       "additionalProperties": {
                         "type": "integer",
-                        "minimum": 0,
+                        "exclusiveMinimum": 0,
                         "maximum": 9007199254740991
                       }
+                    },
+                    "abortSource": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "caller",
+                        "deadline"
+                      ]
+                    },
+                    "unsatisfiedAnchors": {
+                      "readOnly": true,
+                      "maxItems": 16,
+                      "type": "array",
+                      "items": {
+                        "readOnly": true,
+                        "type": "object",
+                        "properties": {
+                          "requestIndex": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 15
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "symbol",
+                              "file",
+                              "table",
+                              "route",
+                              "term"
+                            ]
+                          },
+                          "satisfaction": {
+                            "type": "string",
+                            "enum": [
+                              "candidate",
+                              "none"
+                            ]
+                          },
+                          "reason": {
+                            "type": "string",
+                            "enum": [
+                              "BUDGET_EXCEEDED",
+                              "NOT_FOUND",
+                              "UNVERIFIED"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "requestIndex",
+                          "kind",
+                          "satisfaction",
+                          "reason"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "snapshot": {
+                      "readOnly": true,
+                      "type": "object",
+                      "properties": {
+                        "gitState": {
+                          "type": "string",
+                          "enum": [
+                            "clean",
+                            "dirty",
+                            "not-git",
+                            "unknown"
+                          ]
+                        },
+                        "consistency": {
+                          "type": "string",
+                          "enum": [
+                            "stable",
+                            "changed",
+                            "unknown"
+                          ]
+                        },
+                        "filesChecked": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "discardedEvidenceCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "gitState",
+                        "consistency",
+                        "filesChecked",
+                        "discardedEvidenceCount"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "scope": {
+                      "readOnly": true,
+                      "type": "object",
+                      "properties": {
+                        "requested": {
+                          "readOnly": true,
+                          "minItems": 0,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "client",
+                              "server",
+                              "db",
+                              "test",
+                              "docs",
+                              "config",
+                              "unknown"
+                            ]
+                          }
+                        },
+                        "effective": {
+                          "readOnly": true,
+                          "minItems": 0,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "client",
+                              "server",
+                              "db",
+                              "test",
+                              "docs",
+                              "config",
+                              "unknown"
+                            ]
+                          }
+                        },
+                        "policyVersion": {
+                          "type": "string",
+                          "const": "repo-scope-v1"
+                        },
+                        "unmatchedLayers": {
+                          "readOnly": true,
+                          "minItems": 0,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "client",
+                              "server",
+                              "db",
+                              "test",
+                              "docs",
+                              "config",
+                              "unknown"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "requested",
+                        "effective",
+                        "policyVersion",
+                        "unmatchedLayers"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "capabilities": {
+                      "readOnly": true,
+                      "type": "object",
+                      "properties": {
+                        "textSearch": {
+                          "type": "string",
+                          "const": "supported-text-files"
+                        },
+                        "semanticClassification": {
+                          "readOnly": true,
+                          "type": "array",
+                          "prefixItems": [
+                            {
+                              "type": "string",
+                              "const": "typescript"
+                            },
+                            {
+                              "type": "string",
+                              "const": "javascript"
+                            },
+                            {
+                              "type": "string",
+                              "const": "sql"
+                            }
+                          ],
+                          "minItems": 3,
+                          "maxItems": 3,
+                          "$comment": "Runtime Zod validation additionally requires the first line number to be less than or equal to the second."
+                        },
+                        "unsupportedLanguageHits": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "textSearch",
+                        "semanticClassification",
+                        "unsupportedLanguageHits"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
                     "backends",
+                    "strategyComplete",
                     "fallbackChecked",
                     "indexState",
                     "indexFreshness",
                     "limitsReached",
-                    "exclusionSummary"
+                    "degradations",
+                    "exclusionSummary",
+                    "abortSource",
+                    "unsatisfiedAnchors",
+                    "snapshot",
+                    "scope",
+                    "capabilities"
                   ],
                   "additionalProperties": false
                 },
                 "nextActions": {
                   "readOnly": true,
+                  "minItems": 0,
                   "type": "array",
                   "items": {
                     "type": "string",
@@ -684,7 +1032,7 @@
               "required": [
                 "schemaVersion",
                 "status",
-                "repositoryRoot",
+                "repositoryRef",
                 "normalizedTerms",
                 "confirmed",
                 "candidates",
@@ -709,42 +1057,108 @@
               "const": false
             },
             "error": {
-              "readOnly": true,
-              "type": "object",
-              "properties": {
-                "code": {
-                  "type": "string",
-                  "enum": [
-                    "INVALID_INPUT",
-                    "INVALID_REPOSITORY",
-                    "PATH_OUTSIDE_ROOT",
-                    "INTERNAL_ERROR"
-                  ]
+              "oneOf": [
+                {
+                  "readOnly": true,
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "const": "INVALID_INPUT"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Locate request does not match the required schema."
+                    },
+                    "recoverable": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "suggestedAction": {
+                      "type": "string",
+                      "const": "ADD_TERM"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "recoverable"
+                  ],
+                  "additionalProperties": false
                 },
-                "message": {
-                  "type": "string",
-                  "minLength": 1
+                {
+                  "readOnly": true,
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "const": "INVALID_REPOSITORY"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Repository root is invalid or unavailable."
+                    },
+                    "recoverable": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "recoverable"
+                  ],
+                  "additionalProperties": false
                 },
-                "recoverable": {
-                  "type": "boolean"
+                {
+                  "readOnly": true,
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "const": "PATH_OUTSIDE_ROOT"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Repository path is outside the configured root."
+                    },
+                    "recoverable": {
+                      "type": "boolean",
+                      "const": false
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "recoverable"
+                  ],
+                  "additionalProperties": false
                 },
-                "suggestedAction": {
-                  "type": "string",
-                  "enum": [
-                    "ADD_TERM",
-                    "ADD_SYMBOL_ANCHOR",
-                    "CONFIRM_CANDIDATE",
-                    "INITIALIZE_CODEGRAPH",
-                    "RETRY_WITH_HIGHER_LIMIT"
-                  ]
+                {
+                  "readOnly": true,
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "const": "INTERNAL_ERROR"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Repository evidence request failed."
+                    },
+                    "recoverable": {
+                      "type": "boolean",
+                      "const": false
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "recoverable"
+                  ],
+                  "additionalProperties": false
                 }
-              },
-              "required": [
-                "code",
-                "message",
-                "recoverable"
-              ],
-              "additionalProperties": false
+              ]
             }
           },
           "required": [

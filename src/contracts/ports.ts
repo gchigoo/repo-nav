@@ -5,7 +5,6 @@ import {
   BackendReasonCodeSchema,
   SearchBackendIdSchema,
   type EvidenceLocation,
-  type LocateResult,
   type SearchBackendId,
 } from './evidence.js';
 import {
@@ -46,9 +45,7 @@ export const RepositoryReadLimitsSchema = z
     maxExcerptLines: z.int().positive(),
   })
   .readonly();
-export type RepositoryReadLimits = z.infer<
-  typeof RepositoryReadLimitsSchema
->;
+export type RepositoryReadLimits = z.infer<typeof RepositoryReadLimitsSchema>;
 
 export const DiscoveryReasonCodeSchema = z.enum(DISCOVERY_REASON_CODES);
 export type DiscoveryReasonCode = z.infer<typeof DiscoveryReasonCodeSchema>;
@@ -81,15 +78,36 @@ export const BackendSearchResultSchema = z
   .readonly();
 export type BackendSearchResult = z.infer<typeof BackendSearchResultSchema>;
 
+/**
+ * Locate 执行上下文。F6：callerSignal 显式命名；signal 为兼容别名。
+ */
 export interface LocateExecutionContext {
-  readonly signal: AbortSignal;
+  readonly callerSignal?: AbortSignal;
+  readonly signal?: AbortSignal;
 }
+
+/**
+ * 解析 caller abort signal；优先 callerSignal，兼容旧 signal 字段。
+ */
+export function requireCallerSignal(
+  context: LocateExecutionContext,
+): AbortSignal {
+  const signal = context.callerSignal ?? context.signal;
+  if (signal === undefined) {
+    throw new TypeError('LocateExecutionContext requires callerSignal');
+  }
+  return signal;
+}
+
+export type LocateExecutionContextV2 = {
+  readonly callerSignal: AbortSignal;
+};
 
 export interface RepositoryEvidenceService {
   locate(
     request: LocateRequest,
     context: LocateExecutionContext,
-  ): Promise<LocateResult>;
+  ): Promise<import('./v2/locate-result-v2.js').LocateResultV2>;
 }
 
 export interface RepositorySearchBackend {

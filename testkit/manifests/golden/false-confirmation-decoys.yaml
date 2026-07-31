@@ -41,7 +41,7 @@ expected:
       role: reference
       reasonCodes: [EXACT_TERM_WITHOUT_DIRECT_MAPPING]
   forbiddenEvidenceIds:
-    - evidence:v1:b36a0eff65a8c15ff0b0b04c99ac56f18d11fea80e9f6d9e8f25692577f4e8df
+    - evidence:v2:9999
   requiredCoverageCodes: []
   minimumExclusionCounts:
     OUTSIDE_LAYER_HINT: 2

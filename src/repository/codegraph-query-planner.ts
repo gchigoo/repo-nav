@@ -16,7 +16,8 @@ export interface CodeGraphQueryPlan {
   readonly canSkipFallbackIfVerified: boolean;
 }
 
-const IDENTIFIER = /^(?:[$_]|\p{ID_Start})(?:[$_\u200C\u200D]|\p{ID_Continue})*$/u;
+const IDENTIFIER =
+  /^(?:[$_]|\p{ID_Start})(?:[$_\u200C\u200D]|\p{ID_Continue})*$/u;
 
 function comparisonKey(value: string, caseSensitive: boolean): string {
   return `${caseSensitive ? '1' : '0'}\u0000${

@@ -1,0 +1,35 @@
+# F2 relevance-ranking-budget implementation scope
+.codestable/features/2026-07-24-relevance-ranking-budget
+.codestable/architecture/system-repo-nav-foundation.md
+.codestable/architecture/ARCHITECTURE.md
+src/contracts/request.ts
+src/contracts/v2
+src/evidence/ranking
+src/evidence/request-snapshot
+src/evidence/public-output
+src/evidence/canonical
+src/evidence/locate-execution
+src/evidence/direct-mapping-classifier.ts
+test/unit/relevance-ranking-budget.spec.ts
+test/unit/canonical-locate-facts-bridge.spec.ts
+test/golden/relevance-ranking-budget.spec.ts
+testkit/fixtures/ranking-v2
+testkit/fixtures/public-output-v2/no-cutover-import-inventory-v2.ts
+testkit/fixtures/canonical-locate-bridge-v2
+testkit/runners/runner-registry.ts
+testkit/manifests/coverage/fixture-ownership.yaml
+# ambient baseline
+.codestable/.gitignore
+.codestable/reference
+.codestable/roadmap/repo-nav-public-beta
+.codestable/runtime-manifest.json
+.codestable/features/2026-07-24-canonical-locate-facts-bridge
+.codestable/features/2026-07-24-cross-platform-ci-baseline
+.codestable/features/2026-07-24-input-abort-contract-v2
+.codestable/features/2026-07-24-language-capability-boundary
+.codestable/features/2026-07-24-public-beta-release
+.codestable/features/2026-07-24-public-result-resource-budgets-v2
+.codestable/features/2026-07-24-repository-scope-policy
+.codestable/features/2026-07-24-request-snapshot-cache
+.codestable/features/2026-07-24-span-redaction-corpus-policy-v2
+.codestable/features/2026-07-24-streaming-ripgrep

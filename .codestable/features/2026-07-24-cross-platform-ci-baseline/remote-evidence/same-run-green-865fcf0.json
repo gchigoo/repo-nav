@@ -1,0 +1,21 @@
+{
+  "evidence_kind": "F4-REMOTE-001 same-run six-cell + aggregate",
+  "workflow": "cross-platform-ci",
+  "event": "push",
+  "branch": "repo-nav-public-beta",
+  "source_sha": "865fcf09ff4fc7f2c2f8dc32fe0c10147ef321df",
+  "workflow_run_id": 30323465951,
+  "workflow_run_url": "https://github.com/gchigoo/repo-nav/actions/runs/30323465951",
+  "conclusion": "success",
+  "cells": [
+    "linux-node22",
+    "linux-node24",
+    "windows-node22",
+    "windows-node24",
+    "macos-intel-node22",
+    "macos-intel-node24"
+  ],
+  "aggregate_job": "cross-platform-required",
+  "aggregate_conclusion": "success",
+  "feature_pr": "https://github.com/gchigoo/repo-nav/pull/2"
+}

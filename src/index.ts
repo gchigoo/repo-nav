@@ -1,6 +1,13 @@
+/**
+ * F1C/F9 approved public package root. Private executor/projector/fact/proof
+ * surfaces are intentionally not re-exported.
+ */
+
 export * from './contracts/index.js';
+export * from './contracts/v2/locate-result-v2.js';
 export * from './app/create-application-context.js';
 export * from './runtime/tokens.js';
+export * from './runtime/package-metadata.js';
 export * from './repository/node-repository-reader.js';
 export * from './repository/ripgrep-backend.js';
 export * from './repository/codegraph-backend.js';
@@ -8,15 +15,3 @@ export * from './repository/codegraph-command.js';
 export * from './repository/codegraph-json.js';
 export * from './repository/codegraph-query-planner.js';
 export * from './repository/node-safe-process-runner.js';
-export * from './evidence/repository-evidence-engine.js';
-export * from './evidence/candidate-policy.js';
-export * from './evidence/evidence-redactor.js';
-export * from './evidence/locate-status-evaluator.js';
-export * from './evidence/next-action-policy.js';
-export * from './evidence/result-budget-selector.js';
-export * from './mcp/diagnostic-scrubber.js';
-export * from './mcp/locate-tool-schema.js';
-export * from './mcp/locate-tool-output.js';
-export * from './mcp/repo-nav-mcp-server.js';
-export * from './mcp/mcp-stdio-host.js';
-export * from './mcp/mcp-shutdown-coordinator.js';

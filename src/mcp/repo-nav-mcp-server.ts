@@ -7,6 +7,7 @@ import {
   type CallToolResult,
 } from '@modelcontextprotocol/sdk/types.js';
 
+import { readPackageVersionForServer } from '../runtime/package-metadata.js';
 import {
   REPO_NAV_LOCATE_TOOL,
   REPO_NAV_LOCATE_TOOL_NAME,
@@ -21,7 +22,7 @@ export function createRepoNavMcpServer(
   handleLocate: LocateToolCallHandler,
 ): Server {
   const server = new Server(
-    { name: 'repo-nav', version: '0.1.0' },
+    { name: 'repo-nav', version: readPackageVersionForServer() },
     { capabilities: { tools: { listChanged: false } } },
   );
 

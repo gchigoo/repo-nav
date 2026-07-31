@@ -155,11 +155,21 @@ describe.runIf(isSelected(isolationIdentity))('safe process output isolation', (
   it.each([
     ['stdout', 'stdout-limit'],
     ['stderr', 'stderr-limit'],
-  ] as const)('terminates the tree on %s overflow', async (stream, kind) => {
+  ] as const)('terminates the tree on %s N+1 overflow', async (stream, kind) => {
     const cwd = mkdtempSync(resolve(tmpdir(), 'repo-nav-process-limit-'));
     try {
-      const result = await new NodeSafeProcessRunner().run(
+      const exact = await new NodeSafeProcessRunner().run(
         request(cwd, 'output', [stream, '1024'], {
+          maxStdoutBytes: 1024,
+          maxStderrBytes: 1024,
+        }),
+        new AbortController().signal,
+      );
+      expect(exact.ok).toBe(true);
+      expect(exact[stream]).toHaveLength(1024);
+
+      const result = await new NodeSafeProcessRunner().run(
+        request(cwd, 'output', [stream, '1025'], {
           maxStdoutBytes: 1024,
           maxStderrBytes: 1024,
         }),

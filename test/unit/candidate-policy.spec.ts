@@ -23,7 +23,7 @@ import {
 } from '../../src/evidence/candidate-policy.js';
 import type { DiscoveryRecord } from '../../src/evidence/discovery-record.js';
 import { classifyDiscoveryRecords } from '../../src/evidence/direct-mapping-classifier.js';
-import { RepositoryEvidenceEngine } from '../../src/evidence/repository-evidence-engine.js';
+import { createCanonicalLocateEngineHarnessV2 } from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import { NodeSafeProcessRunner } from '../../src/repository/node-safe-process-runner.js';
 import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
 import { RipgrepBackend } from '../../src/repository/ripgrep-backend.js';
@@ -31,6 +31,8 @@ import {
   CandidateFixtureBackend,
   candidateFixtureRoot,
 } from '../../testkit/fixtures/candidate-policy/candidate-fixture-backend.js';
+import { resolveRepositoryScopeV1 } from '../../src/evidence/scope/index.js';
+import { CANDIDATE_CONTEXTS_V1 } from '../../testkit/fixtures/scope-v1/candidate-contexts-v1.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
 const POLICY_EXCERPT = [
@@ -528,10 +530,9 @@ describe.runIf(selected('candidate-discovery', 'secondary-backend-provenance-tab
     });
 
     it('produces sibling candidates from the real single-line RipgrepBackend path', async () => {
-      const engine = new RepositoryEvidenceEngine(
-        [new RipgrepBackend(new NodeSafeProcessRunner())],
+      const engine = createCanonicalLocateEngineHarnessV2([new RipgrepBackend(new NodeSafeProcessRunner())],
         new NodeRepositoryReader(),
-      );
+      ).service;
       const result = await engine.locate(
         {
           repoPath: candidateFixtureRoot,
@@ -573,10 +574,9 @@ describe.runIf(selected('candidate-discovery', 'secondary-backend-provenance-tab
         layers: ['server'] as const,
       };
       const locate = async (reader: NodeRepositoryReader) =>
-        await new RepositoryEvidenceEngine(
-          [new CandidateFixtureBackend()],
+        await createCanonicalLocateEngineHarnessV2([new CandidateFixtureBackend()],
           reader,
-        ).locate(request, { signal: new AbortController().signal });
+        ).service.locate(request, { signal: new AbortController().signal });
       const expanded = await locate(new NodeRepositoryReader());
       const focusOnly = await locate(new FocusOnlyReader());
 
@@ -600,10 +600,9 @@ describe.runIf(selected('candidate-discovery', 'secondary-backend-provenance-tab
           throw new RepositoryAccessError('FILE_UNREADABLE');
         }
       }
-      const result = await new RepositoryEvidenceEngine(
-        [new CandidateFixtureBackend()],
+      const result = await createCanonicalLocateEngineHarnessV2([new CandidateFixtureBackend()],
         new FailingWindowReader(),
-      ).locate(
+      ).service.locate(
         {
           repoPath: candidateFixtureRoot,
           question: 'candidate context failure',
@@ -716,8 +715,7 @@ describe.runIf(
 
     it('emits one confirmed evidence for an occurrence that also matches candidate terms', async () => {
       const matchedText = 'hcpId = hcp_id;';
-      const engine = new RepositoryEvidenceEngine(
-        [
+      const engine = createCanonicalLocateEngineHarnessV2([
           new OrderedFixtureBackend([
             {
               file: 'server/exclusive.fixture',
@@ -729,7 +727,7 @@ describe.runIf(
           ]),
         ],
         new NodeRepositoryReader(),
-      );
+      ).service;
       const result = await engine.locate(
         {
           repoPath: candidateFixtureRoot,
@@ -777,10 +775,9 @@ describe.runIf(selected('candidate-budget', 'candidate-budget'))(
     it.each([0, 1] as const)(
       'keeps confirmed evidence stable when maxCandidates is %i',
       async (maxCandidates) => {
-        const engine = new RepositoryEvidenceEngine(
-          [new CandidateFixtureBackend()],
+        const engine = createCanonicalLocateEngineHarnessV2([new CandidateFixtureBackend()],
           new NodeRepositoryReader(),
-        );
+        ).service;
         const result = await engine.locate(
           {
             repoPath: candidateFixtureRoot,
@@ -911,10 +908,9 @@ describe.runIf(selected('candidate-permutation', 'candidate-permutation'))(
         },
       ] satisfies readonly BackendHit[];
       const locate = async (orderedHits: readonly BackendHit[]) =>
-        await new RepositoryEvidenceEngine(
-          [new OrderedFixtureBackend(orderedHits)],
+        await createCanonicalLocateEngineHarnessV2([new OrderedFixtureBackend(orderedHits)],
           new NodeRepositoryReader(),
-        ).locate(
+        ).service.locate(
           {
             repoPath: candidateFixtureRoot,
             question: 'stable file budget',
@@ -939,3 +935,56 @@ describe.runIf(selected('candidate-permutation', 'candidate-permutation'))(
     });
   },
 );
+
+describe.runIf(
+  isSelected({
+    group: 'repository-scope-policy',
+    caseId: 'candidate-pool',
+  }),
+)('F7-CANDIDATE-001 candidate-pool', () => {
+  it('excludes default test/docs neighbors and keeps explicit candidate-only', () => {
+    const defaultScope = resolveRepositoryScopeV1([
+      ...CANDIDATE_CONTEXTS_V1.defaultLayers,
+    ]);
+    expect(defaultScope.effective).not.toContain('test');
+    expect(defaultScope.effective).not.toContain('docs');
+
+    const explicit = resolveRepositoryScopeV1([
+      ...CANDIDATE_CONTEXTS_V1.explicitTestDocs,
+    ]);
+    expect(explicit.effective).toEqual(['test', 'docs']);
+    expect(
+      classifyDiscoveryRecords(
+        [
+          {
+            discoveryKey: createDiscoveryKey({
+              file: CANDIDATE_CONTEXTS_V1.explicitCandidateNeighbor,
+              lines: [1, 1],
+              excerpt: 'targetField = row.source_field;',
+            }),
+            location: {
+              file: CANDIDATE_CONTEXTS_V1.explicitCandidateNeighbor,
+              lines: [1, 1],
+              excerpt: 'targetField = row.source_field;',
+            },
+            discoveredBy: ['ripgrep'],
+            operations: ['RIPGREP_SEARCH', 'FILESYSTEM_READ_RANGE'],
+            discoveryReasonCodes: ['LITERAL_TERM_HIT'],
+            matchedTerms: [
+              { value: 'targetField', caseSensitive: false },
+              { value: 'row.source_field', caseSensitive: false },
+            ],
+            focusLines: [1, 1],
+            focusExcerpt: 'targetField = row.source_field;',
+            canonicalSymbols: [],
+          },
+        ],
+        {
+          anchors: [],
+          layers: ['test', 'docs'],
+          negativeTerms: [],
+        },
+      ).confirmed,
+    ).toEqual([]);
+  });
+});

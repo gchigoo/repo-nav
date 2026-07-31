@@ -1,0 +1,40 @@
+{
+  "gate_id": "evidence-pack",
+  "stage": "acceptance",
+  "status": "passed",
+  "blocking": [],
+  "warnings": [],
+  "evidence": [
+    {
+      "out": ".codestable\\features\\2026-07-24-request-snapshot-cache\\request-snapshot-cache-evidence-pack.md",
+      "providers": {
+        "archguard": {
+          "status": "skipped",
+          "reason": "archguard collection disabled",
+          "warnings": []
+        },
+        "meta_cc": {
+          "status": "skipped",
+          "reason": "meta-cc collection disabled",
+          "warnings": []
+        }
+      }
+    }
+  ],
+  "providers": {},
+  "feature": "2026-07-24-request-snapshot-cache",
+  "inputs": {
+    "design": ".codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-design.md",
+    "checklist": ".codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-checklist.yaml",
+    "out": ".codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-evidence-pack.md",
+    "dod_results": ".codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-dod-results.json",
+    "gate_results": ".codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-gate-results.json"
+  },
+  "input_digests": {
+    "design": "1e07fabb19c7d837c74b9fcdbf6ecca66e01f388f6c59002fc312443ef6b4f58",
+    "checklist": "86bff4f165df38cb19c1d0a69c007768334c8479262917279382e64b2d3c88b1",
+    "dod_results": "875feeace542377b168a502adcf87ea0278c9fe879ee84b6e1e943a6dbfd67ee",
+    "gate_results": "46b799bbe11a925310f73217cd9a027a3c94fd45528f4b6fa96228994aa4fab7",
+    "out": "1490bae9eb164c57421f4e8567bd89997852811bb542f78a9ac2a521f1c0c762"
+  }
+}

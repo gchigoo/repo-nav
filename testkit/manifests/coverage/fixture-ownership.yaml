@@ -49,7 +49,8 @@ families:
     partial: {positive: ripgrep-incomplete}
     no_result: {positive: contract-code-probes}
     backend_unavailable: {positive: backend-unavailable}
-    timeout: {positive: codegraph-global-abort-no-fallback}
+    timeout: {positive: contract-code-probes}
+    cancelled: {positive: codegraph-global-abort-no-fallback}
   EvidenceSource:
     codegraph: {positive: codegraph-incomplete}
     ripgrep: {positive: source-field-mapping}
@@ -101,7 +102,7 @@ families:
     MAX_CANDIDATES_REACHED: {positive: contract-code-probes}
     MAX_FILE_BYTES_REACHED: {positive: contract-code-probes}
     MAX_EXCERPT_BYTES_REACHED: {positive: contract-code-probes}
-    TIMEOUT_REACHED: {positive: codegraph-global-abort-no-fallback}
+    TIMEOUT_REACHED: {positive: contract-code-probes}
   ExclusionReasonCode:
     NEGATIVE_TERM_MATCH: {positive: exclusion-summary}
     OUTSIDE_LAYER_HINT: {positive: exclusion-summary}
@@ -123,3 +124,25 @@ families:
     INVALID_REPOSITORY: {positive: contract-code-probes}
     PATH_OUTSIDE_ROOT: {positive: contract-code-probes}
     INTERNAL_ERROR: {positive: contract-code-probes}
+publicBetaRelease:
+  F9-CUTOVER-001: cutover-truth-v2
+  F9-TRANSPORT-001: transport-receipt-v2
+  F9-SINGLE-EXEC-001: single-execution-v2
+  F9-FAIL-CLOSED-001: cutover-failure-order-v2
+  F9-NO-V1-001: runtime-graph-mutations-v2
+  F9-VERSION-001: version-sources-v2
+  F9-NODE-001: node-range-v2
+  F9-CLI-CLOSURE-001: cli-closure-v2
+  F9-PACKAGE-API-001: package-api-snapshot-v2
+  F9-METADATA-001: package-metadata-v2
+  F9-QUALITY-001: quality-config-v2
+  F9-PACK-001: package-allowlist-v2
+  F9-PACK-REPRO-001: reproducibility-v2
+  F9-INSTALL-001: package-install-v2
+  F9-AUDIT-001: dependency-closure-v2
+  F9-SBOM-001: dependency-closure-v2
+  F9-SECURITY-001: security-metadata-v2
+  F9-MIGRATION-001: migration-v2
+  F9-REAL-MCP-001: real-consumer-confirmation-schema-v2
+  F9-LARGE-001: large-release-v2
+  F9-RELEASE-001: release-readiness-v2

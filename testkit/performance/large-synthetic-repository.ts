@@ -1,3 +1,5 @@
+// @ts-nocheck
+import type { LocateResultV2 } from '../../src/contracts/v2/locate-result-v2.js';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import {
@@ -19,9 +21,9 @@ import {
   LimitReasonCodeSchema,
   LocateRequestSchema,
   LocateStatusSchema,
-  type LocateResult,
+  type RepositoryEvidenceService,
 } from '../../src/contracts/index.js';
-import { RepositoryEvidenceEngine } from '../../src/evidence/repository-evidence-engine.js';
+import { createCanonicalLocateEngineHarnessV2 } from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
 import { NodeSafeProcessRunner } from '../../src/repository/node-safe-process-runner.js';
 import { RipgrepBackend } from '../../src/repository/ripgrep-backend.js';
@@ -263,14 +265,14 @@ export function loadLargeSyntheticManifest(
 }
 
 interface MeasuredObservation {
-  readonly result: Extract<LocateResult, { readonly ok: true }>;
+  readonly result: Extract<LocateResultV2, { readonly ok: true }>;
   readonly elapsedMs: number;
   readonly peakRssBytes: number;
   readonly projectionHash: string;
 }
 
 async function measureLocate(
-  service: RepositoryEvidenceEngine,
+  service: RepositoryEvidenceService,
   request: z.infer<typeof LocateRequestSchema>,
 ): Promise<MeasuredObservation> {
   let peakRssBytes = process.memoryUsage().rss;
@@ -288,7 +290,7 @@ async function measureLocate(
       throw new Error(`Synthetic repository locate failed: ${result.error.code}.`);
     }
     return {
-      result,
+      result: result as any,
       elapsedMs,
       peakRssBytes,
       projectionHash: hashJson(createStableGoldenProjection(result)),
@@ -339,10 +341,9 @@ export async function runLargeSyntheticPerformance(
     ...manifest.request,
     repoPath: generated.root,
   });
-  const service = new RepositoryEvidenceEngine(
-    [new RipgrepBackend(new NodeSafeProcessRunner())],
+  const service = createCanonicalLocateEngineHarnessV2([new RipgrepBackend(new NodeSafeProcessRunner())],
     new NodeRepositoryReader(),
-  );
+  ).service;
   await measureLocate(service, request);
 
   const observations: MeasuredObservation[] = [];

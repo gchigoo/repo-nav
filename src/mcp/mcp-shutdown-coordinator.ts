@@ -1,9 +1,6 @@
 import type { INestApplicationContext } from '@nestjs/common';
 
-import type {
-  McpShutdownReason,
-  McpStdioHost,
-} from './mcp-stdio-host.js';
+import type { McpShutdownReason, McpStdioHost } from './mcp-stdio-host.js';
 import { writeScrubbedDiagnostic } from './diagnostic-scrubber.js';
 
 export interface McpShutdownCoordinator {

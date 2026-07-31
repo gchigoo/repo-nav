@@ -3,10 +3,7 @@
 import type { INestApplicationContext } from '@nestjs/common';
 
 import { createRepoNavApplicationContext } from './app/create-application-context.js';
-import type {
-  McpShutdownReason,
-  McpStdioHost,
-} from './mcp/mcp-stdio-host.js';
+import type { McpShutdownReason, McpStdioHost } from './mcp/mcp-stdio-host.js';
 import {
   createMcpShutdownCoordinator,
   createMcpStartupShutdownController,

@@ -8,12 +8,18 @@ import {
   type BackendSearchResult,
   type LocateExecutionContext,
   type LocateRequest,
-  type LocateResult,
   type RepositoryEvidenceService,
   type RepositoryReader,
   type RepositoryReadLimits,
   type RepositorySearchBackend,
 } from '../../src/contracts/index.js';
+import type { LocateResultV2 } from '../../src/contracts/v2/locate-result-v2.js';
+import { CanonicalRepositoryLocateExecutorV2 } from '../../src/evidence/locate-execution/canonical-locate-executor-v2.js';
+import {
+  CANONICAL_LOCATE_EXECUTOR_V2,
+  LOCATE_RESULT_PROJECTOR,
+} from '../../src/evidence/locate-execution/locate-execution.tokens.js';
+import { V2LocateResultProjector } from '../../src/evidence/locate-execution/v2-locate-result-projector.js';
 import { RepositoryEvidenceEngine } from '../../src/evidence/repository-evidence-engine.js';
 import { NodeMcpStdioHost } from '../../src/mcp/mcp-stdio-host.js';
 import { CodeGraphBackend } from '../../src/repository/codegraph-backend.js';
@@ -28,6 +34,10 @@ import { createRepoNavTestingModule } from '../../testkit/create-testing-module.
 import { isSelected } from '../../testkit/testing/selection.js';
 
 const identity = { group: 'di', caseId: 'di-assembly' } as const;
+const diWiringIdentity = {
+  group: 'canonical-locate-bridge',
+  caseId: 'canonical-di-wiring',
+} as const;
 const request = LocateRequestSchema.parse({
   repoPath: 'C:/fixture',
   question: 'Where is hcp_id mapped?',
@@ -89,15 +99,16 @@ class FakeService implements RepositoryEvidenceService {
   public async locate(
     _request: LocateRequest,
     _context: LocateExecutionContext,
-  ): Promise<LocateResult> {
+  ): Promise<LocateResultV2> {
     return {
       ok: false,
       error: {
+        schemaVersion: '2.0',
         code: 'INVALID_REPOSITORY',
-        message: 'Synthetic fixture repository.',
+        message: 'The repository path could not be opened.',
         recoverable: false,
       },
-    };
+    } as unknown as LocateResultV2;
   }
 }
 
@@ -158,5 +169,143 @@ describe.runIf(isSelected(identity))('NestJS standalone DI assembly', () => {
     expect(testingModule.get(MCP_STDIO_HOST)).toBeInstanceOf(NodeMcpStdioHost);
 
     await expect(testingModule.close()).resolves.toBeUndefined();
+  });
+});
+
+describe.runIf(isSelected(diWiringIdentity))(
+  'F1C-DI-001 canonical DI wiring',
+  () => {
+    it('binds only v1 projector and keeps service on RepositoryEvidenceEngine', async () => {
+      const application = await createRepoNavApplicationContext();
+      try {
+        const service = application.get(REPOSITORY_EVIDENCE_SERVICE);
+        const executor = application.get(CANONICAL_LOCATE_EXECUTOR_V2);
+        const projector = application.get(LOCATE_RESULT_PROJECTOR);
+        expect(service).toBeInstanceOf(RepositoryEvidenceEngine);
+        expect(executor).toBeInstanceOf(CanonicalRepositoryLocateExecutorV2);
+        expect(projector).toBeInstanceOf(V2LocateResultProjector);
+        const providerNames = Object.getOwnPropertyNames(
+          Object.getPrototypeOf(application),
+        ).join(',');
+        expect(providerNames).not.toMatch(/Shadow/u);
+      } finally {
+        await application.close();
+      }
+    });
+  },
+);
+
+describe.runIf(
+  isSelected({
+    group: 'language-capability-boundary',
+    caseId: 'real-complete-shadow',
+  }),
+)('F8-REAL-SHADOW-001 real-complete-shadow', () => {
+  it('registers non-exported orchestrator and runs real aggregation path', async () => {
+    const {
+      ACCEPTED_COMPLETE_REAL_LOCATE_SHADOW_ORCHESTRATOR_V2,
+      createAcceptedCompleteRealLocateShadowOrchestratorV2,
+      registerAcceptedCompleteRealAggregationBundleV2,
+    } = await import(
+      '../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js'
+    );
+    const { createFourPrerequisiteCanonicalInputV2 } = await import(
+      '../../testkit/fixtures/canonical-locate-bridge-v2/four-prerequisite-base-v2.js'
+    );
+    const { buildAggregationHarnessV2 } = await import(
+      '../../testkit/fixtures/request-outcome-v2/build-aggregation-harness-v2.js'
+    );
+    const { issueEvidenceRankingOutcomeV2 } = await import(
+      '../../src/evidence/ranking/evidence-ranking-outcome-v2.js'
+    );
+    const { registerF2RankingOutcomeForExecutionV2 } = await import(
+      '../../src/evidence/public-output/f2-locate-projection-stages-v2.js'
+    );
+    const { readCompleteRealLocateShadowFailureObservationV2 } = await import(
+      '../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js'
+    );
+    const application = await createRepoNavApplicationContext();
+    try {
+      const projector = application.get(LOCATE_RESULT_PROJECTOR);
+      expect(projector).toBeInstanceOf(V2LocateResultProjector);
+      const orchestrator = application.get(
+        ACCEPTED_COMPLETE_REAL_LOCATE_SHADOW_ORCHESTRATOR_V2,
+      );
+      expect(orchestrator.projectAcceptedExecution).toBeTypeOf('function');
+
+      const { input, capability, execution } =
+        createFourPrerequisiteCanonicalInputV2();
+      const harness = await buildAggregationHarnessV2({});
+      const ranking = issueEvidenceRankingOutcomeV2({
+        fragment: Object.freeze({
+          confirmed: Object.freeze([]),
+          candidates: Object.freeze([]),
+          unsatisfiedAnchors: Object.freeze([]),
+        }),
+        budgetFacts: Object.freeze({
+          maxFilesReached: false,
+          maxConfirmedReached: false,
+          maxCandidatesReached: false,
+          preRankingPoolTruncated: false,
+          safeSelectorCollision: false,
+          safeOrderingCollision: false,
+        }),
+        confirmed: [],
+        candidates: [],
+        snapshotProof: harness.input.snapshotProof,
+        execution,
+        collisionAnchorKeys: new Set(),
+      });
+      registerF2RankingOutcomeForExecutionV2(
+        execution,
+        ranking,
+        harness.input.snapshotProof,
+      );
+      registerAcceptedCompleteRealAggregationBundleV2(
+        execution,
+        Object.freeze({
+          execution,
+          backendTrace: harness.input.backendTrace,
+          fallback: harness.input.fallback,
+          ranking,
+          snapshotProof: harness.input.snapshotProof,
+          resolvedLimits: harness.input.resolvedLimits,
+          abortDecision: harness.input.abortDecision,
+          abortCoordinator: harness.input.abortCoordinator,
+          contributions: Object.freeze([
+            harness.input.contributions[1],
+            harness.input.contributions[2],
+            harness.input.contributions[3],
+          ] as const),
+          scopeProof: harness.input.scopeProof,
+          expectedEligiblePool: harness.input.expectedEligiblePool,
+          expectedFoldProof: harness.input.expectedFoldProof,
+          expectedCoverageBasis: harness.input.expectedCoverageBasis,
+          expectedResolvedScope: harness.input.expectedResolvedScope,
+          expectedCapabilityFacts: harness.input.expectedCapabilityFacts,
+        }),
+      );
+      const attempt = orchestrator.projectAcceptedExecution(input, capability);
+      if (attempt.ok) {
+        expect(attempt.accepted).toBeDefined();
+      } else {
+        const failure = readCompleteRealLocateShadowFailureObservationV2(
+          attempt.failure,
+        );
+        // production path entered stages (not pre-stage zero counters from stub)
+        expect(failure.counters.source).toBe(1);
+        expect([
+          'SOURCE_INVALID',
+          'MATERIALIZATION_INVALID',
+          'AGGREGATION_INVALID',
+        ]).toContain(failure.code);
+      }
+      expect(
+        createAcceptedCompleteRealLocateShadowOrchestratorV2()
+          .projectAcceptedExecution,
+      ).toBeTypeOf('function');
+    } finally {
+      await application.close();
+    }
   });
 });

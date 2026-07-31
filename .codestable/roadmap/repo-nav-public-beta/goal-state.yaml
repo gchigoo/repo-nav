@@ -1,0 +1,365 @@
+roadmap: repo-nav-public-beta
+status: complete
+baseline_ref: 9d7b0e237e3cd9245d1f057a2ad504b1d1028d7d
+driver_kind: host-agent
+driver_id: 06c57bbc-6ea2-4038-a133-a77038e95a06
+execution_confirmation_id: ge-6e44d402368a
+acceptance_authorization: approved
+acceptance_authorization_ref: approval-report.md#goal-acceptance
+commit_authorization: approved
+commit_authorization_ref: approval-report.md#goal-commits
+handoff_reason: ''
+handoff_next: ''
+current_feature_index: 11
+features:
+- slug: public-output-boundary-v2
+  roadmap_item: public-output-boundary-v2
+  feature_dir: .codestable/features/2026-07-23-public-output-boundary-v2
+  design: .codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-design.md
+  checklist: .codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-checklist.yaml
+  review: .codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-review.md
+  qa: .codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-qa.md
+  acceptance: .codestable/features/2026-07-23-public-output-boundary-v2/public-output-boundary-v2-acceptance.md
+  status: accepted
+- slug: span-redaction-corpus-policy-v2
+  roadmap_item: span-redaction-corpus-policy-v2
+  feature_dir: .codestable/features/2026-07-24-span-redaction-corpus-policy-v2
+  design: .codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-design.md
+  checklist: .codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-checklist.yaml
+  review: .codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-review.md
+  qa: .codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-qa.md
+  acceptance: .codestable/features/2026-07-24-span-redaction-corpus-policy-v2/span-redaction-corpus-policy-v2-acceptance.md
+  status: accepted
+- slug: cross-platform-ci-baseline
+  roadmap_item: cross-platform-ci-baseline
+  feature_dir: .codestable/features/2026-07-24-cross-platform-ci-baseline
+  design: .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-design.md
+  checklist: .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-checklist.yaml
+  review: .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-review.md
+  qa: .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-qa.md
+  acceptance: .codestable/features/2026-07-24-cross-platform-ci-baseline/cross-platform-ci-baseline-acceptance.md
+  status: accepted
+- slug: public-result-resource-budgets-v2
+  roadmap_item: public-result-resource-budgets-v2
+  feature_dir: .codestable/features/2026-07-24-public-result-resource-budgets-v2
+  design: .codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-design.md
+  checklist: .codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-checklist.yaml
+  review: .codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-review.md
+  qa: .codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-qa.md
+  acceptance: .codestable/features/2026-07-24-public-result-resource-budgets-v2/public-result-resource-budgets-v2-acceptance.md
+  status: accepted
+- slug: canonical-locate-facts-bridge
+  roadmap_item: canonical-locate-facts-bridge
+  feature_dir: .codestable/features/2026-07-24-canonical-locate-facts-bridge
+  design: .codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-design.md
+  checklist: .codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-checklist.yaml
+  review: .codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-review.md
+  qa: .codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-qa.md
+  acceptance: .codestable/features/2026-07-24-canonical-locate-facts-bridge/canonical-locate-facts-bridge-acceptance.md
+  status: accepted
+- slug: request-snapshot-cache
+  roadmap_item: request-snapshot-cache
+  feature_dir: .codestable/features/2026-07-24-request-snapshot-cache
+  design: .codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-design.md
+  checklist: .codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-checklist.yaml
+  review: .codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-review.md
+  qa: .codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-qa.md
+  acceptance: .codestable/features/2026-07-24-request-snapshot-cache/request-snapshot-cache-acceptance.md
+  status: accepted
+- slug: relevance-ranking-budget
+  roadmap_item: relevance-ranking-budget
+  feature_dir: .codestable/features/2026-07-24-relevance-ranking-budget
+  design: .codestable/features/2026-07-24-relevance-ranking-budget/relevance-ranking-budget-design.md
+  checklist: .codestable/features/2026-07-24-relevance-ranking-budget/relevance-ranking-budget-checklist.yaml
+  review: .codestable/features/2026-07-24-relevance-ranking-budget/relevance-ranking-budget-review.md
+  qa: .codestable/features/2026-07-24-relevance-ranking-budget/relevance-ranking-budget-qa.md
+  acceptance: .codestable/features/2026-07-24-relevance-ranking-budget/relevance-ranking-budget-acceptance.md
+  status: accepted
+- slug: streaming-ripgrep
+  roadmap_item: streaming-ripgrep
+  feature_dir: .codestable/features/2026-07-24-streaming-ripgrep
+  design: .codestable/features/2026-07-24-streaming-ripgrep/streaming-ripgrep-design.md
+  checklist: .codestable/features/2026-07-24-streaming-ripgrep/streaming-ripgrep-checklist.yaml
+  review: .codestable/features/2026-07-24-streaming-ripgrep/streaming-ripgrep-review.md
+  qa: .codestable/features/2026-07-24-streaming-ripgrep/streaming-ripgrep-qa.md
+  acceptance: .codestable/features/2026-07-24-streaming-ripgrep/streaming-ripgrep-acceptance.md
+  status: accepted
+- slug: input-abort-contract-v2
+  roadmap_item: input-abort-contract-v2
+  feature_dir: .codestable/features/2026-07-24-input-abort-contract-v2
+  design: .codestable/features/2026-07-24-input-abort-contract-v2/input-abort-contract-v2-design.md
+  checklist: .codestable/features/2026-07-24-input-abort-contract-v2/input-abort-contract-v2-checklist.yaml
+  review: .codestable/features/2026-07-24-input-abort-contract-v2/input-abort-contract-v2-review.md
+  qa: .codestable/features/2026-07-24-input-abort-contract-v2/input-abort-contract-v2-qa.md
+  acceptance: .codestable/features/2026-07-24-input-abort-contract-v2/input-abort-contract-v2-acceptance.md
+  status: accepted
+- slug: repository-scope-policy
+  roadmap_item: repository-scope-policy
+  feature_dir: .codestable/features/2026-07-24-repository-scope-policy
+  design: .codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-design.md
+  checklist: .codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-checklist.yaml
+  review: .codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-review.md
+  qa: .codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-qa.md
+  acceptance: .codestable/features/2026-07-24-repository-scope-policy/repository-scope-policy-acceptance.md
+  status: accepted
+- slug: language-capability-boundary
+  roadmap_item: language-capability-boundary
+  feature_dir: .codestable/features/2026-07-24-language-capability-boundary
+  design: .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-design.md
+  checklist: .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-checklist.yaml
+  review: .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-review.md
+  qa: .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-qa.md
+  acceptance: .codestable/features/2026-07-24-language-capability-boundary/language-capability-boundary-acceptance.md
+  status: accepted
+- slug: public-beta-release
+  roadmap_item: public-beta-release
+  feature_dir: .codestable/features/2026-07-24-public-beta-release
+  design: .codestable/features/2026-07-24-public-beta-release/public-beta-release-design.md
+  checklist: .codestable/features/2026-07-24-public-beta-release/public-beta-release-checklist.yaml
+  review: .codestable/features/2026-07-24-public-beta-release/public-beta-release-review.md
+  qa: .codestable/features/2026-07-24-public-beta-release/public-beta-release-qa.md
+  acceptance: .codestable/features/2026-07-24-public-beta-release/public-beta-release-acceptance.md
+  status: accepted
+ledger:
+- step: dispatch-goal-driver
+  status: started
+  driver_id: 06c57bbc-6ea2-4038-a133-a77038e95a06
+  note: host-agent goal driver dispatched after owner authorization
+- step: f1a-feature-start
+  status: started
+  feature: span-redaction-corpus-policy-v2
+  index: 1
+  note: implementationReady verified; entering cs-feat implementation
+- step: f1a-implementation
+  status: done
+  feature: span-redaction-corpus-policy-v2
+  note: S1-S5 done; scope/dod/evidence-pack passed; entering independent code review
+- step: f1a-review
+  status: done
+  feature: span-redaction-corpus-policy-v2
+  note: independent subagent review passed blocking=0
+- step: f1a-qa
+  status: done
+  feature: span-redaction-corpus-policy-v2
+  note: independent QA runner passed; core commands green
+- step: f1a-acceptance
+  status: done
+  feature: span-redaction-corpus-policy-v2
+  note: ResumeGoalAcceptance approval-report.md#goal-acceptance; index->2
+- step: f1a-scoped-commit
+  status: done
+  feature: span-redaction-corpus-policy-v2
+  commit: 9c125e2
+  note: goal-commits authorized; working tree clean
+- step: f4-feature-start
+  status: started
+  feature: cross-platform-ci-baseline
+  index: 2
+  note: implementationReady; local S1-S4 implemented
+- step: f4-implementation-local
+  status: done
+  feature: cross-platform-ci-baseline
+  note: S1-S4 done; local build/typecheck/unit/golden/mcp/docs/test:platform green
+- step: f4-handoff
+  status: cleared
+  feature: cross-platform-ci-baseline
+  note: CoreEvidenceUnavailable resolved after f4-remote-ci-evidence
+- step: f4-remote-evidence
+  status: done
+  feature: cross-platform-ci-baseline
+  note: same-run green 30323465951@865fcf0; ruleset 19864943; failing PR#1 BLOCKED;
+    artifacts under remote-evidence/
+- step: f4-resume
+  status: started
+  feature: cross-platform-ci-baseline
+  index: 2
+  note: resume review→QA→accept with remote evidence in hand
+- step: f4-review
+  status: done
+  feature: cross-platform-ci-baseline
+  note: independent subagent review passed blocking=0
+- step: f4-qa
+  status: done
+  feature: cross-platform-ci-baseline
+  note: independent QA passed; remote evidence consistent
+- step: f4-acceptance
+  status: done
+  feature: cross-platform-ci-baseline
+  note: ResumeGoalAcceptance; S5 closed; index->3
+- step: f4-scoped-commit
+  status: done
+  feature: cross-platform-ci-baseline
+  commit: 67d0de9
+  note: goal-commits authorized; working tree clean
+- step: f1b-feature-loop
+  status: done
+  feature: public-result-resource-budgets-v2
+  note: impl/review/QA/accept complete; index->4
+- step: f1c-feature-loop
+  status: done
+  feature: canonical-locate-facts-bridge
+  note: impl/review/QA/accept complete; index->5
+- step: f3-feature-loop
+  status: done
+  feature: request-snapshot-cache
+  note: impl/review/QA/accept complete; index->6
+- step: f2-implementation
+  status: done
+  feature: relevance-ranking-budget
+  index: 6
+  note: S1-S5 done; scope/dod/evidence-pack passed
+- step: f2-review
+  status: done
+  feature: relevance-ranking-budget
+  index: 6
+  note: round2 passed blocking=0 (r3); REV-001..004 closed after review-fix
+- step: f2-qa
+  status: done
+  feature: relevance-ranking-budget
+  index: 6
+  note: independent QA passed
+- step: f2-acceptance
+  status: done
+  feature: relevance-ranking-budget
+  index: 6
+  note: ResumeGoalAcceptance; checks passed; index->7
+- step: f2-scoped-commit
+  status: done
+  feature: relevance-ranking-budget
+  index: 6
+  commit: f21cc0c
+  note: goal-commits authorized; working tree clean after F2
+- step: f5-feature-start
+  status: started
+  feature: streaming-ripgrep
+  index: 7
+  note: next pending feature after F2 accept
+- step: f5-implementation
+  status: done
+  feature: streaming-ripgrep
+  index: 7
+  note: S1-S5 done; scope/dod/evidence-pack passed
+- step: f5-review
+  status: done
+  feature: streaming-ripgrep
+  index: 7
+  note: round2 passed blocking=0; REV-001..003 closed after review-fix
+- step: f5-qa
+  status: done
+  feature: streaming-ripgrep
+  index: 7
+  note: independent QA passed; core CMD green
+- step: f5-acceptance
+  status: done
+  feature: streaming-ripgrep
+  index: 7
+  note: ResumeGoalAcceptance approval-report.md#goal-acceptance; checks passed; index->8
+- step: f6-feature-loop
+  status: done
+  feature: input-abort-contract-v2
+  index: 8
+  note: impl/review(r4)/QA(r3)/accept complete; ResumeGoalAcceptance approval-report.md#goal-acceptance;
+    checks passed; index->9
+- step: f7-feature-start
+  status: started
+  feature: repository-scope-policy
+  index: 9
+  note: next pending feature after F6 accept
+- step: f7-implementation
+  status: done
+  feature: repository-scope-policy
+  index: 9
+  note: S1-S5 done; review round3 passed blocking=0
+- step: f7-qa
+  status: done
+  feature: repository-scope-policy
+  index: 9
+  note: independent QA passed; must-run green; Material delta golden group registered
+- step: f7-acceptance
+  status: done
+  feature: repository-scope-policy
+  index: 9
+  note: ResumeGoalAcceptance approval-report.md#goal-acceptance; checks passed; index->10
+- step: f8-feature-start
+  status: started
+  feature: language-capability-boundary
+  index: 10
+  note: next pending feature after F7 accept
+- step: f8-implementation
+  status: done
+  feature: language-capability-boundary
+  index: 10
+  note: S1-S5 done; review round3 passed blocking=0
+- step: f8-qa
+  status: done
+  feature: language-capability-boundary
+  index: 10
+  note: QA passed; must-run + golden-all green; MOVE regex-class restore
+- step: f8-gates
+  status: done
+  feature: language-capability-boundary
+  index: 10
+  note: scope-gate/dod-runner/evidence-pack passed
+- step: f8-acceptance
+  status: done
+  feature: language-capability-boundary
+  index: 10
+  note: ResumeGoalAcceptance approval-report.md#goal-acceptance; checks passed; index->11
+- at: '2026-07-28'
+  feature: public-beta-release
+  note: Owner-stop RiskAcceptanceNeeded after F8 accept 2457a7a; ge-6e44d402368a does
+    not cover F9 cutover/publish/private/license
+- step: f9-auth
+  status: done
+  feature: public-beta-release
+  index: 11
+  note: f9-public-beta-release approved option1; MIT/2026/Gchigoo; push+#2 allowed;
+    no private-remove/publish/tag/merge-main
+- step: f9-resume
+  status: started
+  feature: public-beta-release
+  index: 11
+  note: handoff cleared; enter F9 implementation
+- step: f9-security-channel-owner-stop
+  status: cleared
+  feature: public-beta-release
+  index: 11
+  note: f9-security-channel-preflight approved option1; github-private-vulnerability-reporting
+- step: f9-security-channel-auth
+  status: done
+  feature: public-beta-release
+  index: 11
+  note: publicSafeText=Report security issues via GitHub Security Advisories for gchigoo/repo-nav.
+    Do not file public issues for vulnerabilities or secrets.
+- step: f9-resume-after-security
+  status: started
+  feature: public-beta-release
+  index: 11
+  note: both preflights approved; write owner-preflight JSON and implement F9
+- step: f9-feature-start
+  status: started
+  feature: public-beta-release
+  index: 11
+  note: owner-preflight license+security written; implementing after f9-security-channel-preflight
+    approved
+- step: f9-review
+  status: done
+  feature: public-beta-release
+  index: 11
+  note: round3 focused closure passed blocking=0; REV-001..003 closed
+- step: f9-qa
+  status: done
+  feature: public-beta-release
+  index: 11
+  note: QA passed; owner-gated CMD-OWNER-ACTIONS/REAL-CONSUMER/six-cell residual for acceptance
+- step: f9-acceptance
+  status: done
+  feature: public-beta-release
+  index: 11
+  note: ResumeGoalAcceptance approval-report.md#goal-acceptance; owner gates+six-cell+DoD/evidence-pack
+    passed; checks C1-C68 passed
+- step: f9-goal-complete
+  status: done
+  feature: public-beta-release
+  index: 11
+  note: goal 12/12 complete; private:true retained; no publish/tag/merge-main

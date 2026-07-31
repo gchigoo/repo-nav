@@ -45,9 +45,7 @@ Example arguments:
   "repoPath": "D:\\path\\to\\target-repository",
   "question": "Where is the repository evidence service token used?",
   "terms": ["REPOSITORY_EVIDENCE_SERVICE"],
-  "anchors": [
-    { "kind": "symbol", "value": "REPOSITORY_EVIDENCE_SERVICE" }
-  ]
+  "anchors": [{ "kind": "symbol", "value": "REPOSITORY_EVIDENCE_SERVICE" }]
 }
 ```
 
@@ -61,8 +59,9 @@ contract.
 npm run repo-nav -- --help
 npm run repo-nav -- debug locate --help
 npm run repo-nav -- debug probe --help
-npm run repo-nav -- debug golden --help
 ```
+
+Requires Node.js `^22.0.0 || ^24.0.0`. Golden regressions run from a source checkout via `npm run test:golden` only.
 
 See [the debug CLI guide](docs/debug-cli.md) for command details and exit-code
 semantics.

@@ -1,9 +1,9 @@
 import { isDeepStrictEqual } from 'node:util';
 
 import type {
-  CandidateEvidence,
-  ConfirmedEvidence,
-} from '../../src/contracts/index.js';
+  CandidateEvidenceV2,
+  ConfirmedEvidenceV2,
+} from '../../src/contracts/v2/locate-result-v2.js';
 import {
   GoldenCaseSchema,
   GoldenObservationSchema,
@@ -15,9 +15,10 @@ import {
   compareGoldenProjection,
   createMissingGoldenProjection,
   loadExpectedGoldenProjection,
+  overwriteGoldenProjection,
 } from './golden-projection.js';
 
-type EvaluatedEvidence = ConfirmedEvidence | CandidateEvidence;
+type EvaluatedEvidence = ConfirmedEvidenceV2 | CandidateEvidenceV2;
 
 export interface GoldenEvaluationIssue {
   readonly path: string;
@@ -97,6 +98,7 @@ function evaluateCompanionProjection(
 ): GoldenEvaluationIssue[] {
   if (priorIssues.length === 0) {
     createMissingGoldenProjection(caseId, observation.result);
+    overwriteGoldenProjection(caseId, observation.result);
   }
   try {
     const comparison = compareGoldenProjection(
@@ -218,7 +220,15 @@ function evaluateError(
       message: 'Recoverable flag differs.',
     });
   }
-  if (actualError.suggestedAction !== expectedError.suggestedAction) {
+  const actualSuggestedAction =
+    'suggestedAction' in actualError
+      ? actualError.suggestedAction
+      : undefined;
+  const expectedSuggestedAction =
+    'suggestedAction' in expectedError
+      ? expectedError.suggestedAction
+      : undefined;
+  if (actualSuggestedAction !== expectedSuggestedAction) {
     issues.push({
       path: 'result.error.suggestedAction',
       message: 'Suggested action differs.',

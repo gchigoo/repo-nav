@@ -4,17 +4,20 @@ import {
   BackendReasonCodeSchema,
   CandidateReasonCodeSchema,
   ConfirmedReasonCodeSchema,
-  EVIDENCE_SCHEMA_VERSION,
   EvidenceRoleSchema,
   ExclusionReasonCodeSchema,
   LimitReasonCodeSchema,
   LocateRequestSchema,
-  LocateResultSchema,
-  LocateStatusSchema,
   RepoNavToolErrorSchema,
 } from '../../src/contracts/index.js';
+import {
+  LOCATE_STATUSES_V2,
+  LocateResultV2Schema,
+} from '../../src/contracts/v2/locate-result-v2.js';
 
-const evidenceId = z.string().regex(/^evidence:v1:[a-f0-9]{64}$/u);
+const GOLDEN_CASE_SCHEMA_VERSION = '1.0' as const;
+const evidenceId = z.string().regex(/^evidence:v2:\d{4,}$/u);
+const LocateStatusExpectationSchema = z.enum(LOCATE_STATUSES_V2);
 
 export const EvidenceExpectationSchema = z
   .strictObject({
@@ -30,7 +33,7 @@ export const EvidenceExpectationSchema = z
 export type EvidenceExpectation = z.infer<typeof EvidenceExpectationSchema>;
 
 const GoldenCaseBaseShape = {
-  schemaVersion: z.literal(EVIDENCE_SCHEMA_VERSION),
+  schemaVersion: z.literal(GOLDEN_CASE_SCHEMA_VERSION),
   id: z.string().min(1),
   fixtureRoot: z.string().min(1),
 } as const;
@@ -43,7 +46,7 @@ export const GoldenSuccessCaseSchema = z
     expected: z
       .strictObject({
         ok: z.literal(true),
-        status: LocateStatusSchema,
+        status: LocateStatusExpectationSchema,
         confirmed: z.array(EvidenceExpectationSchema).readonly(),
         candidates: z.array(EvidenceExpectationSchema).readonly(),
         forbiddenEvidenceIds: z.array(evidenceId).readonly(),
@@ -88,9 +91,9 @@ export type GoldenCase = z.infer<typeof GoldenCaseSchema>;
 
 export const GoldenObservationSchema = z
   .strictObject({
-    result: LocateResultSchema,
+    result: LocateResultV2Schema,
     mcpIsError: z.boolean(),
-    structuredContent: LocateResultSchema,
+    structuredContent: LocateResultV2Schema,
     textContent: z.string(),
   })
   .readonly();

@@ -17,23 +17,49 @@ Schema version：`2.0`。下方 machine-readable 区块由当前 Zod/JSON Schema
       "termCase",
       "terms"
     ],
-    "required": ["repoPath", "terms"],
+    "required": [
+      "repoPath",
+      "terms"
+    ],
     "enums": {
-      "anchorKinds": ["symbol", "file", "table", "route", "term"],
-      "layers": ["client", "server", "db", "test", "docs", "config", "unknown"],
-      "termCase": ["sensitive", "insensitive", "smart"]
+      "anchorKinds": [
+        "symbol",
+        "file",
+        "table",
+        "route",
+        "term"
+      ],
+      "layers": [
+        "client",
+        "server",
+        "db",
+        "test",
+        "docs",
+        "config",
+        "unknown"
+      ],
+      "termCase": [
+        "sensitive",
+        "insensitive",
+        "smart"
+      ]
     },
     "example": {
       "repoPath": "/workspace/repository",
       "question": "Where is the value mapping implemented?",
-      "terms": ["external_id", "internalId"],
+      "terms": [
+        "external_id",
+        "internalId"
+      ],
       "anchors": [
         {
           "kind": "symbol",
           "value": "mapIdentifier"
         }
       ],
-      "layers": ["server"]
+      "layers": [
+        "server"
+      ]
     }
   },
   "output": {
@@ -96,6 +122,7 @@ Schema version：`2.0`。下方 machine-readable 区块由当前 Zod/JSON Schema
       "scope",
       "semanticClassification",
       "snapshot",
+      "snapshotRef",
       "status",
       "strategyComplete",
       "suggestedAction",

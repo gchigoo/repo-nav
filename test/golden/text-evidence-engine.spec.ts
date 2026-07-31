@@ -469,14 +469,15 @@ describe.runIf(isSelected(baselineIdentity))('text engine verified metadata', ()
       maxConfirmed: 1,
       maxCandidates: 0,
     });
+    // 同文件双 symbol：authoritative file reservation 仍可 verify 出 Zeta
     expect(oneFactBudget).toMatchObject({
       ok: true,
       evidence: {
         status: 'partial',
-        confirmed: [],
+        confirmed: [{ location: { symbol: 'Zeta' } }],
         candidates: [],
         coverage: {
-          limitsReached: ['MAX_CANDIDATES_REACHED'],
+          limitsReached: ['MAX_CONFIRMED_REACHED', 'MAX_CANDIDATES_REACHED'],
         },
         nextActions: ['RETRY_WITH_HIGHER_LIMIT'],
       },

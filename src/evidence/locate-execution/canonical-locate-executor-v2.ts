@@ -1010,8 +1010,8 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
       const backendResults = [codegraphResult, ripgrepResult].filter(
         (result): result is BackendSearchResult => result !== undefined,
       );
-      // legacy lane：仅 coverage/telemetry，不再决定 verify 输入
-      void selectAndFreezeLegacyBackendHitsV1(
+      // legacy：telemetry；仅在 expanded selection 为空时作 incomplete/unsafe 兼容桥
+      const legacyFrozen = selectAndFreezeLegacyBackendHitsV1(
         backendResults,
         limits.maxFiles,
         executionToken,
@@ -1028,11 +1028,23 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
       const scopeObservation: TrustedScopeEligibilityObservationV2 =
         authoritativeSelection.observation;
       const discoverySelection = authoritativeSelection.boundSelection;
-      const filesTruncated = authoritativeSelection.filesTruncated;
+      // complete expanded → authoritative；任一 available incomplete → legacy 兼容桥
+      const expandedIncomplete = expandedBackendResults.some(
+        (result) =>
+          result.health.state === 'available' && result.complete === false,
+      );
+      const useAuthoritative =
+        !expandedIncomplete && authoritativeSelection.hits.length > 0;
+      const verifyHits = useAuthoritative
+        ? authoritativeSelection.hits
+        : legacyFrozen.result.hits;
+      const filesTruncated = useAuthoritative
+        ? authoritativeSelection.filesTruncated
+        : legacyFrozen.result.filesTruncated;
 
       const merged = await verifyAndMergeBackendHits({
         repositoryRoot,
-        hits: authoritativeSelection.hits,
+        hits: verifyHits,
         terms: termsForVerification,
         reader: requestReader,
         limits: verificationLimits,

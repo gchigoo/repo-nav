@@ -33,7 +33,13 @@ export function createStableGoldenProjection(result: LocateResultV2): unknown {
     return result;
   }
   const snapshot = result.evidence.coverage.snapshot;
-  if (snapshot === undefined || snapshot.gitState === 'unknown') {
+  if (snapshot === undefined) {
+    return result;
+  }
+  // gitState / snapshotRef 依赖本机 checkout，golden 比较时剥离
+  const { snapshotRef: _snapshotRef, ...snapshotWithoutRef } = snapshot;
+  void _snapshotRef;
+  if (snapshot.gitState === 'unknown' && snapshot.snapshotRef === undefined) {
     return result;
   }
   return {
@@ -43,7 +49,7 @@ export function createStableGoldenProjection(result: LocateResultV2): unknown {
       coverage: {
         ...result.evidence.coverage,
         snapshot: {
-          ...snapshot,
+          ...snapshotWithoutRef,
           gitState: 'unknown' as const,
         },
       },

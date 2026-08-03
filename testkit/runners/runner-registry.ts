@@ -587,6 +587,7 @@ export const RUNNER_SELECTIONS: Readonly<
       'single-execution',
       'failure-order',
       'no-v1-runtime',
+      'repository-hardening-inventory',
       'version-sources',
       'node-range-declared',
       'cli-runtime-closure',

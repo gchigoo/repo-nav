@@ -1,13 +1,18 @@
 import type {
+  BackendHit,
   BackendSearchResult,
   RepositorySearchBackend,
 } from '../../contracts/index.js';
 import type { LocateExecutionTokenV2 } from '../../contracts/v2/locate-fact-envelope-v2.js';
 import type {
+  BackendDiscoveryHandoffForF3ViewV2,
   BackendExecutionContextV2,
   TrustedBackendDiscoveryHandoffV2,
 } from '../../contracts/v2/backend-execution-outcome-v2.js';
-import { requireBackendDiscoveryHandoffForF3V2 } from '../../process/backend-execution-context-v2.js';
+import {
+  requireBackendDiscoveryHandoffForF3V2,
+  requireBackendExecutionOutcomeV2,
+} from '../../process/backend-execution-context-v2.js';
 import type { MultiViewBackendSearchRequestV2 } from './discovery-reservation-v2.js';
 
 /**
@@ -82,6 +87,42 @@ export function deriveLaneBackendResultV2(
 }
 
 /**
+ * 从 handoff 解析 expanded 视图：complete-safe-set 或 truncated-but-valid retainedHits。
+ */
+export function resolveExpandedLaneFromHandoffViewV2(
+  view: BackendDiscoveryHandoffForF3ViewV2,
+  execution: LocateExecutionTokenV2,
+): { readonly hits: readonly BackendHit[]; readonly complete: boolean } {
+  if (view.kind !== 'started') {
+    return Object.freeze({ hits: Object.freeze([]), complete: false });
+  }
+  if (view.expandedComplete) {
+    return Object.freeze({
+      hits: Object.freeze(view.completeSafeHits.map((entry) => entry.hit)),
+      complete: true,
+    });
+  }
+  const shape = requireBackendExecutionOutcomeV2(
+    view.expandedOutcome,
+    execution,
+  );
+  // truncated-but-valid：结果上限/early-stop，保留候选供 authoritative selection
+  if (
+    shape.status === 'used' &&
+    shape.completion === 'incomplete' &&
+    (shape.termination === 'early-stop' ||
+      shape.termination === 'output-limit') &&
+    shape.retainedHits.length > 0
+  ) {
+    return Object.freeze({
+      hits: shape.retainedHits,
+      complete: false,
+    });
+  }
+  return Object.freeze({ hits: Object.freeze([]), complete: false });
+}
+
+/**
  * Pre-F5 multi-view backend search（F3-owned，不 import F5）。
  *
  * 规则：当 legacyMaxHits ≤ expandedMaxHits（生产常态：legacy ≪ 800）时，
@@ -119,14 +160,11 @@ export async function searchBackendMultiViewV2(
       backendExecutionContext,
       execution,
     );
+    const expandedLane = resolveExpandedLaneFromHandoffViewV2(view, execution);
     const expanded: BackendSearchResult = Object.freeze({
       health: view.expandedHealth,
-      hits: Object.freeze(
-        view.kind === 'started'
-          ? view.completeSafeHits.map((entry) => entry.hit)
-          : [],
-      ),
-      complete: view.expandedComplete,
+      hits: expandedLane.hits,
+      complete: expandedLane.complete,
       canSkipFallbackIfVerified: view.canSkipFallbackIfVerified,
     });
     return Object.freeze({

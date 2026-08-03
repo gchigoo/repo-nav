@@ -11,7 +11,7 @@ const root = resolve(import.meta.dirname, '../..');
 describe.runIf(
   isSelected({ group: 'public-beta-release', caseId: 'package-api' }),
 )('F9-PACKAGE-API-001 package-api', () => {
-  it('exposes root, legacy-v1, and package.json exports', () => {
+  it('exposes root, subpath, legacy-v1, and package.json exports', () => {
     const exports = JSON.parse(
       readFileSync(resolve(root, 'package.json'), 'utf8'),
     ).exports as Record<string, unknown>;

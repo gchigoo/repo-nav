@@ -134,7 +134,10 @@ function selected(group: string, caseId: string): boolean {
 class OrderedFixtureBackend implements RepositorySearchBackend {
   public readonly id = 'ripgrep' as const;
 
-  public constructor(private readonly hits: readonly BackendHit[]) {}
+  public constructor(
+    private readonly hits: readonly BackendHit[],
+    private readonly complete = true,
+  ) {}
 
   public async probe(
     _repositoryRoot: string,
@@ -150,7 +153,7 @@ class OrderedFixtureBackend implements RepositorySearchBackend {
     return {
       health: { state: 'available' },
       hits: this.hits,
-      complete: true,
+      complete: this.complete,
     };
   }
 }
@@ -979,6 +982,58 @@ describe.runIf(selected('candidate-permutation', 'candidate-permutation'))(
               },
             },
           ],
+        },
+      });
+    });
+
+    it('keeps symbol-anchor when expanded is incomplete instead of legacy lexicographic bridge', async () => {
+      // legacy 按路径字典序会选 alpha；authoritative 应因 anchor 保留 target
+      const hits = [
+        {
+          file: 'server/alpha.fixture',
+          lines: [1, 1] as const,
+          symbol: 'alphaNoise',
+          matchedText: 'export const alpha = { hcpId: row.hcp_id };',
+          source: 'ripgrep' as const,
+          reasonCodes: ['LITERAL_TERM_HIT'] as const,
+        },
+        {
+          file: 'server/target-anchor.fixture',
+          lines: [1, 1] as const,
+          symbol: 'zetaAnchor',
+          matchedText: 'export function zetaAnchor() { return row.hcp_id; }',
+          source: 'ripgrep' as const,
+          reasonCodes: ['LITERAL_TERM_HIT', 'SYMBOL_SEARCH_HIT'] as const,
+        },
+      ] satisfies readonly BackendHit[];
+      const result = await createCanonicalLocateEngineHarnessV2(
+        [new OrderedFixtureBackend(hits, false)],
+        new NodeRepositoryReader(),
+      ).service.locate(
+        {
+          repoPath: candidateFixtureRoot,
+          question: 'truncated-but-valid authoritative selection',
+          terms: ['zetaAnchor', 'hcp_id'],
+          termCase: 'sensitive',
+          layers: ['server'],
+          anchors: [{ kind: 'symbol', value: 'zetaAnchor' }],
+          limits: { maxFiles: 1 },
+        },
+        { signal: new AbortController().signal },
+      );
+      expect(result).toMatchObject({
+        ok: true,
+        evidence: {
+          status: 'partial',
+          confirmed: [
+            {
+              location: {
+                file: 'server/target-anchor.fixture',
+                symbol: 'zetaAnchor',
+              },
+            },
+          ],
+          coverage: { limitsReached: expect.arrayContaining(['MAX_FILES_REACHED']) },
         },
       });
     });

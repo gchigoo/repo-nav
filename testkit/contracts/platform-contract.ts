@@ -218,8 +218,8 @@ export const PLATFORM_ACTION_PINS_V1: readonly PlatformActionPin[] =
       id: 'setup-python',
       owner: 'actions',
       repository: 'actions/setup-python',
-      sha: 'a26af69be951a213d495a4c3e4e4022e16d87065',
-      tag: 'v5.6.0',
+      sha: '5fda3b95a4ea91299a34e894583c3862153e4b97',
+      tag: 'v7.0.0',
     }),
     Object.freeze({
       id: 'setup-node',
@@ -232,8 +232,8 @@ export const PLATFORM_ACTION_PINS_V1: readonly PlatformActionPin[] =
       id: 'upload-artifact',
       owner: 'actions',
       repository: 'actions/upload-artifact',
-      sha: '330a01c490aca151604b8cf639adc76d48f6c5d4',
-      tag: 'v5.0.0',
+      sha: 'b7c566a772e6b6bfb58ed0dc250532a479d7789f',
+      tag: 'v6.0.0',
     }),
   ]);
 

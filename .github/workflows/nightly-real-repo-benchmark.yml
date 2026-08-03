@@ -1,0 +1,52 @@
+# Non-blocking nightly placeholder for a future multi-sample real-repo suite.
+# Current PR gate remains benchmark:fixture-scenarios (single-run fixture smoke).
+name: nightly-real-repo-benchmark
+
+on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-real-repo-benchmark
+  cancel-in-progress: true
+
+jobs:
+  fixture-scenarios-nightly:
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install and build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install host tools
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TOOLS="${RUNNER_TEMP}/repo-nav-host-tools"
+          mkdir -p "$TOOLS"
+          npm install --prefix "$TOOLS" --no-save --no-package-lock --no-fund --no-audit \
+            @vscode/ripgrep@1.15.9
+          RG_BIN="$TOOLS/node_modules/@vscode/ripgrep/bin"
+          echo "$RG_BIN" >> "$GITHUB_PATH"
+
+      - name: Fixture-scenario smoke
+        run: npm run benchmark:fixture-scenarios

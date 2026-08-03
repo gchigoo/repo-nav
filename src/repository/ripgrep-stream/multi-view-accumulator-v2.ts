@@ -144,11 +144,10 @@ export class MultiViewAccumulatorV2 {
       return 'legacy-complete';
     }
     if (this.legacyCommitted.length >= this.legacyMaxHits) {
-      const legacyWasComplete =
-        this.legacyCommitted.length <= this.legacyMaxHits;
+      // 下一 group 已知存在：即使恰好等于 maxHits，也不能标 complete
       this.legacyCompletenessLatch = Object.freeze({
-        complete: legacyWasComplete,
-        truncated: !legacyWasComplete,
+        complete: false,
+        truncated: true,
       });
       const capped = this.legacyCommitted
         .slice(0, this.legacyMaxHits)

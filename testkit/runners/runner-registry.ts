@@ -694,11 +694,13 @@ export const RUNNER_SELECTIONS: Readonly<
       'mcp-surface',
       'protocol',
       'lifecycle',
+      'debug-cli-lifecycle',
       'input-abort-contract-v2',
     ]),
     cases: new Set([
       'runner-smoke',
       'lifecycle-manifest-schema',
+      'closed-stdin-bin',
       'mcp-input-and-cancel',
       'initialize-tools-capability',
       'tool-list-schema',

@@ -92,11 +92,12 @@ if (mode === 'smoke') {
     cwd: temp,
   });
   // Invoke via node + installed entry (Windows cannot exec the .bin shell shim).
-  const help = spawnSync(
-    process.execPath,
-    [join(temp, 'node_modules/repo-nav/dist/cli/main.js'), '--help'],
-    { encoding: 'utf8', shell: false, cwd: temp },
-  );
+  const installedCli = join(temp, 'node_modules/repo-nav/dist/cli/main.js');
+  const help = spawnSync(process.execPath, [installedCli, '--help'], {
+    encoding: 'utf8',
+    shell: false,
+    cwd: temp,
+  });
   if (help.status !== 0) {
     process.stderr.write(
       help.stderr || help.stdout || 'repo-nav --help failed\n',
@@ -107,6 +108,94 @@ if (mode === 'smoke') {
     process.stderr.write('repo-nav --help missing expected banner\n');
     process.exit(1);
   }
+
+  const fixtureRoot = join(temp, 'closed-stdin-fixture');
+  mkdirSync(fixtureRoot, { recursive: true });
+  writeFileSync(join(fixtureRoot, 'README.md'), 'closed stdin smoke fixture\n');
+  const closedStdinOptions = {
+    encoding: 'utf8',
+    shell: false,
+    cwd: temp,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  };
+
+  const probe = spawnSync(
+    process.execPath,
+    [installedCli, 'debug', 'probe', '--repo', fixtureRoot],
+    closedStdinOptions,
+  );
+  if (probe.status !== 0) {
+    process.stderr.write(
+      probe.stderr || probe.stdout || 'repo-nav debug probe failed\n',
+    );
+    process.exit(1);
+  }
+  if (probe.stderr !== '') {
+    process.stderr.write('repo-nav debug probe wrote to stderr\n');
+    process.exit(1);
+  }
+  let probeOutput;
+  try {
+    probeOutput = JSON.parse(probe.stdout);
+  } catch {
+    process.stderr.write('repo-nav debug probe returned invalid JSON\n');
+    process.exit(1);
+  }
+  if (
+    probeOutput?.schemaVersion !== '1.0' ||
+    probeOutput?.repositoryRootRedacted !== '<repository-root>' ||
+    !Array.isArray(probeOutput?.backends)
+  ) {
+    process.stderr.write('repo-nav debug probe returned invalid output\n');
+    process.exit(1);
+  }
+
+  const locate = spawnSync(
+    process.execPath,
+    [
+      installedCli,
+      'debug',
+      'locate',
+      '--repo',
+      fixtureRoot,
+      '--term',
+      'repo_nav_closed_stdin_absent_marker_7f9c',
+    ],
+    closedStdinOptions,
+  );
+  if (locate.status !== 0) {
+    process.stderr.write(
+      locate.stderr || locate.stdout || 'repo-nav debug locate failed\n',
+    );
+    process.exit(1);
+  }
+  if (locate.stderr !== '') {
+    process.stderr.write('repo-nav debug locate wrote to stderr\n');
+    process.exit(1);
+  }
+  let locateOutput;
+  try {
+    locateOutput = JSON.parse(locate.stdout);
+  } catch {
+    process.stderr.write('repo-nav debug locate returned invalid JSON\n');
+    process.exit(1);
+  }
+  const allowedLocateStatuses = new Set([
+    'no_result',
+    'partial',
+    'backend_unavailable',
+  ]);
+  if (
+    locateOutput?.ok !== true ||
+    !allowedLocateStatuses.has(locateOutput?.evidence?.status) ||
+    locateOutput?.evidence?.coverage?.abortSource !== 'none'
+  ) {
+    process.stderr.write(
+      'repo-nav debug locate returned an invalid closed-stdin outcome\n',
+    );
+    process.exit(1);
+  }
+
   rmSync(tgz, { force: true });
   rmSync(temp, { recursive: true, force: true });
 }

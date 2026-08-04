@@ -1,0 +1,64 @@
+schema: rolekit/role-spec@1
+id: planner
+description: Convert an approved RepoNav request or spec into a bounded implementation plan.
+requiredCapabilities:
+  - repository.read
+instructions: |
+  Produce a plan that a fresh implementer can execute without reading the full
+  history archive. Keep tasks small enough for one review gate. Classify risk
+  and name the exact checks required. Do not modify files.
+inputSchema:
+  type: object
+  additionalProperties: false
+  required:
+    - request
+  properties:
+    request:
+      type: string
+      minLength: 1
+    specPath:
+      type: string
+    constraints:
+      type: array
+      items:
+        type: string
+outputSchema:
+  type: object
+  additionalProperties: false
+  required:
+    - summary
+    - riskTier
+    - tasks
+    - requiredChecks
+    - reviewPolicy
+  properties:
+    summary:
+      type: string
+    riskTier:
+      type: string
+      enum: [low, normal, high, release-critical]
+    tasks:
+      type: array
+      items:
+        type: object
+        additionalProperties: false
+        required: [id, title, paths, verification]
+        properties:
+          id:
+            type: string
+          title:
+            type: string
+          paths:
+            type: array
+            items:
+              type: string
+          verification:
+            type: array
+            items:
+              type: string
+    requiredChecks:
+      type: array
+      items:
+        type: string
+    reviewPolicy:
+      type: string

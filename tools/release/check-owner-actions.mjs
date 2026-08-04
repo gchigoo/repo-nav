@@ -10,15 +10,15 @@ import { validateOwnerPreflight } from './owner-action-schema.mjs';
 const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const preflightPath = join(
   root,
-  '.codestable/runtime/public-beta-release-owner-preflight.json',
+  'docs/superpowers/evidence/release-runtime/public-beta-release-owner-preflight.json',
 );
 const actionsPath = join(
   root,
-  '.codestable/runtime/public-beta-release-owner-actions.json',
+  'docs/superpowers/evidence/release-runtime/public-beta-release-owner-actions.json',
 );
 const confirmationPath = join(
   root,
-  '.codestable/runtime/public-beta-real-consumer-confirmation.json',
+  'docs/superpowers/evidence/release-runtime/public-beta-real-consumer-confirmation.json',
 );
 
 if (!existsSync(preflightPath)) {

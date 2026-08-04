@@ -1,7 +1,7 @@
 dist
 node_modules
-.codestable
 test-artifacts
+docs/superpowers/archive
 coverage
 *.tgz
 package-lock.json

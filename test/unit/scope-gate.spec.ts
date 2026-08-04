@@ -23,7 +23,10 @@ const gateScript = resolve(
   import.meta.dirname,
   '..',
   '..',
-  '.codestable',
+  'docs',
+  'superpowers',
+  'archive',
+  'codestable',
   'tools',
   'codestable-scope-gate.py',
 );

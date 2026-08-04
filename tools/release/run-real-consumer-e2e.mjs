@@ -21,7 +21,7 @@ const idx = args.indexOf('--confirmation');
 const rel =
   idx >= 0
     ? args[idx + 1]
-    : '.codestable/runtime/public-beta-real-consumer-confirmation.json';
+    : 'docs/superpowers/evidence/release-runtime/public-beta-real-consumer-confirmation.json';
 const abs = join(root, rel);
 
 function writeFail(code, payload) {

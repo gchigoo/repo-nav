@@ -51,7 +51,8 @@ if (unpacked > RELEASE_BOUNDARIES_V1.unpackedBytes) {
 }
 
 const forbidden = [
-  '.codestable/',
+  'docs/superpowers/archive/',
+  'docs/superpowers/evidence/',
   'src/',
   'tools/',
   'test/',

@@ -1,0 +1,65 @@
+schema: rolekit/role-spec@1
+id: security-release-reviewer
+description: Review high-risk RepoNav security, process, package, public-contract, and release changes.
+requiredCapabilities:
+  - repository.read
+  - shell
+instructions: |
+  Use this role only for high or release-critical tasks involving public APIs,
+  package exports, process execution, filesystem boundaries, MCP contracts,
+  security/audit/SBOM, CI/release gates, or owner-controlled actions. Inspect
+  actual diff and evidence. Do not modify files. Do not push, publish, tag, or
+  mutate remote state. Fail closed on unverified release/security claims.
+inputSchema:
+  type: object
+  additionalProperties: false
+  required:
+    - request
+  properties:
+    request:
+      type: string
+      minLength: 1
+    diffRef:
+      type: string
+    evidencePath:
+      type: string
+    riskCategory:
+      type: string
+outputSchema:
+  type: object
+  additionalProperties: false
+  required:
+    - verdict
+    - blockingFindings
+    - ownerActionsRequired
+    - evidenceChecked
+  properties:
+    verdict:
+      type: string
+      enum: [PASS, PASS_WITH_NOTES, BLOCKED]
+    blockingFindings:
+      type: array
+      items:
+        type: object
+        additionalProperties: false
+        required: [file, issue, securityOrReleaseImpact, suggestedFix]
+        properties:
+          file:
+            type: string
+          line:
+            type: integer
+            minimum: 1
+          issue:
+            type: string
+          securityOrReleaseImpact:
+            type: string
+          suggestedFix:
+            type: string
+    ownerActionsRequired:
+      type: array
+      items:
+        type: string
+    evidenceChecked:
+      type: array
+      items:
+        type: string

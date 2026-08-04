@@ -1,0 +1,41 @@
+schema: rolekit/task-packet@1
+taskId: repo-nav-example-plan-release-runtime-paths
+roleId: planner
+objective: Plan one bounded follow-up that verifies RepoNav release owner-runtime paths after CodeStable root deletion.
+input:
+  request: Plan a follow-up verification task for the release owner-runtime path migration from the removed CodeStable runtime root to `docs/superpowers/evidence/release-runtime/`. Do not execute the verification in the plan task.
+  specPath: docs/superpowers/specs/2026-08-03-rolekit-first-host-bridge-migration-design.md
+  constraints:
+    - Keep RoleKit as the source of truth for agent contracts.
+    - Preserve docs/superpowers/archive as the historical source of record.
+    - Do not require package dependency changes.
+context:
+  - id: migration-design
+    type: file
+    value: docs/superpowers/specs/2026-08-03-rolekit-first-host-bridge-migration-design.md
+  - id: migration-map
+    type: file
+    value: docs/superpowers/reference/codestable-migration-map.md
+  - id: owner-actions-check
+    type: file
+    value: tools/release/check-owner-actions.mjs
+  - id: real-consumer-runner
+    type: file
+    value: tools/release/run-real-consumer-e2e.mjs
+constraints:
+  - Do not modify files.
+  - Produce one follow-up plan with exact files, commands, and expected owner-residual behavior.
+acceptanceCriteria:
+  - The plan names the new owner-runtime root `docs/superpowers/evidence/release-runtime/`.
+  - The plan includes release owner-action check behavior and real-consumer confirmation behavior.
+  - The plan identifies whether reviewer or security-release-reviewer is required.
+allowedPaths:
+  - docs/superpowers/specs/2026-08-03-rolekit-first-host-bridge-migration-design.md
+  - docs/superpowers/reference/codestable-migration-map.md
+  - tools/release/check-owner-actions.mjs
+  - tools/release/run-real-consumer-e2e.mjs
+  - tools/release/write-owner-preflight.mjs
+  - testkit/fixtures/release-v2/real-consumer-confirmation-schema-v2.ts
+expectedArtifacts:
+  - name: release-runtime-path-follow-up-plan
+    kind: structured-json

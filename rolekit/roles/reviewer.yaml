@@ -1,0 +1,62 @@
+schema: rolekit/role-spec@1
+id: reviewer
+description: Review one actual RepoNav change without modifying the workspace.
+requiredCapabilities:
+  - repository.read
+instructions: |
+  Review only the supplied task, actual diff, relevant files, and verification
+  evidence. Do not re-run CodeStable's historical gate process. Do not modify
+  files. Return BLOCKED only for concrete correctness, test-coverage, safety,
+  contract, or maintainability issues that must be fixed before completion.
+  PASS_WITH_NOTES is terminal and must not demand another review round.
+inputSchema:
+  type: object
+  additionalProperties: false
+  required:
+    - request
+  properties:
+    request:
+      type: string
+      minLength: 1
+    diffRef:
+      type: string
+    evidencePath:
+      type: string
+outputSchema:
+  type: object
+  additionalProperties: false
+  required:
+    - verdict
+    - blockingFindings
+    - notes
+    - evidenceChecked
+  properties:
+    verdict:
+      type: string
+      enum: [PASS, PASS_WITH_NOTES, BLOCKED]
+    blockingFindings:
+      type: array
+      items:
+        type: object
+        additionalProperties: false
+        required: [file, issue, impact, suggestedFix]
+        properties:
+          file:
+            type: string
+          line:
+            type: integer
+            minimum: 1
+          issue:
+            type: string
+          impact:
+            type: string
+          suggestedFix:
+            type: string
+    notes:
+      type: array
+      items:
+        type: string
+    evidenceChecked:
+      type: array
+      items:
+        type: string

@@ -1,0 +1,64 @@
+schema: rolekit/config@1
+
+roles:
+  explorer:
+    spec: rolekit/roles/explorer.yaml
+    executor: grok-host-readonly
+  planner:
+    spec: rolekit/roles/planner.yaml
+    executor: grok-host-readonly
+  implementer:
+    spec: rolekit/roles/implementer.yaml
+    executor: grok-host-write-shell
+  reviewer:
+    spec: rolekit/roles/reviewer.yaml
+    executor: grok-host-readonly
+  security-release-reviewer:
+    spec: rolekit/roles/security-release-reviewer.yaml
+    executor: grok-host-review-execute
+
+executors:
+  grok-host-readonly:
+    mode: host
+    executorId: grok-build-host-readonly
+    transport: in-process
+    capabilities: [repository.read]
+    requestedProvider: xai
+    requestedModel: grok-build
+    pathEnforcement: advisory
+    contextIsolation:
+      userConfig: inherited
+      projectInstructions: inherited
+      projectResources: inherited
+      environment: unknown
+      credentials: unknown
+
+  grok-host-write-shell:
+    mode: host
+    executorId: grok-build-host-write-shell
+    transport: in-process
+    capabilities: [repository.read, repository.write, shell]
+    requestedProvider: xai
+    requestedModel: grok-build
+    pathEnforcement: advisory
+    contextIsolation:
+      userConfig: inherited
+      projectInstructions: inherited
+      projectResources: inherited
+      environment: unknown
+      credentials: unknown
+
+  grok-host-review-execute:
+    mode: host
+    executorId: grok-build-host-review-execute
+    transport: in-process
+    capabilities: [repository.read, shell]
+    requestedProvider: xai
+    requestedModel: grok-build
+    pathEnforcement: advisory
+    contextIsolation:
+      userConfig: inherited
+      projectInstructions: inherited
+      projectResources: inherited
+      environment: unknown
+      credentials: unknown

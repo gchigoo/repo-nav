@@ -1,0 +1,1918 @@
+# Review package: ac26ac2e7fb0625f7cec662f06e137f8b2ba684b..ae1d7a5d90e35837923001f2acc3a5b93a3ad2f4
+
+## Commits
+ae1d7a5 test(hardening): freeze public and authority inventories
+
+## Files changed
+ test/unit/public-root-export-snapshot.spec.ts      |  51 +-
+ .../unit/repository-hardening-inventory-v2.spec.ts | 723 +++++++++++++++++++++
+ .../legacy-v1-api-map-v2.ts                        | 190 ++++++
+ .../repository-hardening-v2/public-root-api-v2.ts  |  68 ++
+ .../version-authorities-v2.ts                      |  81 +++
+ .../weak-registry-disposition-v2.ts                | 717 ++++++++++++++++++++
+ testkit/runners/runner-registry.ts                 |   1 +
+ 7 files changed, 1784 insertions(+), 47 deletions(-)
+
+## Diff
+diff --git a/test/unit/public-root-export-snapshot.spec.ts b/test/unit/public-root-export-snapshot.spec.ts
+index 06a9280..f8fae64 100644
+--- a/test/unit/public-root-export-snapshot.spec.ts
++++ b/test/unit/public-root-export-snapshot.spec.ts
+@@ -1,58 +1,15 @@
+ import { describe, expect, it } from 'vitest';
+ 
+ import * as root from '../../src/index.js';
++import { PUBLIC_ROOT_RUNTIME_EXPORT_KEYS_V2 } from '../../testkit/fixtures/repository-hardening-v2/public-root-api-v2.js';
+ import { isSelected } from '../../testkit/testing/selection.js';
+ 
+-/** F9 root runtime export surface — update intentionally when public API changes. */
+-const EXPECTED_ROOT_EXPORT_KEYS = Object.freeze([
+-  'ANCHOR_KINDS_V2',
+-  'BACKEND_REASON_CODES_V2',
+-  'CANDIDATE_REASON_CODES_V2',
+-  'CONFIRMED_REASON_CODES_V2',
+-  'COVERAGE_DEGRADATION_CODES_V2',
+-  'CodeGraphBackend',
+-  'CoverageReportV2Schema',
+-  'EVIDENCE_OPERATION_CODES_V2',
+-  'EVIDENCE_ROLES_V2',
+-  'EVIDENCE_SOURCES_V2',
+-  'EXCLUSION_REASON_CODES_V2',
+-  'FinalizedUnsafeCoverageReportV2Schema',
+-  'FinalizedUnsafeLocateResultV2Schema',
+-  'LIMIT_REASON_CODES_V2',
+-  'LOCATE_STATUSES_V2',
+-  'LocateResultV2Schema',
+-  'MCP_STDIO_HOST',
+-  'NEXT_ACTION_CODES_V2',
+-  'NodeRepositoryReader',
+-  'NodeSafeProcessRunner',
+-  'PROMOTION_REQUIREMENT_CODES_V2',
+-  'REDACTED_FIELDS_V2',
+-  'REDACTION_REASON_CODES_V2',
+-  'REPOSITORY_EVIDENCE_SERVICE',
+-  'REPOSITORY_READER',
+-  'REPOSITORY_SEARCH_BACKENDS',
+-  'REPO_LAYERS_V2',
+-  'RipgrepBackend',
+-  'SEARCH_BACKEND_IDS_V2',
+-  'TOOL_ERROR_CODES_V2',
+-  'UPSTREAM_DEGRADATION_CODES_V2',
+-  'canonicalizeCoverageV2',
+-  'createCodeGraphProcessInvocation',
+-  'createCodeGraphQueryPlan',
+-  'createRepoNavApplicationContext',
+-  'deriveLocateStatusV2',
+-  'guardLocateRequestRawV2',
+-  'parseCodeGraphQuery',
+-  'parseCodeGraphStatus',
+-  'parseLocateRequestV2',
+-  'readPackageMetadata',
+-  'safeParseLocateRequestV2',
+-] as const);
+-
+ describe.runIf(
+   isSelected({ group: 'public-beta-release', caseId: 'package-metadata' }),
+ )('F9-METADATA-002 root-export-snapshot', () => {
+   it('exports a frozen v2-only root runtime surface', () => {
+-    expect(Object.keys(root).sort()).toEqual([...EXPECTED_ROOT_EXPORT_KEYS]);
++    expect(Object.keys(root).sort()).toEqual([
++      ...PUBLIC_ROOT_RUNTIME_EXPORT_KEYS_V2,
++    ]);
+   });
+ });
+diff --git a/test/unit/repository-hardening-inventory-v2.spec.ts b/test/unit/repository-hardening-inventory-v2.spec.ts
+new file mode 100644
+index 0000000..78a1198
+--- /dev/null
++++ b/test/unit/repository-hardening-inventory-v2.spec.ts
+@@ -0,0 +1,723 @@
++import { readFileSync } from 'node:fs';
++import { relative, resolve, sep } from 'node:path';
++
++import ts from 'typescript';
++import { describe, expect, it } from 'vitest';
++
++import {
++  LEGACY_V1_API_REPLACEMENTS_V2,
++  type LegacyV1ApiReplacementV2,
++} from '../../testkit/fixtures/repository-hardening-v2/legacy-v1-api-map-v2.js';
++import {
++  PUBLIC_ROOT_RUNTIME_EXPORT_KEYS_V2,
++  PUBLIC_ROOT_TYPE_EXPORT_KEYS_V2,
++} from '../../testkit/fixtures/repository-hardening-v2/public-root-api-v2.js';
++import {
++  VERSION_AUTHORITIES_V2,
++  type VersionAuthorityV2,
++} from '../../testkit/fixtures/repository-hardening-v2/version-authorities-v2.js';
++import {
++  WEAK_REGISTRY_DISPOSITIONS_V2,
++  type WeakRegistryDispositionV2,
++} from '../../testkit/fixtures/repository-hardening-v2/weak-registry-disposition-v2.js';
++import { isSelected } from '../../testkit/testing/selection.js';
++
++interface ExportInventoryV2 {
++  readonly runtime: readonly string[];
++  readonly types: readonly string[];
++}
++
++interface WeakRegistrySiteV2 {
++  readonly module: string;
++  readonly binding: string;
++}
++
++interface SourceInventoryV2 {
++  readonly root: ExportInventoryV2;
++  readonly legacyExports: readonly string[];
++  readonly weakSites: readonly WeakRegistrySiteV2[];
++  readonly versionAuthorityIds: readonly VersionAuthorityV2['id'][];
++  readonly packageVersion: string;
++  readonly shrinkwrapVersion: string;
++  readonly shrinkwrapWorkspaceVersion: string;
++}
++
++interface InventoryFixtureV2 {
++  readonly rootRuntime: readonly string[];
++  readonly rootTypes: readonly string[];
++  readonly legacy: readonly LegacyV1ApiReplacementV2[];
++  readonly weak: readonly WeakRegistryDispositionV2[];
++  readonly versions: readonly VersionAuthorityV2[];
++}
++
++const repositoryRoot = resolve(import.meta.dirname, '../..');
++
++const LEGACY_NON_SUBPATH_API_KEYS_V2 = Object.freeze([
++  'repo-nav/legacy-v1',
++  'CodeGraphBackend.probe',
++  'CodeGraphBackend.search',
++  'PackageMetadataV1',
++  'RipgrepBackend.probe',
++  'RipgrepBackend.search',
++] as const);
++
++const REQUIRED_LEGACY_MAPPINGS_V2 = Object.freeze([
++  Object.freeze({
++    legacy: 'repo-nav/legacy-v1',
++    replacement: 'repo-nav',
++    disposition: 'replace',
++  }),
++  Object.freeze({
++    legacy: 'LocateResult',
++    replacement: 'LocateResultV2',
++    disposition: 'replace',
++  }),
++  Object.freeze({
++    legacy: 'LocateToolOutput',
++    replacement: 'LocateResultV2',
++    disposition: 'replace',
++  }),
++  Object.freeze({
++    legacy: 'LocateResultSchema',
++    replacement: 'LocateResultV2Schema',
++    disposition: 'replace',
++  }),
++  Object.freeze({
++    legacy: 'LocateToolOutputSchema',
++    replacement: 'LocateResultV2Schema',
++    disposition: 'replace',
++  }),
++  Object.freeze({
++    legacy: 'EvidencePack',
++    replacement: 'EvidencePackV2',
++    disposition: 'replace',
++  }),
++  Object.freeze({
++    legacy: 'RepoNavToolError',
++    replacement: 'RepoNavToolErrorV2',
++    disposition: 'replace',
++  }),
++  Object.freeze({
++    legacy: 'LocateRequest',
++    replacement: 'LocateRequest',
++    disposition: 'retained-root',
++  }),
++  Object.freeze({
++    legacy: 'PackageMetadataV1',
++    replacement: 'PackageMetadata',
++    disposition: 'replace',
++  }),
++  Object.freeze({
++    legacy: 'RepositorySearchBackend',
++    replacement: null,
++    disposition: 'removed-internal-only',
++  }),
++  Object.freeze({
++    legacy: 'CodeGraphBackend.probe',
++    replacement: 'CodeGraphBackend.probe',
++    disposition: 'retained-root',
++  }),
++  Object.freeze({
++    legacy: 'CodeGraphBackend.search',
++    replacement: 'CodeGraphBackend.search',
++    disposition: 'retained-root',
++  }),
++  Object.freeze({
++    legacy: 'RipgrepBackend.probe',
++    replacement: 'RipgrepBackend.probe',
++    disposition: 'retained-root',
++  }),
++  Object.freeze({
++    legacy: 'RipgrepBackend.search',
++    replacement: 'RipgrepBackend.search',
++    disposition: 'retained-root',
++  }),
++] as const satisfies readonly LegacyV1ApiReplacementV2[]);
++
++const REQUIRED_VERSION_AUTHORITIES_V2 = Object.freeze([
++  Object.freeze({
++    id: 'package-json-root',
++    module: 'package.json',
++    binding: 'version',
++    expected: '1.0.6',
++  }),
++  Object.freeze({
++    id: 'shrinkwrap-root',
++    module: 'npm-shrinkwrap.json',
++    binding: 'version',
++    expected: '1.0.6',
++  }),
++  Object.freeze({
++    id: 'shrinkwrap-workspace-root',
++    module: 'npm-shrinkwrap.json',
++    binding: 'packages[""].version',
++    expected: '1.0.6',
++  }),
++  Object.freeze({
++    id: 'runtime-package-metadata',
++    module: 'src/runtime/package-metadata.ts',
++    binding: 'readPackageMetadata().version',
++    expected: '1.0.6',
++  }),
++  Object.freeze({
++    id: 'cli-version',
++    module: 'src/cli/execute.ts',
++    binding: 'executeCli(["--version"]).stdout',
++    expected: '1.0.6',
++  }),
++  Object.freeze({
++    id: 'mcp-server-info',
++    module: 'src/mcp/repo-nav-mcp-server.ts',
++    binding: 'serverInfo.version',
++    expected: '1.0.6',
++  }),
++  Object.freeze({
++    id: 'tarball-filename',
++    module: 'tools/release/pack-candidate.mjs',
++    binding: 'npm pack filename',
++    expected: 'repo-nav-1.0.6.tgz',
++  }),
++  Object.freeze({
++    id: 'installed-package-json',
++    module: 'tools/release/pack-candidate.mjs',
++    binding: 'installed node_modules/repo-nav/package.json.version',
++    expected: '1.0.6',
++  }),
++  Object.freeze({
++    id: 'sbom-root',
++    module: 'tools/release/sbom-from-shrinkwrap.mjs',
++    binding: 'bom.metadata.component.purl',
++    expected: 'pkg:npm/repo-nav@1.0.6',
++  }),
++  Object.freeze({
++    id: 'real-consumer-confirmation',
++    module: 'tools/release/real-consumer-contracts.mjs',
++    binding: 'confirmation.candidate.version',
++    expected: '1.0.6',
++  }),
++] as const satisfies readonly VersionAuthorityV2[]);
++
++function toPosixPath(value: string): string {
++  return value.split(sep).join('/');
++}
++
++function compareText(left: string, right: string): number {
++  return left.localeCompare(right);
++}
++
++function diagnosticText(diagnostics: readonly ts.Diagnostic[]): string {
++  return diagnostics
++    .map((diagnostic) =>
++      ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'),
++    )
++    .join('\n');
++}
++
++function createInventoryProgramV2(): ts.Program {
++  const configPath = resolve(repositoryRoot, 'tsconfig.json');
++  const config = ts.readConfigFile(configPath, ts.sys.readFile);
++  if (config.error !== undefined) {
++    throw new Error(diagnosticText([config.error]));
++  }
++  const parsed = ts.parseJsonConfigFileContent(
++    config.config,
++    ts.sys,
++    repositoryRoot,
++  );
++  if (parsed.errors.length > 0) {
++    throw new Error(diagnosticText(parsed.errors));
++  }
++  return ts.createProgram(parsed.fileNames, parsed.options);
++}
++
++function requireSourceFileV2(
++  program: ts.Program,
++  relativePath: string,
++): ts.SourceFile {
++  const absolute = resolve(repositoryRoot, relativePath);
++  const sourceFile = program.getSourceFile(absolute);
++  if (sourceFile === undefined) {
++    throw new Error(`TypeScript program omitted ${relativePath}`);
++  }
++  return sourceFile;
++}
++
++function enumerateModuleExportsV2(
++  program: ts.Program,
++  relativePath: string,
++): ExportInventoryV2 {
++  const checker = program.getTypeChecker();
++  const sourceFile = requireSourceFileV2(program, relativePath);
++  const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
++  if (moduleSymbol === undefined) {
++    throw new Error(`TypeScript checker omitted module symbol for ${relativePath}`);
++  }
++
++  const runtime: string[] = [];
++  const types: string[] = [];
++  for (const exported of checker.getExportsOfModule(moduleSymbol)) {
++    const target =
++      (exported.flags & ts.SymbolFlags.Alias) !== 0
++        ? checker.getAliasedSymbol(exported)
++        : exported;
++    if ((target.flags & ts.SymbolFlags.Value) !== 0) {
++      runtime.push(exported.name);
++    }
++    if ((target.flags & ts.SymbolFlags.Type) !== 0) {
++      types.push(exported.name);
++    }
++  }
++  return Object.freeze({
++    runtime: Object.freeze(runtime.sort()),
++    types: Object.freeze(types.sort()),
++  });
++}
++
++function weakBindingV2(node: ts.NewExpression): string {
++  const sourceFile = node.getSourceFile();
++  let child: ts.Node = node;
++  let parent = node.parent;
++  while (parent !== undefined) {
++    if (ts.isVariableDeclaration(parent) && parent.initializer === child) {
++      return parent.name.getText(sourceFile);
++    }
++    if (ts.isPropertyDeclaration(parent) && parent.initializer === child) {
++      return parent.name.getText(sourceFile);
++    }
++    if (ts.isPropertyAssignment(parent) && parent.initializer === child) {
++      return parent.name.getText(sourceFile);
++    }
++    if (
++      ts.isBinaryExpression(parent) &&
++      parent.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
++      parent.right === child
++    ) {
++      return parent.left.getText(sourceFile);
++    }
++    child = parent;
++    parent = parent.parent;
++  }
++  throw new Error(
++    `Weak registry at ${sourceFile.fileName}:${String(
++      sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,
++    )} has no binding`,
++  );
++}
++
++function enumerateWeakRegistrySitesV2(
++  program: ts.Program,
++): readonly WeakRegistrySiteV2[] {
++  const sites: WeakRegistrySiteV2[] = [];
++  for (const sourceFile of program.getSourceFiles()) {
++    const module = toPosixPath(relative(repositoryRoot, sourceFile.fileName));
++    if (
++      sourceFile.isDeclarationFile ||
++      (!module.startsWith('src/') && module !== 'src')
++    ) {
++      continue;
++    }
++    const visit = (node: ts.Node): void => {
++      if (
++        ts.isNewExpression(node) &&
++        ts.isIdentifier(node.expression) &&
++        (node.expression.text === 'WeakMap' ||
++          node.expression.text === 'WeakSet')
++      ) {
++        sites.push(
++          Object.freeze({ module, binding: weakBindingV2(node) }),
++        );
++      }
++      ts.forEachChild(node, visit);
++    };
++    visit(sourceFile);
++  }
++  return Object.freeze(
++    sites.sort(
++      (left, right) =>
++        compareText(left.module, right.module) ||
++        compareText(left.binding, right.binding),
++    ),
++  );
++}
++
++function readJsonRecordV2(relativePath: string): Record<string, unknown> {
++  return JSON.parse(
++    readFileSync(resolve(repositoryRoot, relativePath), 'utf8'),
++  ) as Record<string, unknown>;
++}
++
++function enumerateVersionAuthorityIdsV2(): readonly VersionAuthorityV2['id'][] {
++  const runtimeMetadata = readFileSync(
++    resolve(repositoryRoot, 'src/runtime/package-metadata.ts'),
++    'utf8',
++  );
++  const cli = readFileSync(resolve(repositoryRoot, 'src/cli/execute.ts'), 'utf8');
++  const mcp = readFileSync(
++    resolve(repositoryRoot, 'src/mcp/repo-nav-mcp-server.ts'),
++    'utf8',
++  );
++  const pack = readFileSync(
++    resolve(repositoryRoot, 'tools/release/pack-candidate.mjs'),
++    'utf8',
++  );
++  const sbom = readFileSync(
++    resolve(repositoryRoot, 'tools/release/sbom-from-shrinkwrap.mjs'),
++    'utf8',
++  );
++  const confirmation = readFileSync(
++    resolve(repositoryRoot, 'tools/release/real-consumer-contracts.mjs'),
++    'utf8',
++  );
++
++  const ids: VersionAuthorityV2['id'][] = [
++    'package-json-root',
++    'shrinkwrap-root',
++    'shrinkwrap-workspace-root',
++  ];
++  if (
++    runtimeMetadata.includes("join(packageRoot, 'package.json')") &&
++    runtimeMetadata.includes('return Object.freeze({ name, version })')
++  ) {
++    ids.push('runtime-package-metadata');
++  }
++  if (cli.includes("command.kind === 'version'") && cli.includes('readPackageMetadata().version')) {
++    ids.push('cli-version');
++  }
++  if (
++    mcp.includes('version: readPackageVersionForServer()') &&
++    mcp.includes('new Server(')
++  ) {
++    ids.push('mcp-server-info');
++  }
++  if (pack.includes("run(['pack', '--json'])") && pack.includes('.filename')) {
++    ids.push('tarball-filename');
++  }
++  if (
++    pack.includes("run(['install', '--ignore-scripts'") &&
++    pack.includes('node_modules/repo-nav')
++  ) {
++    ids.push('installed-package-json');
++  }
++  if (
++    sbom.includes("'bom-ref': `pkg:npm/${pkg.name}@${pkg.version}`") &&
++    sbom.includes('version: pkg.version')
++  ) {
++    ids.push('sbom-root');
++  }
++  if (confirmation.includes('confirmation.candidate')) {
++    ids.push('real-consumer-confirmation');
++  }
++  return Object.freeze(ids.sort(compareText));
++}
++
++function readSourceInventoryV2(): SourceInventoryV2 {
++  const program = createInventoryProgramV2();
++  const legacy = enumerateModuleExportsV2(program, 'src/legacy-v1.ts');
++  const pkg = readJsonRecordV2('package.json');
++  const shrinkwrap = readJsonRecordV2('npm-shrinkwrap.json');
++  const packages = shrinkwrap['packages'];
++  const workspace =
++    typeof packages === 'object' && packages !== null
++      ? Reflect.get(packages, '')
++      : undefined;
++  const workspaceVersion =
++    typeof workspace === 'object' && workspace !== null
++      ? Reflect.get(workspace, 'version')
++      : undefined;
++  if (
++    typeof pkg['version'] !== 'string' ||
++    typeof shrinkwrap['version'] !== 'string' ||
++    typeof workspaceVersion !== 'string'
++  ) {
++    throw new Error('Version source inventory is malformed.');
++  }
++  return Object.freeze({
++    root: enumerateModuleExportsV2(program, 'src/index.ts'),
++    legacyExports: Object.freeze(
++      [...new Set([...legacy.runtime, ...legacy.types])].sort(compareText),
++    ),
++    weakSites: enumerateWeakRegistrySitesV2(program),
++    versionAuthorityIds: enumerateVersionAuthorityIdsV2(),
++    packageVersion: pkg['version'],
++    shrinkwrapVersion: shrinkwrap['version'],
++    shrinkwrapWorkspaceVersion: workspaceVersion,
++  });
++}
++
++function fixtureInventoryV2(): InventoryFixtureV2 {
++  return {
++    rootRuntime: [...PUBLIC_ROOT_RUNTIME_EXPORT_KEYS_V2],
++    rootTypes: [...PUBLIC_ROOT_TYPE_EXPORT_KEYS_V2],
++    legacy: LEGACY_V1_API_REPLACEMENTS_V2.map((entry) => ({ ...entry })),
++    weak: WEAK_REGISTRY_DISPOSITIONS_V2.map((entry) => ({ ...entry })),
++    versions: VERSION_AUTHORITIES_V2.map((entry) => ({ ...entry })),
++  };
++}
++
++function sameStringsV2(
++  left: readonly string[],
++  right: readonly string[],
++): boolean {
++  return (
++    left.length === right.length &&
++    left.every((value, index) => value === right[index])
++  );
++}
++
++function duplicateValuesV2(values: readonly string[]): readonly string[] {
++  const seen = new Set<string>();
++  const duplicates = new Set<string>();
++  for (const value of values) {
++    if (seen.has(value)) {
++      duplicates.add(value);
++    }
++    seen.add(value);
++  }
++  return [...duplicates].sort(compareText);
++}
++
++function weakKeyV2(
++  row: Pick<WeakRegistryDispositionV2, 'module' | 'binding'>,
++): string {
++  return `${row.module}\u0000${row.binding}`;
++}
++
++function evaluateRepositoryHardeningInventoryV2(
++  fixture: InventoryFixtureV2,
++  source: SourceInventoryV2,
++): readonly string[] {
++  const issues: string[] = [];
++
++  for (const [label, values] of [
++    ['root runtime exports', fixture.rootRuntime],
++    ['root type exports', fixture.rootTypes],
++  ] as const) {
++    const duplicates = duplicateValuesV2(values);
++    if (duplicates.length > 0) {
++      issues.push(`${label} contain duplicates: ${duplicates.join(', ')}`);
++    }
++  }
++  if (!sameStringsV2(fixture.rootRuntime, source.root.runtime)) {
++    issues.push('root runtime exports are not deep-exact');
++  }
++  if (!sameStringsV2(fixture.rootTypes, source.root.types)) {
++    issues.push('root type exports are not deep-exact');
++  }
++
++  const legacyKeys = fixture.legacy.map((entry) => entry.legacy);
++  const duplicateLegacy = duplicateValuesV2(legacyKeys);
++  if (duplicateLegacy.length > 0) {
++    issues.push(`legacy mappings contain duplicates: ${duplicateLegacy.join(', ')}`);
++  }
++  const expectedLegacyKeys = [
++    ...source.legacyExports,
++    ...LEGACY_NON_SUBPATH_API_KEYS_V2,
++  ].sort(compareText);
++  if (!sameStringsV2([...legacyKeys].sort(compareText), expectedLegacyKeys)) {
++    issues.push('legacy mappings are not deep-exact with legacy exports');
++  }
++  const legacyByName = new Map(
++    fixture.legacy.map((entry) => [entry.legacy, entry] as const),
++  );
++  for (const entry of fixture.legacy) {
++    const replacement = entry.replacement;
++    if (entry.legacy.trim().length === 0) {
++      issues.push('legacy mapping contains an empty symbol');
++    }
++    if (entry.disposition === 'removed-internal-only') {
++      if (replacement !== null) {
++        issues.push(`${entry.legacy} removal must have null replacement`);
++      }
++    } else if (
++      replacement === null ||
++      replacement.trim().length === 0 ||
++      /(?:TODO|TBD|placeholder|unknown|later)/iu.test(replacement)
++    ) {
++      issues.push(`${entry.legacy} replacement is missing or a placeholder`);
++    }
++  }
++  for (const required of REQUIRED_LEGACY_MAPPINGS_V2) {
++    const actual = legacyByName.get(required.legacy);
++    if (
++      actual === undefined ||
++      actual.replacement !== required.replacement ||
++      actual.disposition !== required.disposition
++    ) {
++      issues.push(`required legacy mapping mismatch: ${required.legacy}`);
++    }
++  }
++  for (const entry of fixture.legacy) {
++    if (
++      /^(?:SafeProcess|SafeStdout|StreamingSafeProcess)/u.test(entry.legacy) &&
++      (entry.disposition !== 'removed-internal-only' ||
++        entry.replacement !== null)
++    ) {
++      issues.push(`${entry.legacy} must be removed-internal-only`);
++    }
++  }
++
++  const weakKeys = fixture.weak.map(weakKeyV2);
++  const duplicateWeak = duplicateValuesV2(weakKeys);
++  if (duplicateWeak.length > 0) {
++    issues.push(`weak registry dispositions contain duplicates: ${duplicateWeak.join(', ')}`);
++  }
++  for (const entry of fixture.weak) {
++    if (
++      entry.module.trim().length === 0 ||
++      entry.binding.trim().length === 0 ||
++      entry.rationale.trim().length === 0
++    ) {
++      issues.push(`weak registry disposition is incomplete: ${weakKeyV2(entry)}`);
++    }
++    if (entry.carries === 'ordinary-data' && entry.action === 'retain') {
++      issues.push(`ordinary-data registry cannot be retained: ${weakKeyV2(entry)}`);
++    }
++  }
++  const sourceWeakKeys = source.weakSites.map(weakKeyV2);
++  if (
++    !sameStringsV2(
++      [...weakKeys].sort(compareText),
++      [...sourceWeakKeys].sort(compareText),
++    )
++  ) {
++    issues.push('weak registry dispositions are not deep-exact with source');
++  }
++
++  const versionIds = fixture.versions.map((entry) => entry.id);
++  const duplicateVersions = duplicateValuesV2(versionIds);
++  if (duplicateVersions.length > 0) {
++    issues.push(`version authorities contain duplicates: ${duplicateVersions.join(', ')}`);
++  }
++  if (
++    !sameStringsV2(
++      [...versionIds].sort(compareText),
++      [...source.versionAuthorityIds].sort(compareText),
++    )
++  ) {
++    issues.push('version authority ids are not deep-exact with source');
++  }
++  if (
++    JSON.stringify(fixture.versions) !==
++    JSON.stringify(REQUIRED_VERSION_AUTHORITIES_V2)
++  ) {
++    issues.push('version authority rows are not the frozen literal inventory');
++  }
++  if (
++    source.packageVersion !== '1.0.6' ||
++    source.shrinkwrapVersion !== '1.0.6' ||
++    source.shrinkwrapWorkspaceVersion !== '1.0.6'
++  ) {
++    issues.push('package and shrinkwrap version authorities disagree');
++  }
++
++  return Object.freeze(issues);
++}
++
++const selected = isSelected({
++  group: 'public-beta-release',
++  caseId: 'repository-hardening-inventory',
++});
++let sourceInventory: SourceInventoryV2 | undefined;
++
++function currentSourceInventoryV2(): SourceInventoryV2 {
++  sourceInventory ??= readSourceInventoryV2();
++  return sourceInventory;
++}
++
++describe.runIf(selected)('P0 repository-hardening inventory', () => {
++  it('matches public, legacy, weak-registry, and version source inventories', () => {
++    const source = currentSourceInventoryV2();
++    expect(source.weakSites).toHaveLength(WEAK_REGISTRY_DISPOSITIONS_V2.length);
++    expect(evaluateRepositoryHardeningInventoryV2(fixtureInventoryV2(), source)).toEqual([]);
++  });
++
++  it('rejects each required characterization mutation', () => {
++    const source = currentSourceInventoryV2();
++    const baseline = fixtureInventoryV2();
++    const ordinaryIndex = baseline.weak.findIndex(
++      (entry) => entry.carries === 'ordinary-data',
++    );
++    if (ordinaryIndex < 0) {
++      throw new Error('Expected at least one ordinary-data weak registry.');
++    }
++    const ordinaryRetained = baseline.weak.map((entry, index) =>
++      index === ordinaryIndex ? { ...entry, action: 'retain' as const } : entry,
++    );
++
++    const mutations: readonly Readonly<{
++      name: string;
++      fixture: InventoryFixtureV2;
++    }>[] = [
++      {
++        name: 'missing-root-export',
++        fixture: {
++          ...baseline,
++          rootRuntime: baseline.rootRuntime.slice(1),
++        },
++      },
++      {
++        name: 'synthetic-weak-map',
++        fixture: {
++          ...baseline,
++          weak: [
++            ...baseline.weak,
++            {
++              module: 'src/synthetic.ts',
++              binding: 'syntheticWeakMap',
++              carries: 'runtime-capability',
++              action: 'retain',
++              rationale: 'Synthetic mutation row.',
++            },
++          ],
++        },
++      },
++      {
++        name: 'ordinary-data-retained',
++        fixture: { ...baseline, weak: ordinaryRetained },
++      },
++      {
++        name: 'missing-mcp-version-authority',
++        fixture: {
++          ...baseline,
++          versions: baseline.versions.filter(
++            (entry) => entry.id !== 'mcp-server-info',
++          ),
++        },
++      },
++    ];
++
++    for (const mutation of mutations) {
++      expect(
++        evaluateRepositoryHardeningInventoryV2(mutation.fixture, source),
++        mutation.name,
++      ).not.toEqual([]);
++    }
++  });
++
++  it('rejects duplicate rows and empty rationales', () => {
++    const source = currentSourceInventoryV2();
++    const baseline = fixtureInventoryV2();
++    const first = baseline.weak[0];
++    if (first === undefined) {
++      throw new Error('Weak registry fixture must not be empty.');
++    }
++
++    expect(
++      evaluateRepositoryHardeningInventoryV2(
++        { ...baseline, weak: [...baseline.weak, { ...first }] },
++        source,
++      ),
++    ).not.toEqual([]);
++    expect(
++      evaluateRepositoryHardeningInventoryV2(
++        {
++          ...baseline,
++          weak: baseline.weak.map((entry, index) =>
++            index === 0 ? { ...entry, rationale: '   ' } : entry,
++          ),
++        },
++        source,
++      ),
++    ).not.toEqual([]);
++  });
++});
+diff --git a/testkit/fixtures/repository-hardening-v2/legacy-v1-api-map-v2.ts b/testkit/fixtures/repository-hardening-v2/legacy-v1-api-map-v2.ts
+new file mode 100644
+index 0000000..30697b3
+--- /dev/null
++++ b/testkit/fixtures/repository-hardening-v2/legacy-v1-api-map-v2.ts
+@@ -0,0 +1,190 @@
++export interface LegacyV1ApiReplacementV2 {
++  readonly legacy: string;
++  readonly replacement: string | null;
++  readonly disposition: 'replace' | 'removed-internal-only' | 'retained-root';
++}
++
++function replace(
++  legacy: string,
++  replacement: string,
++): LegacyV1ApiReplacementV2 {
++  return Object.freeze({ legacy, replacement, disposition: 'replace' });
++}
++
++function removed(legacy: string): LegacyV1ApiReplacementV2 {
++  return Object.freeze({
++    legacy,
++    replacement: null,
++    disposition: 'removed-internal-only',
++  });
++}
++
++function retained(
++  legacy: string,
++  replacement: string,
++): LegacyV1ApiReplacementV2 {
++  return Object.freeze({ legacy, replacement, disposition: 'retained-root' });
++}
++
++/** Exact migration disposition for every legacy-v1 export plus root compatibility APIs. */
++export const LEGACY_V1_API_REPLACEMENTS_V2: readonly LegacyV1ApiReplacementV2[] =
++  Object.freeze([
++    replace('repo-nav/legacy-v1', 'repo-nav'),
++    replace('ANCHOR_KINDS', 'ANCHOR_KINDS_V2'),
++    removed('AnchorKind'),
++    removed('AnchorKindSchema'),
++    removed('applyPublicErrorPolicy'),
++    replace('BACKEND_REASON_CODES', 'BACKEND_REASON_CODES_V2'),
++    removed('BackendAttempt'),
++    removed('BackendAttemptSchema'),
++    removed('BackendHealth'),
++    removed('BackendHealthSchema'),
++    removed('BackendHit'),
++    removed('BackendHitSchema'),
++    removed('BackendReasonCode'),
++    removed('BackendReasonCodeSchema'),
++    removed('BackendSearchRequest'),
++    removed('BackendSearchRequestSchema'),
++    removed('BackendSearchResult'),
++    removed('BackendSearchResultSchema'),
++    replace('CANDIDATE_REASON_CODES', 'CANDIDATE_REASON_CODES_V2'),
++    replace('CandidateEvidence', 'CandidateEvidenceV2'),
++    removed('CandidateEvidenceSchema'),
++    removed('CandidateReasonCode'),
++    removed('CandidateReasonCodeSchema'),
++    removed('CLEANUP_INVARIANT_MESSAGE'),
++    retained('CodeGraphBackend.probe', 'CodeGraphBackend.probe'),
++    retained('CodeGraphBackend.search', 'CodeGraphBackend.search'),
++    removed('comparePublicEvidence'),
++    replace('CONFIRMED_REASON_CODES', 'CONFIRMED_REASON_CODES_V2'),
++    replace('ConfirmedEvidence', 'ConfirmedEvidenceV2'),
++    removed('ConfirmedEvidenceSchema'),
++    removed('ConfirmedReasonCode'),
++    removed('ConfirmedReasonCodeSchema'),
++    replace('CoverageReport', 'CoverageReportV2'),
++    replace('CoverageReportSchema', 'CoverageReportV2Schema'),
++    removed('createDiscoveryKey'),
++    removed('createEvidenceId'),
++    removed('createPublicErrorResult'),
++    removed('createPublicToolError'),
++    removed('DEFAULT_LOCATE_LIMITS'),
++    removed('DEFAULT_MAX_EXCERPT_BYTES'),
++    removed('DEFAULT_MAX_EXCERPT_LINES'),
++    removed('DEFAULT_MAX_FILE_BYTES'),
++    removed('DEFAULT_SAFE_PROCESS_LIMITS'),
++    removed('DISCOVERY_REASON_CODES'),
++    removed('DiscoveryReasonCode'),
++    removed('DiscoveryReasonCodeSchema'),
++    removed('EVIDENCE_CLASS_PRIORITY'),
++    replace('EVIDENCE_OPERATION_CODES', 'EVIDENCE_OPERATION_CODES_V2'),
++    removed('EVIDENCE_ROLE_PRIORITY'),
++    replace('EVIDENCE_ROLES', 'EVIDENCE_ROLES_V2'),
++    removed('EVIDENCE_SCHEMA_VERSION'),
++    removed('EVIDENCE_SOURCE_PRIORITY'),
++    replace('EVIDENCE_SOURCES', 'EVIDENCE_SOURCES_V2'),
++    removed('EvidenceDiscoveryIdentity'),
++    removed('EvidenceLinesSchema'),
++    replace('EvidenceLocation', 'EvidenceLocationV2'),
++    removed('EvidenceLocationSchema'),
++    removed('EvidenceOperationCode'),
++    removed('EvidenceOperationCodeSchema'),
++    replace('EvidencePack', 'EvidencePackV2'),
++    removed('EvidencePackSchema'),
++    removed('EvidenceProvenance'),
++    removed('EvidenceProvenanceSchema'),
++    removed('EvidenceRole'),
++    removed('EvidenceRoleSchema'),
++    removed('EvidenceSource'),
++    removed('EvidenceSourceSchema'),
++    replace('EXCLUSION_REASON_CODES', 'EXCLUSION_REASON_CODES_V2'),
++    removed('ExclusionReasonCode'),
++    removed('ExclusionReasonCodeSchema'),
++    replace('LIMIT_REASON_CODES', 'LIMIT_REASON_CODES_V2'),
++    removed('LimitReasonCode'),
++    removed('LimitReasonCodeSchema'),
++    removed('LOCATE_INPUT_MAX_BYTES'),
++    removed('LOCATE_LIMIT_MAXIMUMS'),
++    replace('LOCATE_STATUSES', 'LOCATE_STATUSES_V2'),
++    removed('LocateAnchor'),
++    removed('LocateAnchorSchema'),
++    removed('LocateExecutionContext'),
++    removed('LocateExecutionContextV2'),
++    removed('LocateLimits'),
++    removed('LocateLimitsSchema'),
++    retained('LocateRequest', 'LocateRequest'),
++    replace('LocateRequestSchema', 'parseLocateRequestV2'),
++    replace('LocateResult', 'LocateResultV2'),
++    replace('LocateResultSchema', 'LocateResultV2Schema'),
++    removed('LocateStatus'),
++    removed('LocateStatusSchema'),
++    replace('LocateToolOutput', 'LocateResultV2'),
++    replace('LocateToolOutputSchema', 'LocateResultV2Schema'),
++    replace('NEXT_ACTION_CODES', 'NEXT_ACTION_CODES_V2'),
++    removed('NextActionCode'),
++    removed('NextActionCodeSchema'),
++    removed('NormalizedLocateAnchor'),
++    removed('NormalizedLocateAnchorSchema'),
++    removed('NormalizedSearchTerm'),
++    removed('NormalizedSearchTermSchema'),
++    removed('normalizeEvidenceExcerpt'),
++    removed('normalizeLocateAnchors'),
++    removed('normalizeSearchTerms'),
++    replace('PackageMetadataV1', 'PackageMetadata'),
++    replace(
++      'PROMOTION_REQUIREMENT_CODES',
++      'PROMOTION_REQUIREMENT_CODES_V2',
++    ),
++    removed('PromotionRequirementCode'),
++    removed('PromotionRequirementCodeSchema'),
++    removed('PublicEvidence'),
++    replace('REDACTION_REASON_CODES', 'REDACTION_REASON_CODES_V2'),
++    removed('RedactionReasonCode'),
++    removed('RedactionReasonCodeSchema'),
++    replace('REPO_LAYERS', 'REPO_LAYERS_V2'),
++    removed('RepoLayer'),
++    removed('RepoLayerSchema'),
++    replace('RepoNavToolError', 'RepoNavToolErrorV2'),
++    replace('RepoNavToolErrorSchema', 'LocateResultV2Schema'),
++    removed('REPOSITORY_ACCESS_ERROR_CODES'),
++    removed('RepositoryAccessError'),
++    removed('RepositoryAccessErrorCode'),
++    removed('RepositoryAccessErrorCodeSchema'),
++    removed('RepositoryEvidenceService'),
++    removed('RepositoryReader'),
++    removed('RepositoryReadLimits'),
++    removed('RepositoryReadLimitsSchema'),
++    removed('RepositorySearchBackend'),
++    removed('requireCallerSignal'),
++    removed('ResolvedLocateLimits'),
++    removed('resolveLocateLimits'),
++    retained('RipgrepBackend.probe', 'RipgrepBackend.probe'),
++    retained('RipgrepBackend.search', 'RipgrepBackend.search'),
++    removed('SAFE_PROCESS_FAILURE_KINDS'),
++    removed('SAFE_PUBLIC_ERROR_MESSAGES'),
++    removed('SafeProcessFailure'),
++    removed('SafeProcessFailureSchema'),
++    removed('SafeProcessNoChildResultV2'),
++    removed('SafeProcessRequest'),
++    removed('SafeProcessRequestSchema'),
++    removed('SafeProcessResult'),
++    removed('SafeProcessResultSchema'),
++    removed('SafeProcessRunner'),
++    removed('SafeProcessStreamingFailureKindV2'),
++    removed('SafeProcessStreamingResultV2'),
++    removed('SafeProcessSuccess'),
++    removed('SafeProcessSuccessSchema'),
++    removed('SafeStdoutConsumerDecisionV2'),
++    removed('SafeStdoutConsumerFinalizationV2'),
++    removed('SafeStdoutConsumerV2'),
++    replace('SEARCH_BACKEND_IDS', 'SEARCH_BACKEND_IDS_V2'),
++    removed('SearchBackendId'),
++    removed('SearchBackendIdSchema'),
++    removed('SearchPlanInputV2'),
++    removed('selectPrimaryEvidenceRole'),
++    removed('sha256Hex'),
++    removed('StreamingSafeProcessRunnerV2'),
++    removed('TERM_CASE_MODES'),
++    removed('TermCaseMode'),
++    removed('TermCaseModeSchema'),
++    replace('TOOL_ERROR_CODES', 'TOOL_ERROR_CODES_V2'),
++  ]);
+diff --git a/testkit/fixtures/repository-hardening-v2/public-root-api-v2.ts b/testkit/fixtures/repository-hardening-v2/public-root-api-v2.ts
+new file mode 100644
+index 0000000..92923f8
+--- /dev/null
++++ b/testkit/fixtures/repository-hardening-v2/public-root-api-v2.ts
+@@ -0,0 +1,68 @@
++/** Exact public `repo-nav` root export inventory before the 2.0 cutover. */
++export const PUBLIC_ROOT_RUNTIME_EXPORT_KEYS_V2 = Object.freeze([
++  'ANCHOR_KINDS_V2',
++  'BACKEND_REASON_CODES_V2',
++  'CANDIDATE_REASON_CODES_V2',
++  'CONFIRMED_REASON_CODES_V2',
++  'COVERAGE_DEGRADATION_CODES_V2',
++  'CodeGraphBackend',
++  'CoverageReportV2Schema',
++  'EVIDENCE_OPERATION_CODES_V2',
++  'EVIDENCE_ROLES_V2',
++  'EVIDENCE_SOURCES_V2',
++  'EXCLUSION_REASON_CODES_V2',
++  'FinalizedUnsafeCoverageReportV2Schema',
++  'FinalizedUnsafeLocateResultV2Schema',
++  'LIMIT_REASON_CODES_V2',
++  'LOCATE_STATUSES_V2',
++  'LocateResultV2Schema',
++  'MCP_STDIO_HOST',
++  'NEXT_ACTION_CODES_V2',
++  'NodeRepositoryReader',
++  'NodeSafeProcessRunner',
++  'PROMOTION_REQUIREMENT_CODES_V2',
++  'REDACTED_FIELDS_V2',
++  'REDACTION_REASON_CODES_V2',
++  'REPOSITORY_EVIDENCE_SERVICE',
++  'REPOSITORY_READER',
++  'REPOSITORY_SEARCH_BACKENDS',
++  'REPO_LAYERS_V2',
++  'RipgrepBackend',
++  'SEARCH_BACKEND_IDS_V2',
++  'TOOL_ERROR_CODES_V2',
++  'UPSTREAM_DEGRADATION_CODES_V2',
++  'canonicalizeCoverageV2',
++  'createCodeGraphProcessInvocation',
++  'createCodeGraphQueryPlan',
++  'createRepoNavApplicationContext',
++  'deriveLocateStatusV2',
++  'guardLocateRequestRawV2',
++  'parseCodeGraphQuery',
++  'parseCodeGraphStatus',
++  'parseLocateRequestV2',
++  'readPackageMetadata',
++  'safeParseLocateRequestV2',
++] as const);
++
++export const PUBLIC_ROOT_TYPE_EXPORT_KEYS_V2 = Object.freeze([
++  'CandidateEvidenceV2',
++  'CodeGraphBackend',
++  'CodeGraphProcessInvocation',
++  'CodeGraphQueryPlan',
++  'CodeGraphQueryPlanEntry',
++  'ConfirmedEvidenceV2',
++  'CoverageReportV2',
++  'EvidenceLocationV2',
++  'EvidencePackV2',
++  'FinalizedUnsafeCoverageReportV2',
++  'FinalizedUnsafeLocateResultV2',
++  'LocateRequest',
++  'LocateResultV2',
++  'NodeRepositoryReader',
++  'NodeSafeProcessRunner',
++  'PackageMetadataV1',
++  'ParsedCodeGraphQuery',
++  'PublicSearchTermV2',
++  'RepoNavToolErrorV2',
++  'RipgrepBackend',
++] as const);
+diff --git a/testkit/fixtures/repository-hardening-v2/version-authorities-v2.ts b/testkit/fixtures/repository-hardening-v2/version-authorities-v2.ts
+new file mode 100644
+index 0000000..67180d5
+--- /dev/null
++++ b/testkit/fixtures/repository-hardening-v2/version-authorities-v2.ts
+@@ -0,0 +1,81 @@
++export interface VersionAuthorityV2 {
++  readonly id:
++    | 'package-json-root'
++    | 'shrinkwrap-root'
++    | 'shrinkwrap-workspace-root'
++    | 'runtime-package-metadata'
++    | 'cli-version'
++    | 'mcp-server-info'
++    | 'tarball-filename'
++    | 'installed-package-json'
++    | 'sbom-root'
++    | 'real-consumer-confirmation';
++  readonly module: string;
++  readonly binding: string;
++  readonly expected: string;
++}
++
++/** Literal characterization values; never derive these from package metadata. */
++export const VERSION_AUTHORITIES_V2: readonly VersionAuthorityV2[] =
++  Object.freeze([
++    Object.freeze({
++      id: 'package-json-root',
++      module: 'package.json',
++      binding: 'version',
++      expected: '1.0.6',
++    }),
++    Object.freeze({
++      id: 'shrinkwrap-root',
++      module: 'npm-shrinkwrap.json',
++      binding: 'version',
++      expected: '1.0.6',
++    }),
++    Object.freeze({
++      id: 'shrinkwrap-workspace-root',
++      module: 'npm-shrinkwrap.json',
++      binding: 'packages[""].version',
++      expected: '1.0.6',
++    }),
++    Object.freeze({
++      id: 'runtime-package-metadata',
++      module: 'src/runtime/package-metadata.ts',
++      binding: 'readPackageMetadata().version',
++      expected: '1.0.6',
++    }),
++    Object.freeze({
++      id: 'cli-version',
++      module: 'src/cli/execute.ts',
++      binding: 'executeCli(["--version"]).stdout',
++      expected: '1.0.6',
++    }),
++    Object.freeze({
++      id: 'mcp-server-info',
++      module: 'src/mcp/repo-nav-mcp-server.ts',
++      binding: 'serverInfo.version',
++      expected: '1.0.6',
++    }),
++    Object.freeze({
++      id: 'tarball-filename',
++      module: 'tools/release/pack-candidate.mjs',
++      binding: 'npm pack filename',
++      expected: 'repo-nav-1.0.6.tgz',
++    }),
++    Object.freeze({
++      id: 'installed-package-json',
++      module: 'tools/release/pack-candidate.mjs',
++      binding: 'installed node_modules/repo-nav/package.json.version',
++      expected: '1.0.6',
++    }),
++    Object.freeze({
++      id: 'sbom-root',
++      module: 'tools/release/sbom-from-shrinkwrap.mjs',
++      binding: 'bom.metadata.component.purl',
++      expected: 'pkg:npm/repo-nav@1.0.6',
++    }),
++    Object.freeze({
++      id: 'real-consumer-confirmation',
++      module: 'tools/release/real-consumer-contracts.mjs',
++      binding: 'confirmation.candidate.version',
++      expected: '1.0.6',
++    }),
++  ]);
+diff --git a/testkit/fixtures/repository-hardening-v2/weak-registry-disposition-v2.ts b/testkit/fixtures/repository-hardening-v2/weak-registry-disposition-v2.ts
+new file mode 100644
+index 0000000..70906f8
+--- /dev/null
++++ b/testkit/fixtures/repository-hardening-v2/weak-registry-disposition-v2.ts
+@@ -0,0 +1,717 @@
++export interface WeakRegistryDispositionV2 {
++  readonly module: string;
++  readonly binding: string;
++  readonly carries: 'runtime-capability' | 'ordinary-data' | 'identity-cache';
++  readonly action: 'retain' | 'remove-c2' | 'remove-c3' | 'remove-c5';
++  readonly rationale: string;
++}
++
++const RUNTIME_CAPABILITY_RATIONALE =
++  'Retain: authenticates an opaque runtime token, proof, or ownership binding without exposing mutable authority.';
++const ORDINARY_DATA_C2_RATIONALE =
++  'Remove in C2: carries legacy-only ordinary data that must stop acting as an internal authority.';
++const ORDINARY_DATA_C3_RATIONALE =
++  'Remove in C3: carries ordinary projection data through object identity instead of an explicit readonly value.';
++const IDENTITY_CACHE_RATIONALE =
++  'Retain: bounded identity cache or deduplication set; it does not transport projection authority.';
++
++function row(
++  module: string,
++  binding: string,
++  carries: WeakRegistryDispositionV2['carries'],
++  action: WeakRegistryDispositionV2['action'],
++  rationale: string,
++): WeakRegistryDispositionV2 {
++  return Object.freeze({ module, binding, carries, action, rationale });
++}
++
++/** Exact disposition for every current `new WeakMap` / `new WeakSet` site. */
++export const WEAK_REGISTRY_DISPOSITIONS_V2: readonly WeakRegistryDispositionV2[] =
++  Object.freeze([
++    row(
++      'src/contracts/v2/locate-fact-envelope-v2.ts',
++      'prerequisiteRegistry',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/abort-source.ts',
++      'finalizedAbortPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.ts',
++      'aggregationBundleByExecution',
++      'ordinary-data',
++      'remove-c3',
++      ORDINARY_DATA_C3_RATIONALE,
++    ),
++    row(
++      'src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.ts',
++      'acceptedPrivate',
++      'ordinary-data',
++      'remove-c3',
++      ORDINARY_DATA_C3_RATIONALE,
++    ),
++    row(
++      'src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.ts',
++      'failurePrivate',
++      'ordinary-data',
++      'remove-c3',
++      ORDINARY_DATA_C3_RATIONALE,
++    ),
++    row(
++      'src/evidence/canonical/locate-projection-stage-registrar-v2.ts',
++      'sourceRegistry',
++      'ordinary-data',
++      'remove-c3',
++      ORDINARY_DATA_C3_RATIONALE,
++    ),
++    row(
++      'src/evidence/canonical/locate-projection-stage-registrar-v2.ts',
++      'materializationRegistry',
++      'ordinary-data',
++      'remove-c3',
++      ORDINARY_DATA_C3_RATIONALE,
++    ),
++    row(
++      'src/evidence/canonical/locate-projection-stage-registrar-v2.ts',
++      'aggregationRegistry',
++      'ordinary-data',
++      'remove-c3',
++      ORDINARY_DATA_C3_RATIONALE,
++    ),
++    row(
++      'src/evidence/canonical/materialized-locate-result-composer-v2.ts',
++      'materializedRegistry',
++      'ordinary-data',
++      'remove-c3',
++      ORDINARY_DATA_C3_RATIONALE,
++    ),
++    row(
++      'src/evidence/canonical/required-owner-finalizer-v2.ts',
++      'finalizedRegistry',
++      'ordinary-data',
++      'remove-c3',
++      ORDINARY_DATA_C3_RATIONALE,
++    ),
++    row(
++      'src/evidence/canonical/trusted-serialized-locate-result-v2.ts',
++      'schemaRegistry',
++      'ordinary-data',
++      'remove-c3',
++      ORDINARY_DATA_C3_RATIONALE,
++    ),
++    row(
++      'src/evidence/canonical/trusted-serialized-locate-result-v2.ts',
++      'serializedRegistry',
++      'ordinary-data',
++      'remove-c3',
++      ORDINARY_DATA_C3_RATIONALE,
++    ),
++    row(
++      'src/evidence/language/capability-coverage-v2.ts',
++      'retainedDecisionLedgerByExecution',
++      'ordinary-data',
++      'remove-c3',
++      ORDINARY_DATA_C3_RATIONALE,
++    ),
++    row(
++      'src/evidence/language/capability-coverage-v2.ts',
++      'preBudgetPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/language/capability-coverage-v2.ts',
++      'sealPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/language/capability-coverage-v2.ts',
++      'factsPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/language/capability-coverage-v2.ts',
++      'contributionPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/language/embedded-sql-literal-decoder-v2.ts',
++      'completePrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/language/language-adapter-producer-v2.ts',
++      'sourcePrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/language/language-adapter-producer-v2.ts',
++      'fallbackFactsPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/language/language-capability-observation-v2.ts',
++      'observationPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/language/language-lexical-coordinator-v2.ts',
++      'preparationPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/language/language-lexical-coordinator-v2.ts',
++      'semanticInputPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/language/language-lexical-coordinator-v2.ts',
++      'fallbackInputPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/language/language-lexical-coordinator-v2.ts',
++      'factsBuckets',
++      'identity-cache',
++      'retain',
++      IDENTITY_CACHE_RATIONALE,
++    ),
++    row(
++      'src/evidence/locate-execution/locate-projection-execution-capability-v2.ts',
++      'capabilityToToken',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/locate-execution/locate-projection-execution-capability-v2.ts',
++      'inputToBinding',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/locate-execution/public-locate-transport-registry-v2.ts',
++      'receiptRegistry',
++      'ordinary-data',
++      'remove-c3',
++      ORDINARY_DATA_C3_RATIONALE,
++    ),
++    row(
++      'src/evidence/locate-execution/public-locate-transport-registry-v2.ts',
++      'valueToReceipt',
++      'ordinary-data',
++      'remove-c3',
++      ORDINARY_DATA_C3_RATIONALE,
++    ),
++    row(
++      'src/evidence/public-output/f2-locate-projection-stages-v2.ts',
++      'outcomeByExecution',
++      'ordinary-data',
++      'remove-c3',
++      ORDINARY_DATA_C3_RATIONALE,
++    ),
++    row(
++      'src/evidence/public-output/f2-locate-projection-stages-v2.ts',
++      'sourcePayloadByToken',
++      'ordinary-data',
++      'remove-c3',
++      ORDINARY_DATA_C3_RATIONALE,
++    ),
++    row(
++      'src/evidence/public-output/f2-locate-projection-stages-v2.ts',
++      'coreByMaterialization',
++      'ordinary-data',
++      'remove-c3',
++      ORDINARY_DATA_C3_RATIONALE,
++    ),
++    row(
++      'src/evidence/public-output/materialized-evidence-core-v2.ts',
++      'coreRecords',
++      'ordinary-data',
++      'remove-c3',
++      ORDINARY_DATA_C3_RATIONALE,
++    ),
++    row(
++      'src/evidence/public-output/materialized-evidence-core-v2.ts',
++      'contributionBindings',
++      'ordinary-data',
++      'remove-c3',
++      ORDINARY_DATA_C3_RATIONALE,
++    ),
++    row(
++      'src/evidence/public-output/sensitive-corpus-v2.ts',
++      'authenticCorpora',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/public-output/sensitive-corpus-v2.ts',
++      'corpusBySource',
++      'identity-cache',
++      'retain',
++      IDENTITY_CACHE_RATIONALE,
++    ),
++    row(
++      'src/evidence/ranking/evidence-ranking-outcome-v2.ts',
++      'outcomeRecords',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-outcome/request-outcome-aggregator-v2.ts',
++      'aggregationProofPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-outcome/trusted-fallback-decision-v2.ts',
++      'fallbackPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/candidate-token-proposal-enumerator-v2.ts',
++      'proposalRecords',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/candidate-token-proposal-enumerator-v2.ts',
++      'enumeratedContexts',
++      'identity-cache',
++      'retain',
++      IDENTITY_CACHE_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/capability-classification-views-v2.ts',
++      'preFinalPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/capability-classification-views-v2.ts',
++      'stablePrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/discovery-lane-universe-v2.ts',
++      'locatorRecords',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/discovery-lane-universe-v2.ts',
++      'hitRecords',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/discovery-lane-universe-v2.ts',
++      'internedLocators',
++      'identity-cache',
++      'retain',
++      IDENTITY_CACHE_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/discovery-selection-binding-v2.ts',
++      'boundSelectionRecords',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/dual-lane-execution-receipt-v2.ts',
++      'receipts',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/final-snapshot-check-v2.ts',
++      'trustRecords',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/final-snapshot-check-v2.ts',
++      'evidencePoolPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/final-snapshot-check-v2.ts',
++      'eligiblePoolPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/legacy-scope-policy-pool-v1.ts',
++      'legacySelectionRecords',
++      'ordinary-data',
++      'remove-c2',
++      ORDINARY_DATA_C2_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/legacy-scope-policy-pool-v1.ts',
++      'legacyReceiptRecords',
++      'ordinary-data',
++      'remove-c2',
++      ORDINARY_DATA_C2_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/legacy-scope-policy-pool-v1.ts',
++      'sealedLegacyPools',
++      'ordinary-data',
++      'remove-c2',
++      ORDINARY_DATA_C2_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/pre-ranking-evidence-pool-v2.ts',
++      'fileBucketRecords',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/pre-ranking-evidence-pool-v2.ts',
++      'stableRecordPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/pre-ranking-evidence-pool-v2.ts',
++      'eligiblePrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/producer-basis-receipts-v2.ts',
++      'basisPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/producer-basis-receipts-v2.ts',
++      'proposalRefPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/producer-basis-receipts-v2.ts',
++      'receiptsBundlePrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/scope-classification-views-v2.ts',
++      'preFinalPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/scope-classification-views-v2.ts',
++      'legacyPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/scope-classification-views-v2.ts',
++      'stablePrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/scope-classification-views-v2.ts',
++      'stableDecisionBindings',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/scope-coverage-basis-v2.ts',
++      'coveragePrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/scope-folded-discovery-selector-v2.ts',
++      'foldedSelectorRecords',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/snapshot-outcome-contribution-v2.ts',
++      'contributionPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/snapshot-outcome-contribution-v2.ts',
++      'contributionByValue',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/trusted-scope-policy-adapter-v2.ts',
++      'adapterPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/trusted-scope-policy-adapter-v2.ts',
++      'observationPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/trusted-snapshot-ranking-view-v2.ts',
++      'rankingViews',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/verified-language-consumer-v2.ts',
++      'admissionPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/verified-language-consumer-v2.ts',
++      'registeredPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/request-snapshot/verified-language-consumer-v2.ts',
++      'carrierPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/scope/scope-bound-producer-registrar-v2.ts',
++      'registrarPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/scope/scope-bound-producer-registrar-v2.ts',
++      'portPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/scope/scope-bound-producer-registrar-v2.ts',
++      'sealPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/scope/scope-bound-producer-registrar-v2.ts',
++      'arbitrationPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/scope/scope-bound-producer-registrar-v2.ts',
++      'childAdmissions',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/scope/scope-bound-producer-registrar-v2.ts',
++      'sources',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/scope/scope-coverage-v1.ts',
++      'factsPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/evidence/scope/scope-coverage-v1.ts',
++      'contributionPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/process/backend-execution-context-v2.ts',
++      'contextPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/process/backend-execution-context-v2.ts',
++      'signalContexts',
++      'identity-cache',
++      'retain',
++      IDENTITY_CACHE_RATIONALE,
++    ),
++    row(
++      'src/process/backend-execution-context-v2.ts',
++      'outcomePrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/process/backend-execution-context-v2.ts',
++      'handoffPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/process/backend-execution-context-v2.ts',
++      'noStartDecisionPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/process/backend-execution-context-v2.ts',
++      'attemptPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/process/backend-execution-context-v2.ts',
++      'sealPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/process/backend-execution-context-v2.ts',
++      'factsPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/process/backend-execution-context-v2.ts',
++      'tracePrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/process/backend-execution-context-v2.ts',
++      'observationPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/process/backend-execution-context-v2.ts',
++      'receiptPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/process/backend-physical-attempt-executor-v2.ts',
++      'preparedPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/process/backend-physical-attempt-executor-v2.ts',
++      'preparationFailurePrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/process/backend-physical-attempt-executor-v2.ts',
++      'startPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/process/backend-physical-attempt-executor-v2.ts',
++      'resultPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++    row(
++      'src/process/backend-physical-attempt-executor-v2.ts',
++      'noStartObservationPrivate',
++      'runtime-capability',
++      'retain',
++      RUNTIME_CAPABILITY_RATIONALE,
++    ),
++  ]);
+diff --git a/testkit/runners/runner-registry.ts b/testkit/runners/runner-registry.ts
+index f2dcde8..6d9acbc 100644
+--- a/testkit/runners/runner-registry.ts
++++ b/testkit/runners/runner-registry.ts
+@@ -580,20 +580,21 @@ export const RUNNER_SELECTIONS: Readonly<
+       'capability-contribution',
+       'real-complete-shadow',
+       'language-extension-and-fallback',
+       'v2-shadow-and-v1-parity',
+       'large-adapter-set',
+       'projector-cutover',
+       'transport-receipt-parity',
+       'single-execution',
+       'failure-order',
+       'no-v1-runtime',
++      'repository-hardening-inventory',
+       'version-sources',
+       'node-range-declared',
+       'cli-runtime-closure',
+       'package-api',
+       'package-metadata',
+       'quality-gates',
+       'package-install-and-bin-smoke',
+       'package-reproducibility',
+       'installed-closure',
+       'installed-audit',

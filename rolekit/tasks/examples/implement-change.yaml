@@ -1,0 +1,29 @@
+schema: rolekit/task-packet@1
+taskId: repo-nav-example-implement-cleanup-note
+roleId: implementer
+objective: Add one concrete cleanup-status note to the RepoNav workflow migration map.
+input:
+  request: |
+    Update `docs/superpowers/reference/codestable-migration-map.md` by adding or refreshing a `Destructive cleanup status` subsection under `Deletion policy`. The subsection must state that the old workflow roots were removed after explicit approval, archive manifests remain the historical source of record, and owner-runtime release evidence now belongs under `docs/superpowers/evidence/release-runtime/`.
+  planPath: docs/superpowers/plans/2026-08-03-rolekit-first-host-bridge-migration.md
+  riskTier: low
+context:
+  - id: migration-map
+    type: file
+    value: docs/superpowers/reference/codestable-migration-map.md
+  - id: migration-plan
+    type: file
+    value: docs/superpowers/plans/2026-08-03-rolekit-first-host-bridge-migration.md
+constraints:
+  - 'Modify only `docs/superpowers/reference/codestable-migration-map.md`.'
+  - Do not modify runtime source, package metadata, release tooling, or archive payload files.
+  - Do not push, publish, tag, or change remote state.
+acceptanceCriteria:
+  - '`docs/superpowers/reference/codestable-migration-map.md` contains a `Destructive cleanup status` subsection.'
+  - The subsection names explicit approval, archive manifests, removed old roots, and the new owner-runtime evidence path.
+  - The implementation report lists the changed file and verification performed.
+allowedPaths:
+  - docs/superpowers/reference/codestable-migration-map.md
+expectedArtifacts:
+  - name: implementation-summary
+    kind: structured-json

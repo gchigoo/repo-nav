@@ -8,7 +8,7 @@ export default tseslint.config(
       'dist/**',
       'node_modules/**',
       'test-artifacts/**',
-      '.codestable/**',
+      'docs/superpowers/archive/**',
       'coverage/**',
       // Pre-existing test doubles / fixtures; F9 quality gate covers src + release tools.
       'test/**',

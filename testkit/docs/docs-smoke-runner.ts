@@ -230,9 +230,9 @@ function verifySchemaAndAcceptance(blocks: ReadonlyMap<string, string>): Readonl
     throw new Error('MVP acceptance guide omitted a required verification command.');
   }
   const requiredArtifacts = [
-    '.codestable/features/2026-07-10-debug-cli-mcp-guide/debug-cli-mcp-guide-evidence-pack.md',
-    '.codestable/features/2026-07-10-debug-cli-mcp-guide/debug-cli-mcp-guide-gate-results.json',
-    '.codestable/features/2026-07-10-debug-cli-mcp-guide/debug-cli-mcp-guide-dod-results.json',
+    'docs/superpowers/archive/codestable/features/2026-07-10-debug-cli-mcp-guide/debug-cli-mcp-guide-evidence-pack.md',
+    'docs/superpowers/archive/codestable/features/2026-07-10-debug-cli-mcp-guide/debug-cli-mcp-guide-gate-results.json',
+    'docs/superpowers/archive/codestable/features/2026-07-10-debug-cli-mcp-guide/debug-cli-mcp-guide-dod-results.json',
     'test-artifacts/docs/docs-smoke-v1.json',
   ];
   if (

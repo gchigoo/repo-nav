@@ -14,6 +14,6 @@ export const REAL_CONSUMER_SENSITIVE_POLICY_V2 =
   'memory-only-v2-strict-forbidden-scan-no-persist' as const;
 
 export const REAL_CONSUMER_CONFIRMATION_PATH_V2 =
-  '.codestable/runtime/public-beta-real-consumer-confirmation.json' as const;
+  'docs/superpowers/evidence/release-runtime/public-beta-real-consumer-confirmation.json' as const;
 
 export const REAL_CONSUMER_OWNER_BLOCK_EXIT_V2 = 2 as const;

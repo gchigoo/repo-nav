@@ -1,0 +1,32 @@
+schema: rolekit/task-packet@1
+taskId: repo-nav-example-review
+roleId: reviewer
+objective: Review a bounded RepoNav documentation or workflow-config change.
+input:
+  request: Review the actual diff for correctness, scope control, and evidence quality.
+  diffRef: working-tree
+context:
+  - id: review-policy
+    type: file
+    value: docs/superpowers/reference/review-policy.md
+constraints:
+  - Do not modify files.
+  - Report only concrete findings.
+  - PASS_WITH_NOTES is terminal and must not request another review round.
+acceptanceCriteria:
+  - Blocking findings cite file and impact.
+  - Evidence checked is listed.
+allowedPaths:
+  - README.md
+  - docs/**
+  - rolekit/**
+  - .grok/**
+  - package.json
+  - npm-shrinkwrap.json
+  - src/**
+  - test/**
+  - testkit/**
+  - tools/**
+expectedArtifacts:
+  - name: review-result
+    kind: structured-json

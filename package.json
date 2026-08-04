@@ -75,7 +75,7 @@
     "repo-nav": "node dist/cli/main.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.29.0",
+    "@modelcontextprotocol/sdk": "1.30.0",
     "@nestjs/common": "11.1.28",
     "@nestjs/core": "11.1.28",
     "reflect-metadata": "0.2.2",
@@ -98,6 +98,7 @@
     "yaml": "2.9.0"
   },
   "overrides": {
-    "fast-uri": "4.1.1"
+    "fast-uri": "4.1.2",
+    "ip-address": "10.4.0"
   }
 }

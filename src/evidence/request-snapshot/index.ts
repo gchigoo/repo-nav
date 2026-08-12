@@ -199,6 +199,7 @@ export {
 } from './executor-snapshot-bridge-v2.js';
 export {
   deriveLaneBackendResultV2,
+  resolveExpandedLaneFromHandoffViewV2,
   resolveSharedSearchMaxHitsV2,
   searchBackendMultiViewV2,
   type PreF5MultiViewLaneResultsV2,
@@ -212,6 +213,7 @@ export {
   registerDualLaneExecutionReceiptV2,
   readDualLaneExecutionReceiptV2,
   type DualLaneExecutionReceiptV2,
+  type VerificationSelectionModeV2,
 } from './dual-lane-execution-receipt-v2.js';
 
 export {

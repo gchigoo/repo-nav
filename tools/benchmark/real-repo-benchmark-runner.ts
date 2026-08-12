@@ -1,5 +1,6 @@
 /**
- * Real-repo benchmark runner: locate each catalog fixture via RipgrepBackend harness.
+ * Fixture-scenario acceptance + single-run elapsed smoke gate.
+ * Not a multi-sample p95 / real open-source repo benchmark.
  */
 
 import { readFileSync } from 'node:fs';
@@ -34,7 +35,7 @@ const BenchmarkExpectationsSchema = z
     mustIncludeFile: z.string().min(1).optional(),
     mustIncludeSymbol: z.string().min(1).optional(),
     mustNotIncludeLiteral: z.string().min(1).optional(),
-    maxP95Ms: z.number().positive(),
+    maxElapsedMs: z.number().positive(),
     forbidPublicAbsolutePath: z.literal(true),
   })
   .readonly();
@@ -206,8 +207,10 @@ function evaluateCase(
       `confirmed ${confirmedCount} < minConfirmed ${expectations.minConfirmed}`,
     );
   }
-  if (elapsedMs > expectations.maxP95Ms) {
-    failures.push(`elapsed ${elapsedMs}ms > maxP95Ms ${expectations.maxP95Ms}`);
+  if (elapsedMs > expectations.maxElapsedMs) {
+    failures.push(
+      `elapsed ${elapsedMs}ms > maxElapsedMs ${expectations.maxElapsedMs}`,
+    );
   }
   if (expectations.mustIncludeFile !== undefined) {
     const hasFile = locations.some(

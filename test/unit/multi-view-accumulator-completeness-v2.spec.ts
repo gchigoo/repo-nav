@@ -76,4 +76,22 @@ describe.runIf(
     expect(plusN.snapshot().legacy.hits).toHaveLength(maxHits);
     expect(plusN.snapshot().legacy.complete).toBe(false);
   });
+
+  it('marks truncated when first group exactly hits maxHits then second group begins', () => {
+    const maxHits = 3;
+    const acc = new MultiViewAccumulatorV2({
+      expandedMaxHits: 800,
+      legacyMaxHits: maxHits,
+      fileAnchors: [],
+    });
+    acc.beginGroup();
+    for (let index = 0; index < maxHits; index += 1) {
+      acc.observeMatch(matchEvent(`g1-${index}.ts`, 1, 'Target'), [seed]);
+    }
+    acc.commitGroup();
+    // 恰好满额后开始下一组：后续内容已知存在，不得标 complete
+    expect(acc.beginGroup()).toBe('legacy-complete');
+    expect(acc.snapshot().legacy.hits).toHaveLength(maxHits);
+    expect(acc.snapshot().legacy.complete).toBe(false);
+  });
 });

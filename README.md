@@ -17,7 +17,7 @@ to text search when necessary. It does not modify the target repository.
 ## Install
 
 ```powershell
-npm i -g repo-nav@beta
+npm install -g repo-nav
 ```
 
 ## MCP host configuration
@@ -66,8 +66,19 @@ semantics.
 
 ## Programmatic API
 
-Root package exports (`repo-nav`) are v2-only. Import legacy v1 contracts from
-`repo-nav/legacy-v1`.
+Root package exports (`repo-nav`) expose the v2 request/result contract and
+application helpers. Prefer these stable surfaces:
+
+```text
+repo-nav              request/result + application API
+repo-nav/backends     RipgrepBackend / CodeGraphBackend
+repo-nav/node         NodeRepositoryReader / NodeSafeProcessRunner
+repo-nav/advanced     DI tokens / CodeGraph planner helpers
+repo-nav/legacy-v1    legacy v1 contracts
+```
+
+Root still re-exports some adapter symbols for 1.x compatibility; new code should
+import them from the subpaths above.
 
 ## Development from source
 

@@ -1,6 +1,6 @@
 {
   "name": "repo-nav",
-  "version": "1.0.6",
+  "version": "1.1.0",
   "private": false,
   "type": "module",
   "description": "Deterministic repository evidence service for local MCP clients.",
@@ -16,6 +16,18 @@
     "./legacy-v1": {
       "types": "./dist/legacy-v1.d.ts",
       "import": "./dist/legacy-v1.js"
+    },
+    "./backends": {
+      "types": "./dist/backends.d.ts",
+      "import": "./dist/backends.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "import": "./dist/node.js"
+    },
+    "./advanced": {
+      "types": "./dist/advanced.d.ts",
+      "import": "./dist/advanced.js"
     },
     "./package.json": "./package.json"
   },
@@ -71,7 +83,8 @@
     "security:audit": "node tools/release/audit-installed-closure.mjs",
     "security:sbom:check": "node tools/release/verify-installed-sbom.mjs",
     "release:owner-actions:check": "node tools/release/check-owner-actions.mjs",
-    "benchmark:real-repos": "tsx tools/benchmark/real-repo-benchmark-runner.ts",
+    "benchmark:fixture-scenarios": "tsx tools/benchmark/real-repo-benchmark-runner.ts",
+    "benchmark:real-repos": "npm run benchmark:fixture-scenarios",
     "repo-nav": "node dist/cli/main.js"
   },
   "dependencies": {

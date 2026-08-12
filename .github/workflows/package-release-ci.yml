@@ -1,5 +1,5 @@
 # F9 package/release gate — Linux Node 22 only (no six-cell matrix).
-# Action pins aligned with cross-platform-ci.yml (reviewed 2026-07-24):
+# Action pins aligned with cross-platform-ci.yml (reviewed 2026-07-31):
 # - actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 (v7.0.0)
 # - actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 (v7.0.0)
 name: package-release-ci
@@ -10,6 +10,10 @@ on:
     branches:
       - main
       - repo-nav-public-beta
+    tags:
+      - 'v*'
+  schedule:
+    - cron: '0 3 * * 1'
   workflow_dispatch:
 
 permissions:
@@ -74,11 +78,28 @@ jobs:
       - name: Security SBOM check
         run: npm run security:sbom:check
 
-      - name: Real-repo benchmark gate
-        run: npm run benchmark:real-repos
+      - name: Fixture-scenario benchmark gate
+        run: npm run benchmark:fixture-scenarios
+
+      - name: Tag release alignment
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          EXPECTED_VERSION="${TAG#v}"
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          if [[ "${PKG_VERSION}" != "${EXPECTED_VERSION}" ]]; then
+            echo "package.json version ${PKG_VERSION} != tag version ${EXPECTED_VERSION}"
+            exit 1
+          fi
+          echo "tag ${TAG} aligns with package.json ${PKG_VERSION} at ${GITHUB_SHA}"
 
   macos-arm-smoke:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      startsWith(github.ref, 'refs/tags/v')
     runs-on: macos-14
     steps:
       - name: Checkout

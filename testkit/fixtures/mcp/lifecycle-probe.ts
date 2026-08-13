@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { spawn } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -26,9 +25,7 @@ function requiredEnvironment(name: string): string {
   return value;
 }
 
-const contextMarker = requiredEnvironment(
-  'REPO_NAV_LIFECYCLE_CONTEXT_MARKER',
-);
+const contextMarker = requiredEnvironment('REPO_NAV_LIFECYCLE_CONTEXT_MARKER');
 const pidFile = requiredEnvironment('REPO_NAV_LIFECYCLE_PID_FILE');
 type LifecycleProbeFault =
   | 'skip-context-close'
@@ -57,7 +54,7 @@ const descendantScript = [
   "import { writeFileSync } from 'node:fs';",
   "const descendant = spawn(process.execPath, ['--input-type=module', '--eval', 'setInterval(() => {}, 1000)'], { stdio: 'ignore', windowsHide: true });",
   "if (descendant.pid === undefined) { throw new Error('descendant pid unavailable'); }",
-  "writeFileSync(process.env.REPO_NAV_LIFECYCLE_PID_FILE, JSON.stringify({ directPid: process.pid, descendantPid: descendant.pid }));",
+  'writeFileSync(process.env.REPO_NAV_LIFECYCLE_PID_FILE, JSON.stringify({ directPid: process.pid, descendantPid: descendant.pid }));',
   'setInterval(() => {}, 1000);',
 ].join('\n');
 

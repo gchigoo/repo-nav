@@ -19,25 +19,15 @@
           "file": "server/definition.ts",
           "resolvable": true,
           "symbol": "AlphaMapping",
-          "lines": [
-            1,
-            1
-          ],
+          "lines": [1, 1],
           "excerpt": "export function AlphaMapping(): string { return 'alpha'; }"
         },
         "provenance": {
-          "discoveredBy": [
-            "codegraph"
-          ],
+          "discoveredBy": ["codegraph"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "CODEGRAPH_QUERY",
-            "FILESYSTEM_READ_RANGE"
-          ]
+          "operations": ["CODEGRAPH_QUERY", "FILESYSTEM_READ_RANGE"]
         },
-        "reasonCodes": [
-          "EXACT_SYMBOL_ANCHOR"
-        ]
+        "reasonCodes": ["EXACT_SYMBOL_ANCHOR"]
       }
     ],
     "candidates": [],
@@ -55,9 +45,7 @@
       "fallbackChecked": false,
       "indexState": "unknown",
       "indexFreshness": "unknown",
-      "limitsReached": [
-        "MAX_CANDIDATES_REACHED"
-      ],
+      "limitsReached": ["MAX_CANDIDATES_REACHED"],
       "degradations": [],
       "exclusionSummary": {},
       "abortSource": "none",
@@ -70,28 +58,13 @@
       },
       "scope": {
         "requested": [],
-        "effective": [
-          "client",
-          "server",
-          "db",
-          "config",
-          "unknown"
-        ],
+        "effective": ["client", "server", "db", "config", "unknown"],
         "policyVersion": "repo-scope-v1",
-        "unmatchedLayers": [
-          "client",
-          "db",
-          "config",
-          "unknown"
-        ]
+        "unmatchedLayers": ["client", "db", "config", "unknown"]
       },
       "capabilities": {
         "textSearch": "supported-text-files",
-        "semanticClassification": [
-          "typescript",
-          "javascript",
-          "sql"
-        ],
+        "semanticClassification": ["typescript", "javascript", "sql"],
         "unsupportedLanguageHits": 0
       }
     },

@@ -17,7 +17,7 @@ to text search when necessary. It does not modify the target repository.
 ## Install
 
 ```powershell
-npm install -g repo-nav
+npm i -g repo-nav@1.1.0
 ```
 
 ## MCP host configuration

@@ -65,7 +65,9 @@ export function createFourPrerequisiteCanonicalInputV2(): {
   readonly capability: ReturnType<
     typeof issueLocateProjectionExecutionCapabilityV2
   >;
-  readonly execution: ReturnType<typeof requireLocateProjectionExecutionTokenV2>;
+  readonly execution: ReturnType<
+    typeof requireLocateProjectionExecutionTokenV2
+  >;
   readonly input: Extract<CanonicalLocateExecutionV2, { ok: true }>;
 } {
   const terms = Object.freeze([
@@ -101,7 +103,9 @@ export function createEmptyCanonicalSuccessInputV2(): {
   readonly capability: ReturnType<
     typeof issueLocateProjectionExecutionCapabilityV2
   >;
-  readonly execution: ReturnType<typeof requireLocateProjectionExecutionTokenV2>;
+  readonly execution: ReturnType<
+    typeof requireLocateProjectionExecutionTokenV2
+  >;
   readonly input: Extract<CanonicalLocateExecutionV2, { ok: true }>;
 } {
   const terms = Object.freeze([

@@ -44,7 +44,10 @@ if (scenario === 'echo-argv') {
     } else {
       writeFileSync(
         pidFile,
-        JSON.stringify({ parentPid: process.pid, descendantPid: descendant.pid }),
+        JSON.stringify({
+          parentPid: process.pid,
+          descendantPid: descendant.pid,
+        }),
         'utf8',
       );
       const outputStream = args[1];

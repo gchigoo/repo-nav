@@ -103,9 +103,7 @@ describe.runIf(reachabilitySelected)(
         ],
         [
           'src/evidence/canonical/v2-shadow-locate-projector.ts',
-          [
-            'src/evidence/canonical/materialized-locate-result-composer-v2.ts',
-          ],
+          ['src/evidence/canonical/materialized-locate-result-composer-v2.ts'],
         ],
         [
           'src/evidence/canonical/materialized-locate-result-composer-v2.ts',

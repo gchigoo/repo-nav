@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  assemblePublicLocateResultV2,
-} from '../../src/evidence/public-output/public-result-assembler-v2.js';
+import { assemblePublicLocateResultV2 } from '../../src/evidence/public-output/public-result-assembler-v2.js';
 import { createUnsafeLocateSuccessV2 } from '../../testkit/fixtures/public-output-v2/synthetic-locate-v2.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
@@ -21,9 +19,7 @@ const statusSelected = isSelected({
 
 describe.runIf(allowlistSelected)('PublicResultAssemblerV2 allowlist', () => {
   it('constructs only public-owned fields from a valid raw success', () => {
-    const result = assemblePublicLocateResultV2(
-      createUnsafeLocateSuccessV2(),
-    );
+    const result = assemblePublicLocateResultV2(createUnsafeLocateSuccessV2());
     expect(result).toMatchObject({
       ok: true,
       evidence: {
@@ -76,11 +72,7 @@ describe.runIf(allowlistSelected)('PublicResultAssemblerV2 allowlist', () => {
         evidence: Record<string, unknown>;
       };
       Object.assign(raw.evidence, mutation);
-      expect(
-        assemblePublicLocateResultV2(
-          raw as never,
-        ),
-      ).toEqual({
+      expect(assemblePublicLocateResultV2(raw as never)).toEqual({
         ok: false,
         error: {
           code: 'INTERNAL_ERROR',
@@ -162,16 +154,15 @@ describe.runIf(ordinalSelected)('PublicResultAssemblerV2 ordinal IDs', () => {
     expect(result.evidence.candidates.map((item) => item.id)).toEqual([
       'evidence:v2:0003',
     ]);
-    expect(result.evidence.confirmed.map((item) => item.location.file))
-      .toEqual(['src/server/mapping.ts', 'src/server/second.ts']);
+    expect(result.evidence.confirmed.map((item) => item.location.file)).toEqual(
+      ['src/server/mapping.ts', 'src/server/second.ts'],
+    );
   });
 });
 
 describe.runIf(statusSelected)('PublicResultAssemblerV2 derived status', () => {
   it('derives zero, one and multiple hidden-path degradation exactly once', () => {
-    const safe = assemblePublicLocateResultV2(
-      createUnsafeLocateSuccessV2(),
-    );
+    const safe = assemblePublicLocateResultV2(createUnsafeLocateSuccessV2());
     if (!safe.ok) throw new Error('Expected a safe success.');
     expect(safe.evidence.status).toBe('ok');
     expect(safe.evidence.coverage.degradations).not.toContain(

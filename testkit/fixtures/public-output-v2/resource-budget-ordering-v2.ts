@@ -16,8 +16,9 @@ export function sourceWithPoisonConfirmedTail(
     (base as { evidence: Record<string, unknown> }).evidence,
   );
   evidence['confirmed'] = createPoisonConfirmedArray(length);
-  (evidence['coverage'] as { snapshot: { filesChecked: number } }).snapshot
-    .filesChecked = length;
+  (
+    evidence['coverage'] as { snapshot: { filesChecked: number } }
+  ).snapshot.filesChecked = length;
   return { ok: true, evidence };
 }
 

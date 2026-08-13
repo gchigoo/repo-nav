@@ -1,21 +1,8 @@
-import {
-  existsSync,
-  readFileSync,
-  readdirSync,
-} from 'node:fs';
-import {
-  dirname,
-  extname,
-  relative,
-  resolve,
-  sep,
-} from 'node:path';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { dirname, extname, relative, resolve, sep } from 'node:path';
 import ts from 'typescript';
 
-export type TypeScriptImportGraph = ReadonlyMap<
-  string,
-  readonly string[]
->;
+export type TypeScriptImportGraph = ReadonlyMap<string, readonly string[]>;
 
 function posixRelative(repositoryRoot: string, file: string): string {
   return relative(repositoryRoot, file).split(sep).join('/');
@@ -49,22 +36,21 @@ function resolveLocalImport(
   const unresolved = resolve(dirname(importer), specifier);
   const candidates =
     extname(unresolved).length > 0
-      ? [
-          unresolved.replace(/\.(?:js|mjs|cjs)$/u, '.ts'),
-          unresolved,
-        ]
+      ? [unresolved.replace(/\.(?:js|mjs|cjs)$/u, '.ts'), unresolved]
       : [`${unresolved}.ts`, resolve(unresolved, 'index.ts')];
   const target = candidates.find(
     (candidate) =>
-      existsSync(candidate) &&
-      candidate.startsWith(resolve(repositoryRoot)),
+      existsSync(candidate) && candidate.startsWith(resolve(repositoryRoot)),
   );
   return target === undefined
     ? undefined
     : posixRelative(repositoryRoot, target);
 }
 
-function runtimeLocalSpecifiers(source: string, fileName: string): readonly string[] {
+function runtimeLocalSpecifiers(
+  source: string,
+  fileName: string,
+): readonly string[] {
   const specifiers: string[] = [];
   const sourceFile = ts.createSourceFile(
     fileName,
@@ -141,9 +127,7 @@ export function buildTypeScriptImportGraph(
       readFileSync(file, 'utf8'),
       file,
     )
-      .map((specifier) =>
-        resolveLocalImport(repositoryRoot, file, specifier),
-      )
+      .map((specifier) => resolveLocalImport(repositoryRoot, file, specifier))
       .filter((value): value is string => value !== undefined);
     graph.set(
       posixRelative(repositoryRoot, file),

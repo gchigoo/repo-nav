@@ -26,7 +26,12 @@ import {
 import { isSelected } from '../../testkit/testing/selection.js';
 
 const repositoryRoot = resolve(import.meta.dirname, '..', '..');
-const fixtureRoot = resolve(repositoryRoot, 'testkit', 'fixtures', 'text-engine');
+const fixtureRoot = resolve(
+  repositoryRoot,
+  'testkit',
+  'fixtures',
+  'text-engine',
+);
 const manifestRoot = resolve(repositoryRoot, 'testkit', 'manifests', 'golden');
 
 const CASE_FILES = Object.freeze({
@@ -64,7 +69,9 @@ function recordsFor(
       .replaceAll('\r\n', '\n')
       .split('\n')
       .flatMap((excerpt, index) => {
-        const matchedTerms = terms.filter((term) => containsTerm(excerpt, term));
+        const matchedTerms = terms.filter((term) =>
+          containsTerm(excerpt, term),
+        );
         if (excerpt.length === 0 || matchedTerms.length === 0) {
           return [];
         }
@@ -101,7 +108,10 @@ function loadCase(caseId: ClassifierCaseId): GoldenSuccessCase {
   return parsed;
 }
 
-function observe(caseId: ClassifierCaseId, goldenCase: GoldenSuccessCase): GoldenObservation {
+function observe(
+  caseId: ClassifierCaseId,
+  goldenCase: GoldenSuccessCase,
+): GoldenObservation {
   const mode = goldenCase.request.termCase ?? 'smart';
   const terms = normalizeSearchTerms(goldenCase.request.terms, mode);
   const negativeTerms = normalizeSearchTerms(

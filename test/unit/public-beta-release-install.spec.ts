@@ -12,28 +12,24 @@ const root = resolve(import.meta.dirname, '../..');
 describe.runIf(
   isSelected({ group: 'public-beta-release', caseId: 'installed-closure' }),
 )('F9-INSTALL-001 installed-closure', () => {
-  it(
-    'runs verify-installed-closure and requires shrinkwrap production graph',
-    () => {
-      const pkg = JSON.parse(
-        readFileSync(resolve(root, 'package.json'), 'utf8'),
-      ) as { packageManager?: string };
-      expect(pkg.packageManager).toBe(INSTALL_PACKAGE_MANAGER_V2);
-      const r = spawnSync(
-        process.execPath,
-        [resolve(root, 'tools/release/verify-installed-closure.mjs')],
-        { cwd: root, encoding: 'utf8', shell: false },
-      );
-      expect(r.status).toBe(0);
-      const report = JSON.parse(r.stdout) as {
-        ok: boolean;
-        nodeCount: number;
-        edgeCount: number;
-      };
-      expect(report.ok).toBe(true);
-      expect(report.nodeCount).toBeGreaterThan(0);
-      expect(report.edgeCount).toBeGreaterThanOrEqual(0);
-    },
-    120_000,
-  );
+  it('runs verify-installed-closure and requires shrinkwrap production graph', () => {
+    const pkg = JSON.parse(
+      readFileSync(resolve(root, 'package.json'), 'utf8'),
+    ) as { packageManager?: string };
+    expect(pkg.packageManager).toBe(INSTALL_PACKAGE_MANAGER_V2);
+    const r = spawnSync(
+      process.execPath,
+      [resolve(root, 'tools/release/verify-installed-closure.mjs')],
+      { cwd: root, encoding: 'utf8', shell: false },
+    );
+    expect(r.status).toBe(0);
+    const report = JSON.parse(r.stdout) as {
+      ok: boolean;
+      nodeCount: number;
+      edgeCount: number;
+    };
+    expect(report.ok).toBe(true);
+    expect(report.nodeCount).toBeGreaterThan(0);
+    expect(report.edgeCount).toBeGreaterThanOrEqual(0);
+  }, 120_000);
 });

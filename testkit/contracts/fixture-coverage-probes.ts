@@ -166,7 +166,9 @@ export function runContractSchemaProbes(): readonly string[] {
     JSON.stringify(CONTRACT_SCHEMA_PROBE_VALUES.TermCaseMode) !==
     JSON.stringify(TERM_CASE_MODES)
   ) {
-    throw new Error('Explicit TermCaseMode probes differ from the contract constants.');
+    throw new Error(
+      'Explicit TermCaseMode probes differ from the contract constants.',
+    );
   }
   const verified: string[] = [];
   for (const [family, values] of Object.entries(CONTRACT_SCHEMA_PROBE_VALUES)) {

@@ -3,6 +3,10 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import {
+  PUBLIC_PACKAGE_EXPORT_DISPOSITIONS_V2,
+  PUBLIC_PACKAGE_SUBPATH_EXPORTS_V2,
+} from '../../testkit/fixtures/repository-hardening-v2/public-package-subpaths-v2.js';
 import { PACKAGE_EXPORT_KEYS_V2 } from '../../testkit/fixtures/release-v2/package-api-snapshot-v2.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
@@ -15,7 +19,22 @@ describe.runIf(
     const exports = JSON.parse(
       readFileSync(resolve(root, 'package.json'), 'utf8'),
     ).exports as Record<string, unknown>;
-    expect(Object.keys(exports).sort()).toEqual([...PACKAGE_EXPORT_KEYS_V2].sort());
+    expect(Object.keys(exports).sort()).toEqual(
+      [...PACKAGE_EXPORT_KEYS_V2].sort(),
+    );
+    expect(PUBLIC_PACKAGE_EXPORT_DISPOSITIONS_V2).toEqual([
+      { specifier: '.', action: 'retain-c5' },
+      { specifier: './advanced', action: 'retain-c5' },
+      { specifier: './backends', action: 'retain-c5' },
+      { specifier: './legacy-v1', action: 'remove-c5' },
+      { specifier: './node', action: 'retain-c5' },
+      { specifier: './package.json', action: 'retain-c5' },
+    ]);
+    for (const subpath of PUBLIC_PACKAGE_SUBPATH_EXPORTS_V2) {
+      expect(readFileSync(resolve(root, subpath.sourceFile), 'utf8')).not.toBe(
+        '',
+      );
+    }
     const index = readFileSync(resolve(root, 'src/index.ts'), 'utf8');
     expect(index).not.toContain('evidence-redactor');
     expect(index).not.toContain('V2LocateResultProjector');

@@ -15,7 +15,9 @@ if (cliPath === undefined) {
   child.stdout.pipe(process.stdout);
   child.stderr.pipe(process.stderr);
   child.once('error', () => {
-    process.stderr.write('CLI wrapper could not start the compiled entrypoint.\n');
+    process.stderr.write(
+      'CLI wrapper could not start the compiled entrypoint.\n',
+    );
     process.exitCode = 1;
   });
   child.once('close', (code, signal) => {

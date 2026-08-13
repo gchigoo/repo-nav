@@ -13,8 +13,18 @@ import { NodeSafeProcessRunner } from '../../src/repository/node-safe-process-ru
 import { RipgrepBackend } from '../../src/repository/ripgrep-backend.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
-const identity = { group: 'ripgrep-backend', caseId: 'ripgrep-backend' } as const;
-const fixtureRoot = resolve(import.meta.dirname, '..', '..', 'testkit', 'fixtures', 'ripgrep');
+const identity = {
+  group: 'ripgrep-backend',
+  caseId: 'ripgrep-backend',
+} as const;
+const fixtureRoot = resolve(
+  import.meta.dirname,
+  '..',
+  '..',
+  'testkit',
+  'fixtures',
+  'ripgrep',
+);
 
 function bytes(value: string): Uint8Array {
   return Buffer.from(value, 'utf8');
@@ -32,12 +42,14 @@ class RecordingProcessRunner extends NodeSafeProcessRunner {
     _signal: AbortSignal,
   ): Promise<SafeProcessResult> {
     this.requests.push(request);
-    return this.results[this.requests.length - 1] ?? {
-      ok: true,
-      exitCode: 0,
-      stdout: bytes(''),
-      stderr: bytes(''),
-    };
+    return (
+      this.results[this.requests.length - 1] ?? {
+        ok: true,
+        exitCode: 0,
+        stdout: bytes(''),
+        stderr: bytes(''),
+      }
+    );
   }
 }
 
@@ -57,10 +69,20 @@ function request(root: string): BackendSearchRequest {
 
 describe.runIf(isSelected(identity))('ripgrep backend', () => {
   it('uses fixed-string JSON argv and independent per-term case groups', async () => {
-    const fixture = readFileSync(resolve(fixtureRoot, 'match-v15.jsonl'), 'utf8');
+    const fixture = readFileSync(
+      resolve(fixtureRoot, 'match-v15.jsonl'),
+      'utf8',
+    );
     const runner = new RecordingProcessRunner([
       { ok: true, exitCode: 0, stdout: bytes(fixture), stderr: bytes('') },
-      { ok: false, kind: 'non-zero-exit', exitCode: 1, terminationSignal: null, stdout: bytes(''), stderr: bytes('') },
+      {
+        ok: false,
+        kind: 'non-zero-exit',
+        exitCode: 1,
+        terminationSignal: null,
+        stdout: bytes(''),
+        stderr: bytes(''),
+      },
     ]);
     const result = await new RipgrepBackend(runner).search(
       request('C:/repository'),
@@ -74,7 +96,10 @@ describe.runIf(isSelected(identity))('ripgrep backend', () => {
     expect(runner.requests[0]?.argv).toContain('Source.Value');
     expect(runner.requests[1]?.argv).toContain('--ignore-case');
     expect(runner.requests[1]?.argv).toContain('[literal].*');
-    expect(result).toMatchObject({ complete: true, health: { state: 'available' } });
+    expect(result).toMatchObject({
+      complete: true,
+      health: { state: 'available' },
+    });
     expect(result.hits).toEqual([
       {
         file: 'src/mapping.ts',
@@ -90,9 +115,16 @@ describe.runIf(isSelected(identity))('ripgrep backend', () => {
   it('runs literal metacharacter search through the real safe process seam', async () => {
     const repository = mkdtempSync(resolve(tmpdir(), 'repo-nav-rg-'));
     try {
-      writeFileSync(resolve(repository, 'literal.ts'), 'const value = \"[literal].*\";\n', 'utf8');
+      writeFileSync(
+        resolve(repository, 'literal.ts'),
+        'const value = "[literal].*";\n',
+        'utf8',
+      );
       const backend = new RipgrepBackend(new NodeSafeProcessRunner());
-      const health = await backend.probe(repository, new AbortController().signal);
+      const health = await backend.probe(
+        repository,
+        new AbortController().signal,
+      );
       const result = await backend.search(
         {
           repositoryRoot: repository,
@@ -118,7 +150,14 @@ describe.runIf(isSelected(identity))('ripgrep backend', () => {
   it('maps no-result, unavailable, abort, and malformed JSON distinctly', async () => {
     const missing = new RipgrepBackend(
       new RecordingProcessRunner([
-        { ok: false, kind: 'spawn-error', exitCode: null, terminationSignal: null, stdout: bytes(''), stderr: bytes('') },
+        {
+          ok: false,
+          kind: 'spawn-error',
+          exitCode: null,
+          terminationSignal: null,
+          stdout: bytes(''),
+          stderr: bytes(''),
+        },
       ]),
     );
     await expect(
@@ -130,7 +169,14 @@ describe.runIf(isSelected(identity))('ripgrep backend', () => {
 
     const aborted = new RipgrepBackend(
       new RecordingProcessRunner([
-        { ok: false, kind: 'aborted', exitCode: null, terminationSignal: null, stdout: bytes(''), stderr: bytes('') },
+        {
+          ok: false,
+          kind: 'aborted',
+          exitCode: null,
+          terminationSignal: null,
+          stdout: bytes(''),
+          stderr: bytes(''),
+        },
       ]),
     );
     await expect(
@@ -140,7 +186,10 @@ describe.runIf(isSelected(identity))('ripgrep backend', () => {
       health: { state: 'unavailable', reasonCode: 'BACKEND_ABORTED' },
     });
 
-    const malformed = readFileSync(resolve(fixtureRoot, 'malformed-v15.jsonl'), 'utf8');
+    const malformed = readFileSync(
+      resolve(fixtureRoot, 'malformed-v15.jsonl'),
+      'utf8',
+    );
     const invalid = new RipgrepBackend(
       new RecordingProcessRunner([
         { ok: true, exitCode: 0, stdout: bytes(malformed), stderr: bytes('') },
@@ -160,7 +209,9 @@ describe.runIf(isSelected(identity))('ripgrep backend', () => {
       {
         repositoryRoot: 'C:/repository',
         terms: [],
-        anchors: [{ kind: 'file', value: 'src/[literal].ts', caseSensitive: true }],
+        anchors: [
+          { kind: 'file', value: 'src/[literal].ts', caseSensitive: true },
+        ],
         negativeTerms: [],
         layers: [],
         maxHits: 2,
@@ -197,9 +248,7 @@ describe.runIf(isSelected(identity))('ripgrep backend', () => {
       {
         repositoryRoot: 'C:/repository',
         terms: [],
-        anchors: [
-          { kind: 'symbol', value: 'maprow', caseSensitive: false },
-        ],
+        anchors: [{ kind: 'symbol', value: 'maprow', caseSensitive: false }],
         negativeTerms: [],
         layers: [],
         maxHits: 4,
@@ -240,7 +289,9 @@ describe.runIf(isSelected(identity))('ripgrep backend', () => {
         ],
       },
     })}\n`;
-    const search = async (values: readonly ['Alpha', 'Beta'] | readonly ['Beta', 'Alpha']) =>
+    const search = async (
+      values: readonly ['Alpha', 'Beta'] | readonly ['Beta', 'Alpha'],
+    ) =>
       await new RipgrepBackend(
         new RecordingProcessRunner([
           { ok: true, exitCode: 0, stdout: bytes(stdout), stderr: bytes('') },

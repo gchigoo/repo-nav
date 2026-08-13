@@ -22,37 +22,24 @@
         "location": {
           "file": "server/mapping.fixture",
           "resolvable": true,
-          "lines": [
-            1,
-            7
-          ],
+          "lines": [1, 7],
           "excerpt": "export function mapCandidate(row: SourceRow) {\n  const sourceAlias = hcpId;\n  const unrelatedToken = [REDACTED];\n  return {\n    hcpName: row.hcp_name,\n    hcpEmail: row.hcp_email,\n    hcpId: row.hcp_id,",
           "redaction": {
             "applied": true,
             "fields": [
               {
                 "field": "excerpt",
-                "reasonCodes": [
-                  "SECRET_LIKE_VALUE"
-                ]
+                "reasonCodes": ["SECRET_LIKE_VALUE"]
               }
             ]
           }
         },
         "provenance": {
-          "discoveredBy": [
-            "ripgrep"
-          ],
+          "discoveredBy": ["ripgrep"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "RIPGREP_SEARCH",
-            "FILESYSTEM_READ_RANGE"
-          ]
+          "operations": ["RIPGREP_SEARCH", "FILESYSTEM_READ_RANGE"]
         },
-        "reasonCodes": [
-          "EXACT_TERM_MATCH",
-          "DIRECT_ALIAS_MAPPING"
-        ]
+        "reasonCodes": ["EXACT_TERM_MATCH", "DIRECT_ALIAS_MAPPING"]
       }
     ],
     "candidates": [
@@ -64,24 +51,15 @@
           "file": "server/mapping.fixture",
           "resolvable": true,
           "symbol": "sourceAlias",
-          "lines": [
-            2,
-            2
-          ],
+          "lines": [2, 2],
           "excerpt": "sourceAlias"
         },
         "provenance": {
-          "discoveredBy": [
-            "filesystem"
-          ],
+          "discoveredBy": ["filesystem"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "FILESYSTEM_FIND_MATCHES"
-          ]
+          "operations": ["FILESYSTEM_FIND_MATCHES"]
         },
-        "reasonCodes": [
-          "ALIAS_SOURCE_NEIGHBOR"
-        ],
+        "reasonCodes": ["ALIAS_SOURCE_NEIGHBOR"],
         "promotionRequirements": [
           "USER_SEMANTIC_CONFIRMATION",
           "DIRECT_REFERENCE_REQUIRED"
@@ -95,24 +73,15 @@
           "file": "server/mapping.fixture",
           "resolvable": true,
           "symbol": "hcpId",
-          "lines": [
-            2,
-            2
-          ],
+          "lines": [2, 2],
           "excerpt": "hcpId"
         },
         "provenance": {
-          "discoveredBy": [
-            "filesystem"
-          ],
+          "discoveredBy": ["filesystem"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "FILESYSTEM_READ_RANGE"
-          ]
+          "operations": ["FILESYSTEM_READ_RANGE"]
         },
-        "reasonCodes": [
-          "SAME_SCOPE_SIMILAR_IDENTIFIER"
-        ],
+        "reasonCodes": ["SAME_SCOPE_SIMILAR_IDENTIFIER"],
         "promotionRequirements": [
           "USER_SEMANTIC_CONFIRMATION",
           "DIRECT_REFERENCE_REQUIRED"
@@ -126,25 +95,15 @@
           "file": "server/mapping.fixture",
           "resolvable": true,
           "symbol": "hcpName",
-          "lines": [
-            5,
-            5
-          ],
+          "lines": [5, 5],
           "excerpt": "hcpName"
         },
         "provenance": {
-          "discoveredBy": [
-            "filesystem"
-          ],
+          "discoveredBy": ["filesystem"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "FILESYSTEM_FIND_MATCHES"
-          ]
+          "operations": ["FILESYSTEM_FIND_MATCHES"]
         },
-        "reasonCodes": [
-          "SAME_SCOPE_SIMILAR_IDENTIFIER",
-          "SAME_ENTITY_SIBLING"
-        ],
+        "reasonCodes": ["SAME_SCOPE_SIMILAR_IDENTIFIER", "SAME_ENTITY_SIBLING"],
         "promotionRequirements": [
           "USER_SEMANTIC_CONFIRMATION",
           "DIRECT_REFERENCE_REQUIRED"
@@ -158,25 +117,15 @@
           "file": "server/mapping.fixture",
           "resolvable": true,
           "symbol": "hcpEmail",
-          "lines": [
-            6,
-            6
-          ],
+          "lines": [6, 6],
           "excerpt": "hcpEmail"
         },
         "provenance": {
-          "discoveredBy": [
-            "filesystem"
-          ],
+          "discoveredBy": ["filesystem"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "FILESYSTEM_FIND_MATCHES"
-          ]
+          "operations": ["FILESYSTEM_FIND_MATCHES"]
         },
-        "reasonCodes": [
-          "SAME_SCOPE_SIMILAR_IDENTIFIER",
-          "SAME_ENTITY_SIBLING"
-        ],
+        "reasonCodes": ["SAME_SCOPE_SIMILAR_IDENTIFIER", "SAME_ENTITY_SIBLING"],
         "promotionRequirements": [
           "USER_SEMANTIC_CONFIRMATION",
           "DIRECT_REFERENCE_REQUIRED"
@@ -198,9 +147,7 @@
       "indexState": "unknown",
       "indexFreshness": "unknown",
       "limitsReached": [],
-      "degradations": [
-        "SEMANTIC_LANGUAGE_UNSUPPORTED"
-      ],
+      "degradations": ["SEMANTIC_LANGUAGE_UNSUPPORTED"],
       "exclusionSummary": {},
       "abortSource": "none",
       "unsatisfiedAnchors": [],
@@ -211,27 +158,17 @@
         "discardedEvidenceCount": 0
       },
       "scope": {
-        "requested": [
-          "server"
-        ],
-        "effective": [
-          "server"
-        ],
+        "requested": ["server"],
+        "effective": ["server"],
         "policyVersion": "repo-scope-v1",
         "unmatchedLayers": []
       },
       "capabilities": {
         "textSearch": "supported-text-files",
-        "semanticClassification": [
-          "typescript",
-          "javascript",
-          "sql"
-        ],
+        "semanticClassification": ["typescript", "javascript", "sql"],
         "unsupportedLanguageHits": 17
       }
     },
-    "nextActions": [
-      "CONFIRM_CANDIDATE"
-    ]
+    "nextActions": ["CONFIRM_CANDIDATE"]
   }
 }

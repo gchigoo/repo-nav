@@ -5,6 +5,10 @@ import type {
   SafeProcessRequest,
   SafeProcessResult,
 } from '../../src/contracts/index.js';
+import type {
+  SafeProcessStreamingResultV2,
+  SafeStdoutConsumerV2,
+} from '../../src/contracts/safe-process.js';
 import { CodeGraphBackend } from '../../src/repository/codegraph-backend.js';
 import { createCodeGraphQueryPlan } from '../../src/repository/codegraph-query-planner.js';
 import { NodeSafeProcessRunner } from '../../src/repository/node-safe-process-runner.js';
@@ -69,6 +73,30 @@ class RecordingRunner extends NodeSafeProcessRunner {
       throw new Error('Unexpected CodeGraph invocation.');
     }
     return result;
+  }
+
+  public override runStreaming<TPartial, TComplete>(
+    request: SafeProcessRequest,
+    _signal: AbortSignal,
+    _consumer: SafeStdoutConsumerV2<TPartial, TComplete>,
+  ): Promise<SafeProcessStreamingResultV2<TPartial, TComplete>> {
+    this.requests.push(request);
+    const result = this.results[this.requests.length - 1];
+    if (result === undefined) {
+      throw new Error('Unexpected CodeGraph invocation.');
+    }
+    if (!result.ok) {
+      throw new Error('Expected successful CodeGraph status fixture.');
+    }
+    return Promise.resolve({
+      ok: true,
+      kind: 'completed',
+      startState: 'started',
+      exitCode: 0,
+      terminationSignal: null,
+      stdout: { kind: 'complete', value: result.stdout as TComplete },
+      stderr: result.stderr,
+    });
   }
 }
 
@@ -143,9 +171,9 @@ describe.runIf(
   });
 
   it('requires all terms to exactly match a sensitive explicit symbol anchor', () => {
-    expect(createCodeGraphQueryPlan(baseRequest()).canSkipFallbackIfVerified).toBe(
-      true,
-    );
+    expect(
+      createCodeGraphQueryPlan(baseRequest()).canSkipFallbackIfVerified,
+    ).toBe(true);
     expect(
       createCodeGraphQueryPlan(
         baseRequest({

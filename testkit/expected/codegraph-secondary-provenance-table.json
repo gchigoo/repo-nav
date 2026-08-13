@@ -2,7 +2,7 @@
   "ok": true,
   "evidence": {
     "schemaVersion": "2.0",
-    "status": "partial",
+    "status": "ok",
     "repositoryRef": "local-repository",
     "normalizedTerms": [
       {
@@ -19,28 +19,16 @@
         "location": {
           "file": "server/secondary.ts",
           "resolvable": true,
-          "lines": [
-            1,
-            1
-          ],
+          "lines": [1, 1],
           "excerpt": "export const opaqueSecondary = 2;"
         },
         "provenance": {
-          "discoveredBy": [
-            "ripgrep"
-          ],
+          "discoveredBy": ["ripgrep"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "RIPGREP_SEARCH",
-            "FILESYSTEM_READ_RANGE"
-          ]
+          "operations": ["RIPGREP_SEARCH", "FILESYSTEM_READ_RANGE"]
         },
-        "reasonCodes": [
-          "SECONDARY_BACKEND_HIT"
-        ],
-        "promotionRequirements": [
-          "DIRECT_REFERENCE_REQUIRED"
-        ]
+        "reasonCodes": ["SECONDARY_BACKEND_HIT"],
+        "promotionRequirements": ["DIRECT_REFERENCE_REQUIRED"]
       }
     ],
     "coverage": {
@@ -60,7 +48,7 @@
           "hitCount": 2
         }
       ],
-      "strategyComplete": false,
+      "strategyComplete": true,
       "fallbackChecked": true,
       "indexState": "unknown",
       "indexFreshness": "unknown",
@@ -76,27 +64,17 @@
         "discardedEvidenceCount": 0
       },
       "scope": {
-        "requested": [
-          "server"
-        ],
-        "effective": [
-          "server"
-        ],
+        "requested": ["server"],
+        "effective": ["server"],
         "policyVersion": "repo-scope-v1",
         "unmatchedLayers": []
       },
       "capabilities": {
         "textSearch": "supported-text-files",
-        "semanticClassification": [
-          "typescript",
-          "javascript",
-          "sql"
-        ],
+        "semanticClassification": ["typescript", "javascript", "sql"],
         "unsupportedLanguageHits": 0
       }
     },
-    "nextActions": [
-      "CONFIRM_CANDIDATE"
-    ]
+    "nextActions": ["CONFIRM_CANDIDATE"]
   }
 }

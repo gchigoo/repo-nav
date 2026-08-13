@@ -59,7 +59,10 @@ describe.runIf(
   it('registers two base ports, seals complete set, and materializes eight-row table', () => {
     const execution = executionToken();
     const registrar = createScopeBoundProducerRegistrarV2(execution);
-    const direct = createDirectClassifierScopeProducerPortV2(registrar, execution);
+    const direct = createDirectClassifierScopeProducerPortV2(
+      registrar,
+      execution,
+    );
     const candidate = createCandidateCollectorScopeProducerPortV2(
       registrar,
       execution,

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import type { BackendHit, BackendSearchResult } from '../../src/contracts/index.js';
+import type {
+  BackendHit,
+  BackendSearchResult,
+} from '../../src/contracts/index.js';
 import { resolveVerificationHitsV2 } from '../../src/evidence/locate-execution/resolve-verification-hits-v2.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 

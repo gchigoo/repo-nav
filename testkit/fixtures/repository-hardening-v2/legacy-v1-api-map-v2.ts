@@ -12,6 +12,9 @@ export const LEGACY_V1_SOURCE_STATE_V2: LegacyV1SourceStateV2 = 'present';
 /** Public compatibility rows that are not transitive exports of legacy-v1.ts. */
 export const LEGACY_V1_NON_SUBPATH_API_KEYS_V2 = Object.freeze([
   'repo-nav/legacy-v1',
+  'repo-nav/advanced',
+  'repo-nav/backends',
+  'repo-nav/node',
   'CodeGraphBackend.probe',
   'CodeGraphBackend.search',
   'PackageMetadataV1',
@@ -45,6 +48,9 @@ function retained(
 export const LEGACY_V1_API_REPLACEMENTS_V2: readonly LegacyV1ApiReplacementV2[] =
   Object.freeze([
     replace('repo-nav/legacy-v1', 'repo-nav'),
+    retained('repo-nav/advanced', 'repo-nav/advanced'),
+    retained('repo-nav/backends', 'repo-nav/backends'),
+    retained('repo-nav/node', 'repo-nav/node'),
     replace('ANCHOR_KINDS', 'ANCHOR_KINDS_V2'),
     removed('AnchorKind'),
     removed('AnchorKindSchema'),

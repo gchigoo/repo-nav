@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -31,33 +31,65 @@ describe.runIf(
         ],
         { cwd: root, encoding: 'utf8', shell: false },
       );
-      // Present confirmation must not stub-pass; runner either completes or
-      // fails closed with a structured report (never silent ok without E2E).
-      expect(r.status === 0 || r.status === 1 || r.status === 2).toBe(true);
-      if (r.status === 0) {
-        const report = JSON.parse(r.stdout) as { ok: boolean };
-        expect(report.ok).toBe(true);
-      }
+      expect(r.status).toBe(0);
+      expect(r.stderr).toBe('');
+      const report = JSON.parse(r.stdout) as { ok: boolean };
+      expect(report.ok).toBe(true);
       return;
     }
 
+    const missing = `does-not-exist-${process.pid}.json`;
     const r = spawnSync(
       process.execPath,
       [
         resolve(root, 'tools/release/run-real-consumer-e2e.mjs'),
         '--confirmation',
-        REAL_CONSUMER_CONFIRMATION_PATH_V2,
+        missing,
       ],
       { cwd: root, encoding: 'utf8', shell: false },
     );
     expect(r.status).toBe(REAL_CONSUMER_OWNER_BLOCK_EXIT_V2);
+    expect(r.stdout).toBe('');
     const report = JSON.parse(r.stderr) as {
       ok: boolean;
       residual: string;
       message: string;
+      path?: string;
     };
-    expect(report.ok).toBe(false);
-    expect(report.residual).toBe('real-consumer-confirmation-missing');
-    expect(report.message).toMatch(/refusing to invent confirmation/iu);
+    expect(report).toEqual({
+      ok: false,
+      residual: 'real-consumer-confirmation-missing',
+      message:
+        'Owner must supply RealConsumerConfirmationV1; refusing to invent confirmation JSON.',
+    });
+    expect(r.stderr).not.toContain(missing);
+    expect(report.path).toBeUndefined();
+  });
+
+  it('keeps the missing-confirmation owner block available without dist', () => {
+    const runner = readFileSync(
+      resolve(root, 'tools/release/run-real-consumer-e2e.mjs'),
+      'utf8',
+    );
+    const missingBranch = runner.slice(
+      runner.indexOf('if (!existsSync(absoluteConfirmation))'),
+      runner.indexOf(
+        '\ntry {',
+        runner.indexOf('const args = process.argv.slice(2)'),
+      ),
+    );
+    expect(missingBranch).not.toContain('reloadLocateResultSchema');
+    expect(missingBranch).not.toContain("import('../../dist/");
+    expect(runner.slice(0, runner.indexOf('function main'))).not.toContain(
+      "from '../../dist/",
+    );
+    const packageCandidateIndex = runner.indexOf(
+      'const candidate = packageCandidate(consumer)',
+    );
+    const schemaReloadIndex = runner.indexOf(
+      'await reloadLocateResultSchema()',
+    );
+    expect(packageCandidateIndex).toBeGreaterThanOrEqual(0);
+    expect(schemaReloadIndex).toBeGreaterThan(packageCandidateIndex);
   });
 });

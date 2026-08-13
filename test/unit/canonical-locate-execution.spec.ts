@@ -32,7 +32,10 @@ import { V2LocateResultProjector } from '../../src/evidence/locate-execution/v2-
 import { createAcceptedCompleteRealLocateShadowOrchestratorV2 } from '../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js';
 import { createV2ShadowLocateProjectorV2 } from '../../testkit/testing/v2-shadow-locate-projector-v2.js';
 import { createSyntheticLocateProjectionPreparationPortV2 } from '../../testkit/testing/create-synthetic-locate-projection-preparation-port-v2.js';
-import { createCanonicalLocateEngineHarnessV2 } from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
+import {
+  asTraceableSearchBackendsV2,
+  createCanonicalLocateEngineHarnessV2,
+} from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import {
   V1_PARITY_GOLDEN_CASE_IDS_V2,
   V1_PARITY_NO_RESULT_REQUEST_V2,
@@ -43,6 +46,10 @@ import {
   V1_MUTATION_PRECEDENCE_CONTRACT_V2,
   V1_MUTATION_STABLE_FILE_V2,
 } from '../../testkit/fixtures/request-snapshot-v2/v1-mutation-precedence-v2.js';
+import {
+  SNAPSHOT_MUTATION_CHARACTERIZATION_RESULT_V2,
+  evaluateLocateExecutionCharacterizationResultV2,
+} from '../../testkit/fixtures/locate-execution-v2/characterization-matrix-v2.js';
 import {
   createEmptyCanonicalSuccessInputV2,
   createFourPrerequisiteCanonicalInputV2,
@@ -158,22 +165,26 @@ describe.runIf(singleSelected)('F1C-SINGLE-EXEC-001 single execution', () => {
   it('executes backend/reader once and binds input/capability/token', async () => {
     const backend = new CountingBackend();
     const reader = new CountingReader();
-    const executor = new CanonicalRepositoryLocateExecutorV2([backend], reader);
+    const executor = new CanonicalRepositoryLocateExecutorV2(
+      asTraceableSearchBackendsV2([backend]),
+      reader,
+    );
     const capability = issueLocateProjectionExecutionCapabilityV2();
     const token = requireLocateProjectionExecutionTokenV2(capability);
-    const input = await executor.execute(baseRequest, {
-      signal: new AbortController().signal,
-    }, capability);
+    const input = await executor.execute(
+      baseRequest,
+      {
+        signal: new AbortController().signal,
+      },
+      capability,
+    );
     expect(backend.searchCount).toBe(1);
     expect(reader.resolveCount).toBe(1);
     expect(requireCanonicalLocateExecutionTokenV2(input, capability)).toBe(
       token,
     );
     expect(() =>
-      requireCanonicalLocateExecutionTokenV2(
-        { ...input },
-        capability,
-      ),
+      requireCanonicalLocateExecutionTokenV2({ ...input }, capability),
     ).toThrow();
     expect(() =>
       requireCanonicalLocateExecutionTokenV2(
@@ -194,7 +205,7 @@ describe.runIf(termSelected)('F1C-TERM-CASE-001 term case parity', () => {
       return { health: { state: 'available' }, hits: [], complete: true };
     };
     const executor = new CanonicalRepositoryLocateExecutorV2(
-      [backend],
+      asTraceableSearchBackendsV2([backend]),
       new CountingReader(),
     );
     const capability = issueLocateProjectionExecutionCapabilityV2();
@@ -211,9 +222,7 @@ describe.runIf(termSelected)('F1C-TERM-CASE-001 term case parity', () => {
     );
     expect(input.ok).toBe(true);
     if (!input.ok) throw new Error('expected success');
-    expect(input.envelope.normalizedTerms).toBe(
-      input.envelope.normalizedTerms,
-    );
+    expect(input.envelope.normalizedTerms).toBe(input.envelope.normalizedTerms);
     expect(seen[0]?.terms).toBe(input.envelope.normalizedTerms);
   });
 });
@@ -243,10 +252,12 @@ describe.runIf(isolationSelected)(
       const backend = new CountingBackend();
       const reader = new CountingReader();
       const executor = new CanonicalRepositoryLocateExecutorV2(
-        [backend],
+        asTraceableSearchBackendsV2([backend]),
         reader,
       );
-      const projector = new V2LocateResultProjector(createAcceptedCompleteRealLocateShadowOrchestratorV2());
+      const projector = new V2LocateResultProjector(
+        createAcceptedCompleteRealLocateShadowOrchestratorV2(),
+      );
       const capability = issueLocateProjectionExecutionCapabilityV2();
       const input = await executor.execute(
         baseRequest,
@@ -324,67 +335,64 @@ function parityBackendResult(
   };
 }
 
-describe.runIf(snapshotV1ParitySelected)(
-  'F3-V1-001 snapshot-v1-parity',
-  () => {
-    it('keeps no-mutation v2 success surface on NodeRepositoryReader snapshot path', async () => {
-      expect(V1_PARITY_GOLDEN_CASE_IDS_V2.length).toBeGreaterThan(0);
+describe.runIf(snapshotV1ParitySelected)('F3-V1-001 snapshot-v1-parity', () => {
+  it('keeps no-mutation v2 success surface on NodeRepositoryReader snapshot path', async () => {
+    expect(V1_PARITY_GOLDEN_CASE_IDS_V2.length).toBeGreaterThan(0);
 
-      for (const caseId of V1_PARITY_GOLDEN_CASE_IDS_V2) {
-        const goldenCase = loadParityGoldenCase(caseId);
-        const service = createCanonicalLocateEngineHarnessV2(
-          [new ParityFixtureBackend(parityBackendResult(caseId))],
-          new NodeRepositoryReader(),
-        ).service;
-        const locateResult = await service.locate(goldenCase.request, {
-          signal: new AbortController().signal,
-        });
-        // Post-F9 public surface is LocateResultV2, not v1 golden EvidencePack.
-        expect(locateResult.ok).toBe(true);
-        if (!locateResult.ok) {
-          throw new Error(`${caseId}: expected v2 success`);
-        }
-        expect(locateResult.evidence.schemaVersion).toBe('2.0');
-        expect(locateResult.evidence.coverage.snapshot.consistency).not.toBe(
-          'changed',
-        );
-        expect(JSON.stringify(locateResult)).not.toMatch(/SNAPSHOT_CHANGED/u);
-      }
-
-      const noResultService = createCanonicalLocateEngineHarnessV2(
-        [
-          new ParityFixtureBackend({
-            health: { state: 'available', reasonCode: 'RIPGREP_NO_RESULT' },
-            hits: [],
-            complete: true,
-          }),
-        ],
+    for (const caseId of V1_PARITY_GOLDEN_CASE_IDS_V2) {
+      const goldenCase = loadParityGoldenCase(caseId);
+      const service = createCanonicalLocateEngineHarnessV2(
+        [new ParityFixtureBackend(parityBackendResult(caseId))],
         new NodeRepositoryReader(),
       ).service;
-      const noResult = await noResultService.locate(
-        {
-          ...V1_PARITY_NO_RESULT_REQUEST_V2,
-          repoPath: resolve(
-            repositoryRoot,
-            V1_PARITY_NO_RESULT_REQUEST_V2.repoPath,
-          ),
-          layers: [...V1_PARITY_NO_RESULT_REQUEST_V2.layers],
-        },
-        { signal: new AbortController().signal },
-      );
-      expect(noResult.ok).toBe(true);
-      if (!noResult.ok) {
-        throw new Error('expected no_result success');
+      const locateResult = await service.locate(goldenCase.request, {
+        signal: new AbortController().signal,
+      });
+      // Post-F9 public surface is LocateResultV2, not v1 golden EvidencePack.
+      expect(locateResult.ok).toBe(true);
+      if (!locateResult.ok) {
+        throw new Error(`${caseId}: expected v2 success`);
       }
-      // Post-F9 v2 may report partial when backend trace is not-observed;
-      // still require empty evidence and no SNAPSHOT_CHANGED.
-      expect(['no_result', 'partial']).toContain(noResult.evidence.status);
-      expect(noResult.evidence.confirmed).toEqual([]);
-      expect(noResult.evidence.candidates).toEqual([]);
-      expect(JSON.stringify(noResult)).not.toMatch(/SNAPSHOT_CHANGED/u);
-    });
-  },
-);
+      expect(locateResult.evidence.schemaVersion).toBe('2.0');
+      expect(locateResult.evidence.coverage.snapshot.consistency).not.toBe(
+        'changed',
+      );
+      expect(JSON.stringify(locateResult)).not.toMatch(/SNAPSHOT_CHANGED/u);
+    }
+
+    const noResultService = createCanonicalLocateEngineHarnessV2(
+      [
+        new ParityFixtureBackend({
+          health: { state: 'available', reasonCode: 'RIPGREP_NO_RESULT' },
+          hits: [],
+          complete: true,
+        }),
+      ],
+      new NodeRepositoryReader(),
+    ).service;
+    const noResult = await noResultService.locate(
+      {
+        ...V1_PARITY_NO_RESULT_REQUEST_V2,
+        repoPath: resolve(
+          repositoryRoot,
+          V1_PARITY_NO_RESULT_REQUEST_V2.repoPath,
+        ),
+        layers: [...V1_PARITY_NO_RESULT_REQUEST_V2.layers],
+      },
+      { signal: new AbortController().signal },
+    );
+    expect(noResult.ok).toBe(true);
+    if (!noResult.ok) {
+      throw new Error('expected no_result success');
+    }
+    // Post-F9 v2 may report partial when backend trace is not-observed;
+    // still require empty evidence and no SNAPSHOT_CHANGED.
+    expect(['no_result', 'partial']).toContain(noResult.evidence.status);
+    expect(noResult.evidence.confirmed).toEqual([]);
+    expect(noResult.evidence.candidates).toEqual([]);
+    expect(JSON.stringify(noResult)).not.toMatch(/SNAPSHOT_CHANGED/u);
+  });
+});
 
 describe.runIf(realEnvelopeSelected)(
   'F3-ENVELOPE-001 snapshot-real-envelope',
@@ -394,7 +402,7 @@ describe.runIf(realEnvelopeSelected)(
       const backend = new CountingBackend();
       const reader = new CountingReader();
       const executor = new CanonicalRepositoryLocateExecutorV2(
-        [backend],
+        asTraceableSearchBackendsV2([backend]),
         reader,
       );
       const capability = issueLocateProjectionExecutionCapabilityV2();
@@ -414,9 +422,9 @@ describe.runIf(realEnvelopeSelected)(
       expect(success.envelope.fragments.snapshot?.owner).toBe('snapshot');
       expect(success.envelope.fragments.scope?.owner).toBe('scope');
       expect(success.envelope.fragments.capability?.owner).toBe('capability');
-      expect(success.envelope.fragments.snapshot?.value.coverage.consistency).toBe(
-        'unknown',
-      );
+      expect(
+        success.envelope.fragments.snapshot?.value.coverage.consistency,
+      ).toBe('unknown');
       for (const owner of LOCATE_FACT_OWNER_ORDER_V2) {
         if (
           owner === 'snapshot' ||
@@ -436,9 +444,8 @@ describe.runIf(realEnvelopeSelected)(
 
       const failingReader: RepositoryReader = {
         async resolveRoot() {
-          const { RepositoryAccessError } = await import(
-            '../../src/contracts/index.js'
-          );
+          const { RepositoryAccessError } =
+            await import('../../src/contracts/index.js');
           throw new RepositoryAccessError('INVALID_REPOSITORY');
         },
         async readRange() {
@@ -452,7 +459,7 @@ describe.runIf(realEnvelopeSelected)(
         },
       };
       const failingExecutor = new CanonicalRepositoryLocateExecutorV2(
-        [backend],
+        asTraceableSearchBackendsV2([backend]),
         failingReader,
       );
       const failure = await failingExecutor.execute(
@@ -474,15 +481,21 @@ describe.runIf(mutationPrecedenceSelected)(
   () => {
     it('purges mutated evidence and elevates v1 status to at least partial', async () => {
       expect(V1_MUTATION_PRECEDENCE_CONTRACT_V2.mutationWithOk).toBe('partial');
-      expect(V1_MUTATION_PRECEDENCE_CONTRACT_V2.forbidsSnapshotChangedCode).toBe(
-        false,
-      );
+      expect(
+        V1_MUTATION_PRECEDENCE_CONTRACT_V2.forbidsSnapshotChangedCode,
+      ).toBe(false);
 
       const workspace = mkdtempSync(resolve(tmpdir(), 'repo-nav-mut-prec-'));
       try {
         for (const [relative, content] of [
-          [V1_MUTATION_CHANGED_FILE_V2, 'const changedId = row.changed_id;\n'] as const,
-          [V1_MUTATION_STABLE_FILE_V2, 'const stableId = row.stable_id;\n'] as const,
+          [
+            V1_MUTATION_CHANGED_FILE_V2,
+            'const changedId = row.changed_id;\n',
+          ] as const,
+          [
+            V1_MUTATION_STABLE_FILE_V2,
+            'const stableId = row.stable_id;\n',
+          ] as const,
         ]) {
           const absolute = resolve(workspace, relative);
           mkdirSync(dirname(absolute), { recursive: true });
@@ -529,14 +542,19 @@ describe.runIf(mutationPrecedenceSelected)(
         try {
           const capability = issueLocateProjectionExecutionCapabilityV2();
           const executor = new CanonicalRepositoryLocateExecutorV2(
-            [backend],
+            asTraceableSearchBackendsV2([backend]),
             new NodeRepositoryReader(),
           );
           const input = await executor.execute(
             {
               repoPath: workspace,
               question: 'mutation precedence',
-              terms: ['changedId', 'stableId', 'row.changed_id', 'row.stable_id'],
+              terms: [
+                'changedId',
+                'stableId',
+                'row.changed_id',
+                'row.stable_id',
+              ],
               termCase: 'sensitive',
               layers: ['server'],
             },
@@ -547,13 +565,12 @@ describe.runIf(mutationPrecedenceSelected)(
           if (!input.ok) {
             throw new Error('expected success');
           }
-          expect(input.envelope.fragments.snapshot?.value.coverage.consistency).toBe(
-            'changed',
-          );
-          const projected = new V2LocateResultProjector(createAcceptedCompleteRealLocateShadowOrchestratorV2()).project(
-            input,
-            capability,
-          );
+          expect(
+            input.envelope.fragments.snapshot?.value.coverage.consistency,
+          ).toBe('changed');
+          const projected = new V2LocateResultProjector(
+            createAcceptedCompleteRealLocateShadowOrchestratorV2(),
+          ).project(input, capability);
           expect(projected.value.ok).toBe(true);
           if (!projected.value.ok) {
             throw new Error('expected projected success');
@@ -578,6 +595,12 @@ describe.runIf(mutationPrecedenceSelected)(
           expect(
             projected.value.evidence.coverage.exclusionSummary.SNAPSHOT_CHANGED,
           ).toBeGreaterThan(0);
+          expect(
+            evaluateLocateExecutionCharacterizationResultV2(
+              SNAPSHOT_MUTATION_CHARACTERIZATION_RESULT_V2,
+              projected.value,
+            ),
+          ).toBe(true);
         } finally {
           setBeforeFinalSnapshotCheckForTestV2(undefined);
         }
@@ -596,8 +619,10 @@ describe.runIf(
 )('F5-ELIGIBILITY-001 eligibility gate', () => {
   it('keeps telemetry-only prefixes out of F3 complete-safe hits', async () => {
     assertSameSearchViewsAbiV2(
-      RipgrepBackend.prototype.searchViews as unknown as F5SearchViewsProviderV2,
-      RipgrepBackend.prototype.searchViews as unknown as F3SearchViewsConsumerV2,
+      RipgrepBackend.prototype
+        .searchViews as unknown as F5SearchViewsProviderV2,
+      RipgrepBackend.prototype
+        .searchViews as unknown as F3SearchViewsConsumerV2,
     );
     const repository = mkdtempSync(resolve(tmpdir(), 'repo-nav-f5-elig-'));
     try {
@@ -714,9 +739,8 @@ describe.runIf(
       'TIMEOUT_REACHED',
     );
 
-    const { countF2CoreAccessorProductionImportersV2 } = await import(
-      '../../src/evidence/public-output/f2-locate-projection-stages-v2.js'
-    );
+    const { countF2CoreAccessorProductionImportersV2 } =
+      await import('../../src/evidence/public-output/f2-locate-projection-stages-v2.js');
     // F2 core accessor remains non-public; production importer count stays 0.
     expect(countF2CoreAccessorProductionImportersV2()).toBe(0);
   });

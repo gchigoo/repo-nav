@@ -45,7 +45,9 @@ function resolveNpmCli() {
       return candidate;
     }
   }
-  throw new Error('unable to resolve npm-cli.js from current Node installation');
+  throw new Error(
+    'unable to resolve npm-cli.js from current Node installation',
+  );
 }
 
 /**
@@ -78,13 +80,22 @@ runNpm([
 ]);
 
 const binDir = resolve(toolsRoot, 'node_modules', '.bin');
-const ripgrepBin = resolve(toolsRoot, 'node_modules', '@vscode', 'ripgrep', 'bin');
+const ripgrepBin = resolve(
+  toolsRoot,
+  'node_modules',
+  '@vscode',
+  'ripgrep',
+  'bin',
+);
 const pathParts = [binDir, ripgrepBin, process.env.PATH ?? ''].filter(
   (part) => part.length > 0,
 );
 const nextPath = pathParts.join(delimiter);
 
-if (typeof process.env.GITHUB_PATH === 'string' && process.env.GITHUB_PATH.length > 0) {
+if (
+  typeof process.env.GITHUB_PATH === 'string' &&
+  process.env.GITHUB_PATH.length > 0
+) {
   appendFileSync(process.env.GITHUB_PATH, `${binDir}\n${ripgrepBin}\n`, 'utf8');
 }
 
@@ -103,7 +114,9 @@ const rgProbe = spawnSync(rgPath, ['--version'], {
 if (rgProbe.status !== 0) {
   throw new Error(`rg --version failed: ${rgProbe.stderr || rgProbe.stdout}`);
 }
-process.stdout.write(`installed ripgrep: ${(rgProbe.stdout || '').split(/\r?\n/u)[0]}\n`);
+process.stdout.write(
+  `installed ripgrep: ${(rgProbe.stdout || '').split(/\r?\n/u)[0]}\n`,
+);
 
 const codegraphShim = resolve(
   toolsRoot,
@@ -115,11 +128,15 @@ const codegraphShim = resolve(
 if (!existsSync(codegraphShim)) {
   throw new Error(`codegraph shim missing at ${codegraphShim}`);
 }
-const codegraphProbe = spawnSync(process.execPath, [codegraphShim, '--version'], {
-  encoding: 'utf8',
-  shell: false,
-  env: { ...process.env, PATH: nextPath },
-});
+const codegraphProbe = spawnSync(
+  process.execPath,
+  [codegraphShim, '--version'],
+  {
+    encoding: 'utf8',
+    shell: false,
+    env: { ...process.env, PATH: nextPath },
+  },
+);
 if (codegraphProbe.status !== 0) {
   throw new Error(
     `codegraph --version failed: ${codegraphProbe.stderr || codegraphProbe.stdout}`,

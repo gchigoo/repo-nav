@@ -1,10 +1,5 @@
 import { createHash } from 'node:crypto';
-import {
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  writeFileSync,
-} from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
 
 import { z } from 'zod';
@@ -107,7 +102,10 @@ function sorted(values: Iterable<string>): string[] {
   return [...values].sort((left, right) => left.localeCompare(right));
 }
 
-function sameMembers(left: readonly string[], right: readonly string[]): boolean {
+function sameMembers(
+  left: readonly string[],
+  right: readonly string[],
+): boolean {
   return (
     left.length === right.length &&
     left.every((value, index) => value === right[index])
@@ -158,7 +156,13 @@ function addSuccessCoverage(
     addVerifiedCoverage(coverage, caseId, 'positive', 'RepoLayer', layer);
   }
   for (const anchor of goldenCase.request.anchors ?? []) {
-    addVerifiedCoverage(coverage, caseId, 'positive', 'AnchorKind', anchor.kind);
+    addVerifiedCoverage(
+      coverage,
+      caseId,
+      'positive',
+      'AnchorKind',
+      anchor.kind,
+    );
   }
   addVerifiedCoverage(
     coverage,
@@ -175,7 +179,13 @@ function addSuccessCoverage(
     result.evidence.status,
   );
   for (const evidence of result.evidence.confirmed) {
-    addVerifiedCoverage(coverage, caseId, 'positive', 'EvidenceRole', evidence.role);
+    addVerifiedCoverage(
+      coverage,
+      caseId,
+      'positive',
+      'EvidenceRole',
+      evidence.role,
+    );
     for (const code of evidence.reasonCodes) {
       addVerifiedCoverage(
         coverage,
@@ -189,7 +199,13 @@ function addSuccessCoverage(
       ...evidence.provenance.discoveredBy,
       evidence.provenance.verifiedBy,
     ]) {
-      addVerifiedCoverage(coverage, caseId, 'positive', 'EvidenceSource', source);
+      addVerifiedCoverage(
+        coverage,
+        caseId,
+        'positive',
+        'EvidenceSource',
+        source,
+      );
     }
     for (const operation of evidence.provenance.operations) {
       addVerifiedCoverage(
@@ -213,7 +229,13 @@ function addSuccessCoverage(
     }
   }
   for (const evidence of result.evidence.candidates) {
-    addVerifiedCoverage(coverage, caseId, 'positive', 'EvidenceRole', evidence.role);
+    addVerifiedCoverage(
+      coverage,
+      caseId,
+      'positive',
+      'EvidenceRole',
+      evidence.role,
+    );
     for (const code of evidence.reasonCodes) {
       addVerifiedCoverage(
         coverage,
@@ -227,7 +249,13 @@ function addSuccessCoverage(
       ...evidence.provenance.discoveredBy,
       evidence.provenance.verifiedBy,
     ]) {
-      addVerifiedCoverage(coverage, caseId, 'positive', 'EvidenceSource', source);
+      addVerifiedCoverage(
+        coverage,
+        caseId,
+        'positive',
+        'EvidenceSource',
+        source,
+      );
     }
     for (const operation of evidence.provenance.operations) {
       addVerifiedCoverage(
@@ -296,20 +324,17 @@ function addSuccessCoverage(
     );
   }
   for (const action of result.evidence.nextActions) {
-    addVerifiedCoverage(
-      coverage,
-      caseId,
-      'positive',
-      'NextActionCode',
-      action,
-    );
+    addVerifiedCoverage(coverage, caseId, 'positive', 'NextActionCode', action);
   }
 }
 
 function buildVerifiedCoverage(
   ownership: z.infer<typeof FixtureOwnershipSchema>,
   manifests: readonly GoldenCase[],
-  snapshots: ReadonlyMap<string, Extract<LocateResultV2, { readonly ok: true }>>,
+  snapshots: ReadonlyMap<
+    string,
+    Extract<LocateResultV2, { readonly ok: true }>
+  >,
 ): ReadonlyMap<string, VerifiedCaseCoverage> {
   const coverage = new Map<string, VerifiedCaseCoverage>();
   for (const key of runContractSchemaProbes()) {
@@ -336,7 +361,9 @@ function buildVerifiedCoverage(
       const owner = ownership.successCases[goldenCase.id];
       const snapshot = snapshots.get(goldenCase.id);
       if (owner === undefined || snapshot === undefined) {
-        throw new Error(`Missing verified success inputs for ${goldenCase.id}.`);
+        throw new Error(
+          `Missing verified success inputs for ${goldenCase.id}.`,
+        );
       }
       addSuccessCoverage(coverage, owner, goldenCase, snapshot);
       continue;
@@ -404,7 +431,8 @@ export function buildFixtureCompletenessReport(
         throw new Error(`Completeness cannot own ${family}.${code}.`);
       }
       if (
-        (family === 'ConfirmedReasonCode' || family === 'CandidateReasonCode') &&
+        (family === 'ConfirmedReasonCode' ||
+          family === 'CandidateReasonCode') &&
         entry.negative === undefined
       ) {
         throw new Error(`Missing negative owner for ${family}.${code}.`);
@@ -415,7 +443,9 @@ export function buildFixtureCompletenessReport(
         );
       }
       if (entry.negative === 'fixture-completeness') {
-        throw new Error(`Completeness cannot negatively own ${family}.${code}.`);
+        throw new Error(
+          `Completeness cannot negatively own ${family}.${code}.`,
+        );
       }
       owners.push(
         entry.negative === undefined
@@ -439,7 +469,12 @@ export function buildFixtureCompletenessReport(
     );
   }
 
-  const manifestDirectory = resolve(repositoryRoot, 'testkit', 'manifests', 'golden');
+  const manifestDirectory = resolve(
+    repositoryRoot,
+    'testkit',
+    'manifests',
+    'golden',
+  );
   const manifests = readdirSync(manifestDirectory)
     .filter((name) => name.endsWith('.yaml'))
     .sort()
@@ -473,18 +508,31 @@ export function buildFixtureCompletenessReport(
       'Every success manifest must have exactly one companion snapshot and no orphan snapshots.',
     );
   }
-  if (!sameMembers(successManifestIds, sorted(Object.keys(ownership.successCases)))) {
-    throw new Error('Every success manifest must declare exactly one runner owner.');
+  if (
+    !sameMembers(
+      successManifestIds,
+      sorted(Object.keys(ownership.successCases)),
+    )
+  ) {
+    throw new Error(
+      'Every success manifest must declare exactly one runner owner.',
+    );
   }
-  if (!sameMembers(errorManifestIds, sorted(Object.keys(ownership.errorCases)))) {
-    throw new Error('Every error manifest must declare exactly one runner owner.');
+  if (
+    !sameMembers(errorManifestIds, sorted(Object.keys(ownership.errorCases)))
+  ) {
+    throw new Error(
+      'Every error manifest must declare exactly one runner owner.',
+    );
   }
   for (const [manifestId, owner] of Object.entries({
     ...ownership.successCases,
     ...ownership.errorCases,
   })) {
     if (!cases.has(owner)) {
-      throw new Error(`Unknown runner owner ${owner} for manifest ${manifestId}.`);
+      throw new Error(
+        `Unknown runner owner ${owner} for manifest ${manifestId}.`,
+      );
     }
   }
   const snapshots = new Map<
@@ -500,12 +548,18 @@ export function buildFixtureCompletenessReport(
     );
     const parsed = LocateResultV2Schema.parse(snapshot);
     if (!parsed.ok) {
-      throw new Error(`Success companion snapshot is not successful: ${snapshotId}.`);
+      throw new Error(
+        `Success companion snapshot is not successful: ${snapshotId}.`,
+      );
     }
     snapshots.set(snapshotId, parsed);
   }
 
-  const verifiedCoverage = buildVerifiedCoverage(ownership, manifests, snapshots);
+  const verifiedCoverage = buildVerifiedCoverage(
+    ownership,
+    manifests,
+    snapshots,
+  );
   for (const owner of owners) {
     const key = coverageKey(owner.family, owner.code);
     if (!verifiedCoverage.get(owner.positive)?.positive.has(key)) {
@@ -549,9 +603,16 @@ export function writeFixtureCompletenessReport(
   repositoryRoot: string,
   report: FixtureCompletenessReport,
 ): string {
-  const outputDirectory = resolve(repositoryRoot, 'test-artifacts', 'completeness');
+  const outputDirectory = resolve(
+    repositoryRoot,
+    'test-artifacts',
+    'completeness',
+  );
   mkdirSync(outputDirectory, { recursive: true });
-  const outputPath = resolve(outputDirectory, 'mvp-fixture-completeness-v1.json');
+  const outputPath = resolve(
+    outputDirectory,
+    'mvp-fixture-completeness-v1.json',
+  );
   writeFileSync(outputPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
   return outputPath;
 }

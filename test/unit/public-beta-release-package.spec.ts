@@ -50,7 +50,9 @@ describe.runIf(
     const ts = JSON.parse(
       readFileSync(resolve(root, 'tsconfig.build.json'), 'utf8'),
     ) as { compilerOptions: Record<string, unknown> };
-    expect(ts.compilerOptions.sourceMap).toBe(REPRO_TSCONFIG_BUILD_V2.sourceMap);
+    expect(ts.compilerOptions.sourceMap).toBe(
+      REPRO_TSCONFIG_BUILD_V2.sourceMap,
+    );
     expect(ts.compilerOptions.declarationMap).toBe(
       REPRO_TSCONFIG_BUILD_V2.declarationMap,
     );

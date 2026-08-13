@@ -45,7 +45,12 @@ function createSuccessResult(): LocateResultV2 {
   return LocateResultV2Schema.parse(
     JSON.parse(
       readFileSync(
-        resolve(repositoryRoot, 'testkit', 'expected', 'foundation-success.json'),
+        resolve(
+          repositoryRoot,
+          'testkit',
+          'expected',
+          'foundation-success.json',
+        ),
         'utf8',
       ),
     ),
@@ -125,7 +130,10 @@ describe.runIf(isSelected(evaluatorIdentity))('Golden evaluator', () => {
       ...successCase,
       expected: {
         ...successCase.expected,
-        forbiddenEvidenceIds: [successResult.evidence.confirmed[0]?.id ?? successResult.evidence.candidates[0]?.id],
+        forbiddenEvidenceIds: [
+          successResult.evidence.confirmed[0]?.id ??
+            successResult.evidence.candidates[0]?.id,
+        ],
         requiredCoverageCodes: ['MAX_FILES_REACHED'],
         minimumExclusionCounts: { UNVERIFIED_FILE_CONTENT: 2 },
       },

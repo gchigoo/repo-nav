@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  bindRawDiscoveryLocatorV2,
-} from '../../src/evidence/request-snapshot/discovery-lane-universe-v2.js';
+import { bindRawDiscoveryLocatorV2 } from '../../src/evidence/request-snapshot/discovery-lane-universe-v2.js';
 import { issueLocateProjectionExecutionCapabilityV2 } from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
 import { requireLocateProjectionExecutionTokenV2 } from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
 import {
@@ -42,7 +40,10 @@ describe.runIf(
     expect(asciiLowercaseCodeUnitsV1('İ')).toBe('İ');
     const policy = createRepositoryScopePolicyV1();
     const scope = resolveRepositoryScopeV1(undefined);
-    const decision = policy.decide(pathViewFromPosixPathV1('Src/Server/A.ts'), scope);
+    const decision = policy.decide(
+      pathViewFromPosixPathV1('Src/Server/A.ts'),
+      scope,
+    );
     expect(decision.layer).toBe('server');
     expect(decision.rule).toBe('explicit-prefix');
 
@@ -183,9 +184,9 @@ describe.runIf(
     expect(
       resolveRepositoryScopeV1([...REQUEST_LAYERS_V1.permutation]).requested,
     ).toEqual(['client', 'test', 'unknown']);
-    expect(resolveRepositoryScopeV1([...REQUEST_LAYERS_V1.all]).requested).toEqual(
-      [...REQUEST_LAYERS_V1.all],
-    );
+    expect(
+      resolveRepositoryScopeV1([...REQUEST_LAYERS_V1.all]).requested,
+    ).toEqual([...REQUEST_LAYERS_V1.all]);
     // legacy characterization still frozen for top-level cases
     expect(legacyResolveRepositoryLayerV1('server/a.ts')).toBe('server');
   });

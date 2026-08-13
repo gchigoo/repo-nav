@@ -5,9 +5,7 @@ import {
   CandidateTokenProposalEnumeratorV2,
   readCandidateTokenProposalFactsV2,
 } from '../../src/evidence/request-snapshot/candidate-token-proposal-enumerator-v2.js';
-import {
-  expandedOnlyReservedDoesNotSuppressLegacyV2,
-} from '../../src/evidence/request-snapshot/lane-candidate-evaluators-v2.js';
+import { expandedOnlyReservedDoesNotSuppressLegacyV2 } from '../../src/evidence/request-snapshot/lane-candidate-evaluators-v2.js';
 import { LegacyCandidateReservationV1 } from '../../src/evidence/request-snapshot/legacy-candidate-reservation-v1.js';
 import {
   buildPreRankingStablePoolsV2,
@@ -41,9 +39,7 @@ function makeRecord(
     discoveredBy: Object.freeze(['ripgrep' as const]),
     operations: Object.freeze(['RIPGREP_SEARCH' as const]),
     discoveryReasonCodes: Object.freeze(['LITERAL_TERM_HIT' as const]),
-    matchedTerms: Object.freeze([
-      { value: symbol, caseSensitive: true },
-    ]),
+    matchedTerms: Object.freeze([{ value: symbol, caseSensitive: true }]),
     focusLines: Object.freeze([1, 1] as [number, number]),
     focusExcerpt: symbol,
     canonicalSymbols: Object.freeze([symbol]),
@@ -133,9 +129,7 @@ describe.runIf(selected)('F3-POOL-001 pre-ranking-stable-pool', () => {
     );
     expect(proposal).toBeDefined();
 
-    const expandedOnly = [
-      makeRecord('exp-1', 'server/x.ts', 'siblingToken'),
-    ];
+    const expandedOnly = [makeRecord('exp-1', 'server/x.ts', 'siblingToken')];
     const legacyOnly = [makeRecord('leg-1', 'server/x.ts', 'seedToken')];
     const divergence = expandedOnlyReservedDoesNotSuppressLegacyV2({
       proposal: proposal!,

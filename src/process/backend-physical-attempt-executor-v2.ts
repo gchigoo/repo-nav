@@ -13,6 +13,8 @@ import type {
   BackendExecutionContextV2,
   BackendNoStartObservationV2,
 } from '../contracts/v2/backend-execution-outcome-v2.js';
+import { createCodeGraphProcessInvocation } from '../repository/codegraph-command.js';
+import { BoundedByteCollectorV2 } from './bounded-byte-collector-v2.js';
 import { createProcessOpaqueTokenV2 } from './opaque-token-v2.js';
 
 export type BackendPhysicalAttemptLaneMaskV2 =
@@ -24,6 +26,9 @@ export type BackendPhysicalAttemptKindV2 =
   | 'codegraph-fallback'
   | 'ripgrep-version'
   | 'ripgrep-group';
+
+export type BackendPhysicalAttemptStartModeV2 =
+  'availability-probe' | 'buffered' | 'streaming';
 
 export type ExecutableAvailabilityProbeArgvClassV2 =
   'codegraph-status' | 'ripgrep-version';
@@ -111,6 +116,8 @@ export type BackendPhysicalAttemptResultV2<TResult> = Readonly<object> & {
 export interface BackendPhysicalAttemptStartViewV2 {
   readonly ordinal: number;
   readonly binding: BackendPhysicalAttemptBindingV2;
+  readonly startMode: BackendPhysicalAttemptStartModeV2;
+  readonly availabilityProbeClass: ExecutableAvailabilityProbeArgvClassV2 | null;
 }
 
 export interface BackendPhysicalAttemptResultViewV2<
@@ -139,6 +146,8 @@ interface PreparedRecordV2 {
 interface StartRecordV2<TResult = unknown> {
   readonly ordinal: number;
   readonly binding: BackendPhysicalAttemptBindingV2;
+  readonly startMode: BackendPhysicalAttemptStartModeV2;
+  readonly availabilityProbeClass: ExecutableAvailabilityProbeArgvClassV2 | null;
   readonly promise: Promise<TResult>;
   readonly execution: LocateExecutionTokenV2;
   readonly context: BackendExecutionContextV2;
@@ -230,8 +239,157 @@ export interface BackendPhysicalAttemptExecutorV2 {
   ): BackendPhysicalAttemptResultViewV2<TResult>;
 }
 
-function isNotFoundCode(code: unknown): boolean {
-  return code === 'ENOENT';
+function sameStringArrayV2(
+  left: readonly string[],
+  right: readonly string[],
+): boolean {
+  return (
+    left.length === right.length &&
+    left.every((value, index) => value === right[index])
+  );
+}
+
+function validateAvailabilityProbeCorrespondenceV2(input: {
+  readonly backend: SearchBackendId;
+  readonly argvClass: ExecutableAvailabilityProbeArgvClassV2;
+  readonly request: SafeProcessRequest;
+}): void {
+  if (input.backend === 'codegraph') {
+    const expected = createCodeGraphProcessInvocation([
+      'status',
+      '--json',
+      input.request.cwd,
+    ]);
+    if (
+      input.argvClass !== 'codegraph-status' ||
+      input.request.executable !== expected.executable ||
+      !sameStringArrayV2(input.request.argv, expected.argv)
+    ) {
+      throw new TypeError('invalid-availability-probe-correspondence');
+    }
+    return;
+  }
+  if (
+    input.backend !== 'ripgrep' ||
+    input.argvClass !== 'ripgrep-version' ||
+    input.request.executable !== 'rg' ||
+    !sameStringArrayV2(input.request.argv, ['--version'])
+  ) {
+    throw new TypeError('invalid-availability-probe-correspondence');
+  }
+}
+
+function mapAvailabilityProbeStreamingResultV2(
+  streaming: SafeProcessStreamingResultV2<Uint8Array, Uint8Array>,
+): AvailabilityProbeExecutionResultV2 {
+  if (streaming.ok) {
+    if (streaming.exitCode === 0) {
+      return {
+        ok: true,
+        kind: 'completed',
+        exitCode: streaming.exitCode,
+        terminationSignal: null,
+        stdout: streaming.stdout.value,
+        stderr: streaming.stderr,
+      };
+    }
+    return {
+      ok: false,
+      kind: 'process-exit',
+      exitCode: streaming.exitCode,
+      terminationSignal: null,
+      stdout: { kind: 'unavailable' },
+      stderr: streaming.stderr,
+    };
+  }
+  switch (streaming.kind) {
+    case 'other-spawn-error':
+      return {
+        ok: false,
+        kind:
+          streaming.spawnFailureReason === 'not-found'
+            ? 'executable-not-found'
+            : 'other-spawn-error',
+        exitCode: null,
+        terminationSignal: null,
+        stdout: { kind: 'unavailable' },
+        stderr: streaming.stderr,
+      };
+    case 'invalid-request':
+      return {
+        ok: false,
+        kind: 'other-spawn-error',
+        exitCode: null,
+        terminationSignal: null,
+        stdout: { kind: 'unavailable' },
+        stderr: streaming.stderr,
+      };
+    case 'aborted':
+      return {
+        ok: false,
+        kind: 'aborted',
+        exitCode: streaming.exitCode,
+        terminationSignal: streaming.terminationSignal,
+        stdout: { kind: 'unavailable' },
+        stderr: streaming.stderr,
+      };
+    case 'process-exit':
+      return {
+        ok: false,
+        kind: 'process-exit',
+        exitCode: streaming.exitCode,
+        terminationSignal: streaming.terminationSignal,
+        stdout: { kind: 'unavailable' },
+        stderr: streaming.stderr,
+      };
+    case 'timeout':
+    case 'stdout-limit':
+    case 'stderr-limit':
+    case 'cleanup-invariant':
+      return {
+        ok: false,
+        kind: streaming.kind,
+        exitCode: streaming.exitCode,
+        terminationSignal: streaming.terminationSignal,
+        stdout: { kind: 'unavailable' },
+        stderr: streaming.stderr,
+      };
+    case 'consumer-stop':
+    case 'consumer-invalid':
+      return {
+        ok: false,
+        kind: 'other-spawn-error',
+        exitCode: null,
+        terminationSignal: null,
+        stdout: { kind: 'unavailable' },
+        stderr: streaming.stderr,
+      };
+    default: {
+      const exhaustive: never = streaming;
+      return exhaustive;
+    }
+  }
+}
+
+function freezeRequestV2(request: SafeProcessRequest): SafeProcessRequest {
+  return Object.freeze({
+    ...request,
+    argv: Object.freeze([...request.argv]),
+    ...(request.env === undefined
+      ? {}
+      : { env: Object.freeze({ ...request.env }) }),
+  }) as SafeProcessRequest;
+}
+
+function freezeBindingV2(
+  binding: BackendPhysicalAttemptBindingV2,
+): BackendPhysicalAttemptBindingV2 {
+  return Object.freeze({
+    backend: binding.backend,
+    laneMask: binding.laneMask,
+    kind: binding.kind,
+    request: freezeRequestV2(binding.request),
+  });
 }
 
 async function readCwdIdentity(cwd: string): Promise<CwdIdentityV2> {
@@ -276,17 +434,22 @@ export function createBackendPhysicalAttemptExecutorV2(input: {
 
   const allocateStart = <TResult>(
     binding: BackendPhysicalAttemptBindingV2,
+    startMode: BackendPhysicalAttemptStartModeV2,
+    availabilityProbeClass: ExecutableAvailabilityProbeArgvClassV2 | null,
     promise: Promise<TResult>,
     execution: LocateExecutionTokenV2,
   ): BackendPhysicalAttemptStartV2<TResult> => {
     assertExecution(execution);
-    assertBackend(binding.backend);
+    const bindingSnapshot = freezeBindingV2(binding);
+    assertBackend(bindingSnapshot.backend);
     input.assertNotSealed?.();
     const token =
       createProcessOpaqueTokenV2<BackendPhysicalAttemptStartV2<TResult>>();
     const record: StartRecordV2<TResult> = {
       ordinal: nextOrdinal,
-      binding,
+      binding: bindingSnapshot,
+      startMode,
+      availabilityProbeClass,
       promise,
       execution,
       context: input.context,
@@ -314,13 +477,19 @@ export function createBackendPhysicalAttemptExecutorV2(input: {
       assertExecution(execution);
       assertBackend(binding.backend);
       try {
-        const cwd = await readCwdIdentity(binding.request.cwd);
+        const request = freezeRequestV2(binding.request);
+        validateAvailabilityProbeCorrespondenceV2({
+          backend: binding.backend,
+          argvClass: binding.argvClass,
+          request,
+        });
+        const cwd = await readCwdIdentity(request.cwd);
         const prepared =
           createProcessOpaqueTokenV2<PreparedExecutableAvailabilityProbeV2>();
         preparedPrivate.set(prepared, {
           backend: binding.backend,
           argvClass: binding.argvClass,
-          request: binding.request,
+          request,
           cwd,
           nonce: Symbol('availability-nonce'),
           execution,
@@ -451,68 +620,20 @@ export function createBackendPhysicalAttemptExecutorV2(input: {
               stderr: new Uint8Array(),
             };
           }
-          const result = await input.runner.run(preparedRecord.request, signal);
-          if (!result.ok && result.kind === 'spawn-error') {
-            // ENOENT 稳定 not-found；其余 other-spawn
-            const kind = isNotFoundCode((result as { code?: unknown }).code)
-              ? 'executable-not-found'
-              : 'executable-not-found';
-            // generic runner 不暴露 code；availability 路径：spawn-error → not-found 当 executable 缺失
-            void kind;
-            return {
-              ok: false,
-              kind: 'executable-not-found',
-              exitCode: null,
-              terminationSignal: null,
-              stdout: { kind: 'unavailable' },
-              stderr: new Uint8Array(),
-            };
-          }
-          if (!result.ok) {
-            if (
-              result.kind === 'aborted' ||
-              result.kind === 'timeout' ||
-              result.kind === 'stdout-limit' ||
-              result.kind === 'stderr-limit'
-            ) {
-              return {
-                ok: false,
-                kind: result.kind,
-                exitCode: result.exitCode,
-                terminationSignal: result.terminationSignal,
-                stdout: { kind: 'unavailable' },
-                stderr: result.stderr,
-              };
-            }
-            if (result.kind === 'non-zero-exit') {
-              return {
-                ok: false,
-                kind: 'process-exit',
-                exitCode: result.exitCode,
-                terminationSignal: result.terminationSignal,
-                stdout: { kind: 'unavailable' },
-                stderr: result.stderr,
-              };
-            }
-            return {
-              ok: false,
-              kind: 'other-spawn-error',
-              exitCode: null,
-              terminationSignal: null,
-              stdout: { kind: 'unavailable' },
-              stderr: new Uint8Array(),
-            };
-          }
-          return {
-            ok: true,
-            kind: 'completed',
-            exitCode: 0,
-            terminationSignal: null,
-            stdout: result.stdout,
-            stderr: result.stderr,
-          };
+          const streaming = await input.runner.runStreaming(
+            preparedRecord.request,
+            signal,
+            new BoundedByteCollectorV2(),
+          );
+          return mapAvailabilityProbeStreamingResultV2(streaming);
         })();
-      return allocateStart(binding, promise, execution);
+      return allocateStart(
+        binding,
+        'availability-probe',
+        preparedRecord.argvClass,
+        promise,
+        execution,
+      );
     },
 
     startBuffered(
@@ -523,7 +644,7 @@ export function createBackendPhysicalAttemptExecutorV2(input: {
       assertExecution(execution);
       assertBackend(binding.backend);
       const promise = input.runner.run(binding.request, signal);
-      return allocateStart(binding, promise, execution);
+      return allocateStart(binding, 'buffered', null, promise, execution);
     },
 
     startStreaming<TPartial, TComplete>(
@@ -541,7 +662,7 @@ export function createBackendPhysicalAttemptExecutorV2(input: {
         signal,
         consumer,
       );
-      return allocateStart(binding, promise, execution);
+      return allocateStart(binding, 'streaming', null, promise, execution);
     },
 
     async settlePhysicalAttempt<TResult>(
@@ -587,6 +708,8 @@ export function createBackendPhysicalAttemptExecutorV2(input: {
       return Object.freeze({
         ordinal: record.ordinal,
         binding: record.binding,
+        startMode: record.startMode,
+        availabilityProbeClass: record.availabilityProbeClass,
       });
     },
 
@@ -601,6 +724,7 @@ export function createBackendPhysicalAttemptExecutorV2(input: {
       if (
         record === undefined ||
         record.execution !== execution ||
+        record.context !== input.context ||
         !record.settled ||
         record.resultValue === undefined
       ) {
@@ -609,6 +733,8 @@ export function createBackendPhysicalAttemptExecutorV2(input: {
       return Object.freeze({
         ordinal: record.ordinal,
         binding: record.binding,
+        startMode: record.startMode,
+        availabilityProbeClass: record.availabilityProbeClass,
         result: record.resultValue,
       });
     },

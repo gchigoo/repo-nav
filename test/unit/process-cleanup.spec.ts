@@ -101,7 +101,9 @@ function isProcessAlive(pid: number): boolean {
   }
 }
 
-async function expectInventoryStopped(inventory: ProcessInventory): Promise<void> {
+async function expectInventoryStopped(
+  inventory: ProcessInventory,
+): Promise<void> {
   await waitFor(
     () =>
       !isProcessAlive(inventory.parentPid) &&
@@ -186,137 +188,137 @@ class FailingTreeTerminationRunner extends NodeSafeProcessRunner {
     return Promise.reject(new Error('synthetic termination failure'));
   }
 
-  protected override killDirectChild(
-    child: ReturnType<typeof spawn>,
-  ): void {
+  protected override killDirectChild(child: ReturnType<typeof spawn>): void {
     queueMicrotask(() => {
       child.emit('error', new Error('synthetic direct kill failure'));
     });
   }
 }
 
-describe.runIf(isSelected(cleanupIdentity))('process and reader cleanup', () => {
-  it('terminates direct child and descendant on caller abort and settles once', async () => {
-    const cwd = mkdtempSync(resolve(tmpdir(), 'repo-nav-process-abort-'));
-    const pidFile = resolve(cwd, 'pids.json');
-    const controller = new AbortController();
-    let inventory: ProcessInventory | undefined;
-    let settlements = 0;
-    try {
-      const runPromise = new NodeSafeProcessRunner().run(
-        treeRequest(cwd, pidFile),
-        controller.signal,
-      );
-      void runPromise.then(
-        () => {
-          settlements += 1;
-        },
-        () => {
-          settlements += 1;
-        },
-      );
-      await waitFor(() => existsSync(pidFile));
-      inventory = readInventory(pidFile);
-      expect(getEventListeners(controller.signal, 'abort')).toHaveLength(1);
-
-      controller.abort();
-      const result = await runPromise;
-      expectTermination(result, 'aborted');
-      await expectInventoryStopped(inventory);
-      await delay(150);
-      expect(settlements).toBe(1);
-      expect(getEventListeners(controller.signal, 'abort')).toHaveLength(0);
-    } finally {
-      forceCleanup(inventory);
-      rmSync(cwd, { recursive: true, force: true });
-    }
-  });
-
-  // Observe pid inventory before awaiting timeout settlement so macOS-intel
-  // spawn latency cannot race past timeoutMs before the helper writes pids.
-  it('terminates direct child and descendant on timeout', async () => {
-    const cwd = mkdtempSync(resolve(tmpdir(), 'repo-nav-process-timeout-'));
-    const pidFile = resolve(cwd, 'pids.json');
-    let inventory: ProcessInventory | undefined;
-    try {
-      const runPromise = new NodeSafeProcessRunner().run(
-        treeRequest(cwd, pidFile, { timeoutMs: 2_000 }),
-        new AbortController().signal,
-      );
-      await waitFor(() => existsSync(pidFile), 15_000);
-      inventory = readInventory(pidFile);
-      const result = await runPromise;
-      expectTermination(result, 'timeout');
-      await expectInventoryStopped(inventory);
-    } finally {
-      forceCleanup(inventory);
-      rmSync(cwd, { recursive: true, force: true });
-    }
-  }, 20_000);
-
-  it.each([
-    ['stdout', 'stdout-limit'],
-    ['stderr', 'stderr-limit'],
-  ] as const)(
-    'terminates direct child and descendant when %s observes N+1',
-    async (stream, kind) => {
-      const cwd = mkdtempSync(resolve(tmpdir(), 'repo-nav-process-cap-'));
+describe.runIf(isSelected(cleanupIdentity))(
+  'process and reader cleanup',
+  () => {
+    it('terminates direct child and descendant on caller abort and settles once', async () => {
+      const cwd = mkdtempSync(resolve(tmpdir(), 'repo-nav-process-abort-'));
       const pidFile = resolve(cwd, 'pids.json');
+      const controller = new AbortController();
       let inventory: ProcessInventory | undefined;
+      let settlements = 0;
       try {
-        const result = await new NodeSafeProcessRunner().run(
-          treeRequest(
-            cwd,
-            pidFile,
-            stream === 'stdout'
-              ? { maxStdoutBytes: 1024 }
-              : { maxStderrBytes: 1024 },
-            [stream, '1025'],
-          ),
-          new AbortController().signal,
+        const runPromise = new NodeSafeProcessRunner().run(
+          treeRequest(cwd, pidFile),
+          controller.signal,
+        );
+        void runPromise.then(
+          () => {
+            settlements += 1;
+          },
+          () => {
+            settlements += 1;
+          },
         );
         await waitFor(() => existsSync(pidFile));
         inventory = readInventory(pidFile);
-        expectTermination(result, kind);
-        expect(result[stream]).toHaveLength(1024);
+        expect(getEventListeners(controller.signal, 'abort')).toHaveLength(1);
+
+        controller.abort();
+        const result = await runPromise;
+        expectTermination(result, 'aborted');
+        await expectInventoryStopped(inventory);
+        await delay(150);
+        expect(settlements).toBe(1);
+        expect(getEventListeners(controller.signal, 'abort')).toHaveLength(0);
+      } finally {
+        forceCleanup(inventory);
+        rmSync(cwd, { recursive: true, force: true });
+      }
+    });
+
+    // Observe pid inventory before awaiting timeout settlement so macOS-intel
+    // spawn latency cannot race past timeoutMs before the helper writes pids.
+    it('terminates direct child and descendant on timeout', async () => {
+      const cwd = mkdtempSync(resolve(tmpdir(), 'repo-nav-process-timeout-'));
+      const pidFile = resolve(cwd, 'pids.json');
+      let inventory: ProcessInventory | undefined;
+      try {
+        const runPromise = new NodeSafeProcessRunner().run(
+          treeRequest(cwd, pidFile, { timeoutMs: 2_000 }),
+          new AbortController().signal,
+        );
+        await waitFor(() => existsSync(pidFile), 15_000);
+        inventory = readInventory(pidFile);
+        const result = await runPromise;
+        expectTermination(result, 'timeout');
         await expectInventoryStopped(inventory);
       } finally {
         forceCleanup(inventory);
         rmSync(cwd, { recursive: true, force: true });
       }
-    },
-  );
+    }, 20_000);
 
-  it('rejects within a fixed cleanup deadline when tree termination fails', async () => {
-    const cwd = mkdtempSync(resolve(tmpdir(), 'repo-nav-process-fail-'));
-    const pidFile = resolve(cwd, 'pids.json');
-    const controller = new AbortController();
-    const runner = new FailingTreeTerminationRunner();
-    const startedAt = Date.now();
-    let inventory: ProcessInventory | undefined;
-    try {
-      const runPromise = runner.run(
-        treeRequest(cwd, pidFile, { timeoutMs: 500, terminateGraceMs: 50 }),
-        controller.signal,
-      );
-      await waitFor(() => existsSync(pidFile));
-      inventory = readInventory(pidFile);
-      await expect(runPromise).rejects.toThrow(
-        'Safe process cleanup invariant failed.',
-      );
-      expect(Date.now() - startedAt).toBeLessThan(3_000);
-      expect(runner.forceAttempts).toEqual([false, true]);
-      expect(getEventListeners(controller.signal, 'abort')).toHaveLength(0);
-    } finally {
-      forceCleanup(inventory);
-      if (inventory !== undefined) {
-        await expectInventoryStopped(inventory);
+    it.each([
+      ['stdout', 'stdout-limit'],
+      ['stderr', 'stderr-limit'],
+    ] as const)(
+      'terminates direct child and descendant when %s observes N+1',
+      async (stream, kind) => {
+        const cwd = mkdtempSync(resolve(tmpdir(), 'repo-nav-process-cap-'));
+        const pidFile = resolve(cwd, 'pids.json');
+        let inventory: ProcessInventory | undefined;
+        try {
+          const result = await new NodeSafeProcessRunner().run(
+            treeRequest(
+              cwd,
+              pidFile,
+              stream === 'stdout'
+                ? { maxStdoutBytes: 1024 }
+                : { maxStderrBytes: 1024 },
+              [stream, '1025'],
+            ),
+            new AbortController().signal,
+          );
+          await waitFor(() => existsSync(pidFile));
+          inventory = readInventory(pidFile);
+          expectTermination(result, kind);
+          expect(result[stream]).toHaveLength(1024);
+          await expectInventoryStopped(inventory);
+        } finally {
+          forceCleanup(inventory);
+          rmSync(cwd, { recursive: true, force: true });
+        }
+      },
+    );
+
+    it('rejects within a fixed cleanup deadline when tree termination fails', async () => {
+      const cwd = mkdtempSync(resolve(tmpdir(), 'repo-nav-process-fail-'));
+      const pidFile = resolve(cwd, 'pids.json');
+      const controller = new AbortController();
+      const runner = new FailingTreeTerminationRunner();
+      const startedAt = Date.now();
+      let inventory: ProcessInventory | undefined;
+      try {
+        const runPromise = runner.run(
+          treeRequest(cwd, pidFile, { timeoutMs: 500, terminateGraceMs: 50 }),
+          controller.signal,
+        );
+        await waitFor(() => existsSync(pidFile));
+        inventory = readInventory(pidFile);
+        await expect(runPromise).rejects.toThrow(
+          'Safe process cleanup invariant failed.',
+        );
+        expect(Date.now() - startedAt).toBeLessThan(3_000);
+        expect(runner.forceAttempts).toEqual([false, true]);
+        expect(getEventListeners(controller.signal, 'abort')).toHaveLength(0);
+      } finally {
+        forceCleanup(inventory);
+        if (inventory !== undefined) {
+          await expectInventoryStopped(inventory);
+        }
+        rmSync(cwd, { recursive: true, force: true });
       }
-      rmSync(cwd, { recursive: true, force: true });
-    }
-  });
-
-});
+    });
+  },
+);
 
 describe.runIf(
   isSelected({

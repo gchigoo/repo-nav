@@ -51,7 +51,9 @@ function hit(
   };
 }
 
-function result(overrides: Partial<BackendSearchResult> = {}): BackendSearchResult {
+function result(
+  overrides: Partial<BackendSearchResult> = {},
+): BackendSearchResult {
   return {
     health: { state: 'available', version: '1.1.6' },
     hits: [],
@@ -63,7 +65,8 @@ function result(overrides: Partial<BackendSearchResult> = {}): BackendSearchResu
 
 async function observeWithBackends(
   goldenCase: GoldenSuccessCase,
-  backends: readonly CodeGraphTransitionBackend[] | readonly CandidateFixtureBackend[],
+  backends:
+    readonly CodeGraphTransitionBackend[] | readonly CandidateFixtureBackend[],
 ) {
   const locateResult = await createCanonicalLocateEngineHarnessV2(
     backends,
@@ -170,13 +173,25 @@ async function regenerateCodegraph(id: (typeof CODEGRAPH_IDS)[number]) {
     case 'codegraph-secondary-provenance-table': {
       codegraphResult = result({
         hits: [
-          hit('codegraph', 'server/primary.ts', 'export const opaquePrimary = 1;'),
-          hit('codegraph', 'server/merged.ts', 'export const opaqueMerged = 3;'),
+          hit(
+            'codegraph',
+            'server/primary.ts',
+            'export const opaquePrimary = 1;',
+          ),
+          hit(
+            'codegraph',
+            'server/merged.ts',
+            'export const opaqueMerged = 3;',
+          ),
         ],
       });
       ripgrepResult = result({
         hits: [
-          hit('ripgrep', 'server/secondary.ts', 'export const opaqueSecondary = 2;'),
+          hit(
+            'ripgrep',
+            'server/secondary.ts',
+            'export const opaqueSecondary = 2;',
+          ),
           hit('ripgrep', 'server/merged.ts', 'export const opaqueMerged = 3;'),
         ],
       });
@@ -202,7 +217,10 @@ async function regenerateCodegraph(id: (typeof CODEGRAPH_IDS)[number]) {
       : undefined,
   );
   const ripgrep = new CodeGraphTransitionBackend('ripgrep', ripgrepResult);
-  const observation = await observeWithBackends(goldenCase, [codegraph, ripgrep]);
+  const observation = await observeWithBackends(goldenCase, [
+    codegraph,
+    ripgrep,
+  ]);
   if (!observation.result.ok) {
     throw new Error(`${id} not ok`);
   }
@@ -234,7 +252,10 @@ function stringifyYamlKeepSimple(doc: Record<string, unknown>): string {
   ).replace(/\s*$/u, '');
 }
 
-async function regenerateTextEngine(id: string, backendResult: BackendSearchResult) {
+async function regenerateTextEngine(
+  id: string,
+  backendResult: BackendSearchResult,
+) {
   const goldenCase = loadSuccess(id);
   class FixtureBackend {
     public readonly id = 'ripgrep' as const;

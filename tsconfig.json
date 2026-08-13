@@ -29,7 +29,7 @@
     "test/**/*.ts",
     "testkit/**/*.ts",
     "tools/**/*.ts",
-    "vitest.config.ts"
+    "vitest*.config.ts"
   ],
   "exclude": ["dist", "node_modules", "testkit/fixtures/benchmark-repos/**"]
 }

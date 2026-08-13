@@ -302,10 +302,7 @@ export function createEvidencePackMutationFixture(): LocateResultV2 {
             verifiedBy: 'filesystem',
             operations: ['FILESYSTEM_FIND_MATCHES'],
           },
-          reasonCodes: [
-            'SAME_SCOPE_SIMILAR_IDENTIFIER',
-            'SAME_ENTITY_SIBLING',
-          ],
+          reasonCodes: ['SAME_SCOPE_SIMILAR_IDENTIFIER', 'SAME_ENTITY_SIBLING'],
           promotionRequirements: [
             'USER_SEMANTIC_CONFIRMATION',
             'DIRECT_REFERENCE_REQUIRED',

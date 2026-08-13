@@ -101,7 +101,11 @@ describe.runIf(
     expect(facts.excludedLedger.length).toBe(12);
     expect(facts.candidates.some((c) => c.locatorRef === serverRef)).toBe(true);
 
-    const anchorKey = encodeAnchorComparisonKeyV2('file', true, 'safe-server.ts');
+    const anchorKey = encodeAnchorComparisonKeyV2(
+      'file',
+      true,
+      'safe-server.ts',
+    );
     const draft = new DiscoveryHitSelectorV2().select(
       folded,
       [
@@ -196,7 +200,9 @@ describe.runIf(
     const facts = readScopeFoldedSelectorFactsV2(folded, execution);
     expect(facts.candidates).toHaveLength(0);
     expect(facts.safeSelectionCollision).toBe(true);
-    expect(facts.excludedLedger.map((e) => e.locatorRef)).toEqual([excludedRef]);
+    expect(facts.excludedLedger.map((e) => e.locatorRef)).toEqual([
+      excludedRef,
+    ]);
 
     const mixedConfirmation = scopeFoldSafeCandidatePoolV2(
       preCap,

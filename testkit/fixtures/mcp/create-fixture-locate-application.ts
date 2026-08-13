@@ -50,7 +50,9 @@ function transportErrorView(
   );
 }
 
-function transportSuccessView(value: LocateResultV2): PublicLocateTransportViewV2 {
+function transportSuccessView(
+  value: LocateResultV2,
+): PublicLocateTransportViewV2 {
   const parsed = LocateResultV2Schema.parse(value);
   const compactJson = JSON.stringify(parsed);
   return Object.freeze({

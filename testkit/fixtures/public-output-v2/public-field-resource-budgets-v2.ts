@@ -53,7 +53,9 @@ export function withOversizedPublicFileAndExcerpt(): FinalizedUnsafeLocateResult
   return raw;
 }
 
-export function withPublicFileBytes(bytes: number): FinalizedUnsafeLocateResultV2 {
+export function withPublicFileBytes(
+  bytes: number,
+): FinalizedUnsafeLocateResultV2 {
   const raw = structuredClone(createUnsafeLocateSuccessV2());
   if (!raw.ok) throw new Error('expected success');
   const mutable = raw as unknown as {

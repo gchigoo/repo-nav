@@ -17,6 +17,13 @@ import {
   type LegacyV1SourceStateV2,
 } from '../../testkit/fixtures/repository-hardening-v2/legacy-v1-api-map-v2.js';
 import {
+  PUBLIC_PACKAGE_EXPORT_DISPOSITIONS_V2,
+  PUBLIC_PACKAGE_EXPORT_KEYS_V2,
+  PUBLIC_PACKAGE_SUBPATH_EXPORTS_V2,
+  type PublicPackageExportDispositionV2,
+  type PublicPackageSubpathExportsV2,
+} from '../../testkit/fixtures/repository-hardening-v2/public-package-subpaths-v2.js';
+import {
   PUBLIC_ROOT_RUNTIME_EXPORT_KEYS_V2,
   PUBLIC_ROOT_TYPE_EXPORT_KEYS_V2,
 } from '../../testkit/fixtures/repository-hardening-v2/public-root-api-v2.js';
@@ -33,6 +40,11 @@ import { isSelected } from '../../testkit/testing/selection.js';
 interface ExportInventoryV2 {
   readonly runtime: readonly string[];
   readonly types: readonly string[];
+}
+
+interface ObservedPackageSubpathExportsV2 extends ExportInventoryV2 {
+  readonly specifier: string;
+  readonly sourceFile: string;
 }
 
 interface WeakRegistrySiteV2 {
@@ -55,6 +67,8 @@ interface VersionAuthorityObservationV2 {
 
 interface SourceInventoryV2 {
   readonly root: ExportInventoryV2;
+  readonly packageExportKeys: readonly string[];
+  readonly packageSubpaths: readonly ObservedPackageSubpathExportsV2[];
   readonly legacy: LegacySourceInventoryV2;
   readonly weakSites: readonly WeakRegistrySiteV2[];
   readonly versionAuthorities: readonly VersionAuthorityObservationV2[];
@@ -63,6 +77,9 @@ interface SourceInventoryV2 {
 interface InventoryFixtureV2 {
   readonly rootRuntime: readonly string[];
   readonly rootTypes: readonly string[];
+  readonly packageExportKeys: readonly string[];
+  readonly packageExportDispositions: readonly PublicPackageExportDispositionV2[];
+  readonly packageSubpaths: readonly PublicPackageSubpathExportsV2[];
   readonly legacyState: LegacyV1SourceStateV2;
   readonly legacy: readonly LegacyV1ApiReplacementV2[];
   readonly weak: readonly WeakRegistryDispositionV2[];
@@ -76,6 +93,21 @@ const REQUIRED_LEGACY_MAPPINGS_V2 = Object.freeze([
     legacy: 'repo-nav/legacy-v1',
     replacement: 'repo-nav',
     disposition: 'replace',
+  }),
+  Object.freeze({
+    legacy: 'repo-nav/advanced',
+    replacement: 'repo-nav/advanced',
+    disposition: 'retained-root',
+  }),
+  Object.freeze({
+    legacy: 'repo-nav/backends',
+    replacement: 'repo-nav/backends',
+    disposition: 'retained-root',
+  }),
+  Object.freeze({
+    legacy: 'repo-nav/node',
+    replacement: 'repo-nav/node',
+    disposition: 'retained-root',
   }),
   Object.freeze({
     legacy: 'LocateResult',
@@ -313,6 +345,26 @@ function requireStringFieldV2(
     throw new Error(`${owner}.${field} must be a string`);
   }
   return value;
+}
+
+function packageExportSourceFileV2(
+  specifier: string,
+  target: unknown,
+): string | null {
+  if (specifier === '.' || !specifier.startsWith('./')) {
+    return null;
+  }
+  const importTarget =
+    typeof target === 'object' && target !== null && !Array.isArray(target)
+      ? Reflect.get(target, 'import')
+      : null;
+  if (
+    typeof importTarget !== 'string' ||
+    !/^\.\/dist\/[a-z0-9-]+\.js$/u.test(importTarget)
+  ) {
+    return null;
+  }
+  return `src/${importTarget.slice('./dist/'.length, -'.js'.length)}.ts`;
 }
 
 function parseJavascriptSourceV2(relativePath: string): ts.SourceFile {
@@ -1049,8 +1101,40 @@ async function readSourceInventoryV2(): Promise<SourceInventoryV2> {
           ),
         });
 
+  const pkg = readJsonRecordV2('package.json');
+  const packageExports = pkg['exports'];
+  if (
+    typeof packageExports !== 'object' ||
+    packageExports === null ||
+    Array.isArray(packageExports)
+  ) {
+    throw new Error('package.json exports must be an object');
+  }
+
+  const packageExportKeys = Object.keys(packageExports).sort(compareText);
+  const packageSubpaths = packageExportKeys.flatMap((specifier) => {
+    const sourceFile = packageExportSourceFileV2(
+      specifier,
+      Reflect.get(packageExports, specifier),
+    );
+    if (sourceFile === null || specifier === './legacy-v1') {
+      return [];
+    }
+    const observed = enumerateModuleExportsV2(program, sourceFile);
+    return [
+      Object.freeze({
+        specifier,
+        sourceFile,
+        runtime: observed.runtime,
+        types: observed.types,
+      }),
+    ];
+  });
+
   return Object.freeze({
     root: enumerateModuleExportsV2(program, 'src/index.ts'),
+    packageExportKeys: Object.freeze(packageExportKeys),
+    packageSubpaths: Object.freeze(packageSubpaths),
     legacy,
     weakSites: enumerateWeakRegistrySitesV2(program),
     versionAuthorities: await enumerateVersionAuthorityObservationsV2(),
@@ -1061,6 +1145,15 @@ function fixtureInventoryV2(): InventoryFixtureV2 {
   return {
     rootRuntime: [...PUBLIC_ROOT_RUNTIME_EXPORT_KEYS_V2],
     rootTypes: [...PUBLIC_ROOT_TYPE_EXPORT_KEYS_V2],
+    packageExportKeys: [...PUBLIC_PACKAGE_EXPORT_KEYS_V2],
+    packageExportDispositions: PUBLIC_PACKAGE_EXPORT_DISPOSITIONS_V2.map(
+      (entry) => ({ ...entry }),
+    ),
+    packageSubpaths: PUBLIC_PACKAGE_SUBPATH_EXPORTS_V2.map((entry) => ({
+      ...entry,
+      runtime: [...entry.runtime],
+      types: [...entry.types],
+    })),
     legacyState: LEGACY_V1_SOURCE_STATE_V2,
     legacy: LEGACY_V1_API_REPLACEMENTS_V2.map((entry) => ({ ...entry })),
     weak: WEAK_REGISTRY_DISPOSITIONS_V2.map((entry) => ({ ...entry })),
@@ -1116,6 +1209,120 @@ function evaluateRepositoryHardeningInventoryV2(
   }
   if (!sameStringsV2(fixture.rootTypes, source.root.types)) {
     issues.push('root type exports are not deep-exact');
+  }
+
+  const packageExportDuplicates = duplicateValuesV2(fixture.packageExportKeys);
+  if (packageExportDuplicates.length > 0) {
+    issues.push(
+      `package exports contain duplicates: ${packageExportDuplicates.join(', ')}`,
+    );
+  }
+  if (
+    !sameStringsV2(
+      [...fixture.packageExportKeys].sort(compareText),
+      [...source.packageExportKeys].sort(compareText),
+    )
+  ) {
+    issues.push('package export keys are not deep-exact');
+  }
+
+  const dispositionSpecifiers = fixture.packageExportDispositions.map(
+    (entry) => entry.specifier,
+  );
+  const duplicateDispositions = duplicateValuesV2(dispositionSpecifiers);
+  if (duplicateDispositions.length > 0) {
+    issues.push(
+      `package export dispositions contain duplicates: ${duplicateDispositions.join(', ')}`,
+    );
+  }
+  if (
+    !sameStringsV2(
+      [...dispositionSpecifiers].sort(compareText),
+      [...fixture.packageExportKeys].sort(compareText),
+    )
+  ) {
+    issues.push('package export dispositions are not deep-exact');
+  }
+  const dispositionsBySpecifier = new Map(
+    fixture.packageExportDispositions.map((entry) => [entry.specifier, entry]),
+  );
+  const legacyDisposition = dispositionsBySpecifier.get('./legacy-v1');
+  if (
+    (legacyDisposition !== undefined &&
+      legacyDisposition.action !== 'remove-c5') ||
+    [...dispositionsBySpecifier.values()].some(
+      (entry) =>
+        entry.specifier !== './legacy-v1' && entry.action !== 'retain-c5',
+    )
+  ) {
+    issues.push('package export C5 dispositions are inconsistent');
+  }
+
+  const sourceSubpathsBySpecifier = new Map(
+    source.packageSubpaths.map((entry) => [entry.specifier, entry] as const),
+  );
+  const fixtureSubpathSpecifiers = fixture.packageSubpaths.map(
+    (entry) => entry.specifier,
+  );
+  const duplicateSubpaths = duplicateValuesV2(fixtureSubpathSpecifiers);
+  if (duplicateSubpaths.length > 0) {
+    issues.push(
+      `package subpaths contain duplicates: ${duplicateSubpaths.join(', ')}`,
+    );
+  }
+  if (
+    !sameStringsV2(
+      [...fixtureSubpathSpecifiers].sort(compareText),
+      [...sourceSubpathsBySpecifier.keys()].sort(compareText),
+    )
+  ) {
+    issues.push('package subpath inventories are not deep-exact');
+  }
+  const retainedAdapterSubpaths = fixture.packageExportDispositions
+    .filter(
+      (entry) =>
+        entry.action === 'retain-c5' &&
+        entry.specifier.startsWith('./') &&
+        entry.specifier !== './package.json',
+    )
+    .map((entry) => entry.specifier);
+  if (
+    !sameStringsV2(
+      [...fixtureSubpathSpecifiers].sort(compareText),
+      [...retainedAdapterSubpaths].sort(compareText),
+    )
+  ) {
+    issues.push('retained package subpath inventories are not deep-exact');
+  }
+  for (const expected of fixture.packageSubpaths) {
+    if (!fixture.packageExportKeys.includes(expected.specifier)) {
+      issues.push(`package subpath export is missing: ${expected.specifier}`);
+    }
+    if (
+      dispositionsBySpecifier.get(expected.specifier)?.action !== 'retain-c5'
+    ) {
+      issues.push(
+        `package subpath is not retained for C5: ${expected.specifier}`,
+      );
+    }
+    const observed = sourceSubpathsBySpecifier.get(expected.specifier);
+    if (observed === undefined) {
+      issues.push(`package subpath is not observed: ${expected.specifier}`);
+      continue;
+    }
+    if (observed.sourceFile !== expected.sourceFile) {
+      issues.push(`package subpath source mismatch: ${expected.specifier}`);
+    }
+    if (!sameStringsV2(expected.runtime, observed.runtime)) {
+      issues.push(
+        `package subpath runtime exports mismatch: ${expected.specifier}`,
+      );
+    }
+    if (!sameStringsV2(expected.types, observed.types)) {
+      issues.push(
+        `package subpath type exports mismatch: ${expected.specifier}`,
+      );
+    }
   }
 
   const legacyKeys = fixture.legacy.map((entry) => entry.legacy);
@@ -1405,9 +1612,7 @@ describe.runIf(selected)('P0 repository-hardening inventory', () => {
     const currentSource = await currentSourceInventoryV2();
     const baseline = fixtureInventoryV2();
     const cutoverRootTypes = baseline.rootTypes
-      .map((entry) =>
-        entry === 'PackageMetadataV1' ? 'PackageMetadata' : entry,
-      )
+      .filter((entry) => entry !== 'PackageMetadataV1')
       .sort();
     const currentPackageVersion = baseline.versions.find(
       (entry) => entry.id === 'package-json-root',
@@ -1425,9 +1630,18 @@ describe.runIf(selected)('P0 repository-hardening inventory', () => {
           syntheticCutoverVersion,
         ),
       }));
+    const cutoverPackageExportKeys = baseline.packageExportKeys.filter(
+      (entry) => entry !== './legacy-v1',
+    );
+    const cutoverPackageExportDispositions =
+      baseline.packageExportDispositions.filter(
+        (entry) => entry.specifier !== './legacy-v1',
+      );
     const cutoverFixture: InventoryFixtureV2 = {
       ...baseline,
       rootTypes: cutoverRootTypes,
+      packageExportKeys: cutoverPackageExportKeys,
+      packageExportDispositions: cutoverPackageExportDispositions,
       legacyState: 'removed',
       versions: cutoverVersions,
     };
@@ -1437,6 +1651,7 @@ describe.runIf(selected)('P0 repository-hardening inventory', () => {
         runtime: cutoverFixture.rootRuntime,
         types: cutoverRootTypes,
       },
+      packageExportKeys: cutoverPackageExportKeys,
       legacy: { state: 'removed', exports: [] },
       versionAuthorities: cutoverVersions.map((entry) => ({
         id: entry.id,
@@ -1474,6 +1689,56 @@ describe.runIf(selected)('P0 repository-hardening inventory', () => {
         fixture: {
           ...baseline,
           rootRuntime: baseline.rootRuntime.slice(1),
+        },
+      },
+      {
+        name: 'missing-package-export',
+        fixture: {
+          ...baseline,
+          packageExportKeys: baseline.packageExportKeys.filter(
+            (entry) => entry !== './advanced',
+          ),
+        },
+      },
+      {
+        name: 'missing-package-subpath-inventory',
+        fixture: {
+          ...baseline,
+          packageSubpaths: baseline.packageSubpaths.filter(
+            (entry) => entry.specifier !== './advanced',
+          ),
+        },
+      },
+      {
+        name: 'missing-package-export-disposition',
+        fixture: {
+          ...baseline,
+          packageExportDispositions: baseline.packageExportDispositions.filter(
+            (entry) => entry.specifier !== './advanced',
+          ),
+        },
+      },
+      {
+        name: 'wrong-legacy-package-export-disposition',
+        fixture: {
+          ...baseline,
+          packageExportDispositions: baseline.packageExportDispositions.map(
+            (entry) =>
+              entry.specifier === './legacy-v1'
+                ? { ...entry, action: 'retain-c5' as const }
+                : entry,
+          ),
+        },
+      },
+      {
+        name: 'changed-package-subpath-type-export',
+        fixture: {
+          ...baseline,
+          packageSubpaths: baseline.packageSubpaths.map((entry) =>
+            entry.specifier === './advanced'
+              ? { ...entry, types: entry.types.slice(1) }
+              : entry,
+          ),
         },
       },
       {

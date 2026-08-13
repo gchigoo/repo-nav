@@ -7,6 +7,7 @@ import type {
   RepositorySearchBackend,
   RepositoryEvidenceService,
 } from '../../src/contracts/index.js';
+import type { TraceableRepositorySearchBackendV2 } from '../../src/contracts/v2/traceable-repository-search-backend-v2.js';
 import { createAcceptedCompleteRealLocateShadowOrchestratorV2 } from '../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js';
 import { CanonicalRepositoryLocateExecutorV2 } from '../../src/evidence/locate-execution/canonical-locate-executor-v2.js';
 import { PublicLocateExecutionApplicationServiceV2 } from '../../src/evidence/locate-execution/public-locate-execution-application-v2.js';
@@ -22,6 +23,15 @@ export interface CanonicalLocateEngineHarnessV2 {
 }
 
 /**
+ * Upgrade fixture backends at the testkit boundary; production never duck-types.
+ */
+export function asTraceableSearchBackendsV2(
+  backends: readonly RepositorySearchBackend[],
+): readonly TraceableRepositorySearchBackendV2[] {
+  return wrapFixtureBackendsSearchViewsV2(backends);
+}
+
+/**
  * Create the production wiring shape used by migrated constructor tests.
  * Fixture backends without searchViews are wrapped so coverage telemetry registers.
  */
@@ -29,9 +39,8 @@ export function createCanonicalLocateEngineHarnessV2(
   backends: readonly RepositorySearchBackend[],
   reader: RepositoryReader,
 ): CanonicalLocateEngineHarnessV2 {
-  const wiredBackends = wrapFixtureBackendsSearchViewsV2(backends);
   const executor = new CanonicalRepositoryLocateExecutorV2(
-    wiredBackends,
+    asTraceableSearchBackendsV2(backends),
     reader,
   );
   const orchestrator = createAcceptedCompleteRealLocateShadowOrchestratorV2();

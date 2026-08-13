@@ -32,13 +32,14 @@ export const EARLY_STOP_RIPGREP_V2: BackendExecutionOutcomeV2 = Object.freeze({
   ]),
 });
 
-export const UNAVAILABLE_CODEGRAPH_V2: BackendExecutionOutcomeV2 = Object.freeze({
-  backend: 'codegraph',
-  status: 'unavailable',
-  completion: 'incomplete',
-  selectionEligibility: 'telemetry-only',
-  termination: 'none',
-  reasonCode: 'CODEGRAPH_INDEX_MISSING',
-  hitCount: 0,
-  retainedHits: Object.freeze([]) as readonly [],
-});
+export const UNAVAILABLE_CODEGRAPH_V2: BackendExecutionOutcomeV2 =
+  Object.freeze({
+    backend: 'codegraph',
+    status: 'unavailable',
+    completion: 'incomplete',
+    selectionEligibility: 'telemetry-only',
+    termination: 'none',
+    reasonCode: 'CODEGRAPH_INDEX_MISSING',
+    hitCount: 0,
+    retainedHits: Object.freeze([]) as readonly [],
+  });

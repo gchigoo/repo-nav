@@ -1,18 +1,11 @@
-import {
-  mkdirSync,
-  mkdtempSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
 import type { CanonicalFileKeyV2 } from '../../src/evidence/request-snapshot/canonical-file-identity-v2.js';
-import {
-  buildPreRankingStablePoolsV2,
-} from '../../src/evidence/request-snapshot/pre-ranking-evidence-pool-v2.js';
+import { buildPreRankingStablePoolsV2 } from '../../src/evidence/request-snapshot/pre-ranking-evidence-pool-v2.js';
 import { createRequestRepositorySnapshotV2 } from '../../src/evidence/request-snapshot/request-repository-snapshot-v2.js';
 import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
 import {

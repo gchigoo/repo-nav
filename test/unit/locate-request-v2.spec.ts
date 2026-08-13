@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { LocateRequestSchema, normalizeLocateAnchors, normalizeSearchTerms } from '../../src/contracts/request.js';
+import {
+  LocateRequestSchema,
+  normalizeLocateAnchors,
+  normalizeSearchTerms,
+} from '../../src/contracts/request.js';
 import { assertRawRepoPathV2 } from '../../src/contracts/v2/filesystem-input.js';
 import {
   guardLocateRequestRawV2,

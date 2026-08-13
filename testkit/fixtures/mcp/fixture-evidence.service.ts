@@ -190,8 +190,7 @@ function successResult(request: LocateRequest): LocateResultV2 {
   const status = requestedStatus(question);
   const sourceMapping = question === 'source-field-mapping';
   const redactionOutput = question === 'redaction-output-parity';
-  const needsConfirmed =
-    sourceMapping || redactionOutput || status === 'ok';
+  const needsConfirmed = sourceMapping || redactionOutput || status === 'ok';
 
   const confirmed = needsConfirmed
     ? [
@@ -226,10 +225,7 @@ function successResult(request: LocateRequest): LocateResultV2 {
               : {}),
           },
           provenance: baseProvenance(),
-          reasonCodes: [
-            'EXACT_TERM_MATCH',
-            'DIRECT_ALIAS_MAPPING',
-          ] as const,
+          reasonCodes: ['EXACT_TERM_MATCH', 'DIRECT_ALIAS_MAPPING'] as const,
         },
         ...(redactionOutput
           ? [

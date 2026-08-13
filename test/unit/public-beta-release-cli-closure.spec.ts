@@ -22,8 +22,20 @@ describe.runIf(
       readFileSync(resolve(root, 'package.json'), 'utf8'),
     ) as { bin?: Record<string, string> };
     expect(pkg.bin?.['repo-nav']).toBe(CLI_MAIN_RELATIVE_V2);
-    expect(readFileSync(resolve(root, 'src/cli/main.ts'), 'utf8').length).toBeGreaterThan(
-      0,
+    const execute = readFileSync(resolve(root, 'src/cli/execute.ts'), 'utf8');
+    const main = readFileSync(resolve(root, 'src/cli/main.ts'), 'utf8');
+    const adapter = readFileSync(
+      resolve(root, 'src/cli/application-adapter.ts'),
+      'utf8',
     );
+    for (const lightweightSource of [execute, main]) {
+      expect(lightweightSource).not.toMatch(
+        /create-application-context|@nestjs|modelcontextprotocol|evidence\/|repository\/|REPOSITORY_(?:READER|SEARCH_BACKENDS)/u,
+      );
+    }
+    expect(execute).toContain("import('./application-adapter.js')");
+    expect(adapter).toContain('createRepoNavApplicationContext');
+    expect(adapter).toContain('PUBLIC_LOCATE_EXECUTION_APPLICATION_V2');
+    expect(adapter).toContain('REPOSITORY_SEARCH_BACKENDS');
   });
 });

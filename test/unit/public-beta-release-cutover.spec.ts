@@ -37,7 +37,10 @@ describe.runIf(
       const executor = application.get(CANONICAL_LOCATE_EXECUTOR_V2);
       expect(executor).toBeDefined();
       const src = readFileSync(
-        resolve(root, 'src/evidence/locate-execution/v2-locate-result-projector.ts'),
+        resolve(
+          root,
+          'src/evidence/locate-execution/v2-locate-result-projector.ts',
+        ),
         'utf8',
       );
       expect(src).toContain(CUTOVER_REQUIRED_TOKEN_V2);

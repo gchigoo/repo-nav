@@ -110,7 +110,8 @@ function evaluateCompanionProjection(
       : [
           {
             path: comparison.firstDifferencePath ?? 'result',
-            message: 'Full stable projection differs from the companion snapshot.',
+            message:
+              'Full stable projection differs from the companion snapshot.',
           },
         ];
   } catch (error: unknown) {
@@ -195,7 +196,9 @@ function evaluateSuccess(
     }
   }
 
-  issues.push(...evaluateCompanionProjection(goldenCase.id, observation, issues));
+  issues.push(
+    ...evaluateCompanionProjection(goldenCase.id, observation, issues),
+  );
 
   return issues;
 }
@@ -221,9 +224,7 @@ function evaluateError(
     });
   }
   const actualSuggestedAction =
-    'suggestedAction' in actualError
-      ? actualError.suggestedAction
-      : undefined;
+    'suggestedAction' in actualError ? actualError.suggestedAction : undefined;
   const expectedSuggestedAction =
     'suggestedAction' in expectedError
       ? expectedError.suggestedAction
@@ -236,10 +237,7 @@ function evaluateError(
   }
   if (goldenCase.expected.structuredTextParity) {
     issues.push(
-      ...evaluateTransportParity(
-        observation,
-        goldenCase.expected.mcpIsError,
-      ),
+      ...evaluateTransportParity(observation, goldenCase.expected.mcpIsError),
     );
   }
 

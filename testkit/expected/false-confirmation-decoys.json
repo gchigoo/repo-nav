@@ -23,25 +23,15 @@
         "location": {
           "file": "server/decoys.fixture",
           "resolvable": true,
-          "lines": [
-            1,
-            1
-          ],
+          "lines": [1, 1],
           "excerpt": "targetField == row.source_field;"
         },
         "provenance": {
-          "discoveredBy": [
-            "ripgrep"
-          ],
+          "discoveredBy": ["ripgrep"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "RIPGREP_SEARCH",
-            "FILESYSTEM_READ_RANGE"
-          ]
+          "operations": ["RIPGREP_SEARCH", "FILESYSTEM_READ_RANGE"]
         },
-        "reasonCodes": [
-          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
-        ],
+        "reasonCodes": ["EXACT_TERM_WITHOUT_DIRECT_MAPPING"],
         "promotionRequirements": [
           "USER_SEMANTIC_CONFIRMATION",
           "DIRECT_REFERENCE_REQUIRED"
@@ -54,25 +44,15 @@
         "location": {
           "file": "server/decoys.fixture",
           "resolvable": true,
-          "lines": [
-            2,
-            2
-          ],
+          "lines": [2, 2],
           "excerpt": "type targetField = row.source_field;"
         },
         "provenance": {
-          "discoveredBy": [
-            "ripgrep"
-          ],
+          "discoveredBy": ["ripgrep"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "RIPGREP_SEARCH",
-            "FILESYSTEM_READ_RANGE"
-          ]
+          "operations": ["RIPGREP_SEARCH", "FILESYSTEM_READ_RANGE"]
         },
-        "reasonCodes": [
-          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
-        ],
+        "reasonCodes": ["EXACT_TERM_WITHOUT_DIRECT_MAPPING"],
         "promotionRequirements": [
           "USER_SEMANTIC_CONFIRMATION",
           "DIRECT_REFERENCE_REQUIRED"
@@ -85,25 +65,15 @@
         "location": {
           "file": "server/decoys.fixture",
           "resolvable": true,
-          "lines": [
-            3,
-            3
-          ],
+          "lines": [3, 3],
           "excerpt": "// targetField = row.source_field;"
         },
         "provenance": {
-          "discoveredBy": [
-            "ripgrep"
-          ],
+          "discoveredBy": ["ripgrep"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "RIPGREP_SEARCH",
-            "FILESYSTEM_READ_RANGE"
-          ]
+          "operations": ["RIPGREP_SEARCH", "FILESYSTEM_READ_RANGE"]
         },
-        "reasonCodes": [
-          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
-        ],
+        "reasonCodes": ["EXACT_TERM_WITHOUT_DIRECT_MAPPING"],
         "promotionRequirements": [
           "USER_SEMANTIC_CONFIRMATION",
           "DIRECT_REFERENCE_REQUIRED"
@@ -116,25 +86,15 @@
         "location": {
           "file": "server/decoys.fixture",
           "resolvable": true,
-          "lines": [
-            4,
-            4
-          ],
+          "lines": [4, 4],
           "excerpt": "const example = \"targetField = row.source_field\";"
         },
         "provenance": {
-          "discoveredBy": [
-            "ripgrep"
-          ],
+          "discoveredBy": ["ripgrep"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "RIPGREP_SEARCH",
-            "FILESYSTEM_READ_RANGE"
-          ]
+          "operations": ["RIPGREP_SEARCH", "FILESYSTEM_READ_RANGE"]
         },
-        "reasonCodes": [
-          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
-        ],
+        "reasonCodes": ["EXACT_TERM_WITHOUT_DIRECT_MAPPING"],
         "promotionRequirements": [
           "USER_SEMANTIC_CONFIRMATION",
           "DIRECT_REFERENCE_REQUIRED"
@@ -147,25 +107,15 @@
         "location": {
           "file": "server/decoys.fixture",
           "resolvable": true,
-          "lines": [
-            5,
-            5
-          ],
+          "lines": [5, 5],
           "excerpt": "interface Dto { targetField: row.source_field }"
         },
         "provenance": {
-          "discoveredBy": [
-            "ripgrep"
-          ],
+          "discoveredBy": ["ripgrep"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "RIPGREP_SEARCH",
-            "FILESYSTEM_READ_RANGE"
-          ]
+          "operations": ["RIPGREP_SEARCH", "FILESYSTEM_READ_RANGE"]
         },
-        "reasonCodes": [
-          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
-        ],
+        "reasonCodes": ["EXACT_TERM_WITHOUT_DIRECT_MAPPING"],
         "promotionRequirements": [
           "USER_SEMANTIC_CONFIRMATION",
           "DIRECT_REFERENCE_REQUIRED"
@@ -178,25 +128,15 @@
         "location": {
           "file": "server/decoys.fixture",
           "resolvable": true,
-          "lines": [
-            6,
-            6
-          ],
+          "lines": [6, 6],
           "excerpt": "@Field({ targetField: row.source_field })"
         },
         "provenance": {
-          "discoveredBy": [
-            "ripgrep"
-          ],
+          "discoveredBy": ["ripgrep"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "RIPGREP_SEARCH",
-            "FILESYSTEM_READ_RANGE"
-          ]
+          "operations": ["RIPGREP_SEARCH", "FILESYSTEM_READ_RANGE"]
         },
-        "reasonCodes": [
-          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
-        ],
+        "reasonCodes": ["EXACT_TERM_WITHOUT_DIRECT_MAPPING"],
         "promotionRequirements": [
           "USER_SEMANTIC_CONFIRMATION",
           "DIRECT_REFERENCE_REQUIRED"
@@ -209,25 +149,15 @@
         "location": {
           "file": "server/decoys.fixture",
           "resolvable": true,
-          "lines": [
-            7,
-            7
-          ],
+          "lines": [7, 7],
           "excerpt": "return { targetField };"
         },
         "provenance": {
-          "discoveredBy": [
-            "ripgrep"
-          ],
+          "discoveredBy": ["ripgrep"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "RIPGREP_SEARCH",
-            "FILESYSTEM_READ_RANGE"
-          ]
+          "operations": ["RIPGREP_SEARCH", "FILESYSTEM_READ_RANGE"]
         },
-        "reasonCodes": [
-          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
-        ],
+        "reasonCodes": ["EXACT_TERM_WITHOUT_DIRECT_MAPPING"],
         "promotionRequirements": [
           "USER_SEMANTIC_CONFIRMATION",
           "DIRECT_REFERENCE_REQUIRED"
@@ -263,28 +193,16 @@
       },
       "scope": {
         "requested": [],
-        "effective": [
-          "client",
-          "server",
-          "db",
-          "config",
-          "unknown"
-        ],
+        "effective": ["client", "server", "db", "config", "unknown"],
         "policyVersion": "repo-scope-v1",
         "unmatchedLayers": []
       },
       "capabilities": {
         "textSearch": "supported-text-files",
-        "semanticClassification": [
-          "typescript",
-          "javascript",
-          "sql"
-        ],
+        "semanticClassification": ["typescript", "javascript", "sql"],
         "unsupportedLanguageHits": 0
       }
     },
-    "nextActions": [
-      "CONFIRM_CANDIDATE"
-    ]
+    "nextActions": ["CONFIRM_CANDIDATE"]
   }
 }

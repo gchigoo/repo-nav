@@ -9,7 +9,12 @@ export const PATH_SOURCE_MATRIX_V1 = Object.freeze({
     '//server/share/a.ts',
     '\\\\server\\share\\a.ts',
   ]),
-  rejectedDotSegments: Object.freeze(['a/../b.ts', 'a//b.ts', 'a/./b.ts', 'a/b/']),
+  rejectedDotSegments: Object.freeze([
+    'a/../b.ts',
+    'a//b.ts',
+    'a/./b.ts',
+    'a/b/',
+  ]),
   rejectedCallerBackslash: Object.freeze(['a\\b.ts']),
   windowsNativeBackslash: 'a\\b.ts',
   nonWindowsNativeBackslashRejected: 'a\\b.ts',

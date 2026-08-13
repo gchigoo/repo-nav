@@ -1,9 +1,4 @@
-import {
-  mkdirSync,
-  mkdtempSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 
@@ -15,9 +10,7 @@ import {
   setAfterSuccessfulFinalFileCheckForTestV2,
   snapshotTrustProofOwnKeysV2,
 } from '../../src/evidence/request-snapshot/final-snapshot-check-v2.js';
-import {
-  buildPreRankingStablePoolsV2,
-} from '../../src/evidence/request-snapshot/pre-ranking-evidence-pool-v2.js';
+import { buildPreRankingStablePoolsV2 } from '../../src/evidence/request-snapshot/pre-ranking-evidence-pool-v2.js';
 import { createRequestRepositorySnapshotV2 } from '../../src/evidence/request-snapshot/request-repository-snapshot-v2.js';
 import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
 import { isSelected } from '../../testkit/testing/selection.js';
@@ -55,6 +48,33 @@ describe.runIf(coverageSelected)(
       expect(empty.facts.coverage.filesChecked).toBe(0);
       expect(empty.facts.coverage.discardedEvidenceCount).toBe(0);
       expect(snapshotTrustProofOwnKeysV2(empty.proof)).toEqual([]);
+
+      const missingLoadedPools = buildPreRankingStablePoolsV2([
+        Object.freeze({
+          discoveryKey: 'd-missing-loaded',
+          canonicalFileKey: 'server/missing.ts' as CanonicalFileKeyV2,
+          safeKey: 'missing',
+          rankingSignals: Object.freeze({
+            kind: 'direct' as const,
+            focusLines: Object.freeze([1, 1] as [number, number]),
+            focusExcerpt: 'const missing = 1;',
+          }),
+          classificationDefined: false,
+        }),
+      ]);
+      const missingLoaded = await runFinalSnapshotCheckV2({
+        repositoryRoot: '/tmp/unused',
+        loadedFiles: [],
+        evidencePool: missingLoadedPools.evidence,
+        eligiblePool: missingLoadedPools.eligible,
+        gitState: 'unknown',
+        signal: new AbortController().signal,
+      });
+      expect(missingLoaded.facts.coverage.consistency).toBe('changed');
+      expect(missingLoaded.changedCanonicalKeys.has('server/missing.ts')).toBe(
+        true,
+      );
+      expect(missingLoaded.retainedEligible).toEqual([]);
 
       const workspace = mkdtempSync(resolve(tmpdir(), 'repo-nav-final-'));
       try {
@@ -155,9 +175,7 @@ describe.runIf(mutationSelected)(
             provenance: Object.freeze({
               discoveredBy: Object.freeze(['filesystem' as const]),
               verifiedBy: 'filesystem' as const,
-              operations: Object.freeze([
-                'FILESYSTEM_READ_RANGE' as const,
-              ]),
+              operations: Object.freeze(['FILESYSTEM_READ_RANGE' as const]),
             }),
             reasonCodes: Object.freeze([
               'SAME_SCOPE_SIMILAR_IDENTIFIER' as const,
@@ -252,6 +270,110 @@ describe.runIf(abortSelected)(
           );
           expect(result.facts.coverage.consistency).toBe('changed');
           expect(result.changedCanonicalKeys.has(relative)).toBe(true);
+        } finally {
+          snapshot.dispose();
+        }
+      } finally {
+        rmSync(workspace, { recursive: true, force: true });
+      }
+    });
+
+    it('fails closed when the request snapshot is disposed before final check', async () => {
+      const workspace = mkdtempSync(
+        resolve(tmpdir(), 'repo-nav-disposed-final-'),
+      );
+      try {
+        const relative = 'server/disposed.ts';
+        const absolute = resolve(workspace, relative);
+        mkdirSync(dirname(absolute), { recursive: true });
+        writeFileSync(absolute, 'const disposed = 1;\n', 'utf8');
+        const root = await new NodeRepositoryReader().resolveRoot(
+          workspace,
+          new AbortController().signal,
+        );
+        const snapshot = createRequestRepositorySnapshotV2({
+          repositoryRoot: root,
+        });
+        await snapshot.readRange(
+          root,
+          relative,
+          [1, 1],
+          {
+            maxFileBytes: 4096,
+            maxExcerptBytes: 256,
+            maxExcerptLines: 4,
+          },
+          new AbortController().signal,
+        );
+        const pools = buildPreRankingStablePoolsV2([
+          Object.freeze({
+            discoveryKey: 'd-disposed',
+            canonicalFileKey: relative as CanonicalFileKeyV2,
+            safeKey: 'disposed',
+            rankingSignals: Object.freeze({
+              kind: 'direct' as const,
+              focusLines: Object.freeze([1, 1] as [number, number]),
+              focusExcerpt: 'const disposed = 1;',
+            }),
+            classificationDefined: false,
+          }),
+        ]);
+        snapshot.dispose();
+
+        await expect(
+          snapshot.finalCheck(
+            new AbortController().signal,
+            pools.evidence,
+            pools.eligible,
+            'unknown',
+          ),
+        ).rejects.toMatchObject({ code: 'FILE_UNREADABLE' });
+      } finally {
+        rmSync(workspace, { recursive: true, force: true });
+      }
+    });
+
+    it('rejects final check while a verified read is still unsettled', async () => {
+      const workspace = mkdtempSync(
+        resolve(tmpdir(), 'repo-nav-pending-final-'),
+      );
+      try {
+        const relative = 'server/pending.ts';
+        const absolute = resolve(workspace, relative);
+        mkdirSync(dirname(absolute), { recursive: true });
+        writeFileSync(absolute, 'const pending = 1;\n', 'utf8');
+        const root = await new NodeRepositoryReader().resolveRoot(
+          workspace,
+          new AbortController().signal,
+        );
+        const snapshot = createRequestRepositorySnapshotV2({
+          repositoryRoot: root,
+        });
+        try {
+          const pendingRead = snapshot.readRange(
+            root,
+            relative,
+            [1, 1],
+            {
+              maxFileBytes: 4096,
+              maxExcerptBytes: 256,
+              maxExcerptLines: 4,
+            },
+            new AbortController().signal,
+          );
+          await expect(
+            snapshot.finalCheck(
+              new AbortController().signal,
+              {
+                records: [],
+                preRankingPoolTruncated: false,
+                safeSelectionCollision: false,
+              },
+              { records: [] },
+              'unknown',
+            ),
+          ).rejects.toMatchObject({ code: 'FILE_UNREADABLE' });
+          await expect(pendingRead).resolves.toMatchObject({ file: relative });
         } finally {
           snapshot.dispose();
         }

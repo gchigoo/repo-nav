@@ -6,3 +6,6 @@ coverage
 *.tgz
 package-lock.json
 npm-shrinkwrap.json
+
+# Source layout is observable test data.
+testkit/fixtures/codegraph/repository/server/definition.ts

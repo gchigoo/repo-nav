@@ -88,7 +88,11 @@ async function classifyFixture(input: {
     scopeView,
     registered,
     execution,
-    { matchedTermsByRef: new Map([[eligibleRef, Object.freeze([...input.terms])]]) },
+    {
+      matchedTermsByRef: new Map([
+        [eligibleRef, Object.freeze([...input.terms])],
+      ]),
+    },
   );
   const result = await classifyLanguageCapabilityRecordV2(
     observation,
@@ -190,29 +194,19 @@ describe.runIf(
   }),
 )('F8-EMBEDDED-SQL-001 embedded-sql-completeness', () => {
   it('decodes safe escapes and rejects unsafe escapes', () => {
-    const ok = decodeCompleteEmbeddedSqlLiteralV2(
-      "query('select a AS b')",
-    );
+    const ok = decodeCompleteEmbeddedSqlLiteralV2("query('select a AS b')");
     expect(ok.ok).toBe(true);
 
-    const escaped = decodeCompleteEmbeddedSqlLiteralV2(
-      "query('line\\nnext')",
-    );
+    const escaped = decodeCompleteEmbeddedSqlLiteralV2("query('line\\nnext')");
     expect(escaped.ok).toBe(true);
 
-    const unsafeHex = decodeCompleteEmbeddedSqlLiteralV2(
-      "query('a\\x41')",
-    );
+    const unsafeHex = decodeCompleteEmbeddedSqlLiteralV2("query('a\\x41')");
     expect(unsafeHex.ok).toBe(false);
 
-    const template = decodeCompleteEmbeddedSqlLiteralV2(
-      'query(`select ${x}`)',
-    );
+    const template = decodeCompleteEmbeddedSqlLiteralV2('query(`select ${x}`)');
     expect(template.ok).toBe(false);
 
-    const extra = decodeCompleteEmbeddedSqlLiteralV2(
-      "query('a', 'b')",
-    );
+    const extra = decodeCompleteEmbeddedSqlLiteralV2("query('a', 'b')");
     expect(extra.ok).toBe(false);
   });
 });

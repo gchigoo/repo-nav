@@ -33,7 +33,7 @@ function expectCode(
   promise: Promise<unknown>,
   code: RepositoryAccessError['code'],
 ): Promise<void> {
-  return expect(promise).rejects.toMatchObject({ code }) as Promise<void>;
+  return expect(promise).rejects.toMatchObject({ code });
 }
 
 describe.runIf(isSelected(identity))('repository root and path safety', () => {
@@ -95,7 +95,11 @@ describe.runIf(isSelected(identity))('repository root and path safety', () => {
     try {
       writeFileSync(resolve(repository, '..notes.md'), 'notes', 'utf8');
       mkdirSync(resolve(repository, '..cache'));
-      writeFileSync(resolve(repository, '..cache', 'entry.ts'), 'entry', 'utf8');
+      writeFileSync(
+        resolve(repository, '..cache', 'entry.ts'),
+        'entry',
+        'utf8',
+      );
       const reader = new NodeRepositoryReader();
       const root = await reader.resolveRoot(
         repository,

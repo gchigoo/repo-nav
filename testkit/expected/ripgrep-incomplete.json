@@ -24,24 +24,15 @@
           "file": "server/mapping.fixture",
           "resolvable": true,
           "symbol": "targetField",
-          "lines": [
-            1,
-            1
-          ],
+          "lines": [1, 1],
           "excerpt": "targetField"
         },
         "provenance": {
-          "discoveredBy": [
-            "filesystem"
-          ],
+          "discoveredBy": ["filesystem"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "FILESYSTEM_READ_RANGE"
-          ]
+          "operations": ["FILESYSTEM_READ_RANGE"]
         },
-        "reasonCodes": [
-          "SAME_SCOPE_SIMILAR_IDENTIFIER"
-        ],
+        "reasonCodes": ["SAME_SCOPE_SIMILAR_IDENTIFIER"],
         "promotionRequirements": [
           "USER_SEMANTIC_CONFIRMATION",
           "DIRECT_REFERENCE_REQUIRED"
@@ -54,25 +45,15 @@
         "location": {
           "file": "server/mapping.fixture",
           "resolvable": true,
-          "lines": [
-            1,
-            2
-          ],
+          "lines": [1, 2],
           "excerpt": "targetField = row.source_field;\nconsume(row.source_field);"
         },
         "provenance": {
-          "discoveredBy": [
-            "ripgrep"
-          ],
+          "discoveredBy": ["ripgrep"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "RIPGREP_SEARCH",
-            "FILESYSTEM_READ_RANGE"
-          ]
+          "operations": ["RIPGREP_SEARCH", "FILESYSTEM_READ_RANGE"]
         },
-        "reasonCodes": [
-          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
-        ],
+        "reasonCodes": ["EXACT_TERM_WITHOUT_DIRECT_MAPPING"],
         "promotionRequirements": [
           "USER_SEMANTIC_CONFIRMATION",
           "DIRECT_REFERENCE_REQUIRED"
@@ -93,9 +74,7 @@
       "fallbackChecked": false,
       "indexState": "unknown",
       "indexFreshness": "unknown",
-      "limitsReached": [
-        "MAX_BACKEND_HITS_REACHED"
-      ],
+      "limitsReached": ["MAX_BACKEND_HITS_REACHED"],
       "degradations": [
         "SEMANTIC_LANGUAGE_UNSUPPORTED",
         "BACKEND_EARLY_STOPPED"
@@ -110,27 +89,17 @@
         "discardedEvidenceCount": 0
       },
       "scope": {
-        "requested": [
-          "server"
-        ],
-        "effective": [
-          "server"
-        ],
+        "requested": ["server"],
+        "effective": ["server"],
         "policyVersion": "repo-scope-v1",
         "unmatchedLayers": []
       },
       "capabilities": {
         "textSearch": "supported-text-files",
-        "semanticClassification": [
-          "typescript",
-          "javascript",
-          "sql"
-        ],
+        "semanticClassification": ["typescript", "javascript", "sql"],
         "unsupportedLanguageHits": 7
       }
     },
-    "nextActions": [
-      "CONFIRM_CANDIDATE"
-    ]
+    "nextActions": ["CONFIRM_CANDIDATE"]
   }
 }

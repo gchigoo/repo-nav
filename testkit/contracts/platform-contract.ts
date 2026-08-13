@@ -3,7 +3,8 @@ import { resolve, sep } from 'node:path';
 
 import {
   PLATFORM_CASE_OWNER_REGISTRATION,
-  RUNNER_SELECTIONS,
+  hasRunnerIdentity,
+  runnerIdentityKey,
 } from '../runners/runner-registry.js';
 
 /** Platform matrix cell identifier in canonical report order. */
@@ -16,11 +17,9 @@ export type PlatformCellId =
   | 'macos-intel-node24';
 
 export type PlatformOs = 'linux' | 'win32' | 'darwin';
-export type PlatformArch = 'x64';
+export type PlatformArch = 'x64' | 'arm64';
 export type PlatformRunnerLabel =
-  | 'ubuntu-24.04'
-  | 'windows-2025'
-  | 'macos-15-intel';
+  'ubuntu-24.04' | 'windows-2025' | 'macos-15-intel';
 
 export interface PlatformCellContract {
   readonly id: PlatformCellId;
@@ -76,12 +75,10 @@ export const PLATFORM_CONTRACT_IDS_V1 = [
   'F9-PACK-001',
 ] as const;
 
-export type PlatformContractIdV1 =
-  (typeof PLATFORM_CONTRACT_IDS_V1)[number];
+export type PlatformContractIdV1 = (typeof PLATFORM_CONTRACT_IDS_V1)[number];
 
 export type SyntheticPlatformContractIdV1 =
-  | PlatformContractIdV1
-  | 'TEST-EXT-001';
+  PlatformContractIdV1 | 'TEST-EXT-001';
 
 export const SYNTHETIC_PLATFORM_CONTRACT_IDS_V1 = [
   ...PLATFORM_CONTRACT_IDS_V1,
@@ -139,6 +136,11 @@ export interface PlatformContractRepositoryPortV1 {
     surface: 'unit' | 'mcp',
     repositoryRelativePath: string,
   ): boolean;
+  hasRunnerIdentity(
+    surface: 'unit' | 'mcp',
+    group: string,
+    executableCaseId: string,
+  ): boolean;
   registeredCaseOwners(
     surface: 'unit' | 'mcp',
     group: string,
@@ -146,8 +148,8 @@ export interface PlatformContractRepositoryPortV1 {
   ): readonly string[];
 }
 
-export const PLATFORM_CELLS_V1: readonly PlatformCellContract[] =
-  Object.freeze([
+export const PLATFORM_CELLS_V1: readonly PlatformCellContract[] = Object.freeze(
+  [
     Object.freeze({
       id: 'linux-node22',
       runner: 'ubuntu-24.04',
@@ -190,7 +192,8 @@ export const PLATFORM_CELLS_V1: readonly PlatformCellContract[] =
       arch: 'x64',
       nodeMajor: 24,
     }),
-  ]);
+  ],
+);
 
 export const PLATFORM_COMMANDS_V1: readonly PlatformCommandContract[] =
   Object.freeze([
@@ -239,8 +242,7 @@ export const PLATFORM_ACTION_PINS_V1: readonly PlatformActionPin[] =
 
 export const PLATFORM_WORKFLOW_PATH_V1 =
   '.github/workflows/cross-platform-ci.yml' as const;
-export const PLATFORM_AGGREGATE_JOB_ID_V1 =
-  'cross-platform-required' as const;
+export const PLATFORM_AGGREGATE_JOB_ID_V1 = 'cross-platform-required' as const;
 export const PLATFORM_MATRIX_JOB_ID_V1 = 'platform-matrix' as const;
 export const PLATFORM_AGGREGATE_RUNNER_V1 = 'ubuntu-24.04' as const;
 
@@ -252,12 +254,9 @@ const UNIT_PLATFORM_OWNER =
   'test/unit/cross-platform-platform.spec.ts' as const;
 const PATH_FIXTURE =
   'testkit/fixtures/platform/repository-path-tree.ts' as const;
-const PROCESS_FIXTURE =
-  'testkit/fixtures/process/process-helper.ts' as const;
-const MCP_CANCEL_OWNER =
-  'test/mcp/request-cancellation.spec.ts' as const;
-const MCP_LIFECYCLE_OWNER =
-  'test/mcp/lifecycle-contract.spec.ts' as const;
+const PROCESS_FIXTURE = 'testkit/fixtures/process/process-helper.ts' as const;
+const MCP_CANCEL_OWNER = 'test/mcp/request-cancellation.spec.ts' as const;
+const MCP_LIFECYCLE_OWNER = 'test/mcp/lifecycle-contract.spec.ts' as const;
 
 function markerOwnersFor(
   contractId: PlatformContractIdV1,
@@ -290,9 +289,7 @@ const BASE_BINDINGS: readonly PlatformCaseBindingV1<PlatformContractIdV1>[] =
       group: 'cross-platform-baseline',
       executableCaseId: 'repository-path-posix-symlink-escape',
       applicableOs: POSIX_OS,
-      requiredAssertionIds: Object.freeze([
-        'posix-symlink-escape-rejected',
-      ]),
+      requiredAssertionIds: Object.freeze(['posix-symlink-escape-rejected']),
       requiredEvidenceHashIds: Object.freeze([]),
       fixture: PATH_FIXTURE,
       assertionOwner: UNIT_PLATFORM_OWNER,
@@ -303,9 +300,7 @@ const BASE_BINDINGS: readonly PlatformCaseBindingV1<PlatformContractIdV1>[] =
       group: 'cross-platform-baseline',
       executableCaseId: 'repository-path-windows-reparse-escape',
       applicableOs: WINDOWS_OS,
-      requiredAssertionIds: Object.freeze([
-        'windows-reparse-escape-rejected',
-      ]),
+      requiredAssertionIds: Object.freeze(['windows-reparse-escape-rejected']),
       requiredEvidenceHashIds: Object.freeze([]),
       fixture: PATH_FIXTURE,
       assertionOwner: UNIT_PLATFORM_OWNER,
@@ -316,9 +311,7 @@ const BASE_BINDINGS: readonly PlatformCaseBindingV1<PlatformContractIdV1>[] =
       group: 'cross-platform-baseline',
       executableCaseId: 'repository-path-error-redaction',
       applicableOs: ALL_OS,
-      requiredAssertionIds: Object.freeze([
-        'absolute-root-not-serialized',
-      ]),
+      requiredAssertionIds: Object.freeze(['absolute-root-not-serialized']),
       requiredEvidenceHashIds: Object.freeze([]),
       fixture: PATH_FIXTURE,
       assertionOwner: UNIT_PLATFORM_OWNER,
@@ -410,8 +403,7 @@ const BASE_BINDINGS: readonly PlatformCaseBindingV1<PlatformContractIdV1>[] =
         'eof-abort',
       ]),
       requiredEvidenceHashIds: Object.freeze([]),
-      fixture:
-        'testkit/manifests/mcp/request-cancellation-platform.yaml',
+      fixture: 'testkit/manifests/mcp/request-cancellation-platform.yaml',
       assertionOwner: MCP_CANCEL_OWNER,
     }),
     Object.freeze({
@@ -428,8 +420,7 @@ const BASE_BINDINGS: readonly PlatformCaseBindingV1<PlatformContractIdV1>[] =
         'nonzero-cleanup',
       ]),
       requiredEvidenceHashIds: Object.freeze([]),
-      fixture:
-        'testkit/manifests/mcp/shutdown-cleanup-platform.yaml',
+      fixture: 'testkit/manifests/mcp/shutdown-cleanup-platform.yaml',
       assertionOwner: MCP_LIFECYCLE_OWNER,
     }),
     Object.freeze({
@@ -536,7 +527,8 @@ const BASE_BINDINGS: readonly PlatformCaseBindingV1<PlatformContractIdV1>[] =
         'no-timer-listener-leak',
       ]),
       requiredEvidenceHashIds: Object.freeze([]),
-      fixture: 'testkit/fixtures/request-outcome-v2/platform-finalization-v2.ts',
+      fixture:
+        'testkit/fixtures/request-outcome-v2/platform-finalization-v2.ts',
       assertionOwner: 'test/unit/canonical-locate-finalization-v2.spec.ts',
     }),
     Object.freeze({
@@ -786,15 +778,12 @@ function isPosixRepositoryRelativePath(value: string): boolean {
   if (value.startsWith('//') || value.startsWith('\\\\')) return false;
   const segments = value.split('/');
   return segments.every(
-    (segment) =>
-      segment.length > 0 && segment !== '.' && segment !== '..',
+    (segment) => segment.length > 0 && segment !== '.' && segment !== '..',
   );
 }
 
 function sortedUnique(values: readonly string[]): readonly string[] {
-  return [...new Set(values)].sort((left, right) =>
-    left.localeCompare(right),
-  );
+  return [...new Set(values)].sort((left, right) => left.localeCompare(right));
 }
 
 function deepExactStringArray(
@@ -862,7 +851,7 @@ export function validatePlatformContractSnapshotV1<
     }
     for (const os of binding.applicableOs) {
       if (os !== 'linux' && os !== 'win32' && os !== 'darwin') {
-        throw new Error(`invalid OS ${os} for ${expectedId}`);
+        throw new Error(`invalid OS ${String(os)} for ${expectedId}`);
       }
     }
     if (binding.requiredAssertionIds.length === 0) {
@@ -881,10 +870,7 @@ export function validatePlatformContractSnapshotV1<
       throw new Error(`missing assertionOwner ${binding.assertionOwner}`);
     }
     if (
-      !repository.isIncludedTestOwner(
-        binding.surface,
-        binding.assertionOwner,
-      )
+      !repository.isIncludedTestOwner(binding.surface, binding.assertionOwner)
     ) {
       throw new Error(
         `assertionOwner not included for ${binding.surface}: ${binding.assertionOwner}`,
@@ -896,6 +882,15 @@ export function validatePlatformContractSnapshotV1<
       throw new Error(`duplicate executable tuple ${tuple}`);
     }
     caseTuples.add(tuple);
+    if (
+      !repository.hasRunnerIdentity(
+        binding.surface,
+        binding.group,
+        binding.executableCaseId,
+      )
+    ) {
+      throw new Error(`runner registry missing identity ${tuple}`);
+    }
 
     const expectedOwners = sortedUnique([
       binding.assertionOwner,
@@ -922,8 +917,7 @@ export function validatePlatformContractSnapshotV1<
     for (const assertionId of binding.requiredAssertionIds) {
       const owners = snapshot.markerOwners.filter(
         (owner) =>
-          owner.contractId === expectedId &&
-          owner.assertionId === assertionId,
+          owner.contractId === expectedId && owner.assertionId === assertionId,
       );
       if (owners.length !== 1) {
         throw new Error(
@@ -943,14 +937,9 @@ export function validatePlatformContractSnapshotV1<
         throw new Error(`missing marker owner ${owner.assertionOwner}`);
       }
       if (
-        !repository.isIncludedTestOwner(
-          binding.surface,
-          owner.assertionOwner,
-        )
+        !repository.isIncludedTestOwner(binding.surface, owner.assertionOwner)
       ) {
-        throw new Error(
-          `marker owner not included: ${owner.assertionOwner}`,
-        );
+        throw new Error(`marker owner not included: ${owner.assertionOwner}`);
       }
       const key = platformAssertionMarkerKey(expectedId, assertionId);
       if (markerKeys.has(key)) {
@@ -962,8 +951,7 @@ export function validatePlatformContractSnapshotV1<
     for (const evidenceId of binding.requiredEvidenceHashIds) {
       const owners = snapshot.evidenceHashOwners.filter(
         (owner) =>
-          owner.contractId === expectedId &&
-          owner.evidenceId === evidenceId,
+          owner.contractId === expectedId && owner.evidenceId === evidenceId,
       );
       if (owners.length !== 1) {
         throw new Error(
@@ -972,9 +960,7 @@ export function validatePlatformContractSnapshotV1<
       }
       const owner = owners[0];
       if (owner === undefined) {
-        throw new Error(
-          `missing evidence owner ${expectedId}/${evidenceId}`,
-        );
+        throw new Error(`missing evidence owner ${expectedId}/${evidenceId}`);
       }
       if (!isPosixRepositoryRelativePath(owner.evidenceOwner)) {
         throw new Error(
@@ -985,14 +971,9 @@ export function validatePlatformContractSnapshotV1<
         throw new Error(`missing evidence owner ${owner.evidenceOwner}`);
       }
       if (
-        !repository.isIncludedTestOwner(
-          binding.surface,
-          owner.evidenceOwner,
-        )
+        !repository.isIncludedTestOwner(binding.surface, owner.evidenceOwner)
       ) {
-        throw new Error(
-          `evidence owner not included: ${owner.evidenceOwner}`,
-        );
+        throw new Error(`evidence owner not included: ${owner.evidenceOwner}`);
       }
       const key = platformEvidenceHashKey(expectedId, evidenceId);
       if (evidenceKeys.has(key)) {
@@ -1085,12 +1066,22 @@ export function createFilesystemPlatformContractRepository(
         repositoryRelativePath.endsWith('.spec.ts')
       );
     },
+    hasRunnerIdentity(
+      surface: 'unit' | 'mcp',
+      group: string,
+      executableCaseId: string,
+    ): boolean {
+      return hasRunnerIdentity(surface, { group, caseId: executableCaseId });
+    },
     registeredCaseOwners(
       surface: 'unit' | 'mcp',
       group: string,
       executableCaseId: string,
     ): readonly string[] {
-      const key = `${surface}/${group}/${executableCaseId}`;
+      const key = runnerIdentityKey(surface, {
+        group,
+        caseId: executableCaseId,
+      });
       const owners = PLATFORM_CASE_OWNER_REGISTRATION[key];
       return owners === undefined ? [] : owners;
     },
@@ -1155,9 +1146,7 @@ export function applicableBindingsForOs(
   );
 }
 
-export function actionPinById(
-  id: PlatformActionPin['id'],
-): PlatformActionPin {
+export function actionPinById(id: PlatformActionPin['id']): PlatformActionPin {
   const pin = PLATFORM_ACTION_PINS_V1.find((entry) => entry.id === id);
   if (pin === undefined) {
     throw new Error(`missing action pin ${id}`);
@@ -1167,15 +1156,13 @@ export function actionPinById(
 
 export function ensureRunnerSelectionsCoverPlatformCases(): void {
   for (const binding of BASE_BINDINGS) {
-    const registry = RUNNER_SELECTIONS[binding.surface];
-    if (!registry.groups.has(binding.group)) {
+    const identity = {
+      group: binding.group,
+      caseId: binding.executableCaseId,
+    };
+    if (!hasRunnerIdentity(binding.surface, identity)) {
       throw new Error(
-        `runner registry missing group ${binding.group} on ${binding.surface}`,
-      );
-    }
-    if (!registry.cases.has(binding.executableCaseId)) {
-      throw new Error(
-        `runner registry missing case ${binding.executableCaseId} on ${binding.surface}`,
+        `runner registry missing identity ${runnerIdentityKey(binding.surface, identity)}`,
       );
     }
   }

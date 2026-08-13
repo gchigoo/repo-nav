@@ -29,9 +29,12 @@ import {
   createBackendPhysicalAttemptExecutorV2,
   requireNoStartObservationRecordV2,
   type AvailabilityProbeExecutionResultV2,
+  type BackendPhysicalAttemptBindingV2,
   type BackendPhysicalAttemptExecutorV2,
   type BackendPhysicalAttemptResultV2,
+  type BackendPhysicalAttemptStartModeV2,
   type BackendPhysicalStartRegistryV2,
+  type ExecutableAvailabilityProbeArgvClassV2,
   type StartRecordV2,
 } from './backend-physical-attempt-executor-v2.js';
 import { createProcessOpaqueTokenV2 } from './opaque-token-v2.js';
@@ -91,7 +94,7 @@ interface ContextRecordV2 {
   readonly starts: StartRecordV2[];
   readonly executors: Map<SearchBackendId, BackendPhysicalAttemptExecutorV2>;
   readonly laneFacts: Map<
-    number,
+    string,
     {
       readonly backend: SearchBackendId;
       readonly laneMask: string;
@@ -108,6 +111,7 @@ interface ContextRecordV2 {
       readonly outcomeShape: BackendExecutionOutcomeV2;
     }
   >;
+  codegraphObservation: CodeGraphIndexObservationV2 | undefined;
   signalBound: boolean;
 }
 
@@ -213,6 +217,10 @@ function requireContext(
   return record;
 }
 
+function laneFactsKeyV2(backend: SearchBackendId, ordinal: number): string {
+  return `${backend}\u0000${ordinal}`;
+}
+
 function deepFreezeHits(hits: readonly BackendHit[]): readonly BackendHit[] {
   return Object.freeze(hits.map((hit) => Object.freeze({ ...hit })));
 }
@@ -292,6 +300,7 @@ export function createBackendExecutionContextV2(
     laneFacts: new Map(),
     sealedBackends: new Set(),
     logicalAttempts: new Map(),
+    codegraphObservation: undefined,
     signalBound: true,
   };
   contextPrivate.set(token, record);
@@ -360,7 +369,9 @@ export function createExpandedLaneAttemptFactsV2(
   }
   if (
     view!.binding.laneMask === 'legacy-only' ||
-    record.laneFacts.has(view!.ordinal) ||
+    record.laneFacts.has(
+      laneFactsKeyV2(view!.binding.backend, view!.ordinal),
+    ) ||
     record.sealedBackends.has(view!.binding.backend)
   ) {
     throw new TypeError('invalid-lane-facts');
@@ -376,7 +387,7 @@ export function createExpandedLaneAttemptFactsV2(
     context,
   };
   factsPrivate.set(token, entry);
-  record.laneFacts.set(view!.ordinal, {
+  record.laneFacts.set(laneFactsKeyV2(entry.backend, entry.ordinal), {
     backend: entry.backend,
     laneMask: entry.laneMask,
     facts: laneFacts,
@@ -403,7 +414,11 @@ export function sealExpandedBackendAttemptSetV2(
     if (!start.settled) {
       throw new TypeError('unsettled-start');
     }
-    if (!record.laneFacts.has(start.ordinal)) {
+    if (
+      !record.laneFacts.has(
+        laneFactsKeyV2(start.binding.backend, start.ordinal),
+      )
+    ) {
       throw new TypeError('missing-lane-facts');
     }
   }
@@ -460,7 +475,9 @@ export function requireExpandedBackendAttemptReducerV2(
       const outcomeStart =
         ordered.find((start) => outcomeSourceKinds.has(start.binding.kind)) ??
         first;
-      const factsEntry = ctx.laneFacts.get(outcomeStart.ordinal);
+      const factsEntry = ctx.laneFacts.get(
+        laneFactsKeyV2(sealRecord.backend, outcomeStart.ordinal),
+      );
       if (factsEntry === undefined) {
         throw new TypeError('missing-facts');
       }
@@ -662,6 +679,9 @@ export function createCodeGraphProbeReceiptV2(
   let view:
     | {
         ordinal: number;
+        binding: BackendPhysicalAttemptBindingV2;
+        startMode: BackendPhysicalAttemptStartModeV2;
+        availabilityProbeClass: ExecutableAvailabilityProbeArgvClassV2 | null;
         result: AvailabilityProbeExecutionResultV2;
       }
     | undefined;
@@ -676,6 +696,15 @@ export function createCodeGraphProbeReceiptV2(
   if (view === undefined) {
     throw new TypeError('invalid-probe-result');
   }
+  if (
+    view.binding.backend !== 'codegraph' ||
+    view.binding.kind !== 'codegraph-status' ||
+    view.binding.laneMask === 'legacy-only' ||
+    view.startMode !== 'availability-probe' ||
+    view.availabilityProbeClass !== 'codegraph-status'
+  ) {
+    throw new TypeError('invalid-probe-result-binding');
+  }
   let observation: CodeGraphIndexObservationV2;
   const probe = view.result;
   if (!probe.ok) {
@@ -687,6 +716,10 @@ export function createCodeGraphProbeReceiptV2(
   } else {
     observation = observeCodeGraphStatusStdoutV2(probe.stdout);
   }
+  if (record.codegraphObservation !== undefined) {
+    throw new TypeError('conflicting-codegraph-receipt');
+  }
+  record.codegraphObservation = observation;
   const token = createProcessOpaqueTokenV2<CodeGraphProbeReceiptV2>();
   receiptPrivate.set(token, {
     observation,
@@ -742,14 +775,24 @@ export function createNotObservedCodeGraphIndexObservationV2(
 
 export function finalizeBackendExecutionTraceV2(
   context: BackendExecutionContextV2,
-  codegraphObservation: TrustedCodeGraphIndexObservationV2,
   execution: LocateExecutionTokenV2,
 ): BackendExecutionTraceV2 {
   const record = requireContext(context, execution);
-  const obs = observationPrivate.get(codegraphObservation);
-  if (obs === undefined || obs.execution !== execution) {
-    throw new TypeError('invalid-codegraph-observation');
-  }
+  const expandedCodegraphStarts = record.starts.filter(
+    (start) =>
+      start.binding.backend === 'codegraph' &&
+      start.binding.laneMask !== 'legacy-only' &&
+      (start.binding.kind === 'codegraph-status' ||
+        start.binding.kind === 'codegraph-query' ||
+        start.binding.kind === 'codegraph-fallback'),
+  );
+  const observation: CodeGraphIndexObservationV2 =
+    expandedCodegraphStarts.length === 0
+      ? { kind: 'not-observed' }
+      : (record.codegraphObservation ??
+        (() => {
+          throw new TypeError('missing-codegraph-receipt');
+        })());
   const attempts = [...record.logicalAttempts.values()].sort(
     (left, right) =>
       left.view.firstExpandedStartOrdinal -
@@ -762,7 +805,7 @@ export function finalizeBackendExecutionTraceV2(
     firstExpandedStartOrdinals: Object.freeze(
       attempts.map((entry) => entry.view.firstExpandedStartOrdinal),
     ),
-    codegraphIndexObservation: obs.observation,
+    codegraphIndexObservation: observation,
   });
   const token = createProcessOpaqueTokenV2<BackendExecutionTraceV2>();
   tracePrivate.set(token, { view, execution, context });

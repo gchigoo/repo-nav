@@ -135,8 +135,10 @@ export async function buildAggregationHarnessV2(options: {
       maxCandidatesReached: options.budgetFacts?.maxCandidatesReached ?? false,
       preRankingPoolTruncated:
         options.budgetFacts?.preRankingPoolTruncated ?? false,
-      safeSelectorCollision: options.budgetFacts?.safeSelectorCollision ?? false,
-      safeOrderingCollision: options.budgetFacts?.safeOrderingCollision ?? false,
+      safeSelectorCollision:
+        options.budgetFacts?.safeSelectorCollision ?? false,
+      safeOrderingCollision:
+        options.budgetFacts?.safeOrderingCollision ?? false,
     }),
     confirmed: [],
     candidates: [],

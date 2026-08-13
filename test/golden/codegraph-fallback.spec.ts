@@ -17,6 +17,11 @@ import {
   type GoldenSuccessCase,
 } from '../../testkit/contracts/index.js';
 import { CodeGraphTransitionBackend } from '../../testkit/fixtures/codegraph/codegraph-transition-backend.js';
+import {
+  LOCATE_EXECUTION_GOLDEN_CHARACTERIZATION_ROWS_V2,
+  evaluateLocateExecutionCharacterizationResultV2,
+  readGoldenCompanionResultV2,
+} from '../../testkit/fixtures/locate-execution-v2/characterization-matrix-v2.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
 const CASE_IDS = [
@@ -203,7 +208,8 @@ async function runCase(caseId: CaseId): Promise<TransitionRun> {
       : undefined,
   );
   const ripgrep = new CodeGraphTransitionBackend('ripgrep', ripgrepResult);
-  const resultValue: any = await createCanonicalLocateEngineHarnessV2([codegraph, ripgrep],
+  const resultValue: any = await createCanonicalLocateEngineHarnessV2(
+    [codegraph, ripgrep],
     new NodeRepositoryReader(),
   ).service.locate(goldenCase.request, { signal: caller.signal });
   return {
@@ -225,19 +231,35 @@ for (const caseId of CASE_IDS) {
       it('matches the explicit fallback transition contract', async () => {
         const goldenCase = loadCase(caseId);
         const run = await runCase(caseId);
-        expect(() => assertGoldenCase(goldenCase, run.observation)).not.toThrow();
+        expect(() =>
+          assertGoldenCase(goldenCase, run.observation),
+        ).not.toThrow();
+        if (
+          LOCATE_EXECUTION_GOLDEN_CHARACTERIZATION_ROWS_V2.some(
+            (row) => row.caseId === caseId,
+          )
+        ) {
+          expect(
+            evaluateLocateExecutionCharacterizationResultV2(
+              readGoldenCompanionResultV2(caseId),
+              run.observation.result,
+            ),
+          ).toBe(true);
+        }
         expect(run.codegraph.calls).toBe(1);
 
         if (!run.observation.result.ok) {
-          throw new Error('Fallback Golden cases must return recoverable results.');
+          throw new Error(
+            'Fallback Golden cases must return recoverable results.',
+          );
         }
         const evidence = run.observation.result.evidence;
         if (caseId === 'codegraph-global-abort-no-fallback') {
           expect(run.ripgrep.calls).toBe(0);
           expect(evidence.coverage.fallbackChecked).toBe(false);
-          expect(evidence.coverage.backends.map((attempt) => attempt.backend)).toEqual([
-            'codegraph',
-          ]);
+          expect(
+            evidence.coverage.backends.map((attempt) => attempt.backend),
+          ).toEqual(['codegraph']);
           expect(evidence.coverage.backends[0]?.status).toBe('used');
           expect(evidence.coverage.backends[0]?.termination).toBe('aborted');
           expect(evidence.coverage.abortSource).toBe('caller');
@@ -257,10 +279,9 @@ for (const caseId of CASE_IDS) {
 
         expect(run.ripgrep.calls).toBe(1);
         expect(evidence.coverage.fallbackChecked).toBe(true);
-        expect(evidence.coverage.backends.map((attempt) => attempt.backend)).toEqual([
-          'codegraph',
-          'ripgrep',
-        ]);
+        expect(
+          evidence.coverage.backends.map((attempt) => attempt.backend),
+        ).toEqual(['codegraph', 'ripgrep']);
         if (caseId === 'codegraph-incomplete') {
           expect(evidence.confirmed[0]?.provenance.discoveredBy).toEqual(
             expect.arrayContaining(['ripgrep']),
@@ -338,7 +359,8 @@ describe.runIf(
       ],
     };
 
-    const located = await createCanonicalLocateEngineHarnessV2([codegraph, ripgrep],
+    const located = await createCanonicalLocateEngineHarnessV2(
+      [codegraph, ripgrep],
       new NodeRepositoryReader(),
     ).service.locate(request, { signal: new AbortController().signal });
 

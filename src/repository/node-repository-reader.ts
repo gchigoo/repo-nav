@@ -9,9 +9,6 @@ import {
 } from '../contracts/index.js';
 import { VerifiedTextFileSourceV2 } from './verified-text-file-source-v2.js';
 
-/**
- * 无状态 one-shot RepositoryReader；安全 open/decode 委托 VerifiedTextFileSourceV2。
- */
 @Injectable()
 export class NodeRepositoryReader implements RepositoryReader {
   private readonly source = new VerifiedTextFileSourceV2();
@@ -36,6 +33,7 @@ export class NodeRepositoryReader implements RepositoryReader {
       limits,
       signal,
     );
+    const locator = file.snapshot.locator;
     const [start, end] = lines;
     if (
       !Number.isSafeInteger(start) ||
@@ -44,23 +42,20 @@ export class NodeRepositoryReader implements RepositoryReader {
       end < start ||
       end > file.lines.length
     ) {
-      throw new RepositoryAccessError('INVALID_LINE_RANGE', file.relativeFile);
+      throw new RepositoryAccessError('INVALID_LINE_RANGE', locator);
     }
     if (end - start + 1 > limits.maxExcerptLines) {
-      throw new RepositoryAccessError(
-        'MAX_EXCERPT_BYTES_REACHED',
-        file.relativeFile,
-      );
+      throw new RepositoryAccessError('MAX_EXCERPT_BYTES_REACHED', locator);
     }
 
     const excerpt = file.lines.slice(start - 1, end).join('\n');
     if (excerpt.length === 0) {
-      throw new RepositoryAccessError('INVALID_LINE_RANGE', file.relativeFile);
+      throw new RepositoryAccessError('INVALID_LINE_RANGE', locator);
     }
-    this.assertExcerptWithinLimit(excerpt, file.relativeFile, limits);
-    this.assertNotAborted(signal, file.relativeFile);
+    this.assertExcerptWithinLimit(excerpt, locator, limits);
+    this.assertNotAborted(signal, locator);
     return {
-      file: file.relativeFile,
+      file: locator,
       lines: [start, end],
       excerpt,
     };
@@ -79,6 +74,7 @@ export class NodeRepositoryReader implements RepositoryReader {
       limits,
       signal,
     );
+    const locator = file.snapshot.locator;
     const [focusStart, focusEnd] = focusLines;
     const focusLength = focusEnd - focusStart + 1;
     if (
@@ -89,7 +85,7 @@ export class NodeRepositoryReader implements RepositoryReader {
       focusEnd > file.lines.length ||
       focusLength > limits.maxExcerptLines
     ) {
-      throw new RepositoryAccessError('INVALID_LINE_RANGE', file.relativeFile);
+      throw new RepositoryAccessError('INVALID_LINE_RANGE', locator);
     }
 
     const available = limits.maxExcerptLines - focusLength;
@@ -113,12 +109,12 @@ export class NodeRepositoryReader implements RepositoryReader {
     }
 
     if (excerpt.length === 0) {
-      throw new RepositoryAccessError('INVALID_LINE_RANGE', file.relativeFile);
+      throw new RepositoryAccessError('INVALID_LINE_RANGE', locator);
     }
-    this.assertExcerptWithinLimit(excerpt, file.relativeFile, limits);
-    this.assertNotAborted(signal, file.relativeFile);
+    this.assertExcerptWithinLimit(excerpt, locator, limits);
+    this.assertNotAborted(signal, locator);
     return {
-      file: file.relativeFile,
+      file: locator,
       lines: [start, end],
       excerpt,
     };
@@ -142,10 +138,11 @@ export class NodeRepositoryReader implements RepositoryReader {
       limits,
       signal,
     );
+    const locator = file.snapshot.locator;
     const matches: EvidenceLocation[] = [];
 
     for (let index = 0; index < file.lines.length; index += 1) {
-      this.assertNotAborted(signal, file.relativeFile);
+      this.assertNotAborted(signal, locator);
       const excerpt = file.lines[index] ?? '';
       const symbolMatches = symbol !== undefined && excerpt.includes(symbol);
       const termMatches = terms.some((term) =>
@@ -159,9 +156,9 @@ export class NodeRepositoryReader implements RepositoryReader {
         continue;
       }
 
-      this.assertExcerptWithinLimit(excerpt, file.relativeFile, limits);
+      this.assertExcerptWithinLimit(excerpt, locator, limits);
       matches.push({
-        file: file.relativeFile,
+        file: locator,
         symbol,
         lines: [index + 1, index + 1],
         excerpt,
@@ -171,7 +168,7 @@ export class NodeRepositoryReader implements RepositoryReader {
       }
     }
 
-    this.assertNotAborted(signal, file.relativeFile);
+    this.assertNotAborted(signal, locator);
     return Object.freeze(matches);
   }
 

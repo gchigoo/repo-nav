@@ -12,6 +12,7 @@ import type {
   RepositorySearchBackend,
 } from '../../src/contracts/index.js';
 import { createV2ShadowLocateProjectorV2 } from '../../testkit/testing/v2-shadow-locate-projector-v2.js';
+import { asTraceableSearchBackendsV2 } from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import { CanonicalRepositoryLocateExecutorV2 } from '../../src/evidence/locate-execution/canonical-locate-executor-v2.js';
 import {
   issueLocateProjectionExecutionCapabilityV2,
@@ -22,9 +23,7 @@ import { createAcceptedCompleteRealLocateShadowOrchestratorV2 } from '../../src/
 import { projectExpandedSafePreCapPoolV2 } from '../../src/evidence/request-snapshot/discovery-lane-universe-v2.js';
 import { runFinalSnapshotCheckV2 } from '../../src/evidence/request-snapshot/final-snapshot-check-v2.js';
 import { createOpaqueTokenV2 } from '../../src/evidence/request-snapshot/opaque-token-v2.js';
-import {
-  createScopeCoverageBasisV2,
-} from '../../src/evidence/request-snapshot/scope-coverage-basis-v2.js';
+import { createScopeCoverageBasisV2 } from '../../src/evidence/request-snapshot/scope-coverage-basis-v2.js';
 import {
   readScopeFoldedSafePoolProofV2,
   scopeFoldSafeCandidatePoolV2,
@@ -185,7 +184,7 @@ describe.runIf(
         }
       }
       const executor = new CanonicalRepositoryLocateExecutorV2(
-        [new HitBackend()],
+        asTraceableSearchBackendsV2([new HitBackend()]),
         new NodeRepositoryReader(),
       );
       const capability = issueLocateProjectionExecutionCapabilityV2();
@@ -272,7 +271,10 @@ describe.runIf(
     const root = mkdtempSync(join(tmpdir(), 'f7-v1-'));
     try {
       mkdirSync(join(root, 'server'), { recursive: true });
-      writeFileSync(join(root, 'server', 'a.ts'), 'export const Mapping = 1;\n');
+      writeFileSync(
+        join(root, 'server', 'a.ts'),
+        'export const Mapping = 1;\n',
+      );
       class EmptyBackend implements RepositorySearchBackend {
         public readonly id = 'ripgrep' as const;
         public async probe(): Promise<BackendHealth> {
@@ -283,7 +285,7 @@ describe.runIf(
         }
       }
       const executor = new CanonicalRepositoryLocateExecutorV2(
-        [new EmptyBackend()],
+        asTraceableSearchBackendsV2([new EmptyBackend()]),
         new NodeRepositoryReader(),
       );
       const capability = issueLocateProjectionExecutionCapabilityV2();
@@ -324,9 +326,7 @@ describe.runIf(
         file: `${LARGE_SCOPE_PERMUTATION_V1.filePrefix}${index}.ts`,
         lines: Object.freeze([1, 1] as [number, number]),
         matchedText: 'hit',
-        source: (index % 2 === 0 ? 'ripgrep' : 'codegraph') as
-          | 'ripgrep'
-          | 'codegraph',
+        source: index % 2 === 0 ? 'ripgrep' : 'codegraph',
         reasonCodes: Object.freeze(['LITERAL_TERM_HIT' as const]),
       }),
     );
@@ -389,7 +389,9 @@ describe.runIf(
         execution,
       );
       const basis = createScopeCoverageBasisV2({
-        excludedLocatorRefs: facts.excludedLedger.map((entry) => entry.locatorRef),
+        excludedLocatorRefs: facts.excludedLedger.map(
+          (entry) => entry.locatorRef,
+        ),
         mixedIncludedLocatorRefs: [],
         stableEligiblePool: registered.eligibleDiscovery,
         snapshotProof: registered.proof,
@@ -419,7 +421,9 @@ describe.runIf(
           effective: view.fragment.value.effective,
           unmatched: view.fragment.value.unmatchedLayers,
           outside: view.contribution.outsideLayerHintCount,
-          selected: facts.candidates.map((candidate) => candidate.safeKey.file).sort(),
+          selected: facts.candidates
+            .map((candidate) => candidate.safeKey.file)
+            .sort(),
         }),
       );
     }

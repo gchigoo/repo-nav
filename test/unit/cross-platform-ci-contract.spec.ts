@@ -48,6 +48,148 @@ function loadWorkflow(): {
   return { raw, doc: parseYaml(raw) as Record<string, unknown> };
 }
 
+function stepRuns(job: Record<string, unknown> | undefined): readonly string[] {
+  if (job === undefined) {
+    return [];
+  }
+  const steps = job['steps'];
+  if (!Array.isArray(steps)) {
+    return [];
+  }
+  return steps
+    .map((step) => {
+      if (typeof step !== 'object' || step === null) {
+        return '';
+      }
+      const run = (step as Record<string, unknown>)['run'];
+      return typeof run === 'string' ? run : '';
+    })
+    .filter((run) => run.length > 0);
+}
+
+function assertAdditionalJobs(
+  jobs: Record<string, Record<string, unknown>>,
+): void {
+  const arm = jobs['macos-arm-unit'];
+  expect(arm?.['runs-on']).toBe('macos-14');
+  const armRuns = stepRuns(arm);
+  expect(armRuns).toEqual(
+    expect.arrayContaining([
+      'npm ci',
+      'npm run clean',
+      'npm run typecheck',
+      'npm test',
+    ]),
+  );
+  expect(armRuns).toHaveLength(5);
+  const armRunsJoined = armRuns.join('\n');
+  expect(armRunsJoined).not.toContain('codegraph');
+  const ripgrepInstall = armRuns.find((run) =>
+    run.includes('@vscode/ripgrep@1.15.9'),
+  );
+  expect(ripgrepInstall).toContain('GITHUB_PATH');
+  expect(ripgrepInstall).toContain('--version');
+
+  const codegraphRuns = stepRuns(jobs['codegraph-integration']);
+  expect(codegraphRuns.join('\n')).toContain('@colbymchenry/codegraph@1.1.6');
+  expect(codegraphRuns).toContain('npm run test:integration:codegraph');
+
+  const aggregate = jobs[PLATFORM_AGGREGATE_JOB_ID_V1];
+  expect(
+    [...((aggregate?.['needs'] as string[] | undefined) ?? [])].sort(),
+  ).toEqual(
+    [
+      PLATFORM_MATRIX_JOB_ID_V1,
+      'macos-arm-unit',
+      'codegraph-integration',
+    ].sort(),
+  );
+  const aggregateRuns = stepRuns(aggregate).join('\n');
+  for (const jobId of [
+    PLATFORM_MATRIX_JOB_ID_V1,
+    'macos-arm-unit',
+    'codegraph-integration',
+  ]) {
+    expect(aggregateRuns).toContain(`needs.${jobId}.result`);
+    expect(aggregateRuns).toContain('!= "success"');
+  }
+}
+
+function withoutJob(
+  jobs: Record<string, Record<string, unknown>>,
+  jobId: string,
+): Record<string, Record<string, unknown>> {
+  const next = structuredClone(jobs);
+  delete next[jobId];
+  return next;
+}
+
+function withoutRunContaining(
+  jobs: Record<string, Record<string, unknown>>,
+  jobId: string,
+  needle: string,
+): Record<string, Record<string, unknown>> {
+  const next = structuredClone(jobs);
+  const job = next[jobId];
+  const steps = job?.['steps'];
+  if (job === undefined || !Array.isArray(steps)) {
+    return next;
+  }
+  job['steps'] = steps.filter((step) => {
+    if (typeof step !== 'object' || step === null) {
+      return true;
+    }
+    const run = (step as Record<string, unknown>)['run'];
+    return !(typeof run === 'string' && run.includes(needle));
+  });
+  return next;
+}
+
+function withoutAggregateNeed(
+  jobs: Record<string, Record<string, unknown>>,
+  jobId: string,
+): Record<string, Record<string, unknown>> {
+  const next = structuredClone(jobs);
+  const aggregate = next[PLATFORM_AGGREGATE_JOB_ID_V1];
+  if (aggregate !== undefined && Array.isArray(aggregate['needs'])) {
+    aggregate['needs'] = aggregate['needs'].filter((need) => need !== jobId);
+  }
+  return next;
+}
+
+function withoutAggregateResultCheck(
+  jobs: Record<string, Record<string, unknown>>,
+  jobId: string,
+): Record<string, Record<string, unknown>> {
+  const next = structuredClone(jobs);
+  const aggregate = next[PLATFORM_AGGREGATE_JOB_ID_V1];
+  if (aggregate === undefined) {
+    return next;
+  }
+  const steps = aggregate['steps'];
+  if (!Array.isArray(steps)) {
+    return next;
+  }
+  aggregate['steps'] = steps.map((step) => {
+    if (typeof step !== 'object' || step === null) {
+      return step;
+    }
+    const record = step as Record<string, unknown>;
+    const run = record['run'];
+    if (typeof run !== 'string') {
+      return step;
+    }
+    return {
+      ...record,
+      run: run
+        .split('\n')
+        .filter((line) => !line.includes(`needs.${jobId}.result`))
+        .join('\n'),
+    };
+  });
+  return next;
+}
+
 describe.runIf(
   isSelected({
     group: 'cross-platform-ci-contract',
@@ -77,13 +219,25 @@ describe.runIf(
         nodeMajor: cell.nodeMajor,
       });
     }
+    const matrixRuns = stepRuns(matrixJob);
+    expect(matrixRuns.filter((run) => run === 'npm run build')).toHaveLength(1);
+    expect(
+      matrixRuns.filter((run) => run.includes('npm run build')),
+    ).toHaveLength(1);
+    expect(matrixRuns).toContain('npm run test:mcp:built -- --all');
+    expect(matrixRuns).toContain('npm run test:docs:built');
+    expect(matrixRuns).toContain('npm run test:platform');
+    expect(matrixRuns).not.toContain('npm run test:mcp -- --all');
+    expect(matrixRuns).not.toContain('npm run test:docs');
 
     const aggregate = jobs[PLATFORM_AGGREGATE_JOB_ID_V1];
+    assertAdditionalJobs(jobs);
     expect(aggregate?.['name']).toBe(PLATFORM_AGGREGATE_JOB_ID_V1);
     expect(aggregate?.['runs-on']).toBe('ubuntu-24.04');
-    expect(aggregate?.['needs']).toEqual([PLATFORM_MATRIX_JOB_ID_V1]);
     expect(aggregate?.['if']).toBe('always()');
-    const aggregateSteps = aggregate?.['steps'] as Array<Record<string, unknown>>;
+    const aggregateSteps = aggregate?.['steps'] as Array<
+      Record<string, unknown>
+    >;
     expect(
       aggregateSteps.some((step) => typeof step['uses'] === 'string'),
     ).toBe(false);
@@ -110,9 +264,59 @@ describe.runIf(
     expect(renamedAggregate).not.toContain('name: cross-platform-required');
     expect(renamedAggregate).toContain('name: cross-platform-optional');
 
-    const repository = createFilesystemPlatformContractRepository(
-      repositoryRoot,
-    );
+    for (const jobId of [
+      'macos-arm-unit',
+      'codegraph-integration',
+      PLATFORM_AGGREGATE_JOB_ID_V1,
+    ]) {
+      expect(() => assertAdditionalJobs(withoutJob(jobs, jobId))).toThrow();
+    }
+    for (const needle of [
+      '@vscode/ripgrep@1.15.9',
+      'GITHUB_PATH',
+      '--version',
+    ]) {
+      expect(() =>
+        assertAdditionalJobs(
+          withoutRunContaining(jobs, 'macos-arm-unit', needle),
+        ),
+      ).toThrow();
+    }
+    expect(() =>
+      assertAdditionalJobs(
+        withoutRunContaining(
+          jobs,
+          'codegraph-integration',
+          '@colbymchenry/codegraph@1.1.6',
+        ),
+      ),
+    ).toThrow();
+    expect(() =>
+      assertAdditionalJobs(
+        withoutRunContaining(
+          jobs,
+          'codegraph-integration',
+          'npm run test:integration:codegraph',
+        ),
+      ),
+    ).toThrow();
+    for (const jobId of ['macos-arm-unit', 'codegraph-integration']) {
+      expect(() =>
+        assertAdditionalJobs(withoutAggregateNeed(jobs, jobId)),
+      ).toThrow();
+    }
+    for (const jobId of [
+      PLATFORM_MATRIX_JOB_ID_V1,
+      'macos-arm-unit',
+      'codegraph-integration',
+    ]) {
+      expect(() =>
+        assertAdditionalJobs(withoutAggregateResultCheck(jobs, jobId)),
+      ).toThrow();
+    }
+
+    const repository =
+      createFilesystemPlatformContractRepository(repositoryRoot);
     validateProductionPlatformContractSnapshotV1(
       PRODUCTION_PLATFORM_CONTRACT_SNAPSHOT_V1,
       repository,
@@ -127,18 +331,11 @@ describe.runIf(
     caseId: 'runtime-cell-contract',
   }),
 )('F4-RUNTIME-001 runtime cell contract', () => {
-  it('probes local runtime identity against registry cells', () => {
+  it('probes local runtime identity against supported OS, arch, and Node ranges', () => {
     const identity = probeRuntimeIdentity();
     expect(['linux', 'win32', 'darwin']).toContain(identity.platform);
-    expect(identity.arch).toBe('x64');
+    expect(['x64', 'arm64']).toContain(identity.arch);
     expect([22, 24]).toContain(identity.nodeMajor);
-    const match = PLATFORM_CELLS_V1.find(
-      (cell) =>
-        cell.os === identity.platform &&
-        cell.arch === identity.arch &&
-        cell.nodeMajor === identity.nodeMajor,
-    );
-    expect(match).toBeDefined();
   });
 });
 
@@ -149,9 +346,8 @@ describe.runIf(
   }),
 )('F4-EXT-001 synthetic extension protocol', () => {
   it('accepts complete synthetic snapshot and rejects hostile mutations', () => {
-    const repository = createFilesystemPlatformContractRepository(
-      repositoryRoot,
-    );
+    const repository =
+      createFilesystemPlatformContractRepository(repositoryRoot);
     const synthetic = buildSyntheticExtensionSnapshotV1();
     validatePlatformContractSnapshotV1(
       SYNTHETIC_PLATFORM_CONTRACT_IDS_V1,

@@ -19,9 +19,10 @@ export type HostileConsumerModeV2 =
 /**
  * Hostile consumer fixture：覆盖 progress / finalizer 契约。
  */
-export class HostileConsumerV2
-  implements SafeStdoutConsumerV2<Uint8Array, Uint8Array>
-{
+export class HostileConsumerV2 implements SafeStdoutConsumerV2<
+  Uint8Array,
+  Uint8Array
+> {
   public pushCount = 0;
   public partialCount = 0;
   public finishCount = 0;

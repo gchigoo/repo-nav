@@ -20,7 +20,8 @@ describe.runIf(
     const caller = new AbortController();
     let cleared = 0;
     const coordinator = LocateAbortCoordinatorV2.create(caller.signal, 30_000, {
-      setTimeout: ((_fn: () => void, _ms?: number) => 1) as unknown as typeof setTimeout,
+      setTimeout: ((_fn: () => void, _ms?: number) =>
+        1) as unknown as typeof setTimeout,
       clearTimeout: (() => {
         cleared += 1;
       }) as unknown as typeof clearTimeout,

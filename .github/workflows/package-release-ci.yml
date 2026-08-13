@@ -2,6 +2,7 @@
 # Action pins aligned with cross-platform-ci.yml (reviewed 2026-07-31):
 # - actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 (v7.0.0)
 # - actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 (v7.0.0)
+# - actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f (v6.0.0)
 name: package-release-ci
 
 on:
@@ -124,3 +125,37 @@ jobs:
 
       - name: MCP entry smoke
         run: test -f dist/main.js && node -e "import('node:fs').then(fs=>{if(!fs.readFileSync('dist/main.js','utf8').includes('bootstrap'))process.exit(1)})"
+
+  snapshot-revalidation-benchmark:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install
+        run: npm ci
+
+      - name: Measure snapshot revalidation candidates
+        run: npm run benchmark:snapshot-revalidation -- --mode authoritative-ci
+
+      - name: Write snapshot benchmark provenance
+        run: node tools/benchmark/write-snapshot-revalidation-provenance.mjs
+
+      - name: Upload snapshot revalidation candidate
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: snapshot-revalidation-candidate-v1
+          path: |
+            test-artifacts/benchmark/snapshot-revalidation-candidate-v1.json
+            test-artifacts/benchmark/snapshot-revalidation-provenance-v1.json
+          if-no-files-found: error
+          retention-days: 7

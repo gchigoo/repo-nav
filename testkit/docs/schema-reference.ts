@@ -15,11 +15,15 @@ import {
 } from '../../src/mcp/locate-tool-schema.js';
 
 function objectRecord(value: unknown): Readonly<Record<string, unknown>> {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) return {};
+  if (typeof value !== 'object' || value === null || Array.isArray(value))
+    return {};
   return value as Readonly<Record<string, unknown>>;
 }
 
-function collectPropertyNames(value: unknown, result = new Set<string>()): Set<string> {
+function collectPropertyNames(
+  value: unknown,
+  result = new Set<string>(),
+): Set<string> {
   if (Array.isArray(value)) {
     for (const item of value) collectPropertyNames(item, result);
     return result;
@@ -27,20 +31,25 @@ function collectPropertyNames(value: unknown, result = new Set<string>()): Set<s
   const record = objectRecord(value);
   const properties = objectRecord(record['properties']);
   for (const name of Object.keys(properties)) result.add(name);
-  for (const nested of Object.values(record)) collectPropertyNames(nested, result);
+  for (const nested of Object.values(record))
+    collectPropertyNames(nested, result);
   return result;
 }
 
 /**
  * Build the machine-readable API reference projection for docs smoke.
  */
-export function buildSchemaReferenceProjection(): Readonly<Record<string, unknown>> {
+export function buildSchemaReferenceProjection(): Readonly<
+  Record<string, unknown>
+> {
   const inputProperties = Object.keys(
     objectRecord(objectRecord(REPO_NAV_LOCATE_INPUT_SCHEMA)['properties']),
   ).sort();
   const requiredRaw = objectRecord(REPO_NAV_LOCATE_INPUT_SCHEMA)['required'];
   const inputRequired = Array.isArray(requiredRaw)
-    ? requiredRaw.filter((value): value is string => typeof value === 'string').sort()
+    ? requiredRaw
+        .filter((value): value is string => typeof value === 'string')
+        .sort()
     : [];
   const inputExample = LocateRequestSchema.parse({
     repoPath: '/workspace/repository',

@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  type LocateStatus,
-} from '../../src/contracts/index.js';
+import { type LocateStatus } from '../../src/contracts/index.js';
 import {
   connectMcpStdioFixture,
   parseLocateToolResultParity,

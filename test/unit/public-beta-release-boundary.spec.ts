@@ -53,7 +53,10 @@ describe.runIf(
         if (norm === allowAbs) continue;
         const text = readFileSync(file, 'utf8');
         for (const symbol of NO_V1_FORBIDDEN_SYMBOLS_V2) {
-          if (symbol === 'redactLocateResult' || symbol === 'applyPublicErrorPolicy') {
+          if (
+            symbol === 'redactLocateResult' ||
+            symbol === 'applyPublicErrorPolicy'
+          ) {
             expect(text.includes(symbol)).toBe(false);
           }
         }

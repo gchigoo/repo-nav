@@ -39,7 +39,10 @@ describe.runIf(selected)(
         expect(request.expandedMaxHits).toBe(800);
         expect(request.legacyMaxHits).toBe(legacyMaxHits);
         expect(
-          Object.prototype.hasOwnProperty.call(request, 'discoveryReservationCap'),
+          Object.prototype.hasOwnProperty.call(
+            request,
+            'discoveryReservationCap',
+          ),
         ).toBe(false);
       }
 

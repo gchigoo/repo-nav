@@ -60,6 +60,7 @@ export const PUBLIC_ROOT_TYPE_EXPORT_KEYS_V2 = Object.freeze([
   'LocateResultV2',
   'NodeRepositoryReader',
   'NodeSafeProcessRunner',
+  'PackageMetadata',
   'PackageMetadataV1',
   'ParsedCodeGraphQuery',
   'PublicSearchTermV2',

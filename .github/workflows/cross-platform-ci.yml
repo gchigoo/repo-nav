@@ -122,11 +122,11 @@ jobs:
 
       - id: mcp
         name: MCP tests
-        run: npm run test:mcp -- --all
+        run: npm run test:mcp:built -- --all
 
       - id: docs
         name: Docs smoke
-        run: npm run test:docs
+        run: npm run test:docs:built
 
       - id: platform
         name: Platform contracts
@@ -170,17 +170,100 @@ jobs:
         if: always()
         run: node --import tsx tools/ci/assert-platform-contract.mjs --cell-report test-artifacts/platform/core-command-${{ matrix.cellId }}.json
 
+  macos-arm-unit:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install
+        run: npm ci
+
+      - name: Install pinned ripgrep
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TOOLS="${RUNNER_TEMP}/repo-nav-arm-tools"
+          mkdir -p "$TOOLS"
+          npm install --prefix "$TOOLS" --no-save --no-package-lock --no-fund --no-audit \
+            @vscode/ripgrep@1.15.9
+          RG_BIN="$TOOLS/node_modules/@vscode/ripgrep/bin"
+          echo "$RG_BIN" >> "$GITHUB_PATH"
+          "${RG_BIN}/rg" --version
+
+      - name: Clean
+        run: npm run clean
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+  codegraph-integration:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install
+        run: npm ci
+
+      - name: Install pinned CodeGraph
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOOLS="${RUNNER_TEMP}/repo-nav-codegraph-tools"
+          mkdir -p "$TOOLS"
+          npm install --prefix "$TOOLS" --no-save --no-package-lock --no-fund --no-audit \
+            @colbymchenry/codegraph@1.1.6
+          echo "$TOOLS/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Run live CodeGraph integration
+        run: npm run test:integration:codegraph
+
   cross-platform-required:
     name: cross-platform-required
     runs-on: ubuntu-24.04
     needs:
       - platform-matrix
+      - macos-arm-unit
+      - codegraph-integration
     if: always()
     steps:
-      - name: Require matrix success
+      - name: Require matrix, macOS ARM unit, and CodeGraph integration success
         shell: bash
         run: |
+          set -euo pipefail
           if [ "${{ needs.platform-matrix.result }}" != "success" ]; then
             echo "platform-matrix result must be success; got ${{ needs.platform-matrix.result }}"
+            exit 1
+          fi
+          if [ "${{ needs.macos-arm-unit.result }}" != "success" ]; then
+            echo "macos-arm-unit result must be success; got ${{ needs.macos-arm-unit.result }}"
+            exit 1
+          fi
+          if [ "${{ needs.codegraph-integration.result }}" != "success" ]; then
+            echo "codegraph-integration result must be success; got ${{ needs.codegraph-integration.result }}"
             exit 1
           fi

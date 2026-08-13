@@ -69,7 +69,9 @@ describe.runIf(
       LOCATE_TRANSITION_ROW_IDS.length,
     );
     expect(TRANSITION_FIXTURE_ROWS.slice(0, 4)).toEqual(
-      TOOL_ERROR_CODES.map((code) => code.toLocaleLowerCase().replaceAll('_', '-')),
+      TOOL_ERROR_CODES.map((code) =>
+        code.toLocaleLowerCase().replaceAll('_', '-'),
+      ),
     );
   });
 
@@ -260,7 +262,8 @@ describe.runIf(
       }
     }
 
-    const result = await createCanonicalLocateEngineHarnessV2([new DeadlineBackend()],
+    const result = await createCanonicalLocateEngineHarnessV2(
+      [new DeadlineBackend()],
       new NodeRepositoryReader(),
     ).service.locate(
       {
@@ -302,7 +305,8 @@ describe.runIf(
       }
     }
 
-    const result = await createCanonicalLocateEngineHarnessV2([new FixedTimeoutBackend()],
+    const result = await createCanonicalLocateEngineHarnessV2(
+      [new FixedTimeoutBackend()],
       new NodeRepositoryReader(),
     ).service.locate(
       {
@@ -423,7 +427,8 @@ for (const [caseId, interruption, timeoutMs] of [
     () => {
       it('retains verification completed before the abort', async () => {
         const callerController = new AbortController();
-        const result = await createCanonicalLocateEngineHarnessV2([new MultiHitCodeGraphBackend()],
+        const result = await createCanonicalLocateEngineHarnessV2(
+          [new MultiHitCodeGraphBackend()],
           new InterruptingReader(interruption, callerController),
         ).service.locate(
           {

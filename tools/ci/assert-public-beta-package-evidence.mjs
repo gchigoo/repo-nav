@@ -144,7 +144,9 @@ for (const cell of cells) {
     fail(`missing ${REQUIRED_CASE_ID} in requiredCaseIds for ${cell.cellId}`);
   }
   const markers = f9AssertionIds(cell.passedAssertionMarkers);
-  if (JSON.stringify(markers) !== JSON.stringify([...REQUIRED_MARKERS].sort())) {
+  if (
+    JSON.stringify(markers) !== JSON.stringify([...REQUIRED_MARKERS].sort())
+  ) {
     fail(
       `F9 marker set mismatch in ${cell.cellId ?? 'unknown'}: got ${markers.join(',')}`,
     );

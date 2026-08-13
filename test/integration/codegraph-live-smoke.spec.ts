@@ -13,12 +13,6 @@ import { describe, expect, it } from 'vitest';
 import { CodeGraphBackend } from '../../src/repository/codegraph-backend.js';
 import { createCodeGraphProcessInvocation } from '../../src/repository/codegraph-command.js';
 import { NodeSafeProcessRunner } from '../../src/repository/node-safe-process-runner.js';
-import { isSelected } from '../../testkit/testing/selection.js';
-
-const identity = {
-  group: 'codegraph-live-smoke',
-  caseId: 'indexed-temp-repo',
-} as const;
 
 function filesBelow(root: string): readonly string[] {
   const files: string[] = [];
@@ -36,12 +30,17 @@ function filesBelow(root: string): readonly string[] {
   return files.sort();
 }
 
-describe.runIf(isSelected(identity))('CodeGraph real indexed temp repository', () => {
+describe('CodeGraph real indexed temp repository', () => {
   it('indexes, probes, queries, and removes only the temporary repository', async () => {
     const workspaceIndex = resolve(process.cwd(), '.codegraph');
     const workspaceIndexExisted = existsSync(workspaceIndex);
     const repository = mkdtempSync(resolve(tmpdir(), 'repo-nav-codegraph-'));
     const runner = new NodeSafeProcessRunner();
+    const normalizedRepository = resolve(repository);
+    const normalizedTemp = resolve(tmpdir());
+    if (!normalizedRepository.startsWith(normalizedTemp)) {
+      throw new Error('Refusing to clean a non-temporary CodeGraph fixture.');
+    }
     try {
       writeFileSync(
         resolve(repository, 'sample.ts'),
@@ -117,11 +116,6 @@ describe.runIf(isSelected(identity))('CodeGraph real indexed temp repository', (
       ).toBe(false);
       expect(existsSync(workspaceIndex)).toBe(workspaceIndexExisted);
     } finally {
-      const normalizedRepository = resolve(repository);
-      const normalizedTemp = resolve(tmpdir());
-      if (!normalizedRepository.startsWith(normalizedTemp)) {
-        throw new Error('Refusing to clean a non-temporary CodeGraph fixture.');
-      }
       rmSync(normalizedRepository, { recursive: true, force: true });
     }
     expect(existsSync(repository)).toBe(false);

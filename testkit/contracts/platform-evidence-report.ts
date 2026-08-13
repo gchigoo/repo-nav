@@ -24,16 +24,10 @@ export interface PlatformContractEvidenceHashV1 {
 }
 
 export type PlatformCommandOutcome =
-  | 'success'
-  | 'failure'
-  | 'cancelled'
-  | 'skipped';
+  'success' | 'failure' | 'cancelled' | 'skipped';
 
 export type PlatformEventName =
-  | 'pull_request'
-  | 'merge_group'
-  | 'push'
-  | 'workflow_dispatch';
+  'pull_request' | 'merge_group' | 'push' | 'workflow_dispatch';
 
 export interface PlatformCoreCommandReportV1 {
   readonly schemaVersion: 1;
@@ -62,9 +56,7 @@ const SHA256_PATTERN = /^[0-9a-f]{64}$/u;
 const WORKFLOW_RUN_ID_PATTERN = /^[0-9]+$/u;
 const GIT_SHA_PATTERN = /^[0-9a-f]{40}$/u;
 
-function isPlainObject(
-  value: unknown,
-): value is Record<string, unknown> {
+function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
@@ -248,8 +240,7 @@ export function validatePlatformCoreCommandReportV1(
     throw new Error('revision must be an object');
   }
   if (
-    Object.keys(revision).sort().join(',') !==
-    'eventName,sourceSha,workflowSha'
+    Object.keys(revision).sort().join(',') !== 'eventName,sourceSha,workflowSha'
   ) {
     throw new Error(
       'revision keys must be exactly workflowSha,sourceSha,eventName',
@@ -277,7 +268,10 @@ export function validatePlatformCoreCommandReportV1(
     throw new Error('invalid eventName');
   }
   const commands = value['commands'];
-  if (!Array.isArray(commands) || commands.length !== PLATFORM_COMMANDS_V1.length) {
+  if (
+    !Array.isArray(commands) ||
+    commands.length !== PLATFORM_COMMANDS_V1.length
+  ) {
     throw new Error('commands must cover all nine core command ids');
   }
   for (let index = 0; index < PLATFORM_COMMANDS_V1.length; index += 1) {
@@ -355,8 +349,7 @@ export function validatePlatformCoreCommandReportV1(
         throw new Error('invalid evidence entry');
       }
       if (
-        Object.keys(entry).sort().join(',') !==
-        'contractId,evidenceId,sha256'
+        Object.keys(entry).sort().join(',') !== 'contractId,evidenceId,sha256'
       ) {
         throw new Error(
           'evidence keys must be exactly contractId,evidenceId,sha256',

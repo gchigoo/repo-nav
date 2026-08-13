@@ -168,7 +168,9 @@ describe.runIf(
     const resolved = resolveRepositoryScopeV1(undefined);
     const matched = new Set([STABLE_POOL_LAYERS_V1.matchedServer]);
     const unmatched = unmatchedLayersFromMatchedV1(resolved.effective, matched);
-    expect(unmatched).toEqual([...STABLE_POOL_LAYERS_V1.unmatchedWithoutServer]);
+    expect(unmatched).toEqual([
+      ...STABLE_POOL_LAYERS_V1.unmatchedWithoutServer,
+    ]);
 
     const eligibleRef = createOpaqueTokenV2<EligibleDiscoveryRefV2>();
     bindStableEligibleScopeDecisionsV2({

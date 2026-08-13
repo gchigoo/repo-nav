@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { assemblePublicLocateResultV2 } from '../../src/evidence/public-output/public-result-assembler-v2.js';
-import {
-  projectSyntheticLocateResultV2,
-} from '../../testkit/fixtures/public-output-v2/synthetic-locate-projection-helper-v2.js';
+import { projectSyntheticLocateResultV2 } from '../../testkit/fixtures/public-output-v2/synthetic-locate-projection-helper-v2.js';
 import { createUnsafeLocateSuccessV2 } from '../../testkit/fixtures/public-output-v2/synthetic-locate-v2.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
@@ -97,7 +95,7 @@ describe.runIf(errorsSelected)('v2 safe error table', () => {
       const result = assemblePublicLocateResultV2({
         ok: false,
         error,
-      } as never);
+      });
       expect(result).toEqual({
         ok: false,
         error: {

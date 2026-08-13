@@ -116,55 +116,57 @@ async function verifyServiceError(
   }
 }
 
-describe.runIf(selected('invalid-repo'))('MCP invalid repository mapping', () => {
-  it('preserves the typed code while sanitizing unsafe detail', async () => {
-    await verifyServiceError(
-      'error:INVALID_REPOSITORY',
-      'INVALID_REPOSITORY',
-      true,
-    );
-  });
-});
+describe.runIf(selected('invalid-repo'))(
+  'MCP invalid repository mapping',
+  () => {
+    it('preserves the typed code while sanitizing unsafe detail', async () => {
+      await verifyServiceError(
+        'error:INVALID_REPOSITORY',
+        'INVALID_REPOSITORY',
+        true,
+      );
+    });
+  },
+);
 
-describe.runIf(selected('path-outside-root'))('MCP path boundary mapping', () => {
-  it('preserves the typed code while sanitizing unsafe detail', async () => {
-    await verifyServiceError(
-      'error:PATH_OUTSIDE_ROOT',
-      'PATH_OUTSIDE_ROOT',
-      false,
-    );
-  });
-});
+describe.runIf(selected('path-outside-root'))(
+  'MCP path boundary mapping',
+  () => {
+    it('preserves the typed code while sanitizing unsafe detail', async () => {
+      await verifyServiceError(
+        'error:PATH_OUTSIDE_ROOT',
+        'PATH_OUTSIDE_ROOT',
+        false,
+      );
+    });
+  },
+);
 
 describe.runIf(selected('internal-error-parity'))(
   'MCP internal exception mapping',
   () => {
-    it(
-      'turns thrown failures into safe typed parity output',
-      async () => {
-        // One session covers both paths to avoid slow darwin dual-spawn flakes.
-        const session = await connectMcpStdioFixture();
-        try {
-          for (const question of [
-            'throw:INTERNAL_ERROR',
-            'error:INTERNAL_ERROR',
-          ] as const) {
-            const result = await session.client.callTool({
-              name: 'repo_nav_locate',
-              arguments: { ...baseArguments, question },
-            });
-            const parsed = parseLocateToolResultParity(result);
-            expectSafeError(parsed, 'INTERNAL_ERROR');
-            if (!parsed.output.ok) {
-              expect(parsed.output.error.recoverable).toBe(false);
-              expect('suggestedAction' in parsed.output.error).toBe(false);
-            }
+    it('turns thrown failures into safe typed parity output', async () => {
+      // One session covers both paths to avoid slow darwin dual-spawn flakes.
+      const session = await connectMcpStdioFixture();
+      try {
+        for (const question of [
+          'throw:INTERNAL_ERROR',
+          'error:INTERNAL_ERROR',
+        ] as const) {
+          const result = await session.client.callTool({
+            name: 'repo_nav_locate',
+            arguments: { ...baseArguments, question },
+          });
+          const parsed = parseLocateToolResultParity(result);
+          expectSafeError(parsed, 'INTERNAL_ERROR');
+          if (!parsed.output.ok) {
+            expect(parsed.output.error.recoverable).toBe(false);
+            expect('suggestedAction' in parsed.output.error).toBe(false);
           }
-        } finally {
-          await session.close();
         }
-      },
-      20_000,
-    );
+      } finally {
+        await session.close();
+      }
+    }, 20_000);
   },
 );

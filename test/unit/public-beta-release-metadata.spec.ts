@@ -66,4 +66,18 @@ describe.runIf(
     expect(license).toContain(EXPECTED_LICENSE_HOLDER_V2);
     expect(license).toContain('MIT License');
   });
+
+  it('aligns public install docs and package metadata with 1.1.0 corrective release', () => {
+    const requiredInstall = 'npm i -g repo-nav@1.1.0';
+    expect(pkg.version).toBe('1.1.0');
+    for (const relativePath of [
+      'README.md',
+      'docs/getting-started-mcp.md',
+      'docs/migration-v1-to-v2.md',
+    ]) {
+      const text = readFileSync(resolve(root, relativePath), 'utf8');
+      expect(text).toContain(requiredInstall);
+      expect(text).not.toContain('repo-nav@beta');
+    }
+  });
 });

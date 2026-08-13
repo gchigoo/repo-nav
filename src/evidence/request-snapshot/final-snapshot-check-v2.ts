@@ -1,10 +1,12 @@
 import type { SnapshotFactsV2 } from '../../contracts/v2/locate-fact-envelope-v2.js';
 import {
-  fileIdentitiesEqualV2,
-  resolveCanonicalTargetV2,
+  readVerifiedFileV2,
+  verifiedFileSnapshotsEqualV2,
   type CanonicalFileKeyV2,
-  type FileIdentityV2,
-} from './canonical-file-identity-v2.js';
+  type ReadVerifiedFileInputV2,
+  type VerifiedFileReadV2,
+  type VerifiedFileSnapshotV2,
+} from '../../repository/verified-file-snapshot-v2.js';
 import type {
   InternalPreRankingEvidenceRecordV2,
   PreFinalEligibleDiscoveryPoolV2,
@@ -31,7 +33,7 @@ export type TrustedStableEligibleDiscoveryPoolV2 = Readonly<object> & {
 
 export interface LoadedCanonicalFileV2 {
   readonly canonicalFileKey: CanonicalFileKeyV2;
-  readonly identity: FileIdentityV2;
+  readonly snapshot: VerifiedFileSnapshotV2;
   readonly aliases: readonly string[];
 }
 
@@ -86,19 +88,43 @@ export function isRegisteredSnapshotTrustProofV2(
 
 export type FinalCheckConsistencyV2 = 'stable' | 'changed' | 'unknown';
 
+function safeMaxFileBytesV2(size: bigint): number {
+  if (size >= BigInt(Number.MAX_SAFE_INTEGER)) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+  return Math.max(1, Number(size));
+}
+
 /**
- * Final check：按 canonical key 排序复核 identity/alias；changed 整文件 purge 双池。
+ * Final check：按 canonical key 排序复核 verified snapshot；changed 整文件 purge 双池。
  */
 export async function runFinalSnapshotCheckV2(input: {
   readonly repositoryRoot: string;
   readonly loadedFiles: readonly LoadedCanonicalFileV2[];
+  readonly invalidatedCanonicalKeys?: ReadonlySet<CanonicalFileKeyV2>;
   readonly evidencePool: PreRankingEvidencePoolV2;
   readonly eligiblePool: PreFinalEligibleDiscoveryPoolV2;
   readonly gitState: RepositoryGitStateV2;
   readonly snapshotRef?: string;
   readonly signal: AbortSignal;
+  readonly readVerifiedFile?: (
+    input: ReadVerifiedFileInputV2,
+  ) => Promise<VerifiedFileReadV2>;
 }): Promise<TrustedFinalSnapshotPoolsV2> {
-  const changed = new Set<string>();
+  const changed = new Set<string>(input.invalidatedCanonicalKeys);
+  const loadedCanonicalKeys = new Set(
+    input.loadedFiles.map((loaded) => loaded.canonicalFileKey),
+  );
+  for (const record of input.evidencePool.records) {
+    if (!loadedCanonicalKeys.has(record.canonicalFileKey)) {
+      changed.add(record.canonicalFileKey);
+    }
+  }
+  for (const record of input.eligiblePool.records) {
+    if (!loadedCanonicalKeys.has(record.canonicalFileKey)) {
+      changed.add(record.canonicalFileKey);
+    }
+  }
   let filesChecked = 0;
 
   const sorted = [...input.loadedFiles].sort((left, right) =>
@@ -116,43 +142,31 @@ export async function runFinalSnapshotCheckV2(input: {
       continue;
     }
     try {
-      let aliasMismatch = false;
-      for (const alias of loaded.aliases) {
+      const readVerifiedFile = input.readVerifiedFile ?? readVerifiedFileV2;
+      const locators =
+        loaded.aliases.length > 0
+          ? loaded.aliases
+          : Object.freeze([loaded.canonicalFileKey]);
+      let stable = true;
+      for (const locator of locators) {
         if (input.signal.aborted) {
-          changed.add(loaded.canonicalFileKey);
-          aliasMismatch = true;
+          stable = false;
           break;
         }
-        const resolved = await resolveCanonicalTargetV2(
-          input.repositoryRoot,
-          alias,
-          input.signal,
-        );
+        const reverified = await readVerifiedFile({
+          repositoryRoot: input.repositoryRoot,
+          locator,
+          maxFileBytes: safeMaxFileBytesV2(loaded.snapshot.identity.size),
+          signal: input.signal,
+        });
         if (
-          resolved.canonicalFileKey !== loaded.canonicalFileKey ||
-          !fileIdentitiesEqualV2(resolved.identity, loaded.identity)
+          !verifiedFileSnapshotsEqualV2(reverified.snapshot, loaded.snapshot)
         ) {
-          aliasMismatch = true;
+          stable = false;
           break;
         }
       }
-      if (aliasMismatch) {
-        changed.add(loaded.canonicalFileKey);
-        continue;
-      }
-      if (input.signal.aborted) {
-        changed.add(loaded.canonicalFileKey);
-        continue;
-      }
-      const recheck = await resolveCanonicalTargetV2(
-        input.repositoryRoot,
-        loaded.aliases[0] ?? loaded.canonicalFileKey,
-        input.signal,
-      );
-      if (
-        recheck.canonicalFileKey !== loaded.canonicalFileKey ||
-        !fileIdentitiesEqualV2(recheck.identity, loaded.identity)
-      ) {
+      if (!stable || input.signal.aborted) {
         changed.add(loaded.canonicalFileKey);
         continue;
       }
@@ -178,10 +192,10 @@ export async function runFinalSnapshotCheckV2(input: {
   ).size;
 
   let consistency: FinalCheckConsistencyV2;
-  if (input.loadedFiles.length === 0 && retainedEvidence.length === 0) {
-    consistency = 'unknown';
-  } else if (changed.size > 0) {
+  if (changed.size > 0) {
     consistency = 'changed';
+  } else if (input.loadedFiles.length === 0 && retainedEvidence.length === 0) {
+    consistency = 'unknown';
   } else {
     consistency = 'stable';
   }

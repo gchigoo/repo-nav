@@ -57,7 +57,7 @@ export function assertV1ShadowFailClosedV2(options: {
   const baselineBytes = JSON.stringify(options.input);
 
   for (const failureClass of V1_SHADOW_FAILURE_CLASSES_V2) {
-    let serializeSpy: ReturnType<typeof vi.spyOn> | undefined;
+    let serializeSpy: { mockRestore(): void } | undefined;
     try {
       if (failureClass === 'serializer') {
         serializeSpy = vi

@@ -39,7 +39,9 @@ interface EvidenceOptions {
   readonly idSuffix?: string;
 }
 
-function createComparableEvidence(options: EvidenceOptions = {}): PublicEvidence {
+function createComparableEvidence(
+  options: EvidenceOptions = {},
+): PublicEvidence {
   const evidenceClass = options.evidenceClass ?? 'confirmed';
   const common = {
     id: `evidence:v1:${options.idSuffix ?? '0'.repeat(64)}`,
@@ -126,8 +128,9 @@ describe.runIf(isSelected(identity))('schema v1 contracts', () => {
   });
 
   it('enforces item, aggregate, field, range, and strict-object budgets', () => {
-    expect(LocateRequestSchema.safeParse({ ...validRequest, terms: [] }).success)
-      .toBe(false);
+    expect(
+      LocateRequestSchema.safeParse({ ...validRequest, terms: [] }).success,
+    ).toBe(false);
     expect(
       LocateRequestSchema.safeParse({
         ...validRequest,

@@ -38,8 +38,10 @@ describe.runIf(isSelected(identity))('MVP fixture completeness', () => {
     expect(report.successManifestIds).toEqual(report.companionSnapshotIds);
     expect(
       report.owners
-        .filter(({ family }) =>
-          family === 'ConfirmedReasonCode' || family === 'CandidateReasonCode',
+        .filter(
+          ({ family }) =>
+            family === 'ConfirmedReasonCode' ||
+            family === 'CandidateReasonCode',
         )
         .every(({ negative }) => negative !== undefined),
     ).toBe(true);

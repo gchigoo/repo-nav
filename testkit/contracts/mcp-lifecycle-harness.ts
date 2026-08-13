@@ -1,10 +1,5 @@
 import { spawn } from 'node:child_process';
-import {
-  existsSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-} from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
@@ -95,10 +90,16 @@ export function evaluateMcpLifecycleCase(
     issues.push({ path: 'exitCode', message: 'Lifecycle exit code differs.' });
   }
   if (observation.elapsedMs > lifecycleCase.expected.maxShutdownMs) {
-    issues.push({ path: 'elapsedMs', message: 'Shutdown budget was exceeded.' });
+    issues.push({
+      path: 'elapsedMs',
+      message: 'Shutdown budget was exceeded.',
+    });
   }
   if (observation.stdoutFrames.length === 0) {
-    issues.push({ path: 'stdoutFrames', message: 'No MCP frames were observed.' });
+    issues.push({
+      path: 'stdoutFrames',
+      message: 'No MCP frames were observed.',
+    });
   }
   if (lifecycleCase.scenario === 'shutdown-cleanup-probe') {
     if (observation.contextClosed !== true) {
@@ -122,7 +123,9 @@ export class McpLifecycleCaseRunner {
     private readonly options: McpLifecycleCaseRunnerOptions = {},
   ) {}
 
-  public async run(caseInput: McpLifecycleCase): Promise<McpLifecycleObservation> {
+  public async run(
+    caseInput: McpLifecycleCase,
+  ): Promise<McpLifecycleObservation> {
     const observation = await runMcpLifecycleProcess(
       caseInput,
       this.options.probeFault,
@@ -203,13 +206,7 @@ function resolveLifecycleProcess(
     argv: [
       '--import',
       'tsx',
-      resolve(
-        projectRoot,
-        'testkit',
-        'fixtures',
-        'mcp',
-        'lifecycle-probe.ts',
-      ),
+      resolve(projectRoot, 'testkit', 'fixtures', 'mcp', 'lifecycle-probe.ts'),
     ],
     environment,
     probe,
@@ -240,6 +237,28 @@ async function waitForProbeChildrenToExit(
   return pids.every((pid) => !processIsAlive(pid));
 }
 
+async function finalizeLifecycleProbeCleanup(
+  pids: readonly number[],
+  directory: string,
+): Promise<void> {
+  for (const pid of [...pids].reverse()) {
+    if (processIsAlive(pid)) {
+      try {
+        process.kill(pid, 'SIGKILL');
+      } catch {
+        // The process may exit between the liveness probe and cleanup.
+      }
+    }
+  }
+  const cleaned = await waitForProbeChildrenToExit(pids);
+  rmSync(directory, { recursive: true, force: true });
+  if (!cleaned) {
+    throw new Error(
+      'Lifecycle probe final cleanup left a child process alive.',
+    );
+  }
+}
+
 async function inspectLifecycleProbe(
   probe: LifecycleProbePaths | null,
   waitForNaturalExit: boolean,
@@ -252,6 +271,13 @@ async function inspectLifecycleProbe(
     return { contextClosed: null, childrenCleaned: null };
   }
   let pids: readonly number[] = [];
+  let observation:
+    | {
+        readonly contextClosed: boolean | null;
+        readonly childrenCleaned: boolean | null;
+      }
+    | undefined;
+  let failure: { readonly error: unknown } | undefined;
   try {
     const parsed = ProbePidSchema.safeParse(
       existsSync(probe.pidFile)
@@ -268,7 +294,7 @@ async function inspectLifecycleProbe(
       directPid: parsed.success ? parsed.data.directPid : null,
       descendantPid: parsed.success ? parsed.data.descendantPid : null,
     });
-    return {
+    observation = {
       contextClosed:
         existsSync(probe.contextMarker) &&
         readFileSync(probe.contextMarker, 'utf8').trim() === 'closed',
@@ -278,22 +304,17 @@ async function inspectLifecycleProbe(
           ? await waitForProbeChildrenToExit(pids)
           : pids.every((pid) => !processIsAlive(pid))),
     };
-  } finally {
-    for (const pid of [...pids].reverse()) {
-      if (processIsAlive(pid)) {
-        try {
-          process.kill(pid, 'SIGKILL');
-        } catch {
-          // The process may exit between the liveness probe and cleanup.
-        }
-      }
-    }
-    const cleaned = await waitForProbeChildrenToExit(pids);
-    rmSync(probe.directory, { recursive: true, force: true });
-    if (!cleaned) {
-      throw new Error('Lifecycle probe final cleanup left a child process alive.');
-    }
+  } catch (error: unknown) {
+    failure = { error };
   }
+  await finalizeLifecycleProbeCleanup(pids, probe.directory);
+  if (failure !== undefined) {
+    throw failure.error;
+  }
+  if (observation === undefined) {
+    throw new Error('Lifecycle probe observation was not produced.');
+  }
+  return observation;
 }
 
 async function cleanupLifecycleProbeAfterSpawnError(
@@ -317,7 +338,9 @@ export function parseMcpStdoutFrames(
     throw new Error('Synthetic MCP child produced no stdout frames.');
   }
   if (lines.some((line) => line.length === 0)) {
-    throw new Error('MCP stdout contains a blank line between protocol frames.');
+    throw new Error(
+      'MCP stdout contains a blank line between protocol frames.',
+    );
   }
   return lines.map((line, index) => {
     let value: unknown;
@@ -340,219 +363,220 @@ async function runMcpLifecycleProcess(
   const { projectRoot } = lifecycleProcess;
   const startedAt = performance.now();
 
-  return await new Promise<McpLifecycleObservation>((resolveObservation, reject) => {
-    const child = spawn(
-      process.execPath,
-      [...lifecycleProcess.argv],
-      {
+  return await new Promise<McpLifecycleObservation>(
+    (resolveObservation, reject) => {
+      const child = spawn(process.execPath, [...lifecycleProcess.argv], {
         cwd: projectRoot,
         env: lifecycleProcess.environment,
         stdio: ['pipe', 'pipe', 'pipe'],
         windowsHide: true,
-      },
-    );
-    let stdout = '';
-    let stderr = '';
-    let timedOut = false;
-    let stdoutRemainder = '';
-    let shutdownTriggered = false;
-    let completed = false;
-    // Probe cases measure shutdown budget from stdin close, not Nest boot.
-    let shutdownStartedAt = startedAt;
-    let killTimeout: ReturnType<typeof setTimeout> | undefined;
-    const armKillTimeout = (): void => {
-      if (killTimeout !== undefined) {
-        return;
+      });
+      let stdout = '';
+      let stderr = '';
+      let timedOut = false;
+      let stdoutRemainder = '';
+      let shutdownTriggered = false;
+      let completed = false;
+      // Probe cases measure shutdown budget from stdin close, not Nest boot.
+      let shutdownStartedAt = startedAt;
+      let killTimeout: ReturnType<typeof setTimeout> | undefined;
+      const armKillTimeout = (): void => {
+        if (killTimeout !== undefined) {
+          return;
+        }
+        killTimeout = setTimeout(() => {
+          timedOut = true;
+          child.kill();
+        }, lifecycleCase.expected.maxShutdownMs);
+      };
+      // Probe cases arm the budget after children.json appears so slow darwin Nest
+      // boot cannot race force-timeout before directPid is written.
+      if (lifecycleProcess.probe === null) {
+        armKillTimeout();
       }
-      killTimeout = setTimeout(() => {
-        timedOut = true;
-        child.kill();
-      }, lifecycleCase.expected.maxShutdownMs);
-    };
-    // Probe cases arm the budget after children.json appears so slow darwin Nest
-    // boot cannot race force-timeout before directPid is written.
-    if (lifecycleProcess.probe === null) {
-      armKillTimeout();
-    }
-    const probeBootstrapTimeout =
-      lifecycleProcess.probe === null
-        ? undefined
-        : setTimeout(() => {
-            if (!shutdownTriggered) {
-              timedOut = true;
-              child.kill();
-            }
-          }, Math.max(lifecycleCase.expected.maxShutdownMs * 4, 20_000));
-    const probePoll =
-      lifecycleProcess.probe === null
-        ? undefined
-        : setInterval(() => {
+      const probeBootstrapTimeout =
+        lifecycleProcess.probe === null
+          ? undefined
+          : setTimeout(
+              () => {
+                if (!shutdownTriggered) {
+                  timedOut = true;
+                  child.kill();
+                }
+              },
+              Math.max(lifecycleCase.expected.maxShutdownMs * 4, 20_000),
+            );
+      const probePoll =
+        lifecycleProcess.probe === null
+          ? undefined
+          : setInterval(() => {
+              if (
+                !shutdownTriggered &&
+                existsSync(lifecycleProcess.probe?.pidFile ?? '')
+              ) {
+                shutdownTriggered = true;
+                shutdownStartedAt = performance.now();
+                armKillTimeout();
+                child.stdin.end();
+              }
+            }, 10);
+
+      child.stdout.setEncoding('utf8');
+      child.stderr.setEncoding('utf8');
+      child.stdout.on('data', (chunk: string) => {
+        stdout += chunk;
+        stdoutRemainder += chunk;
+        const lines = stdoutRemainder.split(/\r?\n/u);
+        stdoutRemainder = lines.pop() ?? '';
+        for (const line of lines) {
+          if (line.length === 0) {
+            continue;
+          }
+          const frame = JSON.parse(line) as Readonly<Record<string, unknown>>;
+          if (frame.id === 1) {
+            child.stdin.write(
+              `${JSON.stringify({
+                jsonrpc: '2.0',
+                method: 'notifications/initialized',
+              })}\n`,
+            );
+            child.stdin.write(
+              `${JSON.stringify({
+                jsonrpc: '2.0',
+                id: 2,
+                method: 'tools/list',
+              })}\n`,
+            );
+          }
+          if (frame.id === 2) {
+            child.stdin.write(
+              `${JSON.stringify({
+                jsonrpc: '2.0',
+                id: 3,
+                method: 'tools/call',
+                params: {
+                  name: 'repo_nav_locate',
+                  arguments: {
+                    repoPath: projectRoot,
+                    question: 'production-bin-lifecycle',
+                    terms:
+                      lifecycleProcess.probe === null
+                        ? []
+                        : ['lifecycle-probe'],
+                  },
+                },
+              })}\n`,
+            );
+          }
+          if (
+            frame.id === 3 &&
+            lifecycleProcess.probe === null &&
+            !shutdownTriggered
+          ) {
+            shutdownTriggered = true;
             if (
-              !shutdownTriggered &&
-              existsSync(lifecycleProcess.probe?.pidFile ?? '')
+              lifecycleCase.scenario === 'graceful-shutdown' &&
+              process.platform !== 'win32'
             ) {
-              shutdownTriggered = true;
-              shutdownStartedAt = performance.now();
-              armKillTimeout();
+              child.kill('SIGINT');
+            } else {
               child.stdin.end();
             }
-          }, 10);
-
-    child.stdout.setEncoding('utf8');
-    child.stderr.setEncoding('utf8');
-    child.stdout.on('data', (chunk: string) => {
-      stdout += chunk;
-      stdoutRemainder += chunk;
-      const lines = stdoutRemainder.split(/\r?\n/u);
-      stdoutRemainder = lines.pop() ?? '';
-      for (const line of lines) {
-        if (line.length === 0) {
-          continue;
-        }
-        const frame = JSON.parse(line) as Readonly<Record<string, unknown>>;
-        if (frame.id === 1) {
-          child.stdin.write(
-            `${JSON.stringify({
-              jsonrpc: '2.0',
-              method: 'notifications/initialized',
-            })}\n`,
-          );
-          child.stdin.write(
-            `${JSON.stringify({
-              jsonrpc: '2.0',
-              id: 2,
-              method: 'tools/list',
-            })}\n`,
-          );
-        }
-        if (frame.id === 2) {
-          child.stdin.write(
-            `${JSON.stringify({
-              jsonrpc: '2.0',
-              id: 3,
-              method: 'tools/call',
-              params: {
-                name: 'repo_nav_locate',
-                arguments: {
-                  repoPath: projectRoot,
-                  question: 'production-bin-lifecycle',
-                  terms:
-                    lifecycleProcess.probe === null
-                      ? []
-                      : ['lifecycle-probe'],
-                },
-              },
-            })}\n`,
-          );
-        }
-        if (
-          frame.id === 3 &&
-          lifecycleProcess.probe === null &&
-          !shutdownTriggered
-        ) {
-          shutdownTriggered = true;
-          if (
-            lifecycleCase.scenario === 'graceful-shutdown' &&
-            process.platform !== 'win32'
-          ) {
-            child.kill('SIGINT');
-          } else {
-            child.stdin.end();
           }
         }
-      }
-    });
-    child.stderr.on('data', (chunk: string) => {
-      stderr += chunk;
-    });
+      });
+      child.stderr.on('data', (chunk: string) => {
+        stderr += chunk;
+      });
 
-    child.once('error', (error) => {
-      if (completed) {
-        return;
-      }
-      completed = true;
-      if (killTimeout !== undefined) {
-        clearTimeout(killTimeout);
-      }
-      if (probeBootstrapTimeout !== undefined) {
-        clearTimeout(probeBootstrapTimeout);
-      }
-      if (probePoll !== undefined) {
-        clearInterval(probePoll);
-      }
-      void cleanupLifecycleProbeAfterSpawnError(
-        lifecycleProcess.probe,
-        onProbeAudit,
-      ).then(
-        () => reject(error),
-        (cleanupError: unknown) =>
-          reject(
-            new AggregateError(
-              [error, cleanupError],
-              'Lifecycle process spawn and probe cleanup both failed.',
-            ),
-          ),
-      );
-    });
-    child.once('spawn', () => {
-      child.stdin.write(
-        `${JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'initialize',
-          params: {
-            protocolVersion: LATEST_PROTOCOL_VERSION,
-            capabilities: {},
-            clientInfo: { name: 'repo-nav-lifecycle', version: '0.1.0' },
-          },
-        })}\n`,
-      );
-    });
-    child.once('close', (code) => {
-      if (completed) {
-        return;
-      }
-      completed = true;
-      if (killTimeout !== undefined) {
-        clearTimeout(killTimeout);
-      }
-      if (probeBootstrapTimeout !== undefined) {
-        clearTimeout(probeBootstrapTimeout);
-      }
-      if (probePoll !== undefined) {
-        clearInterval(probePoll);
-      }
-      void (async () => {
-        const elapsedMs = performance.now() - shutdownStartedAt;
-        const probeState =
-          lifecycleProcess.probe === null
-            ? 'no-probe'
-            : `pidFile=${existsSync(lifecycleProcess.probe.pidFile)},contextMarker=${existsSync(lifecycleProcess.probe.contextMarker)}`;
-        const probe = await inspectLifecycleProbe(
+      child.once('error', (error) => {
+        if (completed) {
+          return;
+        }
+        completed = true;
+        if (killTimeout !== undefined) {
+          clearTimeout(killTimeout);
+        }
+        if (probeBootstrapTimeout !== undefined) {
+          clearTimeout(probeBootstrapTimeout);
+        }
+        if (probePoll !== undefined) {
+          clearInterval(probePoll);
+        }
+        void cleanupLifecycleProbeAfterSpawnError(
           lifecycleProcess.probe,
-          !timedOut && code === lifecycleCase.expected.exitCode,
           onProbeAudit,
+        ).then(
+          () => reject(error),
+          (cleanupError: unknown) =>
+            reject(
+              new AggregateError(
+                [error, cleanupError],
+                'Lifecycle process spawn and probe cleanup both failed.',
+              ),
+            ),
         );
-        if (timedOut) {
-          throw new Error(
-            `MCP lifecycle case exceeded ${lifecycleCase.expected.maxShutdownMs}ms (${probeState}, observed=${JSON.stringify(probe)}, stderr=${JSON.stringify(stderr)}, stdout=${JSON.stringify(stdout)}).`,
-          );
+      });
+      child.once('spawn', () => {
+        child.stdin.write(
+          `${JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'initialize',
+            params: {
+              protocolVersion: LATEST_PROTOCOL_VERSION,
+              capabilities: {},
+              clientInfo: { name: 'repo-nav-lifecycle', version: '0.1.0' },
+            },
+          })}\n`,
+        );
+      });
+      child.once('close', (code) => {
+        if (completed) {
+          return;
         }
-        if (code !== lifecycleCase.expected.exitCode) {
-          throw new Error(
-            `MCP lifecycle exit code ${code ?? 'null'} did not match ${lifecycleCase.expected.exitCode}.`,
-          );
+        completed = true;
+        if (killTimeout !== undefined) {
+          clearTimeout(killTimeout);
         }
-        resolveObservation({
-          exitCode: code,
-          stdoutFrames: parseMcpStdoutFrames(stdout),
-          stderr,
-          elapsedMs,
-          ...probe,
-        });
-      })().catch(reject);
-    });
-  });
+        if (probeBootstrapTimeout !== undefined) {
+          clearTimeout(probeBootstrapTimeout);
+        }
+        if (probePoll !== undefined) {
+          clearInterval(probePoll);
+        }
+        void (async () => {
+          const elapsedMs = performance.now() - shutdownStartedAt;
+          const probeState =
+            lifecycleProcess.probe === null
+              ? 'no-probe'
+              : `pidFile=${existsSync(lifecycleProcess.probe.pidFile)},contextMarker=${existsSync(lifecycleProcess.probe.contextMarker)}`;
+          const probe = await inspectLifecycleProbe(
+            lifecycleProcess.probe,
+            !timedOut && code === lifecycleCase.expected.exitCode,
+            onProbeAudit,
+          );
+          if (timedOut) {
+            throw new Error(
+              `MCP lifecycle case exceeded ${lifecycleCase.expected.maxShutdownMs}ms (${probeState}, observed=${JSON.stringify(probe)}, stderr=${JSON.stringify(stderr)}, stdout=${JSON.stringify(stdout)}).`,
+            );
+          }
+          if (code !== lifecycleCase.expected.exitCode) {
+            throw new Error(
+              `MCP lifecycle exit code ${code ?? 'null'} did not match ${lifecycleCase.expected.exitCode}.`,
+            );
+          }
+          resolveObservation({
+            exitCode: code,
+            stdoutFrames: parseMcpStdoutFrames(stdout),
+            stderr,
+            elapsedMs,
+            ...probe,
+          });
+        })().catch(reject);
+      });
+    },
+  );
 }
 
 export async function runMcpLifecycleCase(
@@ -567,61 +591,63 @@ export async function runMcpTransportErrorCase(
   const { childPath, projectRoot } = resolveProductionBin();
   const startedAt = performance.now();
 
-  return await new Promise<McpLifecycleObservation>((resolveObservation, reject) => {
-    const child = spawn(process.execPath, [childPath], {
-      cwd: projectRoot,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      windowsHide: true,
-    });
-    let stdout = '';
-    let stderr = '';
-    let timedOut = false;
-
-    child.stdout.setEncoding('utf8');
-    child.stderr.setEncoding('utf8');
-    child.stdout.on('data', (chunk: string) => {
-      stdout += chunk;
-    });
-    child.stderr.on('data', (chunk: string) => {
-      stderr += chunk;
-    });
-
-    const timeout = setTimeout(() => {
-      timedOut = true;
-      child.kill();
-    }, maxShutdownMs);
-    child.once('error', (error) => {
-      clearTimeout(timeout);
-      reject(error);
-    });
-    child.once('spawn', () => {
-      child.stdin.write('{"jsonrpc":\n');
-    });
-    child.once('close', (code) => {
-      clearTimeout(timeout);
-      child.stdin.destroy();
-      if (timedOut) {
-        reject(
-          new Error(`MCP transport error case exceeded ${maxShutdownMs}ms.`),
-        );
-        return;
-      }
-      if (code !== 1) {
-        reject(
-          new Error(
-            `MCP transport error exit code ${code ?? 'null'} did not match 1.`,
-          ),
-        );
-        return;
-      }
-      resolveObservation({
-        exitCode: code,
-        stdoutFrames: stdout.length === 0 ? [] : parseMcpStdoutFrames(stdout),
-        stderr,
-        elapsedMs: performance.now() - startedAt,
-        contextClosed: null,
-        childrenCleaned: null,
+  return await new Promise<McpLifecycleObservation>(
+    (resolveObservation, reject) => {
+      const child = spawn(process.execPath, [childPath], {
+        cwd: projectRoot,
+        stdio: ['pipe', 'pipe', 'pipe'],
+        windowsHide: true,
       });
-    });
-  });
+      let stdout = '';
+      let stderr = '';
+      let timedOut = false;
+
+      child.stdout.setEncoding('utf8');
+      child.stderr.setEncoding('utf8');
+      child.stdout.on('data', (chunk: string) => {
+        stdout += chunk;
+      });
+      child.stderr.on('data', (chunk: string) => {
+        stderr += chunk;
+      });
+
+      const timeout = setTimeout(() => {
+        timedOut = true;
+        child.kill();
+      }, maxShutdownMs);
+      child.once('error', (error) => {
+        clearTimeout(timeout);
+        reject(error);
+      });
+      child.once('spawn', () => {
+        child.stdin.write('{"jsonrpc":\n');
+      });
+      child.once('close', (code) => {
+        clearTimeout(timeout);
+        child.stdin.destroy();
+        if (timedOut) {
+          reject(
+            new Error(`MCP transport error case exceeded ${maxShutdownMs}ms.`),
+          );
+          return;
+        }
+        if (code !== 1) {
+          reject(
+            new Error(
+              `MCP transport error exit code ${code ?? 'null'} did not match 1.`,
+            ),
+          );
+          return;
+        }
+        resolveObservation({
+          exitCode: code,
+          stdoutFrames: stdout.length === 0 ? [] : parseMcpStdoutFrames(stdout),
+          stderr,
+          elapsedMs: performance.now() - startedAt,
+          contextClosed: null,
+          childrenCleaned: null,
+        });
+      });
+    },
+  );
 }

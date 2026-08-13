@@ -1,9 +1,9 @@
 export {
   fileIdentitiesEqualV2,
-  resolveCanonicalTargetV2,
+  verifiedFileSnapshotsEqualV2,
   type CanonicalFileKeyV2,
   type FileIdentityV2,
-  type ResolvedCanonicalTargetV2,
+  type VerifiedFileSnapshotV2,
 } from './canonical-file-identity-v2.js';
 export {
   RequestFileCacheV2,

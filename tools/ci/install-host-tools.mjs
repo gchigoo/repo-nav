@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Install pinned host tools required by the full unit/MCP suite on CI.
- * Does not rely on runner image preinstalls.
+ * Install pinned ripgrep required by the full unit/MCP suite on CI.
+ * CodeGraph remains isolated to the dedicated integration job.
  * Set GITHUB_TOKEN so @vscode/ripgrep postinstall can authenticate GitHub API downloads.
  */
 import { spawnSync } from 'node:child_process';
@@ -11,7 +11,6 @@ import { delimiter, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const RIPGREP_SPEC = '@vscode/ripgrep@1.15.9';
-const CODEGRAPH_SPEC = '@colbymchenry/codegraph@1.1.6';
 const toolsRoot = resolve(
   process.env.RUNNER_TEMP ?? resolve(homedir(), '.repo-nav-ci-tools'),
   'repo-nav-host-tools',
@@ -45,7 +44,9 @@ function resolveNpmCli() {
       return candidate;
     }
   }
-  throw new Error('unable to resolve npm-cli.js from current Node installation');
+  throw new Error(
+    'unable to resolve npm-cli.js from current Node installation',
+  );
 }
 
 /**
@@ -74,18 +75,25 @@ runNpm([
   '--no-fund',
   '--no-audit',
   RIPGREP_SPEC,
-  CODEGRAPH_SPEC,
 ]);
 
-const binDir = resolve(toolsRoot, 'node_modules', '.bin');
-const ripgrepBin = resolve(toolsRoot, 'node_modules', '@vscode', 'ripgrep', 'bin');
-const pathParts = [binDir, ripgrepBin, process.env.PATH ?? ''].filter(
+const ripgrepBin = resolve(
+  toolsRoot,
+  'node_modules',
+  '@vscode',
+  'ripgrep',
+  'bin',
+);
+const pathParts = [ripgrepBin, process.env.PATH ?? ''].filter(
   (part) => part.length > 0,
 );
 const nextPath = pathParts.join(delimiter);
 
-if (typeof process.env.GITHUB_PATH === 'string' && process.env.GITHUB_PATH.length > 0) {
-  appendFileSync(process.env.GITHUB_PATH, `${binDir}\n${ripgrepBin}\n`, 'utf8');
+if (
+  typeof process.env.GITHUB_PATH === 'string' &&
+  process.env.GITHUB_PATH.length > 0
+) {
+  appendFileSync(process.env.GITHUB_PATH, `${ripgrepBin}\n`, 'utf8');
 }
 
 process.env.PATH = nextPath;
@@ -103,28 +111,6 @@ const rgProbe = spawnSync(rgPath, ['--version'], {
 if (rgProbe.status !== 0) {
   throw new Error(`rg --version failed: ${rgProbe.stderr || rgProbe.stdout}`);
 }
-process.stdout.write(`installed ripgrep: ${(rgProbe.stdout || '').split(/\r?\n/u)[0]}\n`);
-
-const codegraphShim = resolve(
-  toolsRoot,
-  'node_modules',
-  '@colbymchenry',
-  'codegraph',
-  'npm-shim.js',
-);
-if (!existsSync(codegraphShim)) {
-  throw new Error(`codegraph shim missing at ${codegraphShim}`);
-}
-const codegraphProbe = spawnSync(process.execPath, [codegraphShim, '--version'], {
-  encoding: 'utf8',
-  shell: false,
-  env: { ...process.env, PATH: nextPath },
-});
-if (codegraphProbe.status !== 0) {
-  throw new Error(
-    `codegraph --version failed: ${codegraphProbe.stderr || codegraphProbe.stdout}`,
-  );
-}
 process.stdout.write(
-  `installed codegraph: ${(codegraphProbe.stdout || '').trim()}\n`,
+  `installed ripgrep: ${(rgProbe.stdout || '').split(/\r?\n/u)[0]}\n`,
 );

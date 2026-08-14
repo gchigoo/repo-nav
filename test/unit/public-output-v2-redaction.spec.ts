@@ -127,9 +127,15 @@ describe.runIf(fieldRedactionSelected)('v2 field redaction policy', () => {
       collectSensitiveCorpusV2(value),
     );
 
-    expect(redacted.value).not.toMatch(
-      /(?:db-secret|query-secret|stan\.guo@example\.com|\u001b|\u202e)/u,
-    );
+    for (const forbidden of [
+      'db-secret',
+      'query-secret',
+      'stan.guo@example.com',
+      '\u001b',
+      '\u202e',
+    ]) {
+      expect(redacted.value).not.toContain(forbidden);
+    }
     expect(redacted.reasonCodes).toEqual([
       'CONNECTION_STRING',
       'PERSONAL_DATA',
@@ -242,9 +248,9 @@ describe.runIf(fieldRedactionSelected)('v2 field redaction policy', () => {
         'excerpt',
         EMPTY_SENSITIVE_CORPUS_V2,
       );
-      expect(result.value, value).not.toMatch(
-        /[\u001b\u007f\u202e]/u,
-      );
+      for (const forbidden of ['\u001b', '\u007f', '\u202e']) {
+        expect(result.value, value).not.toContain(forbidden);
+      }
       expect(result.reasonCodes, value).toContain(
         'UNTRUSTED_CONTROL_CHARACTERS',
       );
@@ -263,9 +269,7 @@ describe.runIf(fieldRedactionSelected)('v2 field redaction policy', () => {
         EMPTY_SENSITIVE_CORPUS_V2,
       );
       expect(result.value, credential).not.toContain(credential);
-      expect(result.reasonCodes, credential).toEqual([
-        'SECRET_LIKE_VALUE',
-      ]);
+      expect(result.reasonCodes, credential).toEqual(['SECRET_LIKE_VALUE']);
     }
 
     const phone = '+1 (415) 555-0123';
@@ -289,52 +293,52 @@ describe.runIf(fieldRedactionSelected)('v2 field redaction policy', () => {
         malformed,
       ).toEqual({
         value: BINARY_OR_OVERSIZED_PLACEHOLDER_V2,
-        reasonCodes: [
-          'SECRET_LIKE_VALUE',
-          'BINARY_OR_OVERSIZED_CONTENT',
-        ],
+        reasonCodes: ['SECRET_LIKE_VALUE', 'BINARY_OR_OVERSIZED_CONTENT'],
       });
     }
   });
 });
 
-describe.runIf(locationRedactionSelected)('v2 location redaction policy', () => {
-  it('accepts only normalized repository-relative POSIX raw locators', () => {
-    for (const invalid of [
-      '',
-      '.',
-      '..',
-      '../secret.ts',
-      'src/../secret.ts',
-      '/root/secret.ts',
-      'C:/root/secret.ts',
-      String.raw`C:\root\secret.ts`,
-      String.raw`\\server\share\secret.ts`,
-      'src\\secret.ts',
-      'src/\0secret.ts',
-    ]) {
-      expect(isValidRawLocatorV2(invalid), invalid).toBe(false);
-    }
-    expect(isValidRawLocatorV2('src/server/a.ts')).toBe(true);
-    expect(isValidRawLocatorV2('src/new\nline.ts')).toBe(true);
-  });
+describe.runIf(locationRedactionSelected)(
+  'v2 location redaction policy',
+  () => {
+    it('accepts only normalized repository-relative POSIX raw locators', () => {
+      for (const invalid of [
+        '',
+        '.',
+        '..',
+        '../secret.ts',
+        'src/../secret.ts',
+        '/root/secret.ts',
+        'C:/root/secret.ts',
+        String.raw`C:\root\secret.ts`,
+        String.raw`\\server\share\secret.ts`,
+        'src\\secret.ts',
+        'src/\0secret.ts',
+      ]) {
+        expect(isValidRawLocatorV2(invalid), invalid).toBe(false);
+      }
+      expect(isValidRawLocatorV2('src/server/a.ts')).toBe(true);
+      expect(isValidRawLocatorV2('src/new\nline.ts')).toBe(true);
+    });
 
-  it('hides the complete path for sensitive segments, inherited tokens and display threats', () => {
-    const rawSecret = 'customer-do-not-publish';
-    const corpus = collectSensitiveCorpusV2(`password=${rawSecret}`);
+    it('hides the complete path for sensitive segments, inherited tokens and display threats', () => {
+      const rawSecret = 'customer-do-not-publish';
+      const corpus = collectSensitiveCorpusV2(`password=${rawSecret}`);
 
-    for (const file of [
-      'src/api_key/config.ts',
-      `src/${rawSecret}/config.ts`,
-      'src/new\nline.ts',
-      `src/${'x'.repeat(2_049)}/config.ts`,
-    ]) {
-      const redacted = redactPublicFieldV2(file, 'file', corpus);
-      expect(redacted.value, file).toBe('[REDACTED_PATH]');
-      expect(redacted.reasonCodes.length, file).toBeGreaterThan(0);
-    }
-  });
-});
+      for (const file of [
+        'src/api_key/config.ts',
+        `src/${rawSecret}/config.ts`,
+        'src/new\nline.ts',
+        `src/${'x'.repeat(2_049)}/config.ts`,
+      ]) {
+        const redacted = redactPublicFieldV2(file, 'file', corpus);
+        expect(redacted.value, file).toBe('[REDACTED_PATH]');
+        expect(redacted.reasonCodes.length, file).toBeGreaterThan(0);
+      }
+    });
+  },
+);
 
 describe.runIf(spanRedactionSelected)('F1A span redaction', () => {
   it('F1A-SPAN-001 merges unicode-safe spans and rejects empty reasons', () => {
@@ -357,14 +361,9 @@ describe.runIf(spanRedactionSelected)('F1A span redaction', () => {
     expect(crOnly.start).toBe(4);
     expect(crOnly.end).toBe(6);
 
-    expect(() =>
-      createSensitiveSpanV2(
-        emoji,
-        0,
-        1,
-        [] as unknown as ['SECRET_LIKE_VALUE'],
-      ),
-    ).toThrow(SpanContractViolationError);
+    expect(() => createSensitiveSpanV2(emoji, 0, 1, [])).toThrow(
+      SpanContractViolationError,
+    );
   });
 
   it('F1A-REASON-001 unions propagation and local reasons canonically', () => {
@@ -379,11 +378,13 @@ describe.runIf(spanRedactionSelected)('F1A span redaction', () => {
       'UNTRUSTED_CONTROL_CHARACTERS',
     ]);
     for (const entry of corpus.entries) {
-      expect(entry.reasonCodes.every((code) =>
-        ['SECRET_LIKE_VALUE', 'CONNECTION_STRING', 'PERSONAL_DATA'].includes(
-          code,
+      expect(
+        entry.reasonCodes.every((code) =>
+          ['SECRET_LIKE_VALUE', 'CONNECTION_STRING', 'PERSONAL_DATA'].includes(
+            code,
+          ),
         ),
-      )).toBe(true);
+      ).toBe(true);
     }
   });
 });
@@ -402,12 +403,10 @@ describe.runIf(corpusPolicySelected)('F1A corpus policy', () => {
         EMPTY_SENSITIVE_CORPUS_V2,
       );
       expect(local.value).toContain(TOKEN_PLACEHOLDER_V2);
-      expect(
-        redactPublicFieldV2('cat', 'term', corpus).value,
-      ).toBe('cat');
-      expect(
-        redactPublicFieldV2('src/catalog.ts', 'file', corpus).value,
-      ).toBe('src/catalog.ts');
+      expect(redactPublicFieldV2('cat', 'term', corpus).value).toBe('cat');
+      expect(redactPublicFieldV2('src/catalog.ts', 'file', corpus).value).toBe(
+        'src/catalog.ts',
+      );
     }
   });
 
@@ -416,18 +415,18 @@ describe.runIf(corpusPolicySelected)('F1A corpus policy', () => {
     const minValue = 'abcd1234';
     const maxValue = `${'abcd'}${'x'.repeat(508)}`;
     const overValue = `${'abcd'}${'x'.repeat(509)}`;
-    expect(
-      collectSensitiveCorpusV2(`password=${shortValue}`).entries,
-    ).toEqual([]);
+    expect(collectSensitiveCorpusV2(`password=${shortValue}`).entries).toEqual(
+      [],
+    );
     expect(
       collectSensitiveCorpusV2(`password=${minValue}`).entries.length,
     ).toBe(2);
     expect(
       collectSensitiveCorpusV2(`password=${maxValue}`).entries.length,
     ).toBe(2);
-    expect(
-      collectSensitiveCorpusV2(`password=${overValue}`).entries,
-    ).toEqual([]);
+    expect(collectSensitiveCorpusV2(`password=${overValue}`).entries).toEqual(
+      [],
+    );
     for (const sentinel of LOW_INFORMATION_SENTINELS_V2) {
       if (utf8Bytes(sentinel) < 8) {
         continue;
@@ -533,16 +532,12 @@ describe.runIf(phoneCorpusSelected)('F1A phone corpus policy', () => {
     expect(classifyPhoneTokenV2('2125551234', PHONE_WITH_CUE_V2)).toBe(
       'accept',
     );
-    expect(classifyPhoneTokenV2('2125551234', '2125551234')).toBe(
-      'local-only',
-    );
+    expect(classifyPhoneTokenV2('2125551234', '2125551234')).toBe('local-only');
   });
 
   it('F1A-PHONE-NEG-001 rejects dates versions uuid and bare unix', () => {
     for (const rejected of PHONE_REJECT_V2) {
-      expect(classifyPhoneTokenV2(rejected, rejected), rejected).toBe(
-        'reject',
-      );
+      expect(classifyPhoneTokenV2(rejected, rejected), rejected).toBe('reject');
       expect(
         collectSensitiveCorpusV2(rejected).entries.some(
           (entry) => entry.value === rejected,

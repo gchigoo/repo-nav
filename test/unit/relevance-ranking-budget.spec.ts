@@ -48,12 +48,7 @@ import {
   issueLocateProjectionExecutionCapabilityV2,
   requireLocateProjectionExecutionTokenV2,
 } from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
-import {
-  mkdirSync,
-  mkdtempSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import type { CanonicalFileKeyV2 } from '../../src/evidence/request-snapshot/canonical-file-identity-v2.js';
@@ -82,7 +77,8 @@ function fakeRecord(
   } = {},
 ): TrustedStableRecordViewV2 {
   const brand = createOpaqueTokenV2<TrustedStableRecordViewV2>();
-  const reasonCodes = extras.reasonCodes ??
+  const reasonCodes =
+    extras.reasonCodes ??
     (evidenceClass === 'confirmed'
       ? (['EXACT_TERM_MATCH'] as const)
       : (['SECONDARY_BACKEND_HIT'] as const));
@@ -738,13 +734,9 @@ describe.runIf(
         const harnessInput = Object.freeze({
           ok: true as const,
           envelope,
-          
         });
-        const {
-          registerCanonicalLocateExecutionInputV2,
-        } = await import(
-          '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js'
-        );
+        const { registerCanonicalLocateExecutionInputV2 } =
+          await import('../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js');
         registerCanonicalLocateExecutionInputV2(
           harnessInput,
           capability,

@@ -26,34 +26,32 @@ const identity = {
 } as const;
 
 describe.runIf(isSelected(identity))('large synthetic repository', () => {
-  it(
-    'keeps five real-engine projections stable and records environment-aware timing',
-    async () => {
-      const repositoryRoot = resolve(import.meta.dirname, '..', '..');
-      const fixtureRoot = mkdtempSync(
-        resolve(tmpdir(), 'repo-nav-large-synthetic-'),
-      );
-      const report = await runLargeSyntheticPerformance(
-        repositoryRoot,
-        fixtureRoot,
-      );
+  it('keeps five real-engine projections stable and records environment-aware timing', async () => {
+    const repositoryRoot = resolve(import.meta.dirname, '..', '..');
+    const fixtureRoot = mkdtempSync(
+      resolve(tmpdir(), 'repo-nav-large-synthetic-'),
+    );
+    const report = await runLargeSyntheticPerformance(
+      repositoryRoot,
+      fixtureRoot,
+    );
 
-      expect(report.runs).toHaveLength(5);
-      expect(new Set(report.runs.map(({ projectionHash }) => projectionHash)).size).toBe(1);
-      expect(report.cleanup).toEqual({
-        attempted: true,
-        succeeded: true,
-        fixtureRemoved: true,
-      });
-      expect(report.trend.timingIsBlocking).toBe(false);
-      if (process.env['REPO_NAV_REPORT_PERFORMANCE'] === '1') {
-        expect(writeSyntheticPerformanceReport(repositoryRoot, report)).toContain(
-          'large-synthetic-repository-v1.json',
-        );
-      }
-    },
-    120_000,
-  );
+    expect(report.runs).toHaveLength(5);
+    expect(
+      new Set(report.runs.map(({ projectionHash }) => projectionHash)).size,
+    ).toBe(1);
+    expect(report.cleanup).toEqual({
+      attempted: true,
+      succeeded: true,
+      fixtureRemoved: true,
+    });
+    expect(report.trend.timingIsBlocking).toBe(false);
+    if (process.env['REPO_NAV_REPORT_PERFORMANCE'] === '1') {
+      expect(writeSyntheticPerformanceReport(repositoryRoot, report)).toContain(
+        'large-synthetic-repository-v1.json',
+      );
+    }
+  }, 120_000);
 });
 
 describe.runIf(
@@ -159,7 +157,6 @@ describe.runIf(
   });
 });
 
-
 describe.runIf(
   isSelected({
     group: 'language-capability-boundary',
@@ -167,9 +164,8 @@ describe.runIf(
   }),
 )('F8-LARGE-001 large-adapter-set', () => {
   it('keeps extension registry membership bounded and stable', async () => {
-    const { requireDefaultLanguageEvidenceAdapterRegistryV2 } = await import(
-      '../../src/evidence/language/language-adapter-registry-v2.js'
-    );
+    const { requireDefaultLanguageEvidenceAdapterRegistryV2 } =
+      await import('../../src/evidence/language/language-adapter-registry-v2.js');
     const registry = requireDefaultLanguageEvidenceAdapterRegistryV2();
     expect(registry.semanticClassification).toEqual([
       'typescript',
@@ -189,12 +185,8 @@ describe.runIf(
 )('F9-LARGE-001 large-release-boundaries', () => {
   it('freezes N pass / N+1 fail-closed boundary constants and mutation manifest', async () => {
     const { readFileSync } = await import('node:fs');
-    const {
-      LARGE_RELEASE_N_PLUS_ONE_V2,
-      LARGE_RELEASE_N_V2,
-    } = await import(
-      '../../testkit/fixtures/release-v2/large-release-v2.js'
-    );
+    const { LARGE_RELEASE_N_PLUS_ONE_V2, LARGE_RELEASE_N_V2 } =
+      await import('../../testkit/fixtures/release-v2/large-release-v2.js');
     const root = resolve(import.meta.dirname, '../..');
     const boundariesSource = readFileSync(
       resolve(root, 'tools/release/release-boundaries-v1.mjs'),

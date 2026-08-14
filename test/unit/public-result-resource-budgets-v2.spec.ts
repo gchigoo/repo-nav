@@ -140,7 +140,11 @@ describe.runIf(primitivesSelected)('F1B resource-budget-primitives', () => {
       { a: undefined },
       Object.create({ x: 1 }),
       { toJSON: () => ({}) },
-      { get x() { return 1; } },
+      {
+        get x() {
+          return 1;
+        },
+      },
       (() => {
         const o: Record<string | symbol, unknown> = {};
         o[Symbol('s')] = 1;
@@ -219,9 +223,9 @@ describe.runIf(rawSelected)('F1B raw-resource-budgets', () => {
   it('F1B-EVIDENCE-001 count gates fail closed before poison elements', () => {
     expect(assemblePublicLocateResultV2(withConfirmedCount(19)).ok).toBe(true);
     expect(assemblePublicLocateResultV2(withConfirmedCount(20)).ok).toBe(true);
-    expect(
-      assemblePublicLocateResultV2(withConfirmedCount(21, 0)),
-    ).toEqual(FIXED_INTERNAL_ERROR_V2);
+    expect(assemblePublicLocateResultV2(withConfirmedCount(21, 0))).toEqual(
+      FIXED_INTERNAL_ERROR_V2,
+    );
     expect(
       assemblePublicLocateResultV2(sourceWithPoisonConfirmedTail(21)),
     ).toEqual(FIXED_INTERNAL_ERROR_V2);
@@ -237,57 +241,61 @@ describe.runIf(rawSelected)('F1B raw-resource-budgets', () => {
     );
   });
 
-  it('F1B-RAW-FIELD-001 file/symbol/excerpt and spaced 400k excerpt', { timeout: 30_000 }, () => {
-    expect(
-      assemblePublicLocateResultV2(
-        withRawField('file', `a/${utf8Repeat('b', 4094)}`),
-      ).ok,
-    ).toBe(true);
-    expect(
-      assemblePublicLocateResultV2(
-        withRawField('file', `a/${utf8Repeat('b', 4095)}`),
-      ),
-    ).toEqual(FIXED_INTERNAL_ERROR_V2);
+  it(
+    'F1B-RAW-FIELD-001 file/symbol/excerpt and spaced 400k excerpt',
+    { timeout: 30_000 },
+    () => {
+      expect(
+        assemblePublicLocateResultV2(
+          withRawField('file', `a/${utf8Repeat('b', 4094)}`),
+        ).ok,
+      ).toBe(true);
+      expect(
+        assemblePublicLocateResultV2(
+          withRawField('file', `a/${utf8Repeat('b', 4095)}`),
+        ),
+      ).toEqual(FIXED_INTERNAL_ERROR_V2);
 
-    expect(
-      assemblePublicLocateResultV2(
-        withRawField('symbol', utf8Repeat('s', 2048)),
-      ).ok,
-    ).toBe(true);
-    expect(
-      assemblePublicLocateResultV2(
-        withRawField('symbol', utf8Repeat('s', 2049)),
-      ),
-    ).toEqual(FIXED_INTERNAL_ERROR_V2);
+      expect(
+        assemblePublicLocateResultV2(
+          withRawField('symbol', utf8Repeat('s', 2048)),
+        ).ok,
+      ).toBe(true);
+      expect(
+        assemblePublicLocateResultV2(
+          withRawField('symbol', utf8Repeat('s', 2049)),
+        ),
+      ).toEqual(FIXED_INTERNAL_ERROR_V2);
 
-    expect(
-      assemblePublicLocateResultV2(
-        withRawField('excerpt', utf8Repeat('e', 16384)),
-      ).ok,
-    ).toBe(true);
-    expect(
-      assemblePublicLocateResultV2(
-        withRawField('excerpt', utf8Repeat('e', 16385)),
-      ),
-    ).toEqual(FIXED_INTERNAL_ERROR_V2);
-    expect(
-      assemblePublicLocateResultV2(
-        withRawField('excerpt', 'x '.repeat(200_000)),
-      ),
-    ).toEqual(FIXED_INTERNAL_ERROR_V2);
+      expect(
+        assemblePublicLocateResultV2(
+          withRawField('excerpt', utf8Repeat('e', 16384)),
+        ).ok,
+      ).toBe(true);
+      expect(
+        assemblePublicLocateResultV2(
+          withRawField('excerpt', utf8Repeat('e', 16385)),
+        ),
+      ).toEqual(FIXED_INTERNAL_ERROR_V2);
+      expect(
+        assemblePublicLocateResultV2(
+          withRawField('excerpt', 'x '.repeat(200_000)),
+        ),
+      ).toEqual(FIXED_INTERNAL_ERROR_V2);
 
-    // 129 path segments
-    const segments = Array.from({ length: 129 }, (_, i) => `s${String(i)}`);
-    expect(
-      assemblePublicLocateResultV2(withRawField('file', segments.join('/'))),
-    ).toEqual(FIXED_INTERNAL_ERROR_V2);
-  });
+      // 129 path segments
+      const segments = Array.from({ length: 129 }, (_, i) => `s${String(i)}`);
+      expect(
+        assemblePublicLocateResultV2(withRawField('file', segments.join('/'))),
+      ).toEqual(FIXED_INTERNAL_ERROR_V2);
+    },
+  );
 
   it('F1B-RAW-JSON-001 source 4MiB gate via preflight', () => {
     const base = createUnsafeLocateSuccessV2();
-    expect(
-      preflightUnsafePublicMaterializationSourceBudgetV2(base),
-    ).toEqual({ ok: true });
+    expect(preflightUnsafePublicMaterializationSourceBudgetV2(base)).toEqual({
+      ok: true,
+    });
     const over = compactJsonValueOfBytes(B.raw.maxJsonUtf8Bytes + 1);
     expect(guardCompactJsonDataV2(over, B.raw.maxJsonUtf8Bytes).ok).toBe(false);
   });
@@ -346,12 +354,12 @@ describe.runIf(corpusSelected)('F1B corpus-resource-budgets', () => {
 
 describe.runIf(publicFieldSelected)('F1B public-field-resource-budgets', () => {
   it('F1B-PUBLIC-FIELD-001 N/N+1 placeholder semantics', () => {
-    expect(applyPublicFieldBudgetV2('term', redactionOf(127)).value.length).toBe(
-      127,
-    );
-    expect(applyPublicFieldBudgetV2('term', redactionOf(128)).value.length).toBe(
-      128,
-    );
+    expect(
+      applyPublicFieldBudgetV2('term', redactionOf(127)).value.length,
+    ).toBe(127);
+    expect(
+      applyPublicFieldBudgetV2('term', redactionOf(128)).value.length,
+    ).toBe(128);
     const termOver = applyPublicFieldBudgetV2('term', redactionOf(129));
     expect(termOver).toEqual({
       value: '[REDACTED:BINARY_OR_OVERSIZED_CONTENT]',
@@ -469,9 +477,9 @@ describe.runIf(orderingSelected)('F1B resource-budget-ordering', () => {
     expect(assemblePublicLocateResultV2(accessor)).toEqual(
       FIXED_INTERNAL_ERROR_V2,
     );
-    expect(
-      (accessor as { __getterCalls: () => number }).__getterCalls(),
-    ).toBe(0);
+    expect((accessor as { __getterCalls: () => number }).__getterCalls()).toBe(
+      0,
+    );
 
     expect(assemblePublicLocateResultV2(throwingProxySource())).toEqual(
       FIXED_INTERNAL_ERROR_V2,
@@ -532,7 +540,8 @@ describe.runIf(legacySelected)('F1B resource-budget-legacy-isolation', () => {
           };
         }
       }
-      const engine = createCanonicalLocateEngineHarnessV2([new StubBackend()],
+      const engine = createCanonicalLocateEngineHarnessV2(
+        [new StubBackend()],
         new NodeRepositoryReader(),
       ).service;
       const request = {

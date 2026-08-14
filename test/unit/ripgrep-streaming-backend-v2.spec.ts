@@ -273,8 +273,8 @@ describe.runIf(
       expect(outcome.completion).toBe('complete');
       expect(outcome.selectionEligibility).toBe('complete-safe-set');
       expect(outcome.termination).toBe('none');
-      expect(counting.streamCount).toBeGreaterThanOrEqual(1);
-      expect(counting.runCount).toBeGreaterThanOrEqual(1);
+      expect(counting.streamCount).toBeGreaterThanOrEqual(2);
+      expect(counting.runCount).toBe(0);
       expect(view.completeSafeHits.length).toBeGreaterThan(0);
       expect(view.completeSafeHits[0]?.querySeedKeys[0]).toMatch(/^q:/u);
     } finally {

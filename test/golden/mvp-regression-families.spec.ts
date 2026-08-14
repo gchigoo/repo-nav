@@ -9,9 +9,7 @@ import {
   type NormalizedSearchTerm,
 } from '../../src/contracts/index.js';
 import { LocateResultV2Schema } from '../../src/contracts/v2/locate-result-v2.js';
-import {
-  classifyDiscoveryRecords,
-} from '../../src/evidence/direct-mapping-classifier.js';
+import { classifyDiscoveryRecords } from '../../src/evidence/direct-mapping-classifier.js';
 import type { DiscoveryRecord } from '../../src/evidence/discovery-record.js';
 import { redactPublicText } from '../../src/evidence/evidence-redactor.js';
 import { deriveLocateStatusFromFactsV2 } from '../../src/evidence/request-outcome/locate-status-v2.js';
@@ -44,7 +42,10 @@ function record(file: string, excerpt: string): DiscoveryRecord {
 }
 
 describe.runIf(
-  isSelected({ group: 'classification', caseId: 'classification-syntax-family' }),
+  isSelected({
+    group: 'classification',
+    caseId: 'classification-syntax-family',
+  }),
 )('classification syntax family', () => {
   it('confirms assignment/object/SQL and rejects executable-looking decoys', () => {
     const positives = [
@@ -69,7 +70,12 @@ describe.runIf(
       "SELECT 'row.source_field AS targetField' AS note",
     ]) {
       const classified = classifyDiscoveryRecords(
-        [record(excerpt.startsWith('SELECT') ? 'db/decoy.sql' : 'server/decoy.ts', excerpt)],
+        [
+          record(
+            excerpt.startsWith('SELECT') ? 'db/decoy.sql' : 'server/decoy.ts',
+            excerpt,
+          ),
+        ],
         { anchors: [], layers: [], negativeTerms: [] },
       );
       expect(classified.confirmed, excerpt).toEqual([]);
@@ -85,7 +91,12 @@ describe.runIf(
     const result = LocateResultV2Schema.parse(
       JSON.parse(
         readFileSync(
-          resolve(repositoryRoot, 'testkit', 'expected', 'sibling-candidate.json'),
+          resolve(
+            repositoryRoot,
+            'testkit',
+            'expected',
+            'sibling-candidate.json',
+          ),
           'utf8',
         ),
       ) as unknown,
@@ -117,7 +128,9 @@ describe.runIf(
       ({ family }) => family === 'BackendReasonCode',
     );
     expect(backendOwners).toHaveLength(7);
-    expect(new Set(backendOwners.map(({ positive }) => positive)).size).toBeGreaterThan(4);
+    expect(
+      new Set(backendOwners.map(({ positive }) => positive)).size,
+    ).toBeGreaterThan(4);
   });
 });
 
@@ -127,9 +140,17 @@ describe.runIf(
   it('exercises all four redaction families without retaining forbidden values', () => {
     const cases = [
       ['api_key=rawSecretValue', 'SECRET_LIKE_VALUE', 'rawSecretValue'],
-      ['postgres://admin:dbPassword@localhost/app', 'CONNECTION_STRING', 'dbPassword'],
+      [
+        'postgres://admin:dbPassword@localhost/app',
+        'CONNECTION_STRING',
+        'dbPassword',
+      ],
       ['owner=stan.guo@mail.ru', 'PERSONAL_DATA', 'stan.guo@mail.ru'],
-      [`payload=${'x'.repeat(2_049)}`, 'BINARY_OR_OVERSIZED_CONTENT', 'x'.repeat(64)],
+      [
+        `payload=${'x'.repeat(2_049)}`,
+        'BINARY_OR_OVERSIZED_CONTENT',
+        'x'.repeat(64),
+      ],
     ] as const;
     for (const [input, reason, forbidden] of cases) {
       const output = redactPublicText(input);
@@ -202,7 +223,11 @@ describe.runIf(
       'timeout',
     ]);
 
-    const outputDirectory = resolve(repositoryRoot, 'test-artifacts', 'families');
+    const outputDirectory = resolve(
+      repositoryRoot,
+      'test-artifacts',
+      'families',
+    );
     mkdirSync(outputDirectory, { recursive: true });
     writeFileSync(
       resolve(outputDirectory, 'mvp-fixture-family-v1.json'),
@@ -211,7 +236,12 @@ describe.runIf(
           schemaVersion: '1.0',
           families: {
             classification: ['assignment', 'object', 'sql', 'symbol', 'decoy'],
-            candidate: ['sibling', 'alias', 'false-positive', 'promotion-order'],
+            candidate: [
+              'sibling',
+              'alias',
+              'false-positive',
+              'promotion-order',
+            ],
             backendTransitions: [
               'codegraph-missing',
               'codegraph-no-result',

@@ -19,25 +19,15 @@
         "location": {
           "file": "mapping.ts",
           "resolvable": true,
-          "lines": [
-            1,
-            1
-          ],
+          "lines": [1, 1],
           "excerpt": "export function mapRow(row: Readonly<{ hcp_id: string }>): Readonly<{"
         },
         "provenance": {
-          "discoveredBy": [
-            "ripgrep"
-          ],
+          "discoveredBy": ["ripgrep"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "RIPGREP_SEARCH",
-            "FILESYSTEM_READ_RANGE"
-          ]
+          "operations": ["RIPGREP_SEARCH", "FILESYSTEM_READ_RANGE"]
         },
-        "reasonCodes": [
-          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
-        ],
+        "reasonCodes": ["EXACT_TERM_WITHOUT_DIRECT_MAPPING"],
         "promotionRequirements": [
           "USER_SEMANTIC_CONFIRMATION",
           "DIRECT_REFERENCE_REQUIRED"
@@ -50,25 +40,15 @@
         "location": {
           "file": "mapping.ts",
           "resolvable": true,
-          "lines": [
-            1,
-            4
-          ],
+          "lines": [1, 4],
           "excerpt": "export function mapRow(row: Readonly<{ hcp_id: string }>): Readonly<{\n  hcpCode: string;\n}> {\n  return { hcpCode: row.hcp_id };"
         },
         "provenance": {
-          "discoveredBy": [
-            "ripgrep"
-          ],
+          "discoveredBy": ["ripgrep"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "RIPGREP_SEARCH",
-            "FILESYSTEM_READ_RANGE"
-          ]
+          "operations": ["RIPGREP_SEARCH", "FILESYSTEM_READ_RANGE"]
         },
-        "reasonCodes": [
-          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
-        ],
+        "reasonCodes": ["EXACT_TERM_WITHOUT_DIRECT_MAPPING"],
         "promotionRequirements": [
           "USER_SEMANTIC_CONFIRMATION",
           "DIRECT_REFERENCE_REQUIRED"
@@ -110,33 +90,16 @@
       },
       "scope": {
         "requested": [],
-        "effective": [
-          "client",
-          "server",
-          "db",
-          "config",
-          "unknown"
-        ],
+        "effective": ["client", "server", "db", "config", "unknown"],
         "policyVersion": "repo-scope-v1",
-        "unmatchedLayers": [
-          "client",
-          "server",
-          "db",
-          "config"
-        ]
+        "unmatchedLayers": ["client", "server", "db", "config"]
       },
       "capabilities": {
         "textSearch": "supported-text-files",
-        "semanticClassification": [
-          "typescript",
-          "javascript",
-          "sql"
-        ],
+        "semanticClassification": ["typescript", "javascript", "sql"],
         "unsupportedLanguageHits": 0
       }
     },
-    "nextActions": [
-      "CONFIRM_CANDIDATE"
-    ]
+    "nextActions": ["CONFIRM_CANDIDATE"]
   }
 }

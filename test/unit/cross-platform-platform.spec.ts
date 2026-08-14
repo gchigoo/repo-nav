@@ -1,11 +1,6 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { getEventListeners } from 'node:events';
-import {
-  existsSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-} from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -212,9 +207,7 @@ class FailingTreeTerminationRunner extends NodeSafeProcessRunner {
     return Promise.reject(new Error('synthetic termination failure'));
   }
 
-  protected override killDirectChild(
-    child: ReturnType<typeof spawn>,
-  ): void {
+  protected override killDirectChild(child: ReturnType<typeof spawn>): void {
     this.killAttempts += 1;
     if (this.killAttempts === 1) {
       // 第一次 hard-kill 注入失败，逼出 cleanup invariant。
@@ -494,12 +487,10 @@ describe.runIf(
       recordPlatformAssertionMarker('F4-PROC-003', 'exact-n-success');
 
       const limited = await new NodeSafeProcessRunner().run(
-        treeRequest(
-          cwd,
-          pidFileLimit,
-          { maxStdoutBytes: 1024 },
-          ['stdout', '1025'],
-        ),
+        treeRequest(cwd, pidFileLimit, { maxStdoutBytes: 1024 }, [
+          'stdout',
+          '1025',
+        ]),
         new AbortController().signal,
       );
       await waitFor(() => existsSync(pidFileLimit));
@@ -538,12 +529,10 @@ describe.runIf(
       recordPlatformAssertionMarker('F4-PROC-004', 'exact-n-success');
 
       const limited = await new NodeSafeProcessRunner().run(
-        treeRequest(
-          cwd,
-          pidFileLimit,
-          { maxStderrBytes: 1024 },
-          ['stderr', '1025'],
-        ),
+        treeRequest(cwd, pidFileLimit, { maxStderrBytes: 1024 }, [
+          'stderr',
+          '1025',
+        ]),
         new AbortController().signal,
       );
       await waitFor(() => existsSync(pidFileLimit));

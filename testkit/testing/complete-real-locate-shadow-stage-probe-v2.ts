@@ -62,7 +62,8 @@ export function probeCompleteRealLocateShadowStagesV2(input: {
     input.aggregationBundle,
   );
   const orchestrator =
-    input.orchestrator ?? createAcceptedCompleteRealLocateShadowOrchestratorV2();
+    input.orchestrator ??
+    createAcceptedCompleteRealLocateShadowOrchestratorV2();
   const attempt = orchestrator.projectAcceptedExecution(
     input.canonical,
     input.projectionCapability,

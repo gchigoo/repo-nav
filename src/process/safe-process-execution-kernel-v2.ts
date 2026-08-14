@@ -23,6 +23,10 @@ import {
   isLegalCompletedExitPairV2,
   reduceSettlementVerdictV2,
 } from './settlement-verdict-v2.js';
+import {
+  classifySpawnFailureReasonV2,
+  type SpawnFailureReasonV2,
+} from './spawn-failure-reason-v2.js';
 
 const INHERITED_ENV_ALLOWLIST = [
   'PATH',
@@ -187,12 +191,27 @@ function isValidDecision(
 }
 
 function noChildResult(
-  kind: 'invalid-request' | 'other-spawn-error' | 'aborted',
+  kind: 'invalid-request' | 'aborted',
 ): SafeProcessStreamingResultV2<never, never> {
   return Object.freeze({
     ok: false,
     kind,
     startState: 'no-child',
+    exitCode: null,
+    terminationSignal: null,
+    stdout: Object.freeze({ kind: 'unavailable' as const }),
+    stderr: emptyBytes(),
+  });
+}
+
+function spawnFailureResult(
+  reason: SpawnFailureReasonV2,
+): SafeProcessStreamingResultV2<never, never> {
+  return Object.freeze({
+    ok: false,
+    kind: 'other-spawn-error',
+    startState: 'no-child',
+    spawnFailureReason: reason,
     exitCode: null,
     terminationSignal: null,
     stdout: Object.freeze({ kind: 'unavailable' as const }),
@@ -279,8 +298,8 @@ export class SafeProcessExecutionKernelV2 {
             windowsHide: true,
           },
         ) as unknown as ChildProcessWithoutNullStreams;
-      } catch {
-        resolveResult(noChildResult('other-spawn-error'));
+      } catch (error: unknown) {
+        resolveResult(spawnFailureResult(classifySpawnFailureReasonV2(error)));
         return;
       }
 
@@ -615,12 +634,14 @@ export class SafeProcessExecutionKernelV2 {
       const onChildSpawn = (): void => {
         spawned = true;
       };
-      const onChildError = (): void => {
+      const onChildError = (error: unknown): void => {
         if (settled) {
           return;
         }
         if (!spawned) {
-          settleStreaming(noChildResult('other-spawn-error'));
+          settleStreaming(
+            spawnFailureResult(classifySpawnFailureReasonV2(error)),
+          );
           return;
         }
         if (triggerState.frozen !== undefined) {

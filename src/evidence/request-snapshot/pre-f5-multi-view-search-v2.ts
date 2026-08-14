@@ -1,8 +1,5 @@
-import type {
-  BackendHit,
-  BackendSearchResult,
-  RepositorySearchBackend,
-} from '../../contracts/index.js';
+import type { BackendHit, BackendSearchResult } from '../../contracts/index.js';
+import type { TraceableRepositorySearchBackendV2 } from '../../contracts/v2/traceable-repository-search-backend-v2.js';
 import type { LocateExecutionTokenV2 } from '../../contracts/v2/locate-fact-envelope-v2.js';
 import type {
   BackendDiscoveryHandoffForF3ViewV2,
@@ -25,26 +22,7 @@ export interface PreF5MultiViewLaneResultsV2 {
   readonly sharedSearchMaxHits: number;
   readonly expandedMaxHits: number;
   readonly legacyMaxHits: number;
-  readonly handoff?: TrustedBackendDiscoveryHandoffV2;
-}
-
-interface F5SearchViewsBackend {
-  readonly id: RepositorySearchBackend['id'];
-  searchViews(
-    request: MultiViewBackendSearchRequestV2,
-    signal: AbortSignal,
-    backendExecutionContext: BackendExecutionContextV2,
-    execution: LocateExecutionTokenV2,
-  ): Promise<TrustedBackendDiscoveryHandoffV2>;
-}
-
-function hasSearchViews(
-  backend: RepositorySearchBackend,
-): backend is RepositorySearchBackend & F5SearchViewsBackend {
-  return (
-    'searchViews' in backend &&
-    typeof (backend as F5SearchViewsBackend).searchViews === 'function'
-  );
+  readonly handoff: TrustedBackendDiscoveryHandoffV2;
 }
 
 /**
@@ -62,8 +40,7 @@ export function resolveSharedSearchMaxHitsV2(
   ) {
     throw new TypeError('multi-view maxHits must be positive safe integers');
   }
-  const shared = Math.max(legacyMaxHits, expandedMaxHits);
-  return shared;
+  return Math.max(legacyMaxHits, expandedMaxHits);
 }
 
 /**
@@ -106,7 +83,6 @@ export function resolveExpandedLaneFromHandoffViewV2(
     view.expandedOutcome,
     execution,
   );
-  // truncated-but-valid：结果上限/early-stop，保留候选供 authoritative selection
   if (
     shape.status === 'used' &&
     shape.completion === 'incomplete' &&
@@ -123,72 +99,47 @@ export function resolveExpandedLaneFromHandoffViewV2(
 }
 
 /**
- * Pre-F5 multi-view backend search（F3-owned，不 import F5）。
+ * Canonical multi-view backend search（trace-mandatory）。
  *
- * 规则：当 legacyMaxHits ≤ expandedMaxHits（生产常态：legacy ≪ 800）时，
- * 只发起一次 `backend.search(maxHits = max(legacy, expanded))`，再切片为两视图。
- * 依赖 adapter 对 hits 前缀确定性：前 N 条与单独 `maxHits=N` 搜索一致，从而保持 v1 deep-exact。
- * 禁止对同一 backend/同一 cap 重复 process；完整 F5 双 process 编排不在本 helper 范围。
+ * 只接受 traceable backend，context/execution 必填，且只调用 `searchViews`。
  */
 export async function searchBackendMultiViewV2(
-  backend: RepositorySearchBackend,
+  backend: TraceableRepositorySearchBackendV2,
   multiView: MultiViewBackendSearchRequestV2,
   signal: AbortSignal,
-  backendExecutionContext?: BackendExecutionContextV2,
-  execution?: LocateExecutionTokenV2,
+  context: BackendExecutionContextV2,
+  execution: LocateExecutionTokenV2,
 ): Promise<PreF5MultiViewLaneResultsV2> {
   const sharedSearchMaxHits = resolveSharedSearchMaxHitsV2(
     multiView.legacyMaxHits,
     multiView.expandedMaxHits,
   );
-
-  if (
-    backendExecutionContext !== undefined &&
-    execution !== undefined &&
-    hasSearchViews(backend)
-  ) {
-    const handoff = await backend.searchViews(
-      multiView,
-      signal,
-      backendExecutionContext,
-      execution,
-    );
-    const view = requireBackendDiscoveryHandoffForF3V2(
-      handoff,
-      backend.id,
-      multiView,
-      backendExecutionContext,
-      execution,
-    );
-    const expandedLane = resolveExpandedLaneFromHandoffViewV2(view, execution);
-    const expanded: BackendSearchResult = Object.freeze({
-      health: view.expandedHealth,
-      hits: expandedLane.hits,
-      complete: expandedLane.complete,
-      canSkipFallbackIfVerified: view.canSkipFallbackIfVerified,
-    });
-    return Object.freeze({
-      legacy: view.legacy,
-      expanded,
-      sharedSearchMaxHits,
-      expandedMaxHits: multiView.expandedMaxHits,
-      legacyMaxHits: multiView.legacyMaxHits,
-      handoff,
-    });
-  }
-
-  const shared = await backend.search(
-    Object.freeze({
-      ...multiView.base,
-      maxHits: sharedSearchMaxHits,
-    }),
+  const handoff = await backend.searchViews(
+    multiView,
     signal,
+    context,
+    execution,
   );
+  const view = requireBackendDiscoveryHandoffForF3V2(
+    handoff,
+    backend.id,
+    multiView,
+    context,
+    execution,
+  );
+  const expandedLane = resolveExpandedLaneFromHandoffViewV2(view, execution);
+  const expanded: BackendSearchResult = Object.freeze({
+    health: view.expandedHealth,
+    hits: expandedLane.hits,
+    complete: expandedLane.complete,
+    canSkipFallbackIfVerified: view.canSkipFallbackIfVerified,
+  });
   return Object.freeze({
-    legacy: deriveLaneBackendResultV2(shared, multiView.legacyMaxHits),
-    expanded: deriveLaneBackendResultV2(shared, multiView.expandedMaxHits),
+    legacy: view.legacy,
+    expanded,
     sharedSearchMaxHits,
     expandedMaxHits: multiView.expandedMaxHits,
     legacyMaxHits: multiView.legacyMaxHits,
+    handoff,
   });
 }

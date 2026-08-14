@@ -6,7 +6,7 @@ test-artifacts/
 artifacts/
 
 # F9 owner runtime (must stay untracked)
-.codestable/runtime/
+docs/superpowers/evidence/release-runtime/
 
 _release_output.txt
 _run_release.ps1

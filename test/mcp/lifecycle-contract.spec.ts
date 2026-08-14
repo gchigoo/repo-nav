@@ -29,9 +29,8 @@ function asLocateApplication(
 ): import('../../src/evidence/locate-execution/public-locate-execution-application-v2.js').PublicLocateExecutionApplicationV2 {
   return {
     async execute(rawRequest, context) {
-      const { safeParseLocateRequestV2 } = await import(
-        '../../src/contracts/locate-request-parse-v2.js'
-      );
+      const { safeParseLocateRequestV2 } =
+        await import('../../src/contracts/locate-request-parse-v2.js');
       const parsed = safeParseLocateRequestV2(rawRequest);
       if (!parsed.success) {
         return {
@@ -57,7 +56,6 @@ function asLocateApplication(
     },
   };
 }
-
 
 const manifestDirectory = resolve(
   import.meta.dirname,
@@ -208,7 +206,7 @@ describe.runIf(
       async execute() {
         throw new Error('Not called by lifecycle test.');
       },
-    } as import('../../src/evidence/locate-execution/public-locate-execution-application-v2.js').PublicLocateExecutionApplicationV2);
+    });
     const privateHost = host as unknown as {
       server: {
         connect(): Promise<void>;
@@ -249,13 +247,33 @@ describe.runIf(
     expect(calls).toEqual(['signal:0']);
   });
 
+  it('reports a shutdown rejection requested after coordinator binding', async () => {
+    const calls: string[] = [];
+    const startup = createMcpStartupShutdownController({
+      reportFailure: () => calls.push('reportFailure'),
+      setExitCode: (exitCode) => calls.push(`exit:${exitCode}`),
+    });
+    expect(
+      startup.bind({
+        shutdown: () => Promise.reject(new Error('synthetic shutdown failure')),
+      }),
+    ).toBeUndefined();
+
+    startup.request('signal', 0);
+    await new Promise<void>((resolveImmediate) => {
+      setImmediate(resolveImmediate);
+    });
+
+    expect(calls).toEqual(['reportFailure', 'exit:1']);
+  });
+
   it('settles tracked calls and closes state even when the SDK server close fails', async () => {
     const service = {
       locate: async () => {
         throw new Error('Not called by lifecycle test.');
       },
     };
-    const host = new NodeMcpStdioHost(asLocateApplication(service as RepositoryEvidenceService));
+    const host = new NodeMcpStdioHost(asLocateApplication(service));
     const privateHost = host as unknown as {
       readonly server: { close(): Promise<void> };
       readonly trackedCalls: Set<{
@@ -352,16 +370,17 @@ describe.runIf(
 
   it('returns one close promise and rejects reconnect after shutdown', async () => {
     const service = {
-      locate: async () => ({
-        ok: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Not called by lifecycle test.',
-          recoverable: false,
-        },
-      }) as any as any,
+      locate: async () =>
+        ({
+          ok: false,
+          error: {
+            code: 'INTERNAL_ERROR',
+            message: 'Not called by lifecycle test.',
+            recoverable: false,
+          },
+        }) as any,
     };
-    const host = new NodeMcpStdioHost(asLocateApplication(service as RepositoryEvidenceService));
+    const host = new NodeMcpStdioHost(asLocateApplication(service));
     const firstClose = host.close('eof');
     const secondClose = host.close('signal');
     expect(secondClose).toBe(firstClose);
@@ -424,87 +443,63 @@ describe.runIf(
 )('MCP instrumented shutdown cleanup', () => {
   const lifecycleCase = loadLifecycleCase('shutdown-cleanup-probe.yaml');
 
-  it(
-    'observes the real Nest context hook and direct/descendant process cleanup',
-    async () => {
-      const observation = await new McpLifecycleCaseRunner().run(lifecycleCase);
+  it('observes the real Nest context hook and direct/descendant process cleanup', async () => {
+    const observation = await new McpLifecycleCaseRunner().run(lifecycleCase);
 
-      expect(observation.exitCode).toBe(0);
-      expect(observation.contextClosed).toBe(true);
-      expect(observation.childrenCleaned).toBe(true);
-      writeLifecycleReport('shutdown-cleanup-probe', observation);
-      recordPlatformAssertionMarker(
-        'F4-MCP-002',
-        'real-close-and-tree-cleanup',
-      );
-    },
-    // Allow slow darwin Nest boot; shutdown budget itself starts after probe arm.
-    30_000,
-  );
+    expect(observation.exitCode).toBe(0);
+    expect(observation.contextClosed).toBe(true);
+    expect(observation.childrenCleaned).toBe(true);
+    writeLifecycleReport('shutdown-cleanup-probe', observation);
+    recordPlatformAssertionMarker('F4-MCP-002', 'real-close-and-tree-cleanup');
+  }, 30_000); // Allow slow darwin Nest boot; shutdown budget itself starts after probe arm.
 
-  it(
-    'fails when the real context close marker is deliberately skipped',
-    async () => {
-      await expect(
-        new McpLifecycleCaseRunner({ probeFault: 'skip-context-close' }).run(
-          lifecycleCase,
-        ),
-      ).rejects.toThrow(/contextClosed/iu);
-      recordPlatformAssertionMarker('F4-MCP-002', 'missing-close-negative');
-    },
-    30_000,
-  );
+  it('fails when the real context close marker is deliberately skipped', async () => {
+    await expect(
+      new McpLifecycleCaseRunner({ probeFault: 'skip-context-close' }).run(
+        lifecycleCase,
+      ),
+    ).rejects.toThrow(/contextClosed/iu);
+    recordPlatformAssertionMarker('F4-MCP-002', 'missing-close-negative');
+  }, 30_000);
 
-  it(
-    'fails when an actual descendant tree is deliberately left running',
-    async () => {
-      await expect(
-        new McpLifecycleCaseRunner({ probeFault: 'leave-child-running' }).run(
-          lifecycleCase,
-        ),
-      ).rejects.toThrow(/childrenCleaned/iu);
-      recordPlatformAssertionMarker('F4-MCP-002', 'live-descendant-negative');
-    },
-    30_000,
-  );
+  it('fails when an actual descendant tree is deliberately left running', async () => {
+    await expect(
+      new McpLifecycleCaseRunner({ probeFault: 'leave-child-running' }).run(
+        lifecycleCase,
+      ),
+    ).rejects.toThrow(/childrenCleaned/iu);
+    recordPlatformAssertionMarker('F4-MCP-002', 'live-descendant-negative');
+  }, 30_000);
 
-  it(
-    'cleans both child PIDs and the probe directory after a forced timeout',
-    async () => {
-      let audit: McpLifecycleProbeAudit | undefined;
-      await expect(
-        new McpLifecycleCaseRunner({
-          probeFault: 'force-timeout',
-          onProbeAudit: (value) => {
-            audit = value;
-          },
-        }).run({
-          ...lifecycleCase,
-          // Budget starts after children.json; keep short once the probe is armed.
-          expected: { ...lifecycleCase.expected, maxShutdownMs: 2_500 },
-        }),
-      ).rejects.toThrow(/exceeded/iu);
-      expectProbeAuditCleaned(audit);
-      recordPlatformAssertionMarker('F4-MCP-002', 'timeout-cleanup');
-    },
-    30_000,
-  );
+  it('cleans both child PIDs and the probe directory after a forced timeout', async () => {
+    let audit: McpLifecycleProbeAudit | undefined;
+    await expect(
+      new McpLifecycleCaseRunner({
+        probeFault: 'force-timeout',
+        onProbeAudit: (value) => {
+          audit = value;
+        },
+      }).run({
+        ...lifecycleCase,
+        // Budget starts after children.json; keep short once the probe is armed.
+        expected: { ...lifecycleCase.expected, maxShutdownMs: 2_500 },
+      }),
+    ).rejects.toThrow(/exceeded/iu);
+    expectProbeAuditCleaned(audit);
+    recordPlatformAssertionMarker('F4-MCP-002', 'timeout-cleanup');
+  }, 30_000);
 
-  it(
-    'cleans both child PIDs and the probe directory after a nonzero exit',
-    async () => {
-      let audit: McpLifecycleProbeAudit | undefined;
-      await expect(
-        new McpLifecycleCaseRunner({
-          probeFault: 'force-nonzero-exit',
-          onProbeAudit: (value) => {
-            audit = value;
-          },
-        }).run(lifecycleCase),
-      ).rejects.toThrow(/exit code 7/iu);
-      expectProbeAuditCleaned(audit);
-      recordPlatformAssertionMarker('F4-MCP-002', 'nonzero-cleanup');
-    },
-    30_000,
-  );
+  it('cleans both child PIDs and the probe directory after a nonzero exit', async () => {
+    let audit: McpLifecycleProbeAudit | undefined;
+    await expect(
+      new McpLifecycleCaseRunner({
+        probeFault: 'force-nonzero-exit',
+        onProbeAudit: (value) => {
+          audit = value;
+        },
+      }).run(lifecycleCase),
+    ).rejects.toThrow(/exit code 7/iu);
+    expectProbeAuditCleaned(audit);
+    recordPlatformAssertionMarker('F4-MCP-002', 'nonzero-cleanup');
+  }, 30_000);
 });

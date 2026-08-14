@@ -12,9 +12,7 @@ import {
   type GoldenObservation,
   type GoldenSuccessCase,
 } from '../../testkit/contracts/index.js';
-import {
-  CandidateFixtureBackend,
-} from '../../testkit/fixtures/candidate-policy/candidate-fixture-backend.js';
+import { CandidateFixtureBackend } from '../../testkit/fixtures/candidate-policy/candidate-fixture-backend.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
 const repositoryRoot = resolve(import.meta.dirname, '..', '..');
@@ -29,17 +27,11 @@ const EXPECTED_CANDIDATES = [
   { symbol: 'hcpId', reasonCodes: ['SAME_SCOPE_SIMILAR_IDENTIFIER'] },
   {
     symbol: 'hcpName',
-    reasonCodes: [
-      'SAME_SCOPE_SIMILAR_IDENTIFIER',
-      'SAME_ENTITY_SIBLING',
-    ],
+    reasonCodes: ['SAME_SCOPE_SIMILAR_IDENTIFIER', 'SAME_ENTITY_SIBLING'],
   },
   {
     symbol: 'hcpEmail',
-    reasonCodes: [
-      'SAME_SCOPE_SIMILAR_IDENTIFIER',
-      'SAME_ENTITY_SIBLING',
-    ],
+    reasonCodes: ['SAME_SCOPE_SIMILAR_IDENTIFIER', 'SAME_ENTITY_SIBLING'],
   },
 ] as const;
 
@@ -53,17 +45,20 @@ function loadCase(caseId: (typeof CASE_IDS)[number]): GoldenSuccessCase {
   return parsed;
 }
 
-async function observe(goldenCase: GoldenSuccessCase): Promise<GoldenObservation> {
-  const engine = createCanonicalLocateEngineHarnessV2([new CandidateFixtureBackend()],
+async function observe(
+  goldenCase: GoldenSuccessCase,
+): Promise<GoldenObservation> {
+  const engine = createCanonicalLocateEngineHarnessV2(
+    [new CandidateFixtureBackend()],
     new NodeRepositoryReader(),
   ).service;
   const result = await engine.locate(goldenCase.request, {
     signal: new AbortController().signal,
   });
   return {
-    result: result as any,
+    result: result,
     mcpIsError: !result.ok,
-    structuredContent: result as any,
+    structuredContent: result,
     textContent: JSON.stringify(result),
   };
 }

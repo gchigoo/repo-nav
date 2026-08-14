@@ -9,7 +9,12 @@ const repositoryRoot = resolve(moduleDirectory, '..', '..');
 if (process.env['REPO_NAV_PLATFORM_TSX_ACTIVE'] !== '1') {
   const relaunch = spawnSync(
     process.execPath,
-    ['--import', 'tsx', fileURLToPath(import.meta.url), ...process.argv.slice(2)],
+    [
+      '--import',
+      'tsx',
+      fileURLToPath(import.meta.url),
+      ...process.argv.slice(2),
+    ],
     {
       cwd: repositoryRoot,
       env: { ...process.env, REPO_NAV_PLATFORM_TSX_ACTIVE: '1' },
@@ -174,8 +179,7 @@ function main() {
       throw new Error(`missing outcome for ${command.id}`);
     }
   }
-  const repository =
-    createFilesystemPlatformContractRepository(repositoryRoot);
+  const repository = createFilesystemPlatformContractRepository(repositoryRoot);
   const snapshot = validateProductionPlatformContractSnapshotV1(
     PRODUCTION_PLATFORM_CONTRACT_SNAPSHOT_V1,
     repository,
@@ -191,7 +195,9 @@ function main() {
       evidence = summary.contractEvidenceHashes ?? [];
     }
   }
-  const requiredCaseIds = applicable.map((binding) => binding.contractId).sort();
+  const requiredCaseIds = applicable
+    .map((binding) => binding.contractId)
+    .sort();
   const report = buildPlatformCoreCommandReportV1({
     cellId: cell.id,
     actual: cell,

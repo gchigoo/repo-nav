@@ -3,6 +3,7 @@
  * Not a multi-sample p95 / real open-source repo benchmark.
  */
 
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
@@ -27,7 +28,13 @@ const catalogPath = resolve(
   'testkit/fixtures/benchmark-repos/catalog.json',
 );
 
-const LanguageFamilySchema = z.enum(['ts', 'js', 'sql', 'mixed', 'unsupported']);
+const LanguageFamilySchema = z.enum([
+  'ts',
+  'js',
+  'sql',
+  'mixed',
+  'unsupported',
+]);
 
 const BenchmarkExpectationsSchema = z
   .strictObject({
@@ -94,6 +101,12 @@ export type RealRepoBenchmarkCatalog = z.infer<
 export type RealRepoBenchmarkCatalogEntry = z.infer<
   typeof BenchmarkCatalogEntrySchema
 >;
+
+export function computeRealRepoBenchmarkCatalogSha256(
+  path: string = catalogPath,
+): string {
+  return createHash('sha256').update(readFileSync(path)).digest('hex');
+}
 
 export interface RealRepoBenchmarkCaseResult {
   readonly id: string;
@@ -260,7 +273,9 @@ function evaluateCase(
 export async function runRealRepoBenchmark(
   root: string = repositoryRoot,
 ): Promise<RealRepoBenchmarkSummary> {
-  const catalog = loadCatalog(resolve(root, 'testkit/fixtures/benchmark-repos/catalog.json'));
+  const catalog = loadCatalog(
+    resolve(root, 'testkit/fixtures/benchmark-repos/catalog.json'),
+  );
   const harness = createCanonicalLocateEngineHarnessV2(
     [new RipgrepBackend(new NodeSafeProcessRunner())],
     new NodeRepositoryReader(),
@@ -268,7 +283,11 @@ export async function runRealRepoBenchmark(
   const results: RealRepoBenchmarkCaseResult[] = [];
 
   for (const entry of catalog.repos) {
-    const repoPath = resolve(root, 'testkit/fixtures/benchmark-repos', entry.path);
+    const repoPath = resolve(
+      root,
+      'testkit/fixtures/benchmark-repos',
+      entry.path,
+    );
     const request = LocateRequestSchema.parse({
       ...entry.request,
       repoPath,

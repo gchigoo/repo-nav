@@ -42,9 +42,7 @@ class GuardrailReader implements RepositoryReader {
   public constructor(
     private readonly excerpts: Readonly<Record<string, string>>,
     private readonly failure?:
-      | 'MAX_FILE_BYTES_REACHED'
-      | 'MAX_EXCERPT_BYTES_REACHED'
-      | 'BINARY_FILE',
+      'MAX_FILE_BYTES_REACHED' | 'MAX_EXCERPT_BYTES_REACHED' | 'BINARY_FILE',
   ) {}
 
   public async resolveRoot(): Promise<string> {
@@ -119,7 +117,8 @@ async function locate(
   locateRequest: LocateRequest,
   failure?: 'MAX_FILE_BYTES_REACHED' | 'MAX_EXCERPT_BYTES_REACHED',
 ) {
-  return await createCanonicalLocateEngineHarnessV2([new GuardrailBackend(hits)],
+  return await createCanonicalLocateEngineHarnessV2(
+    [new GuardrailBackend(hits)],
     new GuardrailReader(excerpts, failure),
   ).service.locate(locateRequest, { signal: new AbortController().signal });
 }
@@ -130,7 +129,8 @@ async function locateUnreadable(
   locateRequest: LocateRequest,
   failure: 'BINARY_FILE',
 ) {
-  return await createCanonicalLocateEngineHarnessV2([new GuardrailBackend(hits)],
+  return await createCanonicalLocateEngineHarnessV2(
+    [new GuardrailBackend(hits)],
     new GuardrailReader(excerpts, failure),
   ).service.locate(locateRequest, { signal: new AbortController().signal });
 }
@@ -161,10 +161,7 @@ describe.runIf(
     const first = 'firstTarget = sourceField;';
     const second = 'secondTarget = sourceField;';
     const filesResult = await locate(
-      [
-        hit('server/zeta.ts', second),
-        hit('server/alpha.ts', first),
-      ],
+      [hit('server/zeta.ts', second), hit('server/alpha.ts', first)],
       { 'server/alpha.ts': first, 'server/zeta.ts': second },
       request(['firstTarget', 'sourceField'], { maxFiles: 1 }),
     );
@@ -211,16 +208,13 @@ describe.runIf(
   it('retains stable evidence before reporting maxConfirmed truncation', async () => {
     const alpha = 'alphaTarget = sourceField;';
     const zeta = 'zetaTarget = sourceField;';
-    const hits = [
-      hit('server/zeta.ts', zeta),
-      hit('server/alpha.ts', alpha),
-    ];
+    const hits = [hit('server/zeta.ts', zeta), hit('server/alpha.ts', alpha)];
     const excerpts = { 'server/alpha.ts': alpha, 'server/zeta.ts': zeta };
     const locateRequest = request(
       ['alphaTarget', 'zetaTarget', 'sourceField'],
       {
-      maxFiles: 2,
-      maxConfirmed: 1,
+        maxFiles: 2,
+        maxConfirmed: 1,
       },
     );
     const forward = await locate(hits, excerpts, locateRequest);
@@ -239,47 +233,51 @@ describe.runIf(
 });
 
 for (const caseId of ['secret-redaction', 'redaction-metadata'] as const) {
-  describe.runIf(isSelected({ group: 'output-redaction', caseId }))(caseId, () => {
-    it('redacts after ID creation and exposes deterministic metadata', async () => {
-      const excerpt = 'api_key = "rawSecretValue"; password="my secret value"; secret=\'abc,def\'; token=`my backtick secret`; passwd=`backtick,comma`; client_secret="my \\"escaped\\" secret";';
-      const result = await locate(
-        [hit('server/sample-config.ts', excerpt)],
-        { 'server/sample-config.ts': excerpt },
-        request(['api_key'], undefined),
-      );
-      expect(result.ok).toBe(true);
-      if (!result.ok) {
-        throw new Error('Expected a recoverable redacted result.');
-      }
-      const publicEvidence = [
-        ...result.evidence.confirmed,
-        ...result.evidence.candidates,
-      ][0];
-      expect(publicEvidence?.location.redaction).toEqual({
-        applied: true,
-        fields: [
-          {
-            field: 'excerpt',
-            reasonCodes: ['SECRET_LIKE_VALUE'],
-          },
-        ],
+  describe.runIf(isSelected({ group: 'output-redaction', caseId }))(
+    caseId,
+    () => {
+      it('redacts after ID creation and exposes deterministic metadata', async () => {
+        const excerpt =
+          'api_key = "rawSecretValue"; password="my secret value"; secret=\'abc,def\'; token=`my backtick secret`; passwd=`backtick,comma`; client_secret="my \\"escaped\\" secret";';
+        const result = await locate(
+          [hit('server/sample-config.ts', excerpt)],
+          { 'server/sample-config.ts': excerpt },
+          request(['api_key'], undefined),
+        );
+        expect(result.ok).toBe(true);
+        if (!result.ok) {
+          throw new Error('Expected a recoverable redacted result.');
+        }
+        const publicEvidence = [
+          ...result.evidence.confirmed,
+          ...result.evidence.candidates,
+        ][0];
+        expect(publicEvidence?.location.redaction).toEqual({
+          applied: true,
+          fields: [
+            {
+              field: 'excerpt',
+              reasonCodes: ['SECRET_LIKE_VALUE'],
+            },
+          ],
+        });
+        expect(publicEvidence?.location.excerpt).toBe(
+          'api_key = "[REDACTED]"; password="[REDACTED]"; secret=\'[REDACTED]\'; token=`[REDACTED]`; passwd=`[REDACTED]`; client_secret="[REDACTED]";',
+        );
+        expect(publicEvidence?.id).toMatch(/^evidence:v2:\d{4,}$/u);
+        for (const forbidden of [
+          'rawSecretValue',
+          'my secret value',
+          'abc,def',
+          'my backtick secret',
+          'backtick,comma',
+          'escaped',
+        ]) {
+          expect(JSON.stringify(result)).not.toContain(forbidden);
+        }
       });
-      expect(publicEvidence?.location.excerpt).toBe(
-        'api_key = "[REDACTED]"; password="[REDACTED]"; secret=\'[REDACTED]\'; token=`[REDACTED]`; passwd=`[REDACTED]`; client_secret="[REDACTED]";',
-      );
-      expect(publicEvidence?.id).toMatch(/^evidence:v2:\d{4,}$/u);
-      for (const forbidden of [
-        'rawSecretValue',
-        'my secret value',
-        'abc,def',
-        'my backtick secret',
-        'backtick,comma',
-        'escaped',
-      ]) {
-        expect(JSON.stringify(result)).not.toContain(forbidden);
-      }
-    });
-  });
+    },
+  );
 }
 
 describe.runIf(
@@ -290,10 +288,7 @@ describe.runIf(
     const seed = `aliasProbe; api_key="${rawSecret}`;
     const derived = `aliasProbe; const alias = "${rawSecret}";`;
     const result = await locate(
-      [
-        hit('server/seed-config.ts', seed),
-        hit('server/derived.ts', derived),
-      ],
+      [hit('server/seed-config.ts', seed), hit('server/derived.ts', derived)],
       {
         'server/seed-config.ts': seed,
         'server/derived.ts': derived,
@@ -310,8 +305,7 @@ describe.runIf(
     expect(JSON.stringify(result)).not.toContain(rawSecret);
     expect(
       [...result.evidence.confirmed, ...result.evidence.candidates].some(
-        (item) =>
-          item.location.excerpt === OVERSIZED_CONTENT_PLACEHOLDER,
+        (item) => item.location.excerpt === OVERSIZED_CONTENT_PLACEHOLDER,
       ),
     ).toBe(true);
   });

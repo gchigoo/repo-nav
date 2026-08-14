@@ -1,19 +1,10 @@
-import { createRepoNavApplicationContext } from '../app/create-application-context.js';
-import type {
-  RepositoryReader,
-  RepositorySearchBackend,
-} from '../contracts/index.js';
-import {
-  PUBLIC_LOCATE_EXECUTION_APPLICATION_V2,
-  type PublicLocateExecutionApplicationV2,
-} from '../evidence/locate-execution/public-locate-execution-application-v2.js';
-import {
-  REPOSITORY_READER,
-  REPOSITORY_SEARCH_BACKENDS,
-} from '../runtime/tokens.js';
 import { readPackageMetadata } from '../runtime/package-metadata.js';
-import { ProbeOutputSchema, createCliError } from './contracts.js';
-import { CliUsageError, parseCliArguments } from './parser.js';
+import { createCliError } from './contracts.js';
+import {
+  CliUsageError,
+  parseCliArguments,
+  type ParsedCliCommand,
+} from './parser.js';
 
 export interface CliExecutionResult {
   readonly exitCode: 0 | 1 | 2 | 3;
@@ -21,17 +12,26 @@ export interface CliExecutionResult {
   readonly stderr?: string;
 }
 
-export interface CliApplicationContext {
-  get<T>(token: symbol): T;
-  close(): Promise<void>;
+export interface CliApplicationAdapter {
+  executeLocate(
+    command: Extract<ParsedCliCommand, { readonly kind: 'locate' }>,
+    signal: AbortSignal,
+  ): Promise<CliExecutionResult>;
+  executeProbe(
+    command: Extract<ParsedCliCommand, { readonly kind: 'probe' }>,
+    signal: AbortSignal,
+  ): Promise<CliExecutionResult>;
 }
 
 export interface CliExecutionDependencies {
-  createApplicationContext(): Promise<CliApplicationContext>;
+  readonly loadApplicationAdapter: () => Promise<CliApplicationAdapter>;
 }
 
 const DEFAULT_DEPENDENCIES: CliExecutionDependencies = {
-  createApplicationContext: createRepoNavApplicationContext,
+  loadApplicationAdapter: () =>
+    import('./application-adapter.js').then((module) =>
+      module.createCliApplicationAdapter(),
+    ),
 };
 
 function json(value: unknown): string {
@@ -56,7 +56,7 @@ export async function executeCli(
   signal: AbortSignal,
   dependencies: CliExecutionDependencies = DEFAULT_DEPENDENCIES,
 ): Promise<CliExecutionResult> {
-  let command;
+  let command: ParsedCliCommand;
   try {
     command = parseCliArguments(args);
   } catch (error: unknown) {
@@ -76,67 +76,12 @@ export async function executeCli(
     return { exitCode: 0, stdout: readPackageMetadata().version };
   }
 
-  let application: CliApplicationContext | undefined;
   try {
-    application = await dependencies.createApplicationContext();
-    if (command.kind === 'locate') {
-      const locateApplication =
-        application.get<PublicLocateExecutionApplicationV2>(
-          PUBLIC_LOCATE_EXECUTION_APPLICATION_V2,
-        );
-      try {
-        const view = await locateApplication.execute(command.rawRequest, {
-          callerSignal: signal,
-        });
-        return {
-          exitCode: view.value.ok ? 0 : 3,
-          stdout: view.compactJson,
-        };
-      } catch {
-        return internalFailure();
-      }
-    }
-
-    const reader = application.get<RepositoryReader>(REPOSITORY_READER);
-    let repositoryRoot: string;
-    try {
-      repositoryRoot = await reader.resolveRoot(command.repoPath, signal);
-    } catch {
-      return {
-        exitCode: 3,
-        stdout: json(
-          createCliError(
-            'INVALID_REPOSITORY',
-            'The repository path could not be opened.',
-          ),
-        ),
-      };
-    }
-    const backends = application.get<readonly RepositorySearchBackend[]>(
-      REPOSITORY_SEARCH_BACKENDS,
-    );
-    const diagnostics = [];
-    for (const backend of backends) {
-      diagnostics.push({
-        backend: backend.id,
-        health: await backend.probe(repositoryRoot, signal),
-      });
-    }
-    const output = ProbeOutputSchema.parse({
-      schemaVersion: '1.0',
-      repositoryRootRedacted: '<repository-root>',
-      backends: diagnostics,
-    });
-    return { exitCode: 0, stdout: json(output) };
+    const adapter = await dependencies.loadApplicationAdapter();
+    return command.kind === 'locate'
+      ? await adapter.executeLocate(command, signal)
+      : await adapter.executeProbe(command, signal);
   } catch {
     return internalFailure();
-  } finally {
-    if (application !== undefined) {
-      try {
-        await application.close();
-      } catch {
-        return internalFailure();
-      }
-    }
   }
 }

@@ -93,7 +93,9 @@ function rangedRecord(
     excerpt,
   });
   const lines = excerpt.split('\n');
-  const focusIndex = lines.findIndex((line) => line.includes(matchedTerm.value));
+  const focusIndex = lines.findIndex((line) =>
+    line.includes(matchedTerm.value),
+  );
   const focusLine = linesRange[0] + focusIndex;
   return Object.freeze({
     discoveryKey: createDiscoveryKey(location),
@@ -165,596 +167,578 @@ function candidateSummary(result: ReturnType<typeof runPolicy>) {
   }));
 }
 
-describe.runIf(selected('candidate-truth-table', 'secondary-backend-provenance-table'))(
-  'candidate truth table',
-  () => {
-    it('owns every schema reason and preserves exact promotion order', () => {
-      expect(Object.keys(CANDIDATE_REASON_POLICY)).toEqual(
-        CANDIDATE_REASON_CODES,
-      );
-      expect(CANDIDATE_REASON_POLICY).toEqual({
-        EXACT_TERM_WITHOUT_DIRECT_MAPPING: {
-          owner: 'F3',
-          role: 'reference',
-          promotionRequirements: [
-            'USER_SEMANTIC_CONFIRMATION',
-            'DIRECT_REFERENCE_REQUIRED',
-          ],
-        },
-        SYMBOL_REFERENCE_ONLY: {
-          owner: 'F3',
-          role: 'reference',
-          promotionRequirements: [
-            'DIRECT_REFERENCE_REQUIRED',
-            'CALL_PATH_REQUIRED',
-          ],
-        },
-        SAME_SCOPE_SIMILAR_IDENTIFIER: {
-          owner: 'F5',
-          role: 'related',
-          promotionRequirements: [
-            'USER_SEMANTIC_CONFIRMATION',
-            'DIRECT_REFERENCE_REQUIRED',
-          ],
-        },
-        SAME_ENTITY_SIBLING: {
-          owner: 'F5',
-          role: 'related',
-          promotionRequirements: [
-            'USER_SEMANTIC_CONFIRMATION',
-            'DIRECT_REFERENCE_REQUIRED',
-          ],
-        },
-        ALIAS_SOURCE_NEIGHBOR: {
-          owner: 'F5',
-          role: 'related',
-          promotionRequirements: [
-            'USER_SEMANTIC_CONFIRMATION',
-            'DIRECT_REFERENCE_REQUIRED',
-          ],
-        },
-        SECONDARY_BACKEND_HIT: {
-          owner: 'F6',
-          role: 'related',
-          promotionRequirements: ['DIRECT_REFERENCE_REQUIRED'],
-        },
-      });
-      expect(
-        promotionRequirementsForReasons([
-          'SYMBOL_REFERENCE_ONLY',
-          'SAME_ENTITY_SIBLING',
-        ]),
-      ).toEqual([
-        'USER_SEMANTIC_CONFIRMATION',
-        'DIRECT_REFERENCE_REQUIRED',
-        'CALL_PATH_REQUIRED',
-      ]);
-    });
-
-    it('assigns secondary-only provenance only after a primary attempt', () => {
-      expect(secondaryBackendCandidateReasons(['codegraph'], true)).toEqual([]);
-      expect(secondaryBackendCandidateReasons(['ripgrep'], false)).toEqual([]);
-      expect(
-        secondaryBackendCandidateReasons(['codegraph', 'ripgrep'], true),
-      ).toEqual([]);
-      expect(
-        secondaryBackendCandidateReasons(['filesystem', 'ripgrep'], true),
-      ).toEqual([]);
-      expect(
-        secondaryBackendCandidateReasons(['ripgrep', 'filesystem'], true),
-      ).toEqual([]);
-      expect(secondaryBackendCandidateReasons(['ripgrep'], true)).toEqual([
-        'SECONDARY_BACKEND_HIT',
-      ]);
-    });
-  },
-);
-
-describe.runIf(selected('candidate-discovery', 'secondary-backend-provenance-table'))(
-  'candidate lexical discovery',
-  () => {
-    it('finds bounded alias, entity sibling, and scope-similar identifiers', () => {
-      const result = runPolicy(record());
-      const bySymbol = new Map(
-        result.candidates.map((candidate) => [
-          candidate.location.symbol,
-          candidate,
-        ]),
-      );
-
-      expect(bySymbol.get('sourceAlias')).toMatchObject({
-        role: 'related',
-        reasonCodes: ['ALIAS_SOURCE_NEIGHBOR'],
+describe.runIf(
+  selected('candidate-truth-table', 'secondary-backend-provenance-table'),
+)('candidate truth table', () => {
+  it('owns every schema reason and preserves exact promotion order', () => {
+    expect(Object.keys(CANDIDATE_REASON_POLICY)).toEqual(
+      CANDIDATE_REASON_CODES,
+    );
+    expect(CANDIDATE_REASON_POLICY).toEqual({
+      EXACT_TERM_WITHOUT_DIRECT_MAPPING: {
+        owner: 'F3',
+        role: 'reference',
         promotionRequirements: [
           'USER_SEMANTIC_CONFIRMATION',
           'DIRECT_REFERENCE_REQUIRED',
         ],
-        provenance: {
-          discoveredBy: ['filesystem'],
-          verifiedBy: 'filesystem',
-          operations: ['FILESYSTEM_FIND_MATCHES'],
-        },
-      });
-      expect(bySymbol.get('hcpName')?.reasonCodes).toEqual([
-        'SAME_SCOPE_SIMILAR_IDENTIFIER',
+      },
+      SYMBOL_REFERENCE_ONLY: {
+        owner: 'F3',
+        role: 'reference',
+        promotionRequirements: [
+          'DIRECT_REFERENCE_REQUIRED',
+          'CALL_PATH_REQUIRED',
+        ],
+      },
+      SAME_SCOPE_SIMILAR_IDENTIFIER: {
+        owner: 'F5',
+        role: 'related',
+        promotionRequirements: [
+          'USER_SEMANTIC_CONFIRMATION',
+          'DIRECT_REFERENCE_REQUIRED',
+        ],
+      },
+      SAME_ENTITY_SIBLING: {
+        owner: 'F5',
+        role: 'related',
+        promotionRequirements: [
+          'USER_SEMANTIC_CONFIRMATION',
+          'DIRECT_REFERENCE_REQUIRED',
+        ],
+      },
+      ALIAS_SOURCE_NEIGHBOR: {
+        owner: 'F5',
+        role: 'related',
+        promotionRequirements: [
+          'USER_SEMANTIC_CONFIRMATION',
+          'DIRECT_REFERENCE_REQUIRED',
+        ],
+      },
+      SECONDARY_BACKEND_HIT: {
+        owner: 'F6',
+        role: 'related',
+        promotionRequirements: ['DIRECT_REFERENCE_REQUIRED'],
+      },
+    });
+    expect(
+      promotionRequirementsForReasons([
+        'SYMBOL_REFERENCE_ONLY',
         'SAME_ENTITY_SIBLING',
-      ]);
-      expect(bySymbol.has('unrelatedToken')).toBe(false);
-      expect(bySymbol.has('row')).toBe(false);
+      ]),
+    ).toEqual([
+      'USER_SEMANTIC_CONFIRMATION',
+      'DIRECT_REFERENCE_REQUIRED',
+      'CALL_PATH_REQUIRED',
+    ]);
+  });
 
-      for (const candidate of result.candidates) {
-        expect(candidate.discoveryKey).not.toBe(candidate.seedDiscoveryKey);
-        expect(candidate.location.lines[0]).toBe(candidate.location.lines[1]);
-        expect(candidate.location.excerpt).toBe(candidate.location.symbol);
-        expect(materializeCandidateDraft(candidate).id).toMatch(
-          /^evidence:v1:[a-f0-9]{64}$/u,
-        );
-      }
-    });
+  it('assigns secondary-only provenance only after a primary attempt', () => {
+    expect(secondaryBackendCandidateReasons(['codegraph'], true)).toEqual([]);
+    expect(secondaryBackendCandidateReasons(['ripgrep'], false)).toEqual([]);
+    expect(
+      secondaryBackendCandidateReasons(['codegraph', 'ripgrep'], true),
+    ).toEqual([]);
+    expect(
+      secondaryBackendCandidateReasons(['filesystem', 'ripgrep'], true),
+    ).toEqual([]);
+    expect(
+      secondaryBackendCandidateReasons(['ripgrep', 'filesystem'], true),
+    ).toEqual([]);
+    expect(secondaryBackendCandidateReasons(['ripgrep'], true)).toEqual([
+      'SECONDARY_BACKEND_HIT',
+    ]);
+  });
+});
 
-    it('fails closed across comments, strings, unrelated identifiers, and docs', () => {
-      const decoy = record(
-        [
-          'function map() {',
-          '  // hcpId = commentedAlias',
-          "  const text = 'hcpId = stringAlias';",
-          '  const pattern = /hcpId = regexAlias/;',
-          '  const unrelatedName = otherValue;',
-          '  return { hcpId: row.hcp_id };',
-          '}',
-        ].join('\n'),
-      );
-      const result = runPolicy(decoy);
-      const symbols = result.candidates.map(
-        (candidate) => candidate.location.symbol,
-      );
-      expect(symbols).not.toContain('commentedAlias');
-      expect(symbols).not.toContain('stringAlias');
-      expect(symbols).not.toContain('regexAlias');
-      expect(symbols).not.toContain('unrelatedName');
-      expect(
-        runPolicy(record(POLICY_EXCERPT, [term('hcpId')], 'docs/example.ts'))
-          .candidates,
-      ).toEqual([]);
-    });
-
-    it.each([
-      {
-        label: 'class',
-        excerpt: 'class Hcp {\n  hcpId: CustomId;\n  hcpName: CustomName;\n}',
-        seed: 'hcpId',
-        candidate: 'hcpName',
-        expectedReasons: [
-          'SAME_SCOPE_SIMILAR_IDENTIFIER',
-          'SAME_ENTITY_SIBLING',
-        ],
-      },
-      {
-        label: 'interface',
-        excerpt: 'interface Hcp {\n  hcpId: string;\n  hcpName: string;\n}',
-        seed: 'hcpId',
-        candidate: 'hcpName',
-        expectedReasons: [
-          'SAME_SCOPE_SIMILAR_IDENTIFIER',
-          'SAME_ENTITY_SIBLING',
-        ],
-      },
-      {
-        label: 'generic type alias',
-        excerpt: [
-          'type Hcp = {',
-          '  hcpId: EntityId<string>;',
-          '  hcpName: EntityName<string>;',
-          '};',
-        ].join('\n'),
-        seed: 'hcpId',
-        candidate: 'hcpName',
-        expectedReasons: [
-          'SAME_SCOPE_SIMILAR_IDENTIFIER',
-          'SAME_ENTITY_SIBLING',
-        ],
-      },
-      {
-        label: 'SQL table',
-        excerpt: 'CREATE TABLE hcp (\n  hcp_id uuid,\n  hcp_name text\n);',
-        seed: 'hcp_id',
-        candidate: 'hcp_name',
-        expectedReasons: ['SAME_ENTITY_SIBLING'],
-      },
-    ] as const)(
-      'recognizes a balanced $label container',
-      ({ excerpt, seed, candidate, expectedReasons }) => {
-        const result = runPolicy(record(excerpt, [term(seed)]));
-        expect(candidateSummary(result)).toEqual([
-          { symbol: candidate, reasonCodes: expectedReasons },
-        ]);
-      },
+describe.runIf(
+  selected('candidate-discovery', 'secondary-backend-provenance-table'),
+)('candidate lexical discovery', () => {
+  it('finds bounded alias, entity sibling, and scope-similar identifiers', () => {
+    const result = runPolicy(record());
+    const bySymbol = new Map(
+      result.candidates.map((candidate) => [
+        candidate.location.symbol,
+        candidate,
+      ]),
     );
 
-    it.each([
-      {
-        label: 'function parameter list',
-        excerpt: 'function f(hcpId, callback) {\n  return hcpId;\n}',
-        forbidden: 'callback',
+    expect(bySymbol.get('sourceAlias')).toMatchObject({
+      role: 'related',
+      reasonCodes: ['ALIAS_SOURCE_NEIGHBOR'],
+      promotionRequirements: [
+        'USER_SEMANTIC_CONFIRMATION',
+        'DIRECT_REFERENCE_REQUIRED',
+      ],
+      provenance: {
+        discoveredBy: ['filesystem'],
+        verifiedBy: 'filesystem',
+        operations: ['FILESYSTEM_FIND_MATCHES'],
       },
-      {
-        label: 'nested object',
-        excerpt: [
-          'const value = {',
-          '  hcpId: source.id,',
-          '  child: { hcpName: source.name },',
-          '};',
-        ].join('\n'),
-        forbidden: 'hcpName',
-      },
-      {
-        label: 'nested brace scope',
-        excerpt: [
-          'function f() {',
-          '  const hcpId = source.id;',
-          '  if (ready) { const hcpName = source.name; }',
-          '}',
-        ].join('\n'),
-        forbidden: 'hcpName',
-      },
-      {
-        label: 'unclosed outer delimiter',
-        excerpt: [
-          'function f() {',
-          '  const value = {',
-          '    hcpId: source.id,',
-          '    child: { hcpName: source.name },',
-          '  };',
-        ].join('\n'),
-        forbidden: 'hcpName',
-      },
-    ])('fails closed for $label boundaries', ({ excerpt, forbidden }) => {
-      expect(
-        runPolicy(record(excerpt)).candidates.some(
-          (candidate) => candidate.location.symbol === forbidden,
-        ),
-      ).toBe(false);
     });
+    expect(bySymbol.get('hcpName')?.reasonCodes).toEqual([
+      'SAME_SCOPE_SIMILAR_IDENTIFIER',
+      'SAME_ENTITY_SIBLING',
+    ]);
+    expect(bySymbol.has('unrelatedToken')).toBe(false);
+    expect(bySymbol.has('row')).toBe(false);
 
-    it.each([
-      {
-        label: 'variable annotation',
-        excerpt: 'function f() { const hcpId: HcpName = source; }',
-        forbidden: 'HcpName',
-      },
-      {
-        label: 'as assertion',
-        excerpt: 'function f() { const value = hcpId as HcpName; }',
-        forbidden: 'HcpName',
-      },
-      {
-        label: 'satisfies inline type',
-        excerpt: [
-          'const value = source satisfies {',
-          '  hcpId: CustomId;',
-          '  hcpName: string;',
-          '};',
-        ].join('\n'),
-        forbidden: 'CustomId',
-      },
-      {
-        label: 'generic comma type',
-        excerpt: [
-          'interface Hcp {',
-          '  hcpId: Record<string, CustomId>;',
-          '  hcpName: string;',
-          '}',
-        ].join('\n'),
-        forbidden: 'CustomId',
-      },
-      {
-        label: 'tuple type',
-        excerpt: [
-          'type Hcp = {',
-          '  hcpId: [Other, CustomId];',
-          '  hcpName: string;',
-          '};',
-        ].join('\n'),
-        forbidden: 'CustomId',
-      },
-      {
-        label: 'function parameter type',
-        excerpt: 'function f(hcpId: HcpName) { return hcpId; }',
-        forbidden: 'HcpName',
-      },
-      {
-        label: 'inline type literal',
-        excerpt: [
-          'const value: {',
-          '  hcpId: CustomId;',
-          '  hcpName: string;',
-          '} = source;',
-        ].join('\n'),
-        forbidden: 'CustomId',
-      },
-    ])('does not classify $label tokens as candidates', ({ excerpt, forbidden }) => {
+    for (const candidate of result.candidates) {
+      expect(candidate.discoveryKey).not.toBe(candidate.seedDiscoveryKey);
+      expect(candidate.location.lines[0]).toBe(candidate.location.lines[1]);
+      expect(candidate.location.excerpt).toBe(candidate.location.symbol);
+      expect(materializeCandidateDraft(candidate).id).toMatch(
+        /^evidence:v1:[a-f0-9]{64}$/u,
+      );
+    }
+  });
+
+  it('fails closed across comments, strings, unrelated identifiers, and docs', () => {
+    const decoy = record(
+      [
+        'function map() {',
+        '  // hcpId = commentedAlias',
+        "  const text = 'hcpId = stringAlias';",
+        '  const pattern = /hcpId = regexAlias/;',
+        '  const unrelatedName = otherValue;',
+        '  return { hcpId: row.hcp_id };',
+        '}',
+      ].join('\n'),
+    );
+    const result = runPolicy(decoy);
+    const symbols = result.candidates.map(
+      (candidate) => candidate.location.symbol,
+    );
+    expect(symbols).not.toContain('commentedAlias');
+    expect(symbols).not.toContain('stringAlias');
+    expect(symbols).not.toContain('regexAlias');
+    expect(symbols).not.toContain('unrelatedName');
+    expect(
+      runPolicy(record(POLICY_EXCERPT, [term('hcpId')], 'docs/example.ts'))
+        .candidates,
+    ).toEqual([]);
+  });
+
+  it.each([
+    {
+      label: 'class',
+      excerpt: 'class Hcp {\n  hcpId: CustomId;\n  hcpName: CustomName;\n}',
+      seed: 'hcpId',
+      candidate: 'hcpName',
+      expectedReasons: ['SAME_SCOPE_SIMILAR_IDENTIFIER', 'SAME_ENTITY_SIBLING'],
+    },
+    {
+      label: 'interface',
+      excerpt: 'interface Hcp {\n  hcpId: string;\n  hcpName: string;\n}',
+      seed: 'hcpId',
+      candidate: 'hcpName',
+      expectedReasons: ['SAME_SCOPE_SIMILAR_IDENTIFIER', 'SAME_ENTITY_SIBLING'],
+    },
+    {
+      label: 'generic type alias',
+      excerpt: [
+        'type Hcp = {',
+        '  hcpId: EntityId<string>;',
+        '  hcpName: EntityName<string>;',
+        '};',
+      ].join('\n'),
+      seed: 'hcpId',
+      candidate: 'hcpName',
+      expectedReasons: ['SAME_SCOPE_SIMILAR_IDENTIFIER', 'SAME_ENTITY_SIBLING'],
+    },
+    {
+      label: 'SQL table',
+      excerpt: 'CREATE TABLE hcp (\n  hcp_id uuid,\n  hcp_name text\n);',
+      seed: 'hcp_id',
+      candidate: 'hcp_name',
+      expectedReasons: ['SAME_ENTITY_SIBLING'],
+    },
+  ] as const)(
+    'recognizes a balanced $label container',
+    ({ excerpt, seed, candidate, expectedReasons }) => {
+      const result = runPolicy(record(excerpt, [term(seed)]));
+      expect(candidateSummary(result)).toEqual([
+        { symbol: candidate, reasonCodes: expectedReasons },
+      ]);
+    },
+  );
+
+  it.each([
+    {
+      label: 'function parameter list',
+      excerpt: 'function f(hcpId, callback) {\n  return hcpId;\n}',
+      forbidden: 'callback',
+    },
+    {
+      label: 'nested object',
+      excerpt: [
+        'const value = {',
+        '  hcpId: source.id,',
+        '  child: { hcpName: source.name },',
+        '};',
+      ].join('\n'),
+      forbidden: 'hcpName',
+    },
+    {
+      label: 'nested brace scope',
+      excerpt: [
+        'function f() {',
+        '  const hcpId = source.id;',
+        '  if (ready) { const hcpName = source.name; }',
+        '}',
+      ].join('\n'),
+      forbidden: 'hcpName',
+    },
+    {
+      label: 'unclosed outer delimiter',
+      excerpt: [
+        'function f() {',
+        '  const value = {',
+        '    hcpId: source.id,',
+        '    child: { hcpName: source.name },',
+        '  };',
+      ].join('\n'),
+      forbidden: 'hcpName',
+    },
+  ])('fails closed for $label boundaries', ({ excerpt, forbidden }) => {
+    expect(
+      runPolicy(record(excerpt)).candidates.some(
+        (candidate) => candidate.location.symbol === forbidden,
+      ),
+    ).toBe(false);
+  });
+
+  it.each([
+    {
+      label: 'variable annotation',
+      excerpt: 'function f() { const hcpId: HcpName = source; }',
+      forbidden: 'HcpName',
+    },
+    {
+      label: 'as assertion',
+      excerpt: 'function f() { const value = hcpId as HcpName; }',
+      forbidden: 'HcpName',
+    },
+    {
+      label: 'satisfies inline type',
+      excerpt: [
+        'const value = source satisfies {',
+        '  hcpId: CustomId;',
+        '  hcpName: string;',
+        '};',
+      ].join('\n'),
+      forbidden: 'CustomId',
+    },
+    {
+      label: 'generic comma type',
+      excerpt: [
+        'interface Hcp {',
+        '  hcpId: Record<string, CustomId>;',
+        '  hcpName: string;',
+        '}',
+      ].join('\n'),
+      forbidden: 'CustomId',
+    },
+    {
+      label: 'tuple type',
+      excerpt: [
+        'type Hcp = {',
+        '  hcpId: [Other, CustomId];',
+        '  hcpName: string;',
+        '};',
+      ].join('\n'),
+      forbidden: 'CustomId',
+    },
+    {
+      label: 'function parameter type',
+      excerpt: 'function f(hcpId: HcpName) { return hcpId; }',
+      forbidden: 'HcpName',
+    },
+    {
+      label: 'inline type literal',
+      excerpt: [
+        'const value: {',
+        '  hcpId: CustomId;',
+        '  hcpName: string;',
+        '} = source;',
+      ].join('\n'),
+      forbidden: 'CustomId',
+    },
+  ])(
+    'does not classify $label tokens as candidates',
+    ({ excerpt, forbidden }) => {
       const result = runPolicy(record(excerpt));
       expect(
         result.candidates.some(
           (candidate) => candidate.location.symbol === forbidden,
         ),
       ).toBe(false);
-    });
+    },
+  );
 
-    it.each([
-      'function f() { const value = <HcpName>hcpId; }',
-      'function f() { const value = factory<HcpName>(hcpId); }',
-      'function f() { const value = factory<Record<string, HcpName>>(hcpId); }',
-    ])('fails closed for angle-bracket type syntax: %s', (excerpt) => {
-      expect(runPolicy(record(excerpt)).candidates).toEqual([]);
-    });
+  it.each([
+    'function f() { const value = <HcpName>hcpId; }',
+    'function f() { const value = factory<HcpName>(hcpId); }',
+    'function f() { const value = factory<Record<string, HcpName>>(hcpId); }',
+  ])('fails closed for angle-bracket type syntax: %s', (excerpt) => {
+    expect(runPolicy(record(excerpt)).candidates).toEqual([]);
+  });
 
-    it('uses SQL-aware masking for AS aliases', () => {
+  it('uses SQL-aware masking for AS aliases', () => {
+    expect(
+      candidateSummary(
+        runPolicy(
+          record('SELECT hcpId AS hcpName;', [term('hcpId')], 'db/mapping.sql'),
+        ),
+      ),
+    ).toEqual([{ symbol: 'hcpName', reasonCodes: ['ALIAS_SOURCE_NEIGHBOR'] }]);
+
+    for (const excerpt of [
+      '-- hcpId AS hcpName',
+      "SELECT 'hcpId AS hcpName';",
+      'SELECT "hcpId AS hcpName";',
+      'SELECT $$ hcpId AS hcpName $$;',
+      '/* outer /* inner */ hcpId AS hcpName */ SELECT 1;',
+    ]) {
       expect(
-        candidateSummary(
-          runPolicy(
-            record(
-              'SELECT hcpId AS hcpName;',
-              [term('hcpId')],
-              'db/mapping.sql',
-            ),
-          ),
-        ),
-      ).toEqual([
-        { symbol: 'hcpName', reasonCodes: ['ALIAS_SOURCE_NEIGHBOR'] },
-      ]);
+        runPolicy(record(excerpt, [term('hcpId')], 'db/mapping.sql'))
+          .candidates,
+      ).toEqual([]);
+    }
+  });
 
-      for (const excerpt of [
-        '-- hcpId AS hcpName',
-        "SELECT 'hcpId AS hcpName';",
-        'SELECT "hcpId AS hcpName";',
-        'SELECT $$ hcpId AS hcpName $$;',
-        '/* outer /* inner */ hcpId AS hcpName */ SELECT 1;',
-      ]) {
-        expect(
-          runPolicy(
-            record(excerpt, [term('hcpId')], 'db/mapping.sql'),
-          ).candidates,
-        ).toEqual([]);
-      }
-    });
+  it('fails scope and entity discovery closed for an unclosed array', () => {
+    const result = runPolicy(
+      record('function f() { const values = [hcpId; const hcpName = 1; }'),
+    );
+    expect(
+      result.candidates.some(
+        (candidate) => candidate.location.symbol === 'hcpName',
+      ),
+    ).toBe(false);
+  });
 
-    it('fails scope and entity discovery closed for an unclosed array', () => {
-      const result = runPolicy(
-        record(
-          'function f() { const values = [hcpId; const hcpName = 1; }',
-        ),
-      );
-      expect(
-        result.candidates.some(
-          (candidate) => candidate.location.symbol === 'hcpName',
-        ),
-      ).toBe(false);
-    });
-
-    it('produces sibling candidates from the real single-line RipgrepBackend path', async () => {
-      const engine = createCanonicalLocateEngineHarnessV2([new RipgrepBackend(new NodeSafeProcessRunner())],
-        new NodeRepositoryReader(),
-      ).service;
-      const result = await engine.locate(
-        {
-          repoPath: candidateFixtureRoot,
-          question: 'real ripgrep candidate window',
-          terms: ['hcpId', 'row.hcp_id'],
-          termCase: 'sensitive',
-          layers: ['server'],
-        },
-        { signal: new AbortController().signal },
-      );
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) {
-        throw new Error(result.error.message);
-      }
-      expect(
-        result.evidence.candidates.some(
-          (candidate) =>
-            candidate.location.file === 'server/mapping.fixture' &&
-            candidate.location.symbol === 'hcpName' &&
-            candidate.reasonCodes.includes('SAME_ENTITY_SIBLING'),
-        ),
-      ).toBe(true);
-    });
-
-    it('keeps confirmed identity unchanged when only the candidate window expands', async () => {
-      class FocusOnlyReader extends NodeRepositoryReader {
-        public override async readWindow(
-          ...args: Parameters<NodeRepositoryReader['readWindow']>
-        ): Promise<EvidenceLocation> {
-          return await this.readRange(...args);
-        }
-      }
-      const request = {
+  it('produces sibling candidates from the real single-line RipgrepBackend path', async () => {
+    const engine = createCanonicalLocateEngineHarnessV2(
+      [new RipgrepBackend(new NodeSafeProcessRunner())],
+      new NodeRepositoryReader(),
+    ).service;
+    const result = await engine.locate(
+      {
         repoPath: candidateFixtureRoot,
-        question: 'candidate window identity',
+        question: 'real ripgrep candidate window',
         terms: ['hcpId', 'row.hcp_id'],
-        termCase: 'sensitive' as const,
-        layers: ['server'] as const,
-      };
-      const locate = async (reader: NodeRepositoryReader) =>
-        await createCanonicalLocateEngineHarnessV2([new CandidateFixtureBackend()],
-          reader,
-        ).service.locate(request, { signal: new AbortController().signal });
-      const expanded = await locate(new NodeRepositoryReader());
-      const focusOnly = await locate(new FocusOnlyReader());
+        termCase: 'sensitive',
+        layers: ['server'],
+      },
+      { signal: new AbortController().signal },
+    );
 
-      expect(expanded.ok).toBe(true);
-      expect(focusOnly.ok).toBe(true);
-      if (!expanded.ok || !focusOnly.ok) {
-        throw new Error('Candidate window identity fixture failed.');
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error(result.error.message);
+    }
+    expect(
+      result.evidence.candidates.some(
+        (candidate) =>
+          candidate.location.file === 'server/mapping.fixture' &&
+          candidate.location.symbol === 'hcpName' &&
+          candidate.reasonCodes.includes('SAME_ENTITY_SIBLING'),
+      ),
+    ).toBe(true);
+  });
+
+  it('keeps confirmed identity unchanged when only the candidate window expands', async () => {
+    class FocusOnlyReader extends NodeRepositoryReader {
+      public override async readWindow(
+        ...args: Parameters<NodeRepositoryReader['readWindow']>
+      ): Promise<EvidenceLocation> {
+        return await this.readRange(...args);
       }
-      expect(expanded.evidence.confirmed).toEqual(focusOnly.evidence.confirmed);
-      expect(
-        expanded.evidence.candidates.some(
-          (candidate) => candidate.location.symbol === 'hcpName',
-        ),
-      ).toBe(true);
-      expect(focusOnly.evidence.candidates).toEqual([]);
-    });
+    }
+    const request = {
+      repoPath: candidateFixtureRoot,
+      question: 'candidate window identity',
+      terms: ['hcpId', 'row.hcp_id'],
+      termCase: 'sensitive' as const,
+      layers: ['server'] as const,
+    };
+    const locate = async (reader: NodeRepositoryReader) =>
+      await createCanonicalLocateEngineHarnessV2(
+        [new CandidateFixtureBackend()],
+        reader,
+      ).service.locate(request, { signal: new AbortController().signal });
+    const expanded = await locate(new NodeRepositoryReader());
+    const focusOnly = await locate(new FocusOnlyReader());
 
-    it('fails the request instead of hiding a second-read candidate context error', async () => {
-      class FailingWindowReader extends NodeRepositoryReader {
-        public override async readWindow(): Promise<never> {
-          throw new RepositoryAccessError('FILE_UNREADABLE');
-        }
+    expect(expanded.ok).toBe(true);
+    expect(focusOnly.ok).toBe(true);
+    if (!expanded.ok || !focusOnly.ok) {
+      throw new Error('Candidate window identity fixture failed.');
+    }
+    expect(expanded.evidence.confirmed).toEqual(focusOnly.evidence.confirmed);
+    expect(
+      expanded.evidence.candidates.some(
+        (candidate) => candidate.location.symbol === 'hcpName',
+      ),
+    ).toBe(true);
+    expect(focusOnly.evidence.candidates).toEqual([]);
+  });
+
+  it('fails the request instead of hiding a second-read candidate context error', async () => {
+    class FailingWindowReader extends NodeRepositoryReader {
+      public override async readWindow(): Promise<never> {
+        throw new RepositoryAccessError('FILE_UNREADABLE');
       }
-      const result = await createCanonicalLocateEngineHarnessV2([new CandidateFixtureBackend()],
-        new FailingWindowReader(),
-      ).service.locate(
-        {
-          repoPath: candidateFixtureRoot,
-          question: 'candidate context failure',
-          terms: ['hcpId', 'row.hcp_id'],
-          termCase: 'sensitive',
-          layers: ['server'],
-        },
-        { signal: new AbortController().signal },
-      );
+    }
+    const result = await createCanonicalLocateEngineHarnessV2(
+      [new CandidateFixtureBackend()],
+      new FailingWindowReader(),
+    ).service.locate(
+      {
+        repoPath: candidateFixtureRoot,
+        question: 'candidate context failure',
+        terms: ['hcpId', 'row.hcp_id'],
+        termCase: 'sensitive',
+        layers: ['server'],
+      },
+      { signal: new AbortController().signal },
+    );
 
-      expect(result).toMatchObject({
-        ok: false,
-        error: { code: 'INTERNAL_ERROR', recoverable: false },
-      });
+    expect(result).toMatchObject({
+      ok: false,
+      error: { code: 'INTERNAL_ERROR', recoverable: false },
     });
-  },
-);
+  });
+});
 
-describe.runIf(selected('candidate-context', 'secondary-backend-provenance-table'))(
-  'candidate verified context invariants',
-  () => {
-    it('rejects unknown, conflicting, and oversized contexts', () => {
-      const seed = record();
-      const valid = createVerifiedCandidateContext(seed);
-      expect(() =>
-        applyCandidatePolicy({
-          records: [seed],
-          contexts: [{ ...valid, seedDiscoveryKey: 'missing' }],
-          maxCandidates: 1,
-          signal: new AbortController().signal,
-        }),
-      ).toThrow(/unknown seed/u);
-      expect(() =>
-        applyCandidatePolicy({
-          records: [seed],
-          contexts: [valid, valid],
-          maxCandidates: 1,
-          signal: new AbortController().signal,
-        }),
-      ).toThrow(/conflict/u);
-      expect(() =>
-        applyCandidatePolicy({
-          records: [seed],
-          contexts: [
-            {
-              ...valid,
-              lines: [1, 13],
-              unredactedExcerpt: Array.from({ length: 13 }, () => 'hcpId')
-                .join('\n'),
-            },
-          ],
-          maxCandidates: 1,
-          signal: new AbortController().signal,
-        }),
-      ).toThrow(/verified seed boundary/u);
-    });
+describe.runIf(
+  selected('candidate-context', 'secondary-backend-provenance-table'),
+)('candidate verified context invariants', () => {
+  it('rejects unknown, conflicting, and oversized contexts', () => {
+    const seed = record();
+    const valid = createVerifiedCandidateContext(seed);
+    expect(() =>
+      applyCandidatePolicy({
+        records: [seed],
+        contexts: [{ ...valid, seedDiscoveryKey: 'missing' }],
+        maxCandidates: 1,
+        signal: new AbortController().signal,
+      }),
+    ).toThrow(/unknown seed/u);
+    expect(() =>
+      applyCandidatePolicy({
+        records: [seed],
+        contexts: [valid, valid],
+        maxCandidates: 1,
+        signal: new AbortController().signal,
+      }),
+    ).toThrow(/conflict/u);
+    expect(() =>
+      applyCandidatePolicy({
+        records: [seed],
+        contexts: [
+          {
+            ...valid,
+            lines: [1, 13],
+            unredactedExcerpt: Array.from({ length: 13 }, () => 'hcpId').join(
+              '\n',
+            ),
+          },
+        ],
+        maxCandidates: 1,
+        signal: new AbortController().signal,
+      }),
+    ).toThrow(/verified seed boundary/u);
+  });
 
-    it('accepts exactly 4 KiB and rejects 4 KiB plus one byte', () => {
-      const prefix = 'function f(){hcpAlias=hcpId;}';
-      const exactExcerpt = `${prefix}${' '.repeat(4 * 1024 - prefix.length)}`;
-      const exactRecord = record(exactExcerpt);
-      expect(runPolicy(exactRecord).candidates).toContainEqual(
-        expect.objectContaining({
-          location: expect.objectContaining({ symbol: 'hcpAlias' }),
-        }),
-      );
+  it('accepts exactly 4 KiB and rejects 4 KiB plus one byte', () => {
+    const prefix = 'function f(){hcpAlias=hcpId;}';
+    const exactExcerpt = `${prefix}${' '.repeat(4 * 1024 - prefix.length)}`;
+    const exactRecord = record(exactExcerpt);
+    expect(runPolicy(exactRecord).candidates).toContainEqual(
+      expect.objectContaining({
+        location: expect.objectContaining({ symbol: 'hcpAlias' }),
+      }),
+    );
 
-      const oversizedRecord = record(`${exactExcerpt} `);
-      expect(() => runPolicy(oversizedRecord)).toThrow(
-        /verified seed boundary/u,
-      );
-    });
-  },
-);
+    const oversizedRecord = record(`${exactExcerpt} `);
+    expect(() => runPolicy(oversizedRecord)).toThrow(/verified seed boundary/u);
+  });
+});
 
 describe.runIf(
   selected('candidate-classification', 'discovery-key-mutual-exclusion'),
-)(
-  'candidate classification mutual exclusion',
-  () => {
-    it('keeps a confirmed seed out of candidate output before public IDs exist', () => {
-      const excerpt = [
-        'const sourceAlias = hcpId;',
-        'hcpId = hcp_id;',
-      ].join('\n');
-      const seed = record(excerpt, [term('hcpId'), term('hcp_id')]);
-      const classified = classifyDiscoveryRecords([seed], {
-        anchors: [],
-        layers: [],
-        negativeTerms: [],
-      });
-      expect(classified.confirmed).toHaveLength(1);
-      expect(classified.candidates).toEqual([]);
-
-      const policy = runPolicy(seed);
-      const confirmedKeys = new Set(
-        classified.confirmed.map((evidence) =>
-          createDiscoveryKey(evidence.location),
-        ),
-      );
-      expect(confirmedKeys).toEqual(new Set([seed.discoveryKey]));
-      expect(
-        policy.candidates.some((candidate) =>
-          confirmedKeys.has(candidate.discoveryKey),
-        ),
-      ).toBe(false);
-      expect(policy.candidates.every((candidate) => candidate.role === 'related'))
-        .toBe(true);
+)('candidate classification mutual exclusion', () => {
+  it('keeps a confirmed seed out of candidate output before public IDs exist', () => {
+    const excerpt = ['const sourceAlias = hcpId;', 'hcpId = hcp_id;'].join(
+      '\n',
+    );
+    const seed = record(excerpt, [term('hcpId'), term('hcp_id')]);
+    const classified = classifyDiscoveryRecords([seed], {
+      anchors: [],
+      layers: [],
+      negativeTerms: [],
     });
+    expect(classified.confirmed).toHaveLength(1);
+    expect(classified.candidates).toEqual([]);
 
-    it('emits one confirmed evidence for an occurrence that also matches candidate terms', async () => {
-      const matchedText = 'hcpId = hcp_id;';
-      const engine = createCanonicalLocateEngineHarnessV2([
-          new OrderedFixtureBackend([
-            {
-              file: 'server/exclusive.fixture',
-              lines: [1, 1],
-              matchedText,
-              source: 'ripgrep',
-              reasonCodes: ['LITERAL_TERM_HIT'],
-            },
-          ]),
-        ],
-        new NodeRepositoryReader(),
-      ).service;
-      const result = await engine.locate(
-        {
-          repoPath: candidateFixtureRoot,
-          question: 'mutual exclusion',
-          terms: ['hcpId', 'hcp_id'],
-          termCase: 'sensitive',
-          layers: ['server'],
-        },
-        { signal: new AbortController().signal },
-      );
+    const policy = runPolicy(seed);
+    const confirmedKeys = new Set(
+      classified.confirmed.map((evidence) =>
+        createDiscoveryKey(evidence.location),
+      ),
+    );
+    expect(confirmedKeys).toEqual(new Set([seed.discoveryKey]));
+    expect(
+      policy.candidates.some((candidate) =>
+        confirmedKeys.has(candidate.discoveryKey),
+      ),
+    ).toBe(false);
+    expect(
+      policy.candidates.every((candidate) => candidate.role === 'related'),
+    ).toBe(true);
+  });
 
-      expect(result.ok).toBe(true);
-      if (!result.ok) {
-        throw new Error(result.error.message);
-      }
-      expect(result.evidence.confirmed).toHaveLength(1);
-      expect(result.evidence.confirmed[0]?.role).toBe('value-mapping');
-      expect(result.evidence.candidates).toEqual([]);
-      expect(
-        result.evidence.confirmed.length + result.evidence.candidates.length,
-      ).toBe(1);
-    });
-  },
-);
+  it('emits one confirmed evidence for an occurrence that also matches candidate terms', async () => {
+    const matchedText = 'hcpId = hcp_id;';
+    const engine = createCanonicalLocateEngineHarnessV2(
+      [
+        new OrderedFixtureBackend([
+          {
+            file: 'server/exclusive.fixture',
+            lines: [1, 1],
+            matchedText,
+            source: 'ripgrep',
+            reasonCodes: ['LITERAL_TERM_HIT'],
+          },
+        ]),
+      ],
+      new NodeRepositoryReader(),
+    ).service;
+    const result = await engine.locate(
+      {
+        repoPath: candidateFixtureRoot,
+        question: 'mutual exclusion',
+        terms: ['hcpId', 'hcp_id'],
+        termCase: 'sensitive',
+        layers: ['server'],
+      },
+      { signal: new AbortController().signal },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error(result.error.message);
+    }
+    expect(result.evidence.confirmed).toHaveLength(1);
+    expect(result.evidence.confirmed[0]?.role).toBe('value-mapping');
+    expect(result.evidence.candidates).toEqual([]);
+    expect(
+      result.evidence.confirmed.length + result.evidence.candidates.length,
+    ).toBe(1);
+  });
+});
 
 describe.runIf(selected('candidate-budget', 'candidate-budget'))(
   'candidate bounded selection',
@@ -771,14 +755,21 @@ describe.runIf(selected('candidate-budget', 'candidate-budget'))(
 
       const controller = new AbortController();
       controller.abort();
-      expect(runPolicy(seed, 20, [createVerifiedCandidateContext(seed)], controller.signal))
-        .toEqual({ candidates: [], truncated: false });
+      expect(
+        runPolicy(
+          seed,
+          20,
+          [createVerifiedCandidateContext(seed)],
+          controller.signal,
+        ),
+      ).toEqual({ candidates: [], truncated: false });
     });
 
     it.each([0, 1] as const)(
       'keeps confirmed evidence stable when maxCandidates is %i',
       async (maxCandidates) => {
-        const engine = createCanonicalLocateEngineHarnessV2([new CandidateFixtureBackend()],
+        const engine = createCanonicalLocateEngineHarnessV2(
+          [new CandidateFixtureBackend()],
           new NodeRepositoryReader(),
         ).service;
         const result = await engine.locate(
@@ -911,7 +902,8 @@ describe.runIf(selected('candidate-permutation', 'candidate-permutation'))(
         },
       ] satisfies readonly BackendHit[];
       const locate = async (orderedHits: readonly BackendHit[]) =>
-        await createCanonicalLocateEngineHarnessV2([new OrderedFixtureBackend(orderedHits)],
+        await createCanonicalLocateEngineHarnessV2(
+          [new OrderedFixtureBackend(orderedHits)],
           new NodeRepositoryReader(),
         ).service.locate(
           {
@@ -1033,7 +1025,9 @@ describe.runIf(selected('candidate-permutation', 'candidate-permutation'))(
               },
             },
           ],
-          coverage: { limitsReached: expect.arrayContaining(['MAX_FILES_REACHED']) },
+          coverage: {
+            limitsReached: expect.arrayContaining(['MAX_FILES_REACHED']),
+          },
         },
       });
     });

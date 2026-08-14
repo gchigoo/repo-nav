@@ -10,7 +10,7 @@ request:
   layers: [server]
 expected:
   ok: true
-  status: partial
+  status: ok
   confirmed: []
   candidates:
     - file: server/secondary.ts

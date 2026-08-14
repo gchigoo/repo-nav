@@ -11,13 +11,23 @@ import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const moduleDirectory = dirname(fileURLToPath(import.meta.url));
+const modulePath = fileURLToPath(import.meta.url);
+const moduleDirectory = dirname(modulePath);
 const repositoryRoot = resolve(moduleDirectory, '..', '..');
 
-if (process.env['REPO_NAV_PLATFORM_TSX_ACTIVE'] !== '1') {
+function isDirectExecution() {
+  return (
+    process.argv[1] !== undefined && resolve(process.argv[1]) === modulePath
+  );
+}
+
+if (
+  isDirectExecution() &&
+  process.env['REPO_NAV_PLATFORM_TSX_ACTIVE'] !== '1'
+) {
   const relaunch = spawnSync(
     process.execPath,
-    ['--import', 'tsx', fileURLToPath(import.meta.url), ...process.argv.slice(2)],
+    ['--import', 'tsx', modulePath, ...process.argv.slice(2)],
     {
       cwd: repositoryRoot,
       env: { ...process.env, REPO_NAV_PLATFORM_TSX_ACTIVE: '1' },
@@ -42,19 +52,21 @@ const {
     resolve(repositoryRoot, 'testkit/contracts/platform-contract.ts'),
   ).href
 );
-const {
-  buildSyntheticExtensionSnapshotV1,
-  listSyntheticExtensionMutationsV1,
-} = await import(
-  pathToFileURL(
-    resolve(
-      repositoryRoot,
-      'testkit/fixtures/platform/registry-extension-mutations.ts',
-    ),
-  ).href
+const { buildSyntheticExtensionSnapshotV1, listSyntheticExtensionMutationsV1 } =
+  await import(
+    pathToFileURL(
+      resolve(
+        repositoryRoot,
+        'testkit/fixtures/platform/registry-extension-mutations.ts',
+      ),
+    ).href
+  );
+const { validatePlatformBatchResult } = await import(
+  pathToFileURL(resolve(repositoryRoot, 'testkit/testing/platform-contract.ts'))
+    .href
 );
 
-function resolveNpmInvocation() {
+export function resolveNpmInvocation() {
   // Node 20+ rejects spawning *.cmd with shell:false (EINVAL on Windows).
   // Invoke the JS CLI through node to keep shell:false on every platform.
   const npmCliCandidates = [
@@ -107,11 +119,11 @@ function parseArgs(argv) {
   return { contracts, selfTest, runtimeProbe, cellId };
 }
 
-function runCommand(executable, args, env = {}) {
+export function defaultCommandRunner(command) {
   return new Promise((resolvePromise, rejectPromise) => {
-    const child = spawn(executable, args, {
-      cwd: repositoryRoot,
-      env: { ...process.env, ...env },
+    const child = spawn(command.executable, command.args, {
+      cwd: command.cwd,
+      env: { ...process.env, ...command.env },
       shell: false,
       stdio: 'inherit',
       windowsHide: true,
@@ -119,7 +131,7 @@ function runCommand(executable, args, env = {}) {
     child.once('error', rejectPromise);
     child.once('exit', (code, signal) => {
       if (signal !== null) {
-        rejectPromise(new Error(`${executable} killed by ${signal}`));
+        rejectPromise(new Error(`${command.executable} killed by ${signal}`));
         return;
       }
       resolvePromise(code ?? 1);
@@ -127,11 +139,8 @@ function runCommand(executable, args, env = {}) {
   });
 }
 
-function readPrivateResult(path) {
-  if (!existsSync(path)) {
-    throw new Error(`missing private platform result at ${path}`);
-  }
-  const parsed = JSON.parse(readFileSync(path, 'utf8'));
+function parsePrivateResult(raw) {
+  const parsed = JSON.parse(raw);
   if (
     typeof parsed !== 'object' ||
     parsed === null ||
@@ -144,11 +153,38 @@ function readPrivateResult(path) {
   return parsed;
 }
 
-function sortUnique(values) {
-  return [...new Set(values)].sort((left, right) => left.localeCompare(right));
+function readPrivateResult(path) {
+  if (!existsSync(path)) {
+    throw new Error(`missing private platform result at ${path}`);
+  }
+  return parsePrivateResult(readFileSync(path, 'utf8'));
 }
 
-function assertDeepExact(actual, expected, label) {
+function readCapturedPrivateResult(resultPath, capturePath) {
+  if (!existsSync(capturePath)) {
+    return readPrivateResult(resultPath);
+  }
+  const snapshots = readFileSync(capturePath, 'utf8')
+    .split('\n')
+    .filter((line) => line.length > 0)
+    .map((line) => parsePrivateResult(JSON.parse(line)));
+  if (snapshots.length === 0) {
+    return readPrivateResult(resultPath);
+  }
+  return {
+    registeredOwners: sortStrings([
+      ...new Set(snapshots.flatMap((snapshot) => snapshot.registeredOwners)),
+    ]),
+    assertions: snapshots.flatMap((snapshot) => snapshot.assertions),
+    evidence: snapshots.flatMap((snapshot) => snapshot.evidence),
+  };
+}
+
+function sortStrings(values) {
+  return [...values].sort((left, right) => left.localeCompare(right));
+}
+
+function assertDeepExactStrings(actual, expected, label) {
   if (
     actual.length !== expected.length ||
     actual.some((value, index) => value !== expected[index])
@@ -159,149 +195,169 @@ function assertDeepExact(actual, expected, label) {
   }
 }
 
-async function executeBinding(binding, markerOwners, evidenceOwners) {
+function identityArgsForBindings(bindings) {
+  return bindings.flatMap((binding) => [
+    '--identity',
+    `${binding.group}/${binding.executableCaseId}`,
+  ]);
+}
+
+function appendNodeImportOption(existing, hookPath) {
+  const option = `--import=${pathToFileURL(hookPath).href}`;
+  return existing === undefined || existing.length === 0
+    ? option
+    : `${existing} ${option}`;
+}
+
+function writeResultCaptureHook(hookPath) {
+  writeFileSync(
+    hookPath,
+    `import fs from 'node:fs';\n` +
+      `import { resolve } from 'node:path';\n` +
+      `import { syncBuiltinESMExports } from 'node:module';\n` +
+      `const originalWriteFileSync = fs.writeFileSync;\n` +
+      `const resultPath = resolve(process.env.REPO_NAV_PLATFORM_RESULT_PATH ?? '');\n` +
+      `const capturePath = process.env.REPO_NAV_PLATFORM_RESULT_CAPTURE_PATH;\n` +
+      `fs.writeFileSync = function patchedWriteFileSync(path, data, options) {\n` +
+      `  if (capturePath !== undefined && resolve(String(path)) === resultPath) {\n` +
+      `    const text = Buffer.isBuffer(data) ? data.toString('utf8') : String(data);\n` +
+      `    originalWriteFileSync.call(fs, capturePath, JSON.stringify(text) + '\\n', { flag: 'a' });\n` +
+      `  }\n` +
+      `  return originalWriteFileSync.apply(fs, arguments);\n` +
+      `};\n` +
+      `syncBuiltinESMExports();\n`,
+    'utf8',
+  );
+}
+
+function groupBindingsBySurface(bindings, os) {
+  const grouped = {
+    unit: [],
+    mcp: [],
+  };
+  for (const binding of bindings) {
+    if (!binding.applicableOs.includes(os)) {
+      continue;
+    }
+    grouped[binding.surface].push(binding);
+  }
+  return [
+    { surface: 'unit', bindings: grouped.unit },
+    { surface: 'mcp', bindings: grouped.mcp },
+  ].filter((group) => group.bindings.length > 0);
+}
+
+function assertSummaryContractIds(summaries, bindings, surface) {
+  assertDeepExactStrings(
+    summaries.map((summary) => summary.contractId),
+    sortStrings(bindings.map((binding) => binding.contractId)),
+    `platform summaries(${surface})`,
+  );
+}
+
+async function executeSurfaceGroup(input) {
   const tempDirectory = mkdtempSync(
     resolve(tmpdir(), 'repo-nav-platform-result-'),
   );
   const resultPath = resolve(tempDirectory, 'private-result.json');
+  const capturePath = resolve(tempDirectory, 'private-result-captures.ndjson');
+  const hookPath = resolve(tempDirectory, 'capture-platform-result.mjs');
+  writeResultCaptureHook(hookPath);
   try {
-    const script = binding.surface === 'unit' ? 'test' : 'test:mcp';
-    const npm = resolveNpmInvocation();
-    const code = await runCommand(
-      npm.executable,
-      [
-        ...npm.prefixArgs,
-        'run',
-        script,
-        '--',
-        '--group',
-        binding.group,
-        '--case',
-        binding.executableCaseId,
-      ],
-      {
+    const script = input.surface === 'unit' ? 'test' : 'test:mcp:built';
+    const npm = input.resolveNpm();
+    const args = [
+      ...npm.prefixArgs,
+      'run',
+      script,
+      '--',
+      ...identityArgsForBindings(input.bindings),
+    ];
+    const code = await input.commandRunner({
+      executable: npm.executable,
+      args,
+      cwd: repositoryRoot,
+      env: {
+        NODE_OPTIONS: appendNodeImportOption(
+          process.env['NODE_OPTIONS'],
+          hookPath,
+        ),
+        REPO_NAV_PLATFORM_RESULT_CAPTURE_PATH: capturePath,
         REPO_NAV_PLATFORM_RESULT_PATH: resultPath,
         REPO_NAV_REPOSITORY_ROOT: repositoryRoot,
       },
-    );
+    });
     if (code !== 0) {
       throw new Error(
-        `runner failed for ${binding.contractId} (${binding.surface}/${binding.group}/${binding.executableCaseId}) exit=${code}`,
+        `runner failed for ${input.surface} platform contracts (${input.bindings
+          .map((binding) => binding.contractId)
+          .join(', ')}) exit=${code}`,
       );
     }
-    const privateResult = readPrivateResult(resultPath);
-    const expectedOwners = sortUnique([
-      binding.assertionOwner,
-      ...markerOwners
-        .filter((owner) => owner.contractId === binding.contractId)
-        .map((owner) => owner.assertionOwner),
-      ...evidenceOwners
-        .filter((owner) => owner.contractId === binding.contractId)
-        .map((owner) => owner.evidenceOwner),
-    ]);
-    assertDeepExact(
-      sortUnique(privateResult.registeredOwners),
-      expectedOwners,
-      `registeredOwners(${binding.contractId})`,
-    );
-
-    const passedMarkers = privateResult.assertions.filter(
-      (entry) => entry.status === 'passed',
-    );
-    const expectedAssertionIds = [...binding.requiredAssertionIds].sort();
-    const actualAssertionIds = sortUnique(
-      passedMarkers.map((entry) => entry.assertionId),
-    );
-    assertDeepExact(
-      actualAssertionIds,
-      expectedAssertionIds,
-      `passedAssertionIds(${binding.contractId})`,
-    );
-    if (passedMarkers.length !== binding.requiredAssertionIds.length) {
-      throw new Error(
-        `duplicate or missing passed markers for ${binding.contractId}`,
-      );
-    }
-    for (const marker of passedMarkers) {
-      if (marker.contractId !== binding.contractId) {
-        throw new Error(
-          `unexpected contract marker ${marker.contractId} while running ${binding.contractId}`,
-        );
-      }
-      const declared = markerOwners.find(
-        (owner) =>
-          owner.contractId === marker.contractId &&
-          owner.assertionId === marker.assertionId,
-      );
-      if (declared === undefined) {
-        throw new Error(
-          `undeclared marker ${marker.contractId}/${marker.assertionId}`,
-        );
-      }
-      if (marker.actualOwner !== declared.assertionOwner) {
-        throw new Error(
-          `actualOwner mismatch for ${marker.contractId}/${marker.assertionId}: declared ${declared.assertionOwner} actual ${marker.actualOwner}`,
-        );
-      }
-    }
-
-    const expectedEvidenceIds = [...binding.requiredEvidenceHashIds].sort();
-    const actualEvidenceIds = sortUnique(
-      privateResult.evidence.map((entry) => entry.evidenceId),
-    );
-    assertDeepExact(
-      actualEvidenceIds,
-      expectedEvidenceIds,
-      `evidenceIds(${binding.contractId})`,
-    );
-    for (const evidence of privateResult.evidence) {
-      if (evidence.contractId !== binding.contractId) {
-        throw new Error(
-          `unexpected evidence contract ${evidence.contractId}`,
-        );
-      }
-      if (!/^[0-9a-f]{64}$/u.test(evidence.sha256)) {
-        throw new Error(
-          `invalid evidence hash for ${evidence.contractId}/${evidence.evidenceId}`,
-        );
-      }
-      const declared = evidenceOwners.find(
-        (owner) =>
-          owner.contractId === evidence.contractId &&
-          owner.evidenceId === evidence.evidenceId,
-      );
-      if (declared === undefined) {
-        throw new Error(
-          `undeclared evidence ${evidence.contractId}/${evidence.evidenceId}`,
-        );
-      }
-      if (evidence.actualOwner !== declared.evidenceOwner) {
-        throw new Error(
-          `evidence actualOwner mismatch for ${evidence.contractId}/${evidence.evidenceId}`,
-        );
-      }
-    }
-
-    return {
-      contractId: binding.contractId,
-      passedAssertionMarkers: passedMarkers.map((entry) => ({
-        contractId: entry.contractId,
-        assertionId: entry.assertionId,
-      })),
-      contractEvidenceHashes: privateResult.evidence.map((entry) => ({
-        contractId: entry.contractId,
-        evidenceId: entry.evidenceId,
-        sha256: entry.sha256,
-      })),
-    };
+    const privateResult = readCapturedPrivateResult(resultPath, capturePath);
+    const summaries = input.validateBatchResult({
+      bindings: input.bindings,
+      privateResult,
+      markerOwners: input.markerOwners,
+      evidenceOwners: input.evidenceOwners,
+    });
+    assertSummaryContractIds(summaries, input.bindings, input.surface);
+    return summaries;
   } finally {
     rmSync(tempDirectory, { recursive: true, force: true });
   }
 }
 
+function selectBindings(snapshot, contracts) {
+  if (contracts.length === 0) {
+    return snapshot.bindings;
+  }
+  const selected = snapshot.bindings.filter((binding) =>
+    contracts.includes(binding.contractId),
+  );
+  if (selected.length !== contracts.length) {
+    throw new Error('one or more --contract ids are unknown');
+  }
+  return selected;
+}
+
+function buildSafeSummary(identity, summaries) {
+  const os = identity.platform;
+  return {
+    schemaVersion: 1,
+    os,
+    nodeMajor: identity.nodeMajor,
+    arch: identity.arch,
+    contracts: summaries.map((entry) => entry.contractId).sort(),
+    passedAssertionMarkers: summaries
+      .flatMap((entry) => entry.passedAssertionMarkers)
+      .sort(
+        (left, right) =>
+          left.contractId.localeCompare(right.contractId) ||
+          left.assertionId.localeCompare(right.assertionId),
+      ),
+    contractEvidenceHashes: summaries
+      .flatMap((entry) => entry.contractEvidenceHashes)
+      .sort(
+        (left, right) =>
+          left.contractId.localeCompare(right.contractId) ||
+          left.evidenceId.localeCompare(right.evidenceId),
+      ),
+  };
+}
+
+function writeSafeSummary(safeSummary) {
+  const outputDirectory = resolve(repositoryRoot, 'test-artifacts', 'platform');
+  mkdirSync(outputDirectory, { recursive: true });
+  writeFileSync(
+    resolve(outputDirectory, 'safe-summary.json'),
+    `${JSON.stringify(safeSummary, null, 2)}\n`,
+    'utf8',
+  );
+}
+
 function runSelfTest() {
-  const repository =
-    createFilesystemPlatformContractRepository(repositoryRoot);
+  const repository = createFilesystemPlatformContractRepository(repositoryRoot);
   validateProductionPlatformContractSnapshotV1(
     PRODUCTION_PLATFORM_CONTRACT_SNAPSHOT_V1,
     repository,
@@ -373,10 +429,9 @@ function runSelfTest() {
   );
 }
 
-async function main() {
-  const args = parseArgs(process.argv.slice(2));
-  const repository =
-    createFilesystemPlatformContractRepository(repositoryRoot);
+export async function runPlatformContracts(argv = [], options = {}) {
+  const args = parseArgs(argv);
+  const repository = createFilesystemPlatformContractRepository(repositoryRoot);
   const validated = validateProductionPlatformContractSnapshotV1(
     PRODUCTION_PLATFORM_CONTRACT_SNAPSHOT_V1,
     repository,
@@ -388,17 +443,15 @@ async function main() {
       throw new Error('--runtime-probe requires --cell');
     }
     const cell = assertRuntimeMatchesCell(args.cellId);
-    process.stdout.write(`${JSON.stringify({ ok: true, cell }, null, 2)}\n`);
-    return;
+    return { mode: 'runtime-probe', cell };
   }
 
   if (args.selfTest) {
     runSelfTest();
-    process.stdout.write('platform contract self-test passed\n');
-    return;
+    return { mode: 'self-test' };
   }
 
-  const identity = probeRuntimeIdentity();
+  const identity = options.runtimeIdentity ?? probeRuntimeIdentity();
   if (
     identity.platform !== 'linux' &&
     identity.platform !== 'win32' &&
@@ -406,69 +459,54 @@ async function main() {
   ) {
     throw new Error(`unsupported platform ${identity.platform}`);
   }
-  const os = identity.platform;
-  const selected =
-    args.contracts.length === 0
-      ? snapshot.bindings
-      : snapshot.bindings.filter((binding) =>
-          args.contracts.includes(binding.contractId),
-        );
-  if (args.contracts.length > 0 && selected.length !== args.contracts.length) {
-    throw new Error('one or more --contract ids are unknown');
-  }
-
+  const selected = selectBindings(snapshot, args.contracts);
+  const surfaceGroups = groupBindingsBySurface(selected, identity.platform);
   const summaries = [];
-  for (const binding of selected) {
-    if (!binding.applicableOs.includes(os)) {
-      continue;
-    }
-    const summary = await executeBinding(
-      binding,
-      snapshot.markerOwners,
-      snapshot.evidenceHashOwners,
+  for (const group of surfaceGroups) {
+    summaries.push(
+      ...(await executeSurfaceGroup({
+        surface: group.surface,
+        bindings: group.bindings,
+        markerOwners: snapshot.markerOwners,
+        evidenceOwners: snapshot.evidenceHashOwners,
+        commandRunner: options.commandRunner ?? defaultCommandRunner,
+        resolveNpm: options.resolveNpm ?? resolveNpmInvocation,
+        validateBatchResult:
+          options.validateBatchResult ?? validatePlatformBatchResult,
+      })),
     );
-    summaries.push(summary);
   }
 
-  const safeSummary = {
-    schemaVersion: 1,
-    os,
-    nodeMajor: identity.nodeMajor,
-    arch: identity.arch,
-    contracts: summaries.map((entry) => entry.contractId).sort(),
-    passedAssertionMarkers: summaries
-      .flatMap((entry) => entry.passedAssertionMarkers)
-      .sort(
-        (left, right) =>
-          left.contractId.localeCompare(right.contractId) ||
-          left.assertionId.localeCompare(right.assertionId),
-      ),
-    contractEvidenceHashes: summaries
-      .flatMap((entry) => entry.contractEvidenceHashes)
-      .sort(
-        (left, right) =>
-          left.contractId.localeCompare(right.contractId) ||
-          left.evidenceId.localeCompare(right.evidenceId),
-      ),
-  };
-  const outputDirectory = resolve(
-    repositoryRoot,
-    'test-artifacts',
-    'platform',
-  );
-  mkdirSync(outputDirectory, { recursive: true });
-  writeFileSync(
-    resolve(outputDirectory, 'safe-summary.json'),
-    `${JSON.stringify(safeSummary, null, 2)}\n`,
-    'utf8',
-  );
+  const safeSummary = buildSafeSummary(identity, summaries);
+  if (options.writeSummary !== false) {
+    writeSafeSummary(safeSummary);
+  }
+  return { mode: 'contracts', safeSummary, summaries };
+}
+
+async function main() {
+  const result = await runPlatformContracts(process.argv.slice(2));
+  if (result.mode === 'runtime-probe') {
+    process.stdout.write(
+      `${JSON.stringify({ ok: true, cell: result.cell }, null, 2)}\n`,
+    );
+    return;
+  }
+  if (result.mode === 'self-test') {
+    process.stdout.write('platform contract self-test passed\n');
+    return;
+  }
   process.stdout.write(
-    `platform contracts passed: ${safeSummary.contracts.join(', ') || '(none applicable)'}\n`,
+    `platform contracts passed: ${
+      result.safeSummary.contracts.join(', ') || '(none applicable)'
+    }\n`,
   );
 }
 
-main().catch((error) => {
-  const message = error instanceof Error ? error.message : String(error);
-  process.stderr.write(`${message}\n`);
-  process.exitCode = 1;
-});
+if (isDirectExecution()) {
+  main().catch((error) => {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`${message}\n`);
+    process.exitCode = 1;
+  });
+}

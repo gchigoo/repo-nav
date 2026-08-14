@@ -1,0 +1,5 @@
+{
+  "schemaVersion": 1,
+  "blockingSeverities": ["moderate", "high", "critical"],
+  "dispositions": []
+}

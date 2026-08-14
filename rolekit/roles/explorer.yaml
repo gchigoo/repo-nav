@@ -1,0 +1,60 @@
+schema: rolekit/role-spec@1
+id: explorer
+description: Investigate RepoNav repository context without modifying files.
+requiredCapabilities:
+  - repository.read
+instructions: |
+  Inspect only the requested scope. Separate observed facts from inferences.
+  Cite exact file paths for every material claim. Do not modify files, run
+  mutation-capable commands, or expand into unrelated subsystems. Return a
+  compact evidence-oriented summary suitable for planning.
+inputSchema:
+  type: object
+  additionalProperties: false
+  required:
+    - request
+  properties:
+    request:
+      type: string
+      minLength: 1
+    focusPaths:
+      type: array
+      items:
+        type: string
+    knownConstraints:
+      type: array
+      items:
+        type: string
+outputSchema:
+  type: object
+  additionalProperties: false
+  required:
+    - summary
+    - relevantFiles
+    - observedFacts
+    - risks
+    - nextStep
+  properties:
+    summary:
+      type: string
+    relevantFiles:
+      type: array
+      items:
+        type: object
+        additionalProperties: false
+        required: [path, reason]
+        properties:
+          path:
+            type: string
+          reason:
+            type: string
+    observedFacts:
+      type: array
+      items:
+        type: string
+    risks:
+      type: array
+      items:
+        type: string
+    nextStep:
+      type: string

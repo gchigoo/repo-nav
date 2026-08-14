@@ -22,17 +22,11 @@
         "location": {
           "file": "server/mapping.ts",
           "resolvable": true,
-          "lines": [
-            1,
-            2
-          ],
+          "lines": [1, 2],
           "excerpt": "declare const row: { readonly source_field: string };\nexport const targetField = row.source_field;"
         },
         "provenance": {
-          "discoveredBy": [
-            "codegraph",
-            "ripgrep"
-          ],
+          "discoveredBy": ["codegraph", "ripgrep"],
           "verifiedBy": "filesystem",
           "operations": [
             "CODEGRAPH_QUERY",
@@ -40,10 +34,7 @@
             "FILESYSTEM_READ_RANGE"
           ]
         },
-        "reasonCodes": [
-          "EXACT_TERM_MATCH",
-          "DIRECT_ALIAS_MAPPING"
-        ]
+        "reasonCodes": ["EXACT_TERM_MATCH", "DIRECT_ALIAS_MAPPING"]
       }
     ],
     "candidates": [],
@@ -64,17 +55,12 @@
           "hitCount": 1
         }
       ],
-      "strategyComplete": false,
+      "strategyComplete": true,
       "fallbackChecked": true,
       "indexState": "unknown",
       "indexFreshness": "unknown",
-      "limitsReached": [
-        "MAX_CANDIDATES_REACHED",
-        "MAX_BACKEND_HITS_REACHED"
-      ],
-      "degradations": [
-        "BACKEND_EARLY_STOPPED"
-      ],
+      "limitsReached": ["MAX_CANDIDATES_REACHED", "MAX_BACKEND_HITS_REACHED"],
+      "degradations": [],
       "exclusionSummary": {},
       "abortSource": "none",
       "unsatisfiedAnchors": [],
@@ -86,33 +72,16 @@
       },
       "scope": {
         "requested": [],
-        "effective": [
-          "client",
-          "server",
-          "db",
-          "config",
-          "unknown"
-        ],
+        "effective": ["client", "server", "db", "config", "unknown"],
         "policyVersion": "repo-scope-v1",
-        "unmatchedLayers": [
-          "client",
-          "db",
-          "config",
-          "unknown"
-        ]
+        "unmatchedLayers": ["client", "db", "config", "unknown"]
       },
       "capabilities": {
         "textSearch": "supported-text-files",
-        "semanticClassification": [
-          "typescript",
-          "javascript",
-          "sql"
-        ],
+        "semanticClassification": ["typescript", "javascript", "sql"],
         "unsupportedLanguageHits": 0
       }
     },
-    "nextActions": [
-      "RETRY_WITH_HIGHER_LIMIT"
-    ]
+    "nextActions": ["RETRY_WITH_HIGHER_LIMIT"]
   }
 }

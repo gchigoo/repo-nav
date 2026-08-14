@@ -7,8 +7,8 @@ import { describe, expect, it } from 'vitest';
 import type { LocateExecutionTokenV2 } from '../../src/contracts/v2/locate-fact-envelope-v2.js';
 import {
   createBackendExecutionContextV2,
+  createCodeGraphProbeReceiptV2,
   createExpandedLaneAttemptFactsV2,
-  createNotObservedCodeGraphIndexObservationV2,
   finalizeBackendExecutionTraceV2,
   requireBackendExecutionOutcomeV2,
   requireBackendExecutionTraceV2,
@@ -19,6 +19,10 @@ import {
   signBackendExecutionOutcomeForFactsV2,
 } from '../../src/process/backend-execution-context-v2.js';
 import { createProcessOpaqueTokenV2 } from '../../src/process/opaque-token-v2.js';
+import type {
+  AvailabilityProbeExecutionResultV2,
+  BackendPhysicalAttemptResultV2,
+} from '../../src/process/backend-physical-attempt-executor-v2.js';
 import { NodeSafeProcessRunner } from '../../src/repository/node-safe-process-runner.js';
 import { RipgrepBackend } from '../../src/repository/ripgrep-backend.js';
 import { CODEGRAPH_TERMINAL_KINDS_V2 } from '../../testkit/fixtures/backend-execution-v2/codegraph-terminal-v2.js';
@@ -40,21 +44,7 @@ describe.runIf(
       new AbortController().signal,
       execution,
     );
-    const executor = requireBackendPhysicalAttemptExecutorV2(
-      context,
-      'codegraph',
-      execution,
-    );
-    const observation = createNotObservedCodeGraphIndexObservationV2(
-      executor.registry(),
-      execution,
-      context,
-    );
-    const trace = finalizeBackendExecutionTraceV2(
-      context,
-      observation,
-      execution,
-    );
+    const trace = finalizeBackendExecutionTraceV2(context, execution);
     const view = requireBackendExecutionTraceV2(trace, execution);
     expect(view.codegraphIndexObservation).toEqual({ kind: 'not-observed' });
     expect(view.outcomes).toEqual([]);
@@ -219,20 +209,7 @@ describe.runIf(
         execution3,
       );
       void handoff3;
-      const observation = createNotObservedCodeGraphIndexObservationV2(
-        requireBackendPhysicalAttemptExecutorV2(
-          context3,
-          'codegraph',
-          execution3,
-        ).registry(),
-        execution3,
-        context3,
-      );
-      const trace = finalizeBackendExecutionTraceV2(
-        context3,
-        observation,
-        execution3,
-      );
+      const trace = finalizeBackendExecutionTraceV2(context3, execution3);
       const traceView = requireBackendExecutionTraceV2(trace, execution3);
       expect(traceView.outcomes.length).toBe(1);
       expect(traceView.outcomes[0]).not.toHaveProperty('retainedHits');
@@ -245,6 +222,173 @@ describe.runIf(
       void createExpandedLaneAttemptFactsV2;
       void signBackendExecutionOutcomeForFactsV2;
       void requireBackendExecutionOutcomeV2;
+    } finally {
+      rmSync(repository, { recursive: true, force: true });
+    }
+  });
+});
+
+describe.runIf(
+  isSelected({
+    group: 'streaming-ripgrep',
+    caseId: 'codegraph-outcome-trace',
+  }),
+)('F5-CODEGRAPH-003 receipt invariants', () => {
+  it('requires one status receipt and rejects a duplicate', async () => {
+    const repository = mkdtempSync(resolve(tmpdir(), 'repo-nav-f5-receipt-'));
+    try {
+      const runner = new NodeSafeProcessRunner();
+      const signal = new AbortController().signal;
+      const execution = createProcessOpaqueTokenV2<LocateExecutionTokenV2>();
+      const context = createBackendExecutionContextV2(
+        runner,
+        undefined,
+        signal,
+        execution,
+      );
+      const executor = requireBackendPhysicalAttemptExecutorV2(
+        context,
+        'codegraph',
+        execution,
+      );
+      const request = {
+        executable: 'codegraph',
+        argv: ['status', '--json', repository],
+        cwd: repository,
+        timeoutMs: 5_000,
+        maxStdoutBytes: 64 * 1024,
+        maxStderrBytes: 16 * 1024,
+        terminateGraceMs: 100,
+      };
+      const prepared = await executor.prepareAvailabilityProbe(
+        { backend: 'codegraph', argvClass: 'codegraph-status', request },
+        execution,
+      );
+      expect(prepared.ok).toBe(true);
+      if (!prepared.ok) {
+        return;
+      }
+      const start = executor.startAvailabilityProbe(
+        {
+          backend: 'codegraph',
+          laneMask: 'expanded-and-legacy',
+          kind: 'codegraph-status',
+          request,
+        },
+        prepared.prepared,
+        signal,
+        execution,
+      );
+      const settled = await executor.settlePhysicalAttempt(start, execution);
+      expect(() => finalizeBackendExecutionTraceV2(context, execution)).toThrow(
+        /missing-codegraph-receipt/u,
+      );
+      createCodeGraphProbeReceiptV2(settled, context, execution);
+      expect(() =>
+        createCodeGraphProbeReceiptV2(settled, context, execution),
+      ).toThrow(/conflicting-codegraph-receipt/u);
+    } finally {
+      rmSync(repository, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects a ripgrep-version result as a codegraph receipt', async () => {
+    const repository = mkdtempSync(resolve(tmpdir(), 'repo-nav-f5-receipt-'));
+    try {
+      const runner = new NodeSafeProcessRunner();
+      const signal = new AbortController().signal;
+      const execution = createProcessOpaqueTokenV2<LocateExecutionTokenV2>();
+      const context = createBackendExecutionContextV2(
+        runner,
+        undefined,
+        signal,
+        execution,
+      );
+      const executor = requireBackendPhysicalAttemptExecutorV2(
+        context,
+        'ripgrep',
+        execution,
+      );
+      const request = {
+        executable: 'rg',
+        argv: ['--version'],
+        cwd: repository,
+        timeoutMs: 5_000,
+        maxStdoutBytes: 64 * 1024,
+        maxStderrBytes: 16 * 1024,
+        terminateGraceMs: 100,
+      };
+      const prepared = await executor.prepareAvailabilityProbe(
+        { backend: 'ripgrep', argvClass: 'ripgrep-version', request },
+        execution,
+      );
+      expect(prepared.ok).toBe(true);
+      if (!prepared.ok) {
+        return;
+      }
+      const start = executor.startAvailabilityProbe(
+        {
+          backend: 'ripgrep',
+          laneMask: 'expanded-and-legacy',
+          kind: 'ripgrep-version',
+          request,
+        },
+        prepared.prepared,
+        signal,
+        execution,
+      );
+      const settled = await executor.settlePhysicalAttempt(start, execution);
+      expect(() =>
+        createCodeGraphProbeReceiptV2(settled, context, execution),
+      ).toThrow(/invalid-probe-result-binding/u);
+    } finally {
+      rmSync(repository, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects a buffered codegraph-query result as a status receipt', async () => {
+    const repository = mkdtempSync(resolve(tmpdir(), 'repo-nav-f5-receipt-'));
+    try {
+      const runner = new NodeSafeProcessRunner();
+      const signal = new AbortController().signal;
+      const execution = createProcessOpaqueTokenV2<LocateExecutionTokenV2>();
+      const context = createBackendExecutionContextV2(
+        runner,
+        undefined,
+        signal,
+        execution,
+      );
+      const executor = requireBackendPhysicalAttemptExecutorV2(
+        context,
+        'codegraph',
+        execution,
+      );
+      const start = executor.startBuffered(
+        {
+          backend: 'codegraph',
+          laneMask: 'expanded-and-legacy',
+          kind: 'codegraph-query',
+          request: {
+            executable: 'node',
+            argv: ['-e', 'process.exit(0)'],
+            cwd: repository,
+            timeoutMs: 5_000,
+            maxStdoutBytes: 64 * 1024,
+            maxStderrBytes: 16 * 1024,
+            terminateGraceMs: 100,
+          },
+        },
+        signal,
+        execution,
+      );
+      const settled = await executor.settlePhysicalAttempt(start, execution);
+      expect(() =>
+        createCodeGraphProbeReceiptV2(
+          settled as unknown as BackendPhysicalAttemptResultV2<AvailabilityProbeExecutionResultV2>,
+          context,
+          execution,
+        ),
+      ).toThrow(/invalid-probe-result-binding/u);
     } finally {
       rmSync(repository, { recursive: true, force: true });
     }

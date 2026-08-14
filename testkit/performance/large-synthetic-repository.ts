@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { LocateResultV2 } from '../../src/contracts/v2/locate-result-v2.js';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
@@ -139,7 +138,9 @@ export type SyntheticPerformanceReport = z.infer<
 >;
 
 function hashJson(value: unknown): string {
-  return createHash('sha256').update(JSON.stringify(value), 'utf8').digest('hex');
+  return createHash('sha256')
+    .update(JSON.stringify(value), 'utf8')
+    .digest('hex');
 }
 
 function paddingFor(index: number, seed: number): string {
@@ -230,14 +231,18 @@ export function generateLargeSyntheticRepository(
   const mappingCount = generatedFiles.filter((name) =>
     name.endsWith('-mapping.ts'),
   ).length;
-  const decoyCount = generatedFiles.filter((name) => name.includes('-decoy-')).length;
+  const decoyCount = generatedFiles.filter((name) =>
+    name.includes('-decoy-'),
+  ).length;
   if (
     moduleDirectories.length !== manifest.generator.modules ||
     generatedFiles.length !== manifest.generator.sourceFiles ||
     mappingCount !== manifest.generator.directMappings ||
     decoyCount !== manifest.generator.namedDecoys
   ) {
-    throw new Error('Synthetic generator output does not match its fixed config.');
+    throw new Error(
+      'Synthetic generator output does not match its fixed config.',
+    );
   }
   return {
     root,
@@ -287,10 +292,12 @@ async function measureLocate(
     const elapsedMs = performance.now() - startedAt;
     peakRssBytes = Math.max(peakRssBytes, process.memoryUsage().rss);
     if (!result.ok) {
-      throw new Error(`Synthetic repository locate failed: ${result.error.code}.`);
+      throw new Error(
+        `Synthetic repository locate failed: ${result.error.code}.`,
+      );
     }
     return {
-      result: result as any,
+      result: result,
       elapsedMs,
       peakRssBytes,
       projectionHash: hashJson(createStableGoldenProjection(result)),
@@ -314,7 +321,9 @@ function deltaPercent(current: number, baseline: number): number {
   return baseline === 0 ? 0 : ((current - baseline) / baseline) * 100;
 }
 
-function packageDependencies(repositoryRoot: string): Readonly<Record<string, string>> {
+function packageDependencies(
+  repositoryRoot: string,
+): Readonly<Record<string, string>> {
   const input: unknown = JSON.parse(
     readFileSync(resolve(repositoryRoot, 'package.json'), 'utf8'),
   );
@@ -335,151 +344,176 @@ export async function runLargeSyntheticPerformance(
   fixtureRoot: string,
 ): Promise<SyntheticPerformanceReport> {
   const manifest = loadLargeSyntheticManifest(repositoryRoot);
+  let report: SyntheticPerformanceReport | undefined;
+  let failure: { readonly error: unknown } | undefined;
   try {
-  const generated = generateLargeSyntheticRepository(fixtureRoot, manifest);
-  const request = LocateRequestSchema.parse({
-    ...manifest.request,
-    repoPath: generated.root,
-  });
-  const service = createCanonicalLocateEngineHarnessV2([new RipgrepBackend(new NodeSafeProcessRunner())],
-    new NodeRepositoryReader(),
-  ).service;
-  await measureLocate(service, request);
+    const generated = generateLargeSyntheticRepository(fixtureRoot, manifest);
+    const request = LocateRequestSchema.parse({
+      ...manifest.request,
+      repoPath: generated.root,
+    });
+    const service = createCanonicalLocateEngineHarnessV2(
+      [new RipgrepBackend(new NodeSafeProcessRunner())],
+      new NodeRepositoryReader(),
+    ).service;
+    await measureLocate(service, request);
 
-  const observations: MeasuredObservation[] = [];
-  for (let index = 0; index < manifest.measuredRuns; index += 1) {
-    observations.push(await measureLocate(service, request));
-  }
-
-  const projectionHashes = new Set(
-    observations.map((observation) => observation.projectionHash),
-  );
-  if (projectionHashes.size !== 1) {
-    throw new Error('Synthetic repository stable projection changed between runs.');
-  }
-  const first = observations[0];
-  if (first === undefined) {
-    throw new Error('Synthetic repository produced no measured observations.');
-  }
-  const correctness = {
-    stableProjectionHash: first.projectionHash,
-    status: first.result.evidence.status,
-    confirmedCount: first.result.evidence.confirmed.length,
-    candidateCount: first.result.evidence.candidates.length,
-    limitsReached: first.result.evidence.coverage.limitsReached,
-  } as const;
-  if (
-    correctness.status !== manifest.expected.status ||
-    correctness.confirmedCount !== manifest.expected.confirmedCount ||
-    correctness.candidateCount !== manifest.expected.candidateCount ||
-    JSON.stringify(correctness.limitsReached) !==
-      JSON.stringify(manifest.expected.limitsReached)
-  ) {
-    throw new Error(
-      `Synthetic correctness differs: ${JSON.stringify(correctness)}.`,
-    );
-  }
-
-  const elapsedSamples = observations.map((observation) => observation.elapsedMs);
-  const rssSamples = observations.map((observation) => observation.peakRssBytes);
-  const summary = {
-    medianElapsedMs: percentile(elapsedSamples, 0.5),
-    p95ElapsedMs: percentile(elapsedSamples, 0.95),
-    peakRssBytes: Math.max(...rssSamples),
-  } as const;
-  const baselinePath = resolve(
-    repositoryRoot,
-    'testkit',
-    'baselines',
-    'performance',
-    'large-synthetic-repository-v1.json',
-  );
-  const baseline = existsSync(baselinePath)
-    ? SyntheticPerformanceReportSchema.parse(
-        JSON.parse(readFileSync(baselinePath, 'utf8')) as unknown,
-      )
-    : undefined;
-  const generatorConfigHash = hashJson(manifest.generator);
-  if (
-    baseline !== undefined &&
-    (baseline.generatorConfigHash !== generatorConfigHash ||
-      baseline.corpusHash !== generated.corpusHash ||
-      baseline.correctness.stableProjectionHash !==
-        correctness.stableProjectionHash)
-  ) {
-    throw new Error('Synthetic correctness/config differs from committed baseline.');
-  }
-
-  return SyntheticPerformanceReportSchema.parse({
-    schemaVersion: '1.0',
-    caseId: manifest.id,
-    generator: manifest.generator,
-    generatorConfigHash,
-    corpusHash: generated.corpusHash,
-    gitCommit: execFileSync('git', ['rev-parse', 'HEAD'], {
-      cwd: repositoryRoot,
-      encoding: 'utf8',
-    }).trim(),
-    environment: {
-      node: process.version,
-      platform: platform(),
-      release: release(),
-      arch: arch(),
-      cpu: cpus()[0]?.model ?? 'unknown-cpu',
-      dependencies: packageDependencies(repositoryRoot),
-    },
-    warmupRuns: manifest.warmupRuns,
-    measuredRuns: manifest.measuredRuns,
-    runs: observations.map((observation, index) => ({
-      index: index + 1,
-      elapsedMs: observation.elapsedMs,
-      peakRssBytes: observation.peakRssBytes,
-      projectionHash: observation.projectionHash,
-      status: observation.result.evidence.status,
-      confirmedCount: observation.result.evidence.confirmed.length,
-      candidateCount: observation.result.evidence.candidates.length,
-      limitsReached: observation.result.evidence.coverage.limitsReached,
-    })),
-    summary,
-    correctness,
-    cleanup: {
-      attempted: true,
-      succeeded: true,
-      fixtureRemoved: true,
-    },
-    trend: {
-      baselineAvailable: baseline !== undefined,
-      timingIsBlocking: false,
-      medianDeltaPercent:
-        baseline === undefined
-          ? null
-          : deltaPercent(
-              summary.medianElapsedMs,
-              baseline.summary.medianElapsedMs,
-            ),
-      p95DeltaPercent:
-        baseline === undefined
-          ? null
-          : deltaPercent(summary.p95ElapsedMs, baseline.summary.p95ElapsedMs),
-      peakRssDeltaPercent:
-        baseline === undefined
-          ? null
-          : deltaPercent(summary.peakRssBytes, baseline.summary.peakRssBytes),
-    },
-  });
-  } finally {
-    rmSync(fixtureRoot, { recursive: true, force: true });
-    if (existsSync(fixtureRoot)) {
-      throw new Error('Synthetic repository fixture cleanup failed.');
+    const observations: MeasuredObservation[] = [];
+    for (let index = 0; index < manifest.measuredRuns; index += 1) {
+      observations.push(await measureLocate(service, request));
     }
+
+    const projectionHashes = new Set(
+      observations.map((observation) => observation.projectionHash),
+    );
+    if (projectionHashes.size !== 1) {
+      throw new Error(
+        'Synthetic repository stable projection changed between runs.',
+      );
+    }
+    const first = observations[0];
+    if (first === undefined) {
+      throw new Error(
+        'Synthetic repository produced no measured observations.',
+      );
+    }
+    const correctness = {
+      stableProjectionHash: first.projectionHash,
+      status: first.result.evidence.status,
+      confirmedCount: first.result.evidence.confirmed.length,
+      candidateCount: first.result.evidence.candidates.length,
+      limitsReached: first.result.evidence.coverage.limitsReached,
+    } as const;
+    if (
+      correctness.status !== manifest.expected.status ||
+      correctness.confirmedCount !== manifest.expected.confirmedCount ||
+      correctness.candidateCount !== manifest.expected.candidateCount ||
+      JSON.stringify(correctness.limitsReached) !==
+        JSON.stringify(manifest.expected.limitsReached)
+    ) {
+      throw new Error(
+        `Synthetic correctness differs: ${JSON.stringify(correctness)}.`,
+      );
+    }
+
+    const elapsedSamples = observations.map(
+      (observation) => observation.elapsedMs,
+    );
+    const rssSamples = observations.map(
+      (observation) => observation.peakRssBytes,
+    );
+    const summary = {
+      medianElapsedMs: percentile(elapsedSamples, 0.5),
+      p95ElapsedMs: percentile(elapsedSamples, 0.95),
+      peakRssBytes: Math.max(...rssSamples),
+    } as const;
+    const baselinePath = resolve(
+      repositoryRoot,
+      'testkit',
+      'baselines',
+      'performance',
+      'large-synthetic-repository-v1.json',
+    );
+    const baseline = existsSync(baselinePath)
+      ? SyntheticPerformanceReportSchema.parse(
+          JSON.parse(readFileSync(baselinePath, 'utf8')) as unknown,
+        )
+      : undefined;
+    const generatorConfigHash = hashJson(manifest.generator);
+    if (
+      baseline !== undefined &&
+      (baseline.generatorConfigHash !== generatorConfigHash ||
+        baseline.corpusHash !== generated.corpusHash ||
+        baseline.correctness.stableProjectionHash !==
+          correctness.stableProjectionHash)
+    ) {
+      throw new Error(
+        'Synthetic correctness/config differs from committed baseline.',
+      );
+    }
+
+    report = SyntheticPerformanceReportSchema.parse({
+      schemaVersion: '1.0',
+      caseId: manifest.id,
+      generator: manifest.generator,
+      generatorConfigHash,
+      corpusHash: generated.corpusHash,
+      gitCommit: execFileSync('git', ['rev-parse', 'HEAD'], {
+        cwd: repositoryRoot,
+        encoding: 'utf8',
+      }).trim(),
+      environment: {
+        node: process.version,
+        platform: platform(),
+        release: release(),
+        arch: arch(),
+        cpu: cpus()[0]?.model ?? 'unknown-cpu',
+        dependencies: packageDependencies(repositoryRoot),
+      },
+      warmupRuns: manifest.warmupRuns,
+      measuredRuns: manifest.measuredRuns,
+      runs: observations.map((observation, index) => ({
+        index: index + 1,
+        elapsedMs: observation.elapsedMs,
+        peakRssBytes: observation.peakRssBytes,
+        projectionHash: observation.projectionHash,
+        status: observation.result.evidence.status,
+        confirmedCount: observation.result.evidence.confirmed.length,
+        candidateCount: observation.result.evidence.candidates.length,
+        limitsReached: observation.result.evidence.coverage.limitsReached,
+      })),
+      summary,
+      correctness,
+      cleanup: {
+        attempted: true,
+        succeeded: true,
+        fixtureRemoved: true,
+      },
+      trend: {
+        baselineAvailable: baseline !== undefined,
+        timingIsBlocking: false,
+        medianDeltaPercent:
+          baseline === undefined
+            ? null
+            : deltaPercent(
+                summary.medianElapsedMs,
+                baseline.summary.medianElapsedMs,
+              ),
+        p95DeltaPercent:
+          baseline === undefined
+            ? null
+            : deltaPercent(summary.p95ElapsedMs, baseline.summary.p95ElapsedMs),
+        peakRssDeltaPercent:
+          baseline === undefined
+            ? null
+            : deltaPercent(summary.peakRssBytes, baseline.summary.peakRssBytes),
+      },
+    });
+  } catch (error: unknown) {
+    failure = { error };
   }
+  rmSync(fixtureRoot, { recursive: true, force: true });
+  if (existsSync(fixtureRoot)) {
+    throw new Error('Synthetic repository fixture cleanup failed.');
+  }
+  if (failure !== undefined) {
+    throw failure.error;
+  }
+  if (report === undefined) {
+    throw new Error('Synthetic repository report was not produced.');
+  }
+  return report;
 }
 
 export function writeSyntheticPerformanceReport(
   repositoryRoot: string,
   report: SyntheticPerformanceReport,
 ): string {
-  const outputDirectory = resolve(repositoryRoot, 'test-artifacts', 'performance');
+  const outputDirectory = resolve(
+    repositoryRoot,
+    'test-artifacts',
+    'performance',
+  );
   mkdirSync(outputDirectory, { recursive: true });
   const outputPath = resolve(
     outputDirectory,

@@ -74,36 +74,41 @@ const evaluatorIdentity = {
   caseId: 'manifest-evaluator',
 } as const;
 
-describe.runIf(isSelected(evaluatorIdentity))('shared GoldenCaseEvaluator', () => {
-  it('uses one public evaluator for success/error on the v2 projection surface', () => {
-    const success = successCase('manifest-schema-success');
-    const successResult = loadSuccessResult('foundation-success');
-    expect(() => assertGoldenCase(success, observe(successResult))).not.toThrow();
+describe.runIf(isSelected(evaluatorIdentity))(
+  'shared GoldenCaseEvaluator',
+  () => {
+    it('uses one public evaluator for success/error on the v2 projection surface', () => {
+      const success = successCase('manifest-schema-success');
+      const successResult = loadSuccessResult('foundation-success');
+      expect(() =>
+        assertGoldenCase(success, observe(successResult)),
+      ).not.toThrow();
 
-    const errorCase = loadCase('manifest-schema-error');
-    const errorResult = {
-      ok: false,
-      error: {
-        code: 'INVALID_INPUT',
-        message: 'Locate request does not match the required schema.',
-        recoverable: true,
-        suggestedAction: 'ADD_TERM',
-      },
-    } as const;
-    expect(() =>
-      assertGoldenCase(errorCase, observe(errorResult, true)),
-    ).not.toThrow();
-  });
+      const errorCase = loadCase('manifest-schema-error');
+      const errorResult = {
+        ok: false,
+        error: {
+          code: 'INVALID_INPUT',
+          message: 'Locate request does not match the required schema.',
+          recoverable: true,
+          suggestedAction: 'ADD_TERM',
+        },
+      } as const;
+      expect(() =>
+        assertGoldenCase(errorCase, observe(errorResult, true)),
+      ).not.toThrow();
+    });
 
-  it('requires a reviewed companion snapshot for every success manifest', () => {
-    const successManifests = readFileSync(
-      resolve(manifestRoot, 'manifest-schema-success.yaml'),
-      'utf8',
-    );
-    expect(successManifests).toContain('kind: success');
-    expect(() => loadSuccessResult('foundation-success')).not.toThrow();
-  });
-});
+    it('requires a reviewed companion snapshot for every success manifest', () => {
+      const successManifests = readFileSync(
+        resolve(manifestRoot, 'manifest-schema-success.yaml'),
+        'utf8',
+      );
+      expect(successManifests).toContain('kind: success');
+      expect(() => loadSuccessResult('foundation-success')).not.toThrow();
+    });
+  },
+);
 
 const negativeIdentity = {
   group: 'verification-contract',
@@ -134,9 +139,9 @@ describe.runIf(isSelected(negativeIdentity))(
           ],
         },
       };
-      expect(() => assertGoldenCase(candidateCase, observe(unexpected))).toThrow(
-        /count|projection/iu,
-      );
+      expect(() =>
+        assertGoldenCase(candidateCase, observe(unexpected)),
+      ).toThrow(/count|projection/iu);
 
       const wrongOrder = {
         ...candidateResult,
@@ -151,9 +156,9 @@ describe.runIf(isSelected(negativeIdentity))(
           })(),
         },
       };
-      expect(() => assertGoldenCase(candidateCase, observe(wrongOrder))).toThrow(
-        /order|projection/iu,
-      );
+      expect(() =>
+        assertGoldenCase(candidateCase, observe(wrongOrder)),
+      ).toThrow(/order|projection/iu);
 
       const forbiddenCase = GoldenCaseSchema.parse({
         ...candidateCase,
@@ -358,7 +363,11 @@ describe.runIf(isSelected(negativeIdentity))(
             : 'evidence.candidates.0.reasonCodes';
         const canon =
           probe.family === 'ConfirmedReasonCode'
-            ? (['EXACT_TERM_MATCH', 'EXACT_SYMBOL_ANCHOR', 'DIRECT_ALIAS_MAPPING'] as const)
+            ? ([
+                'EXACT_TERM_MATCH',
+                'EXACT_SYMBOL_ANCHOR',
+                'DIRECT_ALIAS_MAPPING',
+              ] as const)
             : ([
                 'EXACT_TERM_WITHOUT_DIRECT_MAPPING',
                 'SYMBOL_REFERENCE_ONLY',
@@ -373,7 +382,9 @@ describe.runIf(isSelected(negativeIdentity))(
             candidate.family === probe.family && candidate.code !== probe.code,
         );
         if (alternate === undefined) {
-          throw new Error(`Missing alternate negative probe for ${probe.family}.`);
+          throw new Error(
+            `Missing alternate negative probe for ${probe.family}.`,
+          );
         }
         const baseline = LocateResultV2Schema.parse(
           applyEvidencePackFieldMutation(fixture, {

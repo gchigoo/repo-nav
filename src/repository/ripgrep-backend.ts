@@ -13,6 +13,7 @@ import {
   type SafeProcessFailure,
 } from '../contracts/index.js';
 import type { LocateExecutionTokenV2 } from '../contracts/v2/locate-fact-envelope-v2.js';
+import type { TraceableRepositorySearchBackendV2 } from '../contracts/v2/traceable-repository-search-backend-v2.js';
 import type {
   BackendExecutionContextV2,
   BackendExecutionOutcomeV2,
@@ -35,6 +36,7 @@ import type {
   BackendPhysicalAttemptLaneMaskV2,
   BackendPhysicalAttemptResultV2,
 } from '../process/backend-physical-attempt-executor-v2.js';
+import { runExecutableAvailabilityProbeV2 } from '../process/executable-availability-probe-v2.js';
 import { NodeSafeProcessRunner } from './node-safe-process-runner.js';
 import {
   MultiViewAccumulatorV2,
@@ -485,7 +487,9 @@ function buildExpandedOutcomeShape(input: {
 }
 
 @Injectable()
-export class RipgrepBackend implements RepositorySearchBackend {
+export class RipgrepBackend
+  implements RepositorySearchBackend, TraceableRepositorySearchBackendV2
+{
   public readonly id = 'ripgrep' as const;
 
   public constructor(private readonly processRunner: NodeSafeProcessRunner) {}
@@ -494,7 +498,8 @@ export class RipgrepBackend implements RepositorySearchBackend {
     repositoryRoot: string,
     signal: AbortSignal,
   ): Promise<BackendHealth> {
-    const result = await this.processRunner.run(
+    const result = await runExecutableAvailabilityProbeV2(
+      this.processRunner,
       {
         executable: 'rg',
         argv: ['--version'],
@@ -504,7 +509,13 @@ export class RipgrepBackend implements RepositorySearchBackend {
       signal,
     );
     if (!result.ok) {
-      return failureHealth(result);
+      if (result.kind === 'not-found') {
+        return { state: 'missing', reasonCode: 'RIPGREP_UNAVAILABLE' };
+      }
+      if (result.kind === 'aborted') {
+        return { state: 'unavailable', reasonCode: 'BACKEND_ABORTED' };
+      }
+      return { state: 'error', reasonCode: 'BACKEND_PROCESS_FAILED' };
     }
     const firstLine = Buffer.from(result.stdout)
       .toString('utf8')
@@ -686,8 +697,8 @@ export class RipgrepBackend implements RepositorySearchBackend {
         execution,
       );
       const empty = emptyLegacyResult({
-        state: 'missing',
-        reasonCode: 'RIPGREP_UNAVAILABLE',
+        state: 'error',
+        reasonCode: 'BACKEND_PROCESS_FAILED',
       });
       return createTrustedBackendDiscoveryHandoffV2(
         {

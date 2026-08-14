@@ -59,12 +59,12 @@ describe.runIf(
           },
         ],
       });
-      expect(
-        parity.output.evidence.confirmed[1]?.location.excerpt,
-      ).toBe('[REDACTED:BINARY_OR_OVERSIZED_CONTENT]');
-      expect(
-        parity.output.evidence.candidates[0]?.location.excerpt,
-      ).toBe('const alias = "[REDACTED]";');
+      expect(parity.output.evidence.confirmed[1]?.location.excerpt).toBe(
+        '[REDACTED:BINARY_OR_OVERSIZED_CONTENT]',
+      );
+      expect(parity.output.evidence.candidates[0]?.location.excerpt).toBe(
+        'const alias = "[REDACTED]";',
+      );
       const allPublicOutput = JSON.stringify(callResult);
       const stderr = session.readStderr();
       for (const value of FORBIDDEN) {

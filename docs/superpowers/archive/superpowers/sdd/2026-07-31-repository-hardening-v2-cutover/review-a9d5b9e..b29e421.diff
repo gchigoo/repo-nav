@@ -1,0 +1,686 @@
+# Review package: a9d5b9ed573eed97755183168e41494501648d26..b29e4215e485c8b386d4d6a99992d482967bc7eb
+
+## Commits
+b29e421 test(hardening): freeze public and authority inventories
+
+## Files changed
+ .../unit/repository-hardening-inventory-v2.spec.ts | 561 ++++++++++++++++++++-
+ 1 file changed, 537 insertions(+), 24 deletions(-)
+
+## Diff
+diff --git a/test/unit/repository-hardening-inventory-v2.spec.ts b/test/unit/repository-hardening-inventory-v2.spec.ts
+index a61aef2..bc9b472 100644
+--- a/test/unit/repository-hardening-inventory-v2.spec.ts
++++ b/test/unit/repository-hardening-inventory-v2.spec.ts
+@@ -340,44 +340,228 @@ function expressionPathV2(expression: ts.Expression): readonly string[] | null {
+     ts.isStringLiteralLike(expression.argumentExpression)
+   ) {
+     const prefix = expressionPathV2(expression.expression);
+     return prefix === null
+       ? null
+       : [...prefix, expression.argumentExpression.text];
+   }
+   return null;
+ }
+ 
+-function sourceHasPropertyPathV2(
++interface BindingReferenceV2 {
++  readonly expression: ts.Expression;
++  readonly path: readonly string[];
++}
++
++interface ResolvedExpressionReferenceV2 {
++  readonly root: ts.Expression;
++  readonly path: readonly string[];
++}
++
++interface ConfirmationVersionBindingContextV2 {
++  readonly packageVersion: string;
++}
++
++function propertyNameTextV2(name: ts.PropertyName): string | null {
++  if (
++    ts.isIdentifier(name) ||
++    ts.isStringLiteralLike(name) ||
++    ts.isNumericLiteral(name)
++  ) {
++    return name.text;
++  }
++  if (
++    ts.isComputedPropertyName(name) &&
++    ts.isStringLiteralLike(name.expression)
++  ) {
++    return name.expression.text;
++  }
++  return null;
++}
++
++function registerBindingReferenceV2(
++  name: ts.BindingName,
++  expression: ts.Expression,
++  path: readonly string[],
++  bindings: Map<string, BindingReferenceV2>,
++): void {
++  if (ts.isIdentifier(name)) {
++    bindings.set(name.text, { expression, path });
++    return;
++  }
++  if (!ts.isObjectBindingPattern(name)) {
++    return;
++  }
++  for (const element of name.elements) {
++    if (element.dotDotDotToken !== undefined) {
++      continue;
++    }
++    const key =
++      element.propertyName === undefined
++        ? ts.isIdentifier(element.name)
++          ? element.name.text
++          : null
++        : propertyNameTextV2(element.propertyName);
++    if (key !== null) {
++      registerBindingReferenceV2(
++        element.name,
++        expression,
++        [...path, key],
++        bindings,
++      );
++    }
++  }
++}
++
++function bindingReferencesV2(
+   sourceFile: ts.SourceFile,
+-  expected: readonly string[],
+-): boolean {
+-  let found = false;
++): ReadonlyMap<string, BindingReferenceV2> {
++  const bindings = new Map<string, BindingReferenceV2>();
+   const visit = (node: ts.Node): void => {
+-    if (found) {
+-      return;
+-    }
+-    if (ts.isPropertyAccessExpression(node)) {
+-      const path = expressionPathV2(node);
+-      if (
+-        path !== null &&
+-        path.length === expected.length &&
+-        path.every((part, index) => part === expected[index])
+-      ) {
+-        found = true;
+-        return;
+-      }
++    if (ts.isVariableDeclaration(node) && node.initializer !== undefined) {
++      registerBindingReferenceV2(node.name, node.initializer, [], bindings);
+     }
+     ts.forEachChild(node, visit);
+   };
+   visit(sourceFile);
+-  return found;
++  return bindings;
++}
++
++function unwrapExpressionV2(expression: ts.Expression): ts.Expression {
++  let current = expression;
++  while (ts.isParenthesizedExpression(current)) {
++    current = current.expression;
++  }
++  return current;
++}
++
++function resolveExpressionReferenceV2(
++  expression: ts.Expression,
++  bindings: ReadonlyMap<string, BindingReferenceV2>,
++  seenBindings: ReadonlySet<string> = new Set<string>(),
++): ResolvedExpressionReferenceV2 {
++  const current = unwrapExpressionV2(expression);
++  if (ts.isIdentifier(current)) {
++    const binding = bindings.get(current.text);
++    if (binding !== undefined && !seenBindings.has(current.text)) {
++      const nextSeen = new Set(seenBindings);
++      nextSeen.add(current.text);
++      const resolved = resolveExpressionReferenceV2(
++        binding.expression,
++        bindings,
++        nextSeen,
++      );
++      return {
++        root: resolved.root,
++        path: [...resolved.path, ...binding.path],
++      };
++    }
++    return { root: current, path: [] };
++  }
++  if (ts.isPropertyAccessExpression(current)) {
++    const resolved = resolveExpressionReferenceV2(
++      current.expression,
++      bindings,
++      seenBindings,
++    );
++    return {
++      root: resolved.root,
++      path: [...resolved.path, current.name.text],
++    };
++  }
++  if (
++    ts.isElementAccessExpression(current) &&
++    current.argumentExpression !== undefined &&
++    ts.isStringLiteralLike(current.argumentExpression)
++  ) {
++    const resolved = resolveExpressionReferenceV2(
++      current.expression,
++      bindings,
++      seenBindings,
++    );
++    return {
++      root: resolved.root,
++      path: [...resolved.path, current.argumentExpression.text],
++    };
++  }
++  return { root: current, path: [] };
++}
++
++function objectLiteralPropertyV2(
++  objectLiteral: ts.ObjectLiteralExpression,
++  key: string,
++): ts.Expression | null {
++  for (const property of objectLiteral.properties) {
++    if (
++      ts.isPropertyAssignment(property) &&
++      propertyNameTextV2(property.name) === key
++    ) {
++      return property.initializer;
++    }
++    if (
++      ts.isShorthandPropertyAssignment(property) &&
++      property.name.text === key
++    ) {
++      return property.name;
++    }
++  }
++  return null;
++}
++
++function staticStringValueV2(
++  expression: ts.Expression,
++  bindings: ReadonlyMap<string, BindingReferenceV2>,
++  seenExpressions: ReadonlySet<ts.Expression> = new Set<ts.Expression>(),
++): string | null {
++  const current = unwrapExpressionV2(expression);
++  if (seenExpressions.has(current)) {
++    return null;
++  }
++  const nextSeen = new Set(seenExpressions);
++  nextSeen.add(current);
++  if (ts.isStringLiteralLike(current)) {
++    return current.text;
++  }
++  const resolved = resolveExpressionReferenceV2(current, bindings);
++  if (resolved.root !== current || resolved.path.length > 0) {
++    if (resolved.path.length === 0) {
++      return staticStringValueV2(resolved.root, bindings, nextSeen);
++    }
++    if (!ts.isObjectLiteralExpression(resolved.root)) {
++      return null;
++    }
++    let value: ts.Expression = resolved.root;
++    for (const key of resolved.path) {
++      if (!ts.isObjectLiteralExpression(value)) {
++        return null;
++      }
++      const property = objectLiteralPropertyV2(value, key);
++      if (property === null) {
++        return null;
++      }
++      value = unwrapExpressionV2(property);
++    }
++    return staticStringValueV2(value, bindings, nextSeen);
++  }
++  return null;
++}
++
++function isConfirmationCandidateVersionV2(
++  expression: ts.Expression,
++  bindings: ReadonlyMap<string, BindingReferenceV2>,
++): boolean {
++  const resolved = resolveExpressionReferenceV2(expression, bindings);
++  return (
++    ts.isIdentifier(resolved.root) &&
++    resolved.root.text === 'confirmation' &&
++    sameStringsV2(resolved.path, ['candidate', 'version'])
++  );
+ }
+ 
+ interface ExpressionFactsV2 {
+   readonly strings: Set<string>;
+   readonly calls: Set<string>;
+ }
+ 
+ function variableInitializersV2(
+   sourceFile: ts.SourceFile,
+ ): ReadonlyMap<string, ts.Expression> {
+@@ -416,20 +600,247 @@ function collectExpressionFactsV2(
+     if (initializer !== undefined && !seenBindings.has(node.text)) {
+       seenBindings.add(node.text);
+       collectExpressionFactsV2(initializer, declarations, seenBindings, facts);
+     }
+   }
+   ts.forEachChild(node, (child) =>
+     collectExpressionFactsV2(child, declarations, seenBindings, facts),
+   );
+ }
+ 
++function isPackageJsonVersionAuthorityV2(
++  expression: ts.Expression,
++  bindings: ReadonlyMap<string, BindingReferenceV2>,
++  declarations: ReadonlyMap<string, ts.Expression>,
++): boolean {
++  const resolved = resolveExpressionReferenceV2(expression, bindings);
++  if (!sameStringsV2(resolved.path, ['version'])) {
++    return false;
++  }
++  const facts: ExpressionFactsV2 = {
++    strings: new Set<string>(),
++    calls: new Set<string>(),
++  };
++  collectExpressionFactsV2(
++    resolved.root,
++    declarations,
++    new Set<string>(),
++    facts,
++  );
++  return (
++    [...facts.strings].some((value) => value.includes('package.json')) &&
++    facts.calls.has('JSON.parse') &&
++    facts.calls.has('readFileSync')
++  );
++}
++
++function exactTarballDescriptorVersionV2(
++  expression: ts.Expression,
++  bindings: ReadonlyMap<string, BindingReferenceV2>,
++): string | null {
++  const resolved = resolveExpressionReferenceV2(expression, bindings);
++  if (
++    !ts.isObjectLiteralExpression(resolved.root) ||
++    !sameStringsV2(resolved.path, ['version'])
++  ) {
++    return null;
++  }
++  const version = staticStringValueV2(expression, bindings);
++  const nameExpression = objectLiteralPropertyV2(resolved.root, 'name');
++  const name =
++    nameExpression === null
++      ? null
++      : staticStringValueV2(nameExpression, bindings);
++  if (version === null || name !== 'repo-nav') {
++    return null;
++  }
++  const filenameExpression =
++    objectLiteralPropertyV2(resolved.root, 'tarballFilename') ??
++    objectLiteralPropertyV2(resolved.root, 'filename');
++  const filename =
++    filenameExpression === null
++      ? null
++      : staticStringValueV2(filenameExpression, bindings);
++  if (filename !== null && filename.endsWith(`-${version}.tgz`)) {
++    return version;
++  }
++  const shaExpression = objectLiteralPropertyV2(resolved.root, 'tarballSha256');
++  const sha =
++    shaExpression === null
++      ? null
++      : staticStringValueV2(shaExpression, bindings);
++  return sha !== null && /^[0-9a-f]{64}$/u.test(sha) ? version : null;
++}
++
++function exactConfirmationAuthorityVersionV2(
++  expression: ts.Expression,
++  bindings: ReadonlyMap<string, BindingReferenceV2>,
++  declarations: ReadonlyMap<string, ts.Expression>,
++  context: ConfirmationVersionBindingContextV2,
++): string | null {
++  if (isPackageJsonVersionAuthorityV2(expression, bindings, declarations)) {
++    return context.packageVersion;
++  }
++  return exactTarballDescriptorVersionV2(expression, bindings);
++}
++
++function statementAlwaysRejectsV2(statement: ts.Statement): boolean {
++  if (ts.isThrowStatement(statement)) {
++    return true;
++  }
++  if (ts.isBlock(statement)) {
++    const last = statement.statements[statement.statements.length - 1];
++    return last !== undefined && statementAlwaysRejectsV2(last);
++  }
++  return false;
++}
++
++function confirmationBindingFromConditionV2(
++  condition: ts.Expression,
++  rejectWhenTrue: boolean,
++  bindings: ReadonlyMap<string, BindingReferenceV2>,
++  declarations: ReadonlyMap<string, ts.Expression>,
++  context: ConfirmationVersionBindingContextV2,
++): string | null {
++  const current = unwrapExpressionV2(condition);
++  if (
++    ts.isPrefixUnaryExpression(current) &&
++    current.operator === ts.SyntaxKind.ExclamationToken
++  ) {
++    return confirmationBindingFromConditionV2(
++      current.operand,
++      !rejectWhenTrue,
++      bindings,
++      declarations,
++      context,
++    );
++  }
++  if (!ts.isBinaryExpression(current)) {
++    return null;
++  }
++  if (
++    rejectWhenTrue &&
++    current.operatorToken.kind === ts.SyntaxKind.BarBarToken
++  ) {
++    return (
++      confirmationBindingFromConditionV2(
++        current.left,
++        true,
++        bindings,
++        declarations,
++        context,
++      ) ??
++      confirmationBindingFromConditionV2(
++        current.right,
++        true,
++        bindings,
++        declarations,
++        context,
++      )
++    );
++  }
++  if (
++    !rejectWhenTrue &&
++    current.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken
++  ) {
++    return (
++      confirmationBindingFromConditionV2(
++        current.left,
++        false,
++        bindings,
++        declarations,
++        context,
++      ) ??
++      confirmationBindingFromConditionV2(
++        current.right,
++        false,
++        bindings,
++        declarations,
++        context,
++      )
++    );
++  }
++  const isMismatch =
++    current.operatorToken.kind === ts.SyntaxKind.ExclamationEqualsToken ||
++    current.operatorToken.kind === ts.SyntaxKind.ExclamationEqualsEqualsToken;
++  const isMatch =
++    current.operatorToken.kind === ts.SyntaxKind.EqualsEqualsToken ||
++    current.operatorToken.kind === ts.SyntaxKind.EqualsEqualsEqualsToken;
++  if ((rejectWhenTrue && !isMismatch) || (!rejectWhenTrue && !isMatch)) {
++    return null;
++  }
++  if (isConfirmationCandidateVersionV2(current.left, bindings)) {
++    return exactConfirmationAuthorityVersionV2(
++      current.right,
++      bindings,
++      declarations,
++      context,
++    );
++  }
++  if (isConfirmationCandidateVersionV2(current.right, bindings)) {
++    return exactConfirmationAuthorityVersionV2(
++      current.left,
++      bindings,
++      declarations,
++      context,
++    );
++  }
++  return null;
++}
++
++/**
++ * Counts only fail-closed equality with a package.json version read or an exact
++ * tarball descriptor. Shape checks and unused reads never produce an actual.
++ */
++function readConfirmationVersionBindingV2(
++  sourceFile: ts.SourceFile,
++  context: ConfirmationVersionBindingContextV2,
++): string | null {
++  const bindings = bindingReferencesV2(sourceFile);
++  const declarations = variableInitializersV2(sourceFile);
++  const versions = new Set<string>();
++  const visit = (node: ts.Node): void => {
++    if (ts.isIfStatement(node)) {
++      if (statementAlwaysRejectsV2(node.thenStatement)) {
++        const version = confirmationBindingFromConditionV2(
++          node.expression,
++          true,
++          bindings,
++          declarations,
++          context,
++        );
++        if (version !== null) {
++          versions.add(version);
++        }
++      }
++      if (
++        node.elseStatement !== undefined &&
++        statementAlwaysRejectsV2(node.elseStatement)
++      ) {
++        const version = confirmationBindingFromConditionV2(
++          node.expression,
++          false,
++          bindings,
++          declarations,
++          context,
++        );
++        if (version !== null) {
++          versions.add(version);
++        }
++      }
++    }
++    ts.forEachChild(node, visit);
++  };
++  visit(sourceFile);
++  return versions.size === 1 ? ([...versions][0] ?? null) : null;
++}
++
+ function sourceHasInstalledPackageVersionBindingV2(
+   sourceFile: ts.SourceFile,
+ ): boolean {
+   const declarations = variableInitializersV2(sourceFile);
+   let found = false;
+   const visit = (node: ts.Node): void => {
+     if (found) {
+       return;
+     }
+     if (ts.isPropertyAccessExpression(node) && node.name.text === 'version') {
+@@ -539,25 +950,24 @@ async function enumerateVersionAuthorityObservationsV2(): Promise<
+   const sbomSource = parseJavascriptSourceV2(
+     'tools/release/sbom-from-shrinkwrap.mjs',
+   ).getFullText();
+   const sbomWired =
+     sbomSource.includes("'bom-ref': `pkg:npm/${pkg.name}@${pkg.version}`") &&
+     sbomSource.includes('version: pkg.version');
+ 
+   const confirmationSource = parseJavascriptSourceV2(
+     'tools/release/real-consumer-contracts.mjs',
+   );
+-  const confirmationVersionWired = sourceHasPropertyPathV2(confirmationSource, [
+-    'confirmation',
+-    'candidate',
+-    'version',
+-  ]);
++  const confirmationVersion = readConfirmationVersionBindingV2(
++    confirmationSource,
++    { packageVersion },
++  );
+ 
+   return Object.freeze([
+     observationV2(
+       'package-json-root',
+       'package.json',
+       'version',
+       packageVersion,
+     ),
+     observationV2(
+       'shrinkwrap-root',
+@@ -604,21 +1014,21 @@ async function enumerateVersionAuthorityObservationsV2(): Promise<
+     observationV2(
+       'sbom-root',
+       'tools/release/sbom-from-shrinkwrap.mjs',
+       'bom.metadata.component.purl',
+       sbomWired ? `pkg:npm/${packageName}@${packageVersion}` : null,
+     ),
+     observationV2(
+       'real-consumer-confirmation',
+       'tools/release/real-consumer-contracts.mjs',
+       'confirmation.candidate.version',
+-      confirmationVersionWired ? packageVersion : null,
++      confirmationVersion,
+     ),
+   ]);
+ }
+ 
+ async function readSourceInventoryV2(): Promise<SourceInventoryV2> {
+   const program = createInventoryProgramV2();
+   const legacySourceFile = program.getSourceFile(
+     resolve(repositoryRoot, 'src/legacy-v1.ts'),
+   );
+   const legacy: LegacySourceInventoryV2 =
+@@ -881,20 +1291,123 @@ describe.runIf(selected)('P0 repository-hardening inventory', () => {
+     ] as const) {
+       expect(
+         VERSION_AUTHORITIES_V2.find((entry) => entry.id === id)?.wiring,
+       ).toBe('planned-unwired');
+       expect(
+         source.versionAuthorities.find((entry) => entry.id === id),
+       ).toMatchObject({ wiring: 'unwired', actual: null });
+     }
+   });
+ 
++  it('detects semantic confirmation version bindings without source-style false positives', () => {
++    const packageVersion = '9.9.9-synthetic-package';
++    const tarballVersion = '8.8.8-synthetic-tarball';
++    const tarballSha256 = 'a'.repeat(64);
++    const detect = (source: string): string | null =>
++      readConfirmationVersionBindingV2(
++        ts.createSourceFile(
++          'synthetic-real-consumer-contracts.mjs',
++          source,
++          ts.ScriptTarget.Latest,
++          true,
++          ts.ScriptKind.JS,
++        ),
++        { packageVersion },
++      );
++
++    expect(
++      detect(`
++        if (typeof confirmation.candidate.version !== 'string') {
++          throw new Error('candidate.version must be a string');
++        }
++      `),
++      'direct type-only access',
++    ).toBeNull();
++    expect(
++      detect(`
++        const candidate = confirmation.candidate;
++        if (typeof candidate.version !== 'string') {
++          throw new Error('candidate.version must be a string');
++        }
++      `),
++      'aliased type-only access',
++    ).toBeNull();
++    expect(
++      detect(`
++        const exactCandidate = {
++          name: 'repo-nav',
++          version: '${tarballVersion}',
++          tarballSha256: '${tarballSha256}',
++        };
++        confirmation.candidate.version;
++        confirmation.candidate.version !== exactCandidate.version;
++      `),
++      'unused direct access and comparison',
++    ).toBeNull();
++    expect(
++      detect(`
++        const exactCandidate = {
++          name: 'repo-nav',
++          version: '${tarballVersion}',
++          tarballSha256: '${tarballSha256}',
++        };
++        if (confirmation.candidate.version !== exactCandidate.version) {
++          throw new Error('candidate.version mismatch');
++        }
++      `),
++      'direct exact tarball binding does not borrow the workspace version',
++    ).toBe(tarballVersion);
++    expect(
++      detect(`
++        const exactCandidate = {
++          name: 'repo-nav',
++          version: '${tarballVersion}',
++          tarballSha256: '${tarballSha256}',
++        };
++        const expected = exactCandidate;
++        const candidate = confirmation.candidate;
++        if (candidate.version !== expected.version) {
++          throw new Error('candidate.version mismatch');
++        }
++      `),
++      'aliased exact tarball binding',
++    ).toBe(tarballVersion);
++    expect(
++      detect(`
++        const exactCandidate = {
++          name: 'repo-nav',
++          version: '${tarballVersion}',
++          tarballSha256: '${tarballSha256}',
++        };
++        const { version: expectedVersion } = exactCandidate;
++        const { version: confirmationVersion } = confirmation.candidate;
++        if (confirmationVersion !== expectedVersion) {
++          throw new Error('candidate.version mismatch');
++        }
++      `),
++      'destructured exact tarball binding',
++    ).toBe(tarballVersion);
++    expect(
++      detect(`
++        const pkg = JSON.parse(
++          readFileSync(join(root, 'package.json'), 'utf8'),
++        );
++        const { version: expectedVersion } = pkg;
++        const candidate = confirmation.candidate;
++        if (candidate.version !== expectedVersion) {
++          throw new Error('candidate.version mismatch');
++        }
++      `),
++      'aliased exact package binding',
++    ).toBe(packageVersion);
++  });
++
+   it('accepts a fixture-owned synthetic C5 phase transition without evaluator changes', async () => {
+     const currentSource = await currentSourceInventoryV2();
+     const baseline = fixtureInventoryV2();
+     const cutoverRootTypes = baseline.rootTypes
+       .map((entry) =>
+         entry === 'PackageMetadataV1' ? 'PackageMetadata' : entry,
+       )
+       .sort();
+     const currentPackageVersion = baseline.versions.find(
+       (entry) => entry.id === 'package-json-root',

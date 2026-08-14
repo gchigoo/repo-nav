@@ -65,4 +65,7 @@ async function bootstrap(): Promise<void> {
   }
 }
 
-void bootstrap();
+void bootstrap().catch(() => {
+  writeScrubbedDiagnostic('RepoNav MCP bootstrap failed.');
+  process.exitCode = 1;
+});

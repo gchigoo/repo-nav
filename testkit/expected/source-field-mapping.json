@@ -22,26 +22,15 @@
         "location": {
           "file": "server/mapping.fixture",
           "resolvable": true,
-          "lines": [
-            1,
-            1
-          ],
+          "lines": [1, 1],
           "excerpt": "targetField = row.source_field;"
         },
         "provenance": {
-          "discoveredBy": [
-            "ripgrep"
-          ],
+          "discoveredBy": ["ripgrep"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "RIPGREP_SEARCH",
-            "FILESYSTEM_READ_RANGE"
-          ]
+          "operations": ["RIPGREP_SEARCH", "FILESYSTEM_READ_RANGE"]
         },
-        "reasonCodes": [
-          "EXACT_TERM_MATCH",
-          "DIRECT_ALIAS_MAPPING"
-        ]
+        "reasonCodes": ["EXACT_TERM_MATCH", "DIRECT_ALIAS_MAPPING"]
       }
     ],
     "candidates": [
@@ -52,25 +41,15 @@
         "location": {
           "file": "server/mapping.fixture",
           "resolvable": true,
-          "lines": [
-            2,
-            2
-          ],
+          "lines": [2, 2],
           "excerpt": "consume(row.source_field);"
         },
         "provenance": {
-          "discoveredBy": [
-            "ripgrep"
-          ],
+          "discoveredBy": ["ripgrep"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "RIPGREP_SEARCH",
-            "FILESYSTEM_READ_RANGE"
-          ]
+          "operations": ["RIPGREP_SEARCH", "FILESYSTEM_READ_RANGE"]
         },
-        "reasonCodes": [
-          "EXACT_TERM_WITHOUT_DIRECT_MAPPING"
-        ],
+        "reasonCodes": ["EXACT_TERM_WITHOUT_DIRECT_MAPPING"],
         "promotionRequirements": [
           "USER_SEMANTIC_CONFIRMATION",
           "DIRECT_REFERENCE_REQUIRED"
@@ -104,28 +83,16 @@
       },
       "scope": {
         "requested": [],
-        "effective": [
-          "client",
-          "server",
-          "db",
-          "config",
-          "unknown"
-        ],
+        "effective": ["client", "server", "db", "config", "unknown"],
         "policyVersion": "repo-scope-v1",
         "unmatchedLayers": []
       },
       "capabilities": {
         "textSearch": "supported-text-files",
-        "semanticClassification": [
-          "typescript",
-          "javascript",
-          "sql"
-        ],
+        "semanticClassification": ["typescript", "javascript", "sql"],
         "unsupportedLanguageHits": 0
       }
     },
-    "nextActions": [
-      "CONFIRM_CANDIDATE"
-    ]
+    "nextActions": ["CONFIRM_CANDIDATE"]
   }
 }

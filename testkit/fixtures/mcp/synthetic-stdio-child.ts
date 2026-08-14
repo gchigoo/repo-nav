@@ -1,7 +1,12 @@
 const scenario = process.argv[2];
 
-function writeFrame(method: string, params: Readonly<Record<string, unknown>>): void {
-  process.stdout.write(`${JSON.stringify({ jsonrpc: '2.0', method, params })}\n`);
+function writeFrame(
+  method: string,
+  params: Readonly<Record<string, unknown>>,
+): void {
+  process.stdout.write(
+    `${JSON.stringify({ jsonrpc: '2.0', method, params })}\n`,
+  );
 }
 
 if (scenario === 'stdio-clean-output') {

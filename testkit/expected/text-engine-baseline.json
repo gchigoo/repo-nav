@@ -22,26 +22,15 @@
         "location": {
           "file": "server/mapping.fixture",
           "resolvable": true,
-          "lines": [
-            1,
-            1
-          ],
+          "lines": [1, 1],
           "excerpt": "targetField = row.source_field;"
         },
         "provenance": {
-          "discoveredBy": [
-            "ripgrep"
-          ],
+          "discoveredBy": ["ripgrep"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "RIPGREP_SEARCH",
-            "FILESYSTEM_READ_RANGE"
-          ]
+          "operations": ["RIPGREP_SEARCH", "FILESYSTEM_READ_RANGE"]
         },
-        "reasonCodes": [
-          "EXACT_TERM_MATCH",
-          "DIRECT_ALIAS_MAPPING"
-        ]
+        "reasonCodes": ["EXACT_TERM_MATCH", "DIRECT_ALIAS_MAPPING"]
       }
     ],
     "candidates": [],
@@ -60,9 +49,7 @@
       "indexState": "unknown",
       "indexFreshness": "unknown",
       "limitsReached": [],
-      "degradations": [
-        "SEMANTIC_LANGUAGE_UNSUPPORTED"
-      ],
+      "degradations": ["SEMANTIC_LANGUAGE_UNSUPPORTED"],
       "exclusionSummary": {},
       "abortSource": "none",
       "unsatisfiedAnchors": [],
@@ -73,22 +60,14 @@
         "discardedEvidenceCount": 0
       },
       "scope": {
-        "requested": [
-          "server"
-        ],
-        "effective": [
-          "server"
-        ],
+        "requested": ["server"],
+        "effective": ["server"],
         "policyVersion": "repo-scope-v1",
         "unmatchedLayers": []
       },
       "capabilities": {
         "textSearch": "supported-text-files",
-        "semanticClassification": [
-          "typescript",
-          "javascript",
-          "sql"
-        ],
+        "semanticClassification": ["typescript", "javascript", "sql"],
         "unsupportedLanguageHits": 6
       }
     },

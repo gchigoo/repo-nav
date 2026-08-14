@@ -114,8 +114,8 @@ describe.runIf(
 )('F2-LARGE-001 large-ranking-permutation', () => {
   it('keeps comparator stable across five reshuffles of equal-priority inputs', () => {
     const files = Array.from({ length: 12 }, (_, index) => `f${index}.ts`);
-    const keys = files.map((file) =>
-      buildPublicSafeOrderingKeyV2(record(file), 60).orderingKey,
+    const keys = files.map(
+      (file) => buildPublicSafeOrderingKeyV2(record(file), 60).orderingKey,
     );
     const baseline = [...keys]
       .sort(comparePublicSafeOrderingKeyV2)

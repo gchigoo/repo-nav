@@ -1,0 +1,35 @@
+schema: rolekit/task-packet@1
+taskId: repo-nav-example-security-release-review
+roleId: security-release-reviewer
+objective: Review high-risk RepoNav release/security surfaces without changing files.
+input:
+  request: Review a high-risk release or public-contract change for fail-closed evidence.
+  diffRef: working-tree
+  riskCategory: release-critical
+context:
+  - id: security-policy
+    type: file
+    value: SECURITY.md
+  - id: package-metadata
+    type: file
+    value: package.json
+constraints:
+  - Do not modify files.
+  - Do not push, publish, tag, or mutate remote state.
+  - Fail closed on unmeasured release/security claims.
+acceptanceCriteria:
+  - Public API, package metadata, release evidence, and security implications are checked when in scope.
+  - Owner-only actions are listed separately.
+allowedPaths:
+  - SECURITY.md
+  - README.md
+  - docs/**
+  - package.json
+  - npm-shrinkwrap.json
+  - src/**
+  - test/**
+  - testkit/**
+  - tools/release/**
+expectedArtifacts:
+  - name: security-release-review-result
+    kind: structured-json

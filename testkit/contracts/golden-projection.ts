@@ -1,9 +1,4 @@
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-} from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 
@@ -60,7 +55,9 @@ export function createStableGoldenProjection(result: LocateResultV2): unknown {
 export function loadExpectedGoldenProjection(caseId: string): unknown {
   const path = expectedPath(caseId);
   if (!existsSync(path)) {
-    throw new Error(`Missing Golden companion snapshot: testkit/expected/${caseId}.json.`);
+    throw new Error(
+      `Missing Golden companion snapshot: testkit/expected/${caseId}.json.`,
+    );
   }
   return JSON.parse(readFileSync(path, 'utf8')) as unknown;
 }
@@ -109,7 +106,11 @@ function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function firstDifference(expected: unknown, actual: unknown, path: string): string {
+function firstDifference(
+  expected: unknown,
+  actual: unknown,
+  path: string,
+): string {
   if (isDeepStrictEqual(expected, actual)) {
     return path;
   }
@@ -119,12 +120,18 @@ function firstDifference(expected: unknown, actual: unknown, path: string): stri
     }
     for (let index = 0; index < expected.length; index += 1) {
       if (!isDeepStrictEqual(expected[index], actual[index])) {
-        return firstDifference(expected[index], actual[index], `${path}[${index}]`);
+        return firstDifference(
+          expected[index],
+          actual[index],
+          `${path}[${index}]`,
+        );
       }
     }
   }
   if (isRecord(expected) && isRecord(actual)) {
-    const keys = [...new Set([...Object.keys(expected), ...Object.keys(actual)])].sort();
+    const keys = [
+      ...new Set([...Object.keys(expected), ...Object.keys(actual)]),
+    ].sort();
     for (const key of keys) {
       if (!isDeepStrictEqual(expected[key], actual[key])) {
         return firstDifference(expected[key], actual[key], `${path}.${key}`);

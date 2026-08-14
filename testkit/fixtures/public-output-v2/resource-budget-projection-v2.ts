@@ -25,7 +25,9 @@ export function failureInputsByStage(): Readonly<Record<string, unknown>> {
   ) as unknown as {
     evidence: { confirmed: Array<{ location: { excerpt: string } }> };
   };
-  oversizedExcerpt.evidence.confirmed[0]!.location.excerpt = 'x '.repeat(200_000);
+  oversizedExcerpt.evidence.confirmed[0]!.location.excerpt = 'x '.repeat(
+    200_000,
+  );
 
   const base = createUnsafeLocateSuccessV2();
   if (!base.ok) throw new Error('expected success');

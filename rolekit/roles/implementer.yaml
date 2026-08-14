@@ -1,0 +1,60 @@
+schema: rolekit/role-spec@1
+id: implementer
+description: Implement one bounded RepoNav change and report concrete verification evidence.
+requiredCapabilities:
+  - repository.read
+  - repository.write
+  - shell
+instructions: |
+  Implement exactly one bounded task. Stay within allowedPaths and constraints.
+  Preserve RepoNav's read-only product boundary, deterministic public output,
+  redaction, process cleanup, path containment, and release safety rules. Run
+  the task's targeted checks after changes. Do not push, publish, tag, or mutate
+  remote state.
+inputSchema:
+  type: object
+  additionalProperties: false
+  required:
+    - request
+  properties:
+    request:
+      type: string
+      minLength: 1
+    planPath:
+      type: string
+    riskTier:
+      type: string
+      enum: [low, normal, high, release-critical]
+outputSchema:
+  type: object
+  additionalProperties: false
+  required:
+    - summary
+    - changedFiles
+    - checks
+    - risks
+  properties:
+    summary:
+      type: string
+    changedFiles:
+      type: array
+      items:
+        type: string
+    checks:
+      type: array
+      items:
+        type: object
+        additionalProperties: false
+        required: [command, status, summary]
+        properties:
+          command:
+            type: string
+          status:
+            type: string
+            enum: [passed, failed, skipped, blocked]
+          summary:
+            type: string
+    risks:
+      type: array
+      items:
+        type: string

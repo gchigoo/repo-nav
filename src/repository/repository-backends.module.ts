@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 
-import type { RepositorySearchBackend } from '../contracts/index.js';
+import type { TraceableRepositorySearchBackendV2 } from '../contracts/v2/traceable-repository-search-backend-v2.js';
 import { REPOSITORY_SEARCH_BACKENDS } from '../runtime/tokens.js';
 import { NodeSafeProcessRunner } from './node-safe-process-runner.js';
 import { CodeGraphBackend } from './codegraph-backend.js';
@@ -17,7 +17,7 @@ import { RipgrepBackend } from './ripgrep-backend.js';
       useFactory: (
         codegraph: CodeGraphBackend,
         ripgrep: RipgrepBackend,
-      ): readonly RepositorySearchBackend[] =>
+      ): readonly TraceableRepositorySearchBackendV2[] =>
         Object.freeze([codegraph, ripgrep]),
     },
   ],

@@ -29,7 +29,7 @@ import {
   issueEvidenceRankingOutcomeV2,
   type EvidenceRankingOutcomeV2,
 } from '../ranking/evidence-ranking-outcome-v2.js';
-import { issueTrustedFallbackDecisionV2 } from '../request-outcome/trusted-fallback-decision-v2.js';
+import { deriveTrustedFallbackDecisionV2 } from '../request-outcome/trusted-fallback-decision-v2.js';
 import type { UnsafeEvidenceDraftV2 } from '../request-snapshot/classified-evidence-record-v2.js';
 import {
   createSnapshotOutcomeContributionV2,
@@ -47,7 +47,6 @@ import type { ResolvedRepositoryScopeV1 } from '../scope/resolve-repository-scop
 import type { ExecutionScopeCoverageMountV1 } from '../scope/build-execution-scope-coverage-v1.js';
 import {
   createBackendExecutionContextV2,
-  createNotObservedCodeGraphIndexObservationV2,
   finalizeBackendExecutionTraceV2,
 } from '../../process/backend-execution-context-v2.js';
 import { NodeSafeProcessRunner } from '../../repository/node-safe-process-runner.js';
@@ -62,9 +61,6 @@ export interface ProductionAcceptedProjectionSeamInputV2 {
   readonly abortCoordinator: LocateAbortCoordinatorV2;
   readonly abortDecision: FinalizedAbortDecisionV2;
   readonly backendExecutionContext: BackendExecutionContextV2 | undefined;
-  readonly fallbackChecked: boolean;
-  readonly fallbackRequired: boolean;
-  readonly completeEquivalentFallback: boolean;
   readonly discardedEvidenceCount: number;
 }
 
@@ -213,8 +209,9 @@ function ensureRankingOutcomeV2(
 }
 
 /**
- * Finalize a production backend trace for aggregation (not-observed when no
- * expanded codegraph starts were recorded).
+ * Finalize a production backend trace for aggregation. The CodeGraph index
+ * observation is derived from the context by finalization (no caller-supplied
+ * observation): no CodeGraph start means not-observed.
  */
 function finalizeProductionBackendTraceV2(
   backendExecutionContext: BackendExecutionContextV2 | undefined,
@@ -229,13 +226,7 @@ function finalizeProductionBackendTraceV2(
       abortCoordinator.signal,
       execution,
     );
-  const observation = createNotObservedCodeGraphIndexObservationV2(
-    // Start registry is unused by the not-observed path beyond the signature.
-    Object.freeze({}) as never,
-    execution,
-    context,
-  );
-  return finalizeBackendExecutionTraceV2(context, observation, execution);
+  return finalizeBackendExecutionTraceV2(context, execution);
 }
 
 /**
@@ -260,12 +251,9 @@ export function registerProductionAcceptedProjectionSeamsV2(
     input.execution,
     input.abortCoordinator,
   );
-  const fallback = issueTrustedFallbackDecisionV2({
+  const fallback = deriveTrustedFallbackDecisionV2({
     execution: input.execution,
     backendTrace,
-    checked: input.fallbackChecked,
-    required: input.fallbackRequired,
-    completeEquivalentFallback: input.completeEquivalentFallback,
   });
 
   const snapshotToken = createSnapshotOutcomeContributionV2({

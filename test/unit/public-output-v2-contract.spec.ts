@@ -111,7 +111,9 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
     expect(FinalizedUnsafeLocateResultV2Schema.parse(rawSuccess())).toEqual(
       rawSuccess(),
     );
-    expect(LocateResultV2Schema.parse(publicSuccess())).toEqual(publicSuccess());
+    expect(LocateResultV2Schema.parse(publicSuccess())).toEqual(
+      publicSuccess(),
+    );
   });
 
   it('rejects output-owned and arbitrary raw fields', () => {
@@ -126,8 +128,9 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
         evidence: Record<string, unknown>;
       };
       Object.assign(fixture.evidence, extra);
-      expect(FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success)
-        .toBe(false);
+      expect(
+        FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success,
+      ).toBe(false);
     }
   });
 
@@ -149,8 +152,9 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
       if (confirmed === undefined) throw new Error('Fixture evidence missing.');
       if ('id' in extra) Object.assign(confirmed, extra);
       else Object.assign(confirmed.location, extra);
-      expect(FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success)
-        .toBe(false);
+      expect(
+        FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success,
+      ).toBe(false);
     }
   });
 
@@ -190,8 +194,9 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
       termination: 'timeout',
       hitCount: 1,
     };
-    expect(FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success)
-      .toBe(false);
+    expect(FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success).toBe(
+      false,
+    );
   });
 
   it('rejects non-canonical limit and degradation order in raw and public coverage', () => {
@@ -236,8 +241,7 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
       'PROCESS_OUTPUT_LIMIT_REACHED',
       'SEMANTIC_LANGUAGE_UNSUPPORTED',
     ];
-    reversedDegradations.evidence.coverage.capabilities
-      .unsupportedLanguageHits = 1;
+    reversedDegradations.evidence.coverage.capabilities.unsupportedLanguageHits = 1;
     expect(
       FinalizedUnsafeLocateResultV2Schema.safeParse(reversedDegradations)
         .success,
@@ -349,8 +353,7 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
         };
       };
       fixture.evidence.coverage.backends = [...mutation.backends];
-      fixture.evidence.coverage.strategyComplete =
-        mutation.strategyComplete;
+      fixture.evidence.coverage.strategyComplete = mutation.strategyComplete;
       expect(
         FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success,
         JSON.stringify(mutation),
@@ -600,14 +603,9 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
         };
       };
       fixture.evidence.coverage.backends = [...variant.backends];
-      fixture.evidence.coverage.strategyComplete =
-        variant.strategyComplete;
-      fixture.evidence.coverage.limitsReached = [
-        ...variant.limitsReached,
-      ];
-      fixture.evidence.coverage.degradations = [
-        ...variant.degradations,
-      ];
+      fixture.evidence.coverage.strategyComplete = variant.strategyComplete;
+      fixture.evidence.coverage.limitsReached = [...variant.limitsReached];
+      fixture.evidence.coverage.degradations = [...variant.degradations];
       fixture.evidence.coverage.abortSource = variant.abortSource;
       if (variant.backends[0]?.hitCount === 0) {
         fixture.evidence.confirmed = [];
@@ -629,8 +627,9 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
       filesChecked: 0,
       discardedEvidenceCount: 0,
     };
-    expect(FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success)
-      .toBe(false);
+    expect(FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success).toBe(
+      false,
+    );
   });
 
   it('requires snapshot discarded and exclusion counts to agree', () => {
@@ -660,8 +659,9 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
       filesChecked: 0,
       discardedEvidenceCount: 0,
     };
-    expect(FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success)
-      .toBe(false);
+    expect(FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success).toBe(
+      false,
+    );
   });
 
   it('bounds retained evidence by the unique checked snapshot files', () => {
@@ -692,9 +692,8 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
       discardedEvidenceCount: 1,
     };
     expect(
-      FinalizedUnsafeLocateResultV2Schema.safeParse(
-        changedWithoutCheckedFiles,
-      ).success,
+      FinalizedUnsafeLocateResultV2Schema.safeParse(changedWithoutCheckedFiles)
+        .success,
     ).toBe(false);
 
     const twoFiles = clone(rawSuccess()) as unknown as {
@@ -734,8 +733,9 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
       };
     };
     fixture.evidence.coverage.scope.unmatchedLayers = ['docs'];
-    expect(FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success)
-      .toBe(false);
+    expect(FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success).toBe(
+      false,
+    );
   });
 
   it('owns language capability degradation parity', () => {
@@ -745,8 +745,9 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
       };
     };
     fixture.evidence.coverage.capabilities.unsupportedLanguageHits = 1;
-    expect(FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success)
-      .toBe(false);
+    expect(FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success).toBe(
+      false,
+    );
   });
 
   it('owns abort, timeout and limit parity', () => {
@@ -754,8 +755,9 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
       evidence: { coverage: { abortSource: string } };
     };
     fixture.evidence.coverage.abortSource = 'deadline';
-    expect(FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success)
-      .toBe(false);
+    expect(FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success).toBe(
+      false,
+    );
   });
 
   it('owns anchor completeness and request-index ordering', () => {
@@ -776,8 +778,9 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
         reason: 'NOT_FOUND',
       },
     ];
-    expect(FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success)
-      .toBe(false);
+    expect(FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success).toBe(
+      false,
+    );
   });
 
   it('rejects caller-owned LOCATION_REDACTED', () => {
@@ -785,8 +788,9 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
       evidence: { coverage: { degradations: string[] } };
     };
     fixture.evidence.coverage.degradations = ['LOCATION_REDACTED'];
-    expect(FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success)
-      .toBe(false);
+    expect(FinalizedUnsafeLocateResultV2Schema.safeParse(fixture).success).toBe(
+      false,
+    );
   });
 
   it('owns public location metadata and ordinal ID continuity', () => {
@@ -843,14 +847,7 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
   });
 
   it('rejects unsafe control characters in every public text field', () => {
-    const displayThreats = [
-      '\n',
-      '\r',
-      '\t',
-      '\u001b',
-      '\u007f',
-      '\u202e',
-    ];
+    const displayThreats = ['\n', '\r', '\t', '\u001b', '\u007f', '\u202e'];
     const termResults = displayThreats.map((threat) => {
       const fixture = clone(publicSuccess()) as unknown as {
         evidence: { normalizedTerms: Array<{ value: string }> };
@@ -885,7 +882,10 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
     });
     expect([...termResults, ...symbolResults, ...excerptResults]).toEqual(
       Array.from(
-        { length: termResults.length + symbolResults.length + excerptResults.length },
+        {
+          length:
+            termResults.length + symbolResults.length + excerptResults.length,
+        },
         () => false,
       ),
     );
@@ -898,9 +898,7 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
     const confirmed = formattedExcerpt.evidence.confirmed[0];
     if (confirmed === undefined) throw new Error('Fixture evidence missing.');
     confirmed.location.excerpt = 'line one\n\tline two';
-    expect(LocateResultV2Schema.safeParse(formattedExcerpt).success).toBe(
-      true,
-    );
+    expect(LocateResultV2Schema.safeParse(formattedExcerpt).success).toBe(true);
   });
 
   it('requires public redaction metadata to identify a replacement token', () => {
@@ -968,13 +966,11 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
       ],
     };
 
-    expect(
-      [
-        LocateResultV2Schema.safeParse(termFixture).success,
-        LocateResultV2Schema.safeParse(symbolFixture).success,
-        LocateResultV2Schema.safeParse(excerptFixture).success,
-      ],
-    ).toEqual([false, false, false]);
+    expect([
+      LocateResultV2Schema.safeParse(termFixture).success,
+      LocateResultV2Schema.safeParse(symbolFixture).success,
+      LocateResultV2Schema.safeParse(excerptFixture).success,
+    ]).toEqual([false, false, false]);
   });
 
   it('bounds public retained evidence by checked snapshot files', () => {
@@ -1024,9 +1020,7 @@ describe.runIf(selected)('LocateResultV2 schema contract families', () => {
       const confirmed = fixture.evidence.confirmed[0];
       if (confirmed === undefined) throw new Error('Fixture evidence missing.');
       confirmed.location.file = file;
-      expect(LocateResultV2Schema.safeParse(fixture).success, file).toBe(
-        false,
-      );
+      expect(LocateResultV2Schema.safeParse(fixture).success, file).toBe(false);
     }
   });
 

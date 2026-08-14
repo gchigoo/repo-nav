@@ -1,9 +1,4 @@
-import {
-  mkdtempSync,
-  renameSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
+import { mkdtempSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 
@@ -23,7 +18,7 @@ function expectCode(
   promise: Promise<unknown>,
   code: RepositoryAccessError['code'],
 ): Promise<void> {
-  return expect(promise).rejects.toMatchObject({ code }) as Promise<void>;
+  return expect(promise).rejects.toMatchObject({ code });
 }
 
 async function withRepository(
@@ -94,7 +89,12 @@ describe.runIf(isSelected(limitsIdentity))('repository reader limits', () => {
 
   it('reads a centered bounded window and clamps it at repository file edges', async () => {
     await withRepository(
-      { 'window.ts': Array.from({ length: 10 }, (_, index) => `line-${index + 1}`).join('\n') },
+      {
+        'window.ts': Array.from(
+          { length: 10 },
+          (_, index) => `line-${index + 1}`,
+        ).join('\n'),
+      },
       async (root, reader) => {
         await expect(
           reader.readWindow(
@@ -107,7 +107,10 @@ describe.runIf(isSelected(limitsIdentity))('repository reader limits', () => {
         ).resolves.toEqual({
           file: 'window.ts',
           lines: [3, 10],
-          excerpt: Array.from({ length: 8 }, (_, index) => `line-${index + 3}`).join('\n'),
+          excerpt: Array.from(
+            { length: 8 },
+            (_, index) => `line-${index + 3}`,
+          ).join('\n'),
         });
         await expect(
           reader.readWindow(
@@ -201,91 +204,97 @@ const failuresIdentity = {
   caseId: 'reader-failures',
 } as const;
 
-describe.runIf(isSelected(failuresIdentity))('repository reader failures', () => {
-  it('distinguishes binary, malformed UTF-8, missing, and invalid ranges', async () => {
-    await withRepository(
-      {
-        'binary.dat': Uint8Array.from([65, 0, 66]),
-        'malformed.txt': Uint8Array.from([0xc3, 0x28]),
-        'lines.txt': 'one\ntwo',
-      },
-      async (root, reader) => {
-        for (const file of ['binary.dat', 'malformed.txt']) {
+describe.runIf(isSelected(failuresIdentity))(
+  'repository reader failures',
+  () => {
+    it('distinguishes binary, malformed UTF-8, missing, and invalid ranges', async () => {
+      await withRepository(
+        {
+          'binary.dat': Uint8Array.from([65, 0, 66]),
+          'malformed.txt': Uint8Array.from([0xc3, 0x28]),
+          'lines.txt': 'one\ntwo',
+        },
+        async (root, reader) => {
+          for (const file of ['binary.dat', 'malformed.txt']) {
+            await expectCode(
+              reader.readRange(
+                root,
+                file,
+                [1, 1],
+                defaultLimits,
+                new AbortController().signal,
+              ),
+              'BINARY_FILE',
+            );
+          }
           await expectCode(
             reader.readRange(
               root,
-              file,
+              'missing.txt',
               [1, 1],
               defaultLimits,
               new AbortController().signal,
             ),
-            'BINARY_FILE',
+            'FILE_UNREADABLE',
           );
-        }
-        await expectCode(
-          reader.readRange(
-            root,
-            'missing.txt',
-            [1, 1],
-            defaultLimits,
-            new AbortController().signal,
-          ),
-          'FILE_UNREADABLE',
-        );
-        for (const lines of [
-          [0, 1],
-          [2, 1],
-          [1, 3],
-        ] as const) {
+          for (const lines of [
+            [0, 1],
+            [2, 1],
+            [1, 3],
+          ] as const) {
+            await expectCode(
+              reader.readRange(
+                root,
+                'lines.txt',
+                lines,
+                defaultLimits,
+                new AbortController().signal,
+              ),
+              'INVALID_LINE_RANGE',
+            );
+          }
+        },
+      );
+    });
+
+    it('returns ABORTED and closes handles before settling', async () => {
+      await withRepository(
+        { 'source.txt': 'content' },
+        async (root, reader) => {
+          const controller = new AbortController();
+          controller.abort();
           await expectCode(
             reader.readRange(
               root,
-              'lines.txt',
-              lines,
+              'source.txt',
+              [1, 1],
               defaultLimits,
-              new AbortController().signal,
+              controller.signal,
             ),
-            'INVALID_LINE_RANGE',
+            'ABORTED',
           );
-        }
-      },
-    );
-  });
+          await expectCode(
+            reader.readWindow(
+              root,
+              'source.txt',
+              [1, 1],
+              defaultLimits,
+              controller.signal,
+            ),
+            'ABORTED',
+          );
 
-  it('returns ABORTED and closes handles before settling', async () => {
-    await withRepository({ 'source.txt': 'content' }, async (root, reader) => {
-      const controller = new AbortController();
-      controller.abort();
-      await expectCode(
-        reader.readRange(
-          root,
-          'source.txt',
-          [1, 1],
-          defaultLimits,
-          controller.signal,
-        ),
-        'ABORTED',
+          await reader.readRange(
+            root,
+            'source.txt',
+            [1, 1],
+            defaultLimits,
+            new AbortController().signal,
+          );
+          renameSync(resolve(root, 'source.txt'), resolve(root, 'renamed.txt'));
+          expect(resolve(root, 'renamed.txt')).toContain('renamed.txt');
+        },
       );
-      await expectCode(
-        reader.readWindow(
-          root,
-          'source.txt',
-          [1, 1],
-          defaultLimits,
-          controller.signal,
-        ),
-        'ABORTED',
-      );
-
-      await reader.readRange(
-        root,
-        'source.txt',
-        [1, 1],
-        defaultLimits,
-        new AbortController().signal,
-      );
-      renameSync(resolve(root, 'source.txt'), resolve(root, 'renamed.txt'));
-      expect(resolve(root, 'renamed.txt')).toContain('renamed.txt');
     });
-  });
-});
+  },
+);

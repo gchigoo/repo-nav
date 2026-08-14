@@ -20,7 +20,6 @@ import {
   type NormalizedLocateAnchor,
   type NormalizedSearchTerm,
   type RepositoryReader,
-  type RepositorySearchBackend,
   type ResolvedLocateLimits,
   type SearchBackendId,
 } from '../../contracts/index.js';
@@ -54,6 +53,7 @@ import {
   registerProductionAcceptedProjectionSeamsV2,
 } from './register-production-accepted-projection-seams-v2.js';
 import type { BackendExecutionContextV2 } from '../../contracts/v2/backend-execution-outcome-v2.js';
+import type { TraceableRepositorySearchBackendV2 } from '../../contracts/v2/traceable-repository-search-backend-v2.js';
 import {
   createVerifiedCandidateContext,
   materializeCandidateDraft,
@@ -249,7 +249,7 @@ function decideToolError(error: unknown): UnsafeToolErrorFactsV2 {
 export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecutorV2 {
   public constructor(
     @Inject(REPOSITORY_SEARCH_BACKENDS)
-    private readonly backends: readonly RepositorySearchBackend[],
+    private readonly backends: readonly TraceableRepositorySearchBackendV2[],
     @Inject(REPOSITORY_READER)
     private readonly reader: RepositoryReader,
   ) {}
@@ -344,9 +344,6 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
       readonly scopeObservation?: TrustedScopeEligibilityObservationV2;
       readonly requestedLayers?: readonly RepoLayer[];
       readonly backendExecutionContext?: BackendExecutionContextV2;
-      readonly fallbackChecked?: boolean;
-      readonly fallbackRequired?: boolean;
-      readonly completeEquivalentFallback?: boolean;
     },
   ): Promise<CanonicalLocateExecutionV2> {
     const execution =
@@ -397,9 +394,6 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
         abortCoordinator,
         abortDecision,
         backendExecutionContext: options.backendExecutionContext,
-        fallbackChecked: options.fallbackChecked ?? false,
-        fallbackRequired: options.fallbackRequired ?? false,
-        completeEquivalentFallback: options.completeEquivalentFallback ?? false,
         discardedEvidenceCount: 0,
       });
       const retainedFiles = legacy.ok
@@ -636,9 +630,6 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
       abortCoordinator,
       abortDecision,
       backendExecutionContext: options.backendExecutionContext,
-      fallbackChecked: options.fallbackChecked ?? false,
-      fallbackRequired: options.fallbackRequired ?? false,
-      completeEquivalentFallback: options.completeEquivalentFallback ?? false,
       discardedEvidenceCount: finalPools.facts.coverage.discardedEvidenceCount,
     });
 
@@ -1317,9 +1308,6 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
           foldedView: authoritativeSelection.foldedView,
           scopeObservation,
           backendExecutionContext,
-          fallbackChecked,
-          fallbackRequired: !skipFallback && codegraphResult !== undefined,
-          completeEquivalentFallback: skipFallback,
           ...(request.layers === undefined
             ? {}
             : { requestedLayers: request.layers }),

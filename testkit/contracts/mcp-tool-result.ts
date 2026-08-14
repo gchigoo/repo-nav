@@ -15,7 +15,9 @@ export interface ParsedLocateToolResult {
 /**
  * Parse MCP tool result and require structured/text deep-equal v2 parity.
  */
-export function parseLocateToolResultParity(result: unknown): ParsedLocateToolResult {
+export function parseLocateToolResultParity(
+  result: unknown,
+): ParsedLocateToolResult {
   if (typeof result !== 'object' || result === null) {
     throw new Error('MCP tool result was not an object.');
   }

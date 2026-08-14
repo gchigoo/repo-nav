@@ -11,6 +11,7 @@ import type {
   RepositorySearchBackend,
 } from '../../src/contracts/index.js';
 import { CanonicalRepositoryLocateExecutorV2 } from '../../src/evidence/locate-execution/canonical-locate-executor-v2.js';
+import { asTraceableSearchBackendsV2 } from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import {
   issueLocateProjectionExecutionCapabilityV2,
   requireLocateProjectionExecutionTokenV2,
@@ -62,7 +63,10 @@ describe.runIf(
     const root = mkdtempSync(join(tmpdir(), 'f7-golden-v1-'));
     try {
       mkdirSync(join(root, 'server'), { recursive: true });
-      writeFileSync(join(root, 'server', 'a.ts'), 'export const Mapping = 1;\n');
+      writeFileSync(
+        join(root, 'server', 'a.ts'),
+        'export const Mapping = 1;\n',
+      );
       class EmptyBackend implements RepositorySearchBackend {
         public readonly id = 'ripgrep' as const;
         public async probe(): Promise<BackendHealth> {
@@ -73,7 +77,7 @@ describe.runIf(
         }
       }
       const executor = new CanonicalRepositoryLocateExecutorV2(
-        [new EmptyBackend()],
+        asTraceableSearchBackendsV2([new EmptyBackend()]),
         new NodeRepositoryReader(),
       );
       const capability = issueLocateProjectionExecutionCapabilityV2();
@@ -115,9 +119,7 @@ describe.runIf(
         file: `${LARGE_SCOPE_PERMUTATION_V1.filePrefix}${index}.ts`,
         lines: Object.freeze([1, 1] as [number, number]),
         matchedText: 'hit',
-        source: (index % 2 === 0 ? 'ripgrep' : 'codegraph') as
-          | 'ripgrep'
-          | 'codegraph',
+        source: index % 2 === 0 ? 'ripgrep' : 'codegraph',
         reasonCodes: Object.freeze(['LITERAL_TERM_HIT' as const]),
       }),
     );
@@ -180,7 +182,9 @@ describe.runIf(
         execution,
       );
       const basis = createScopeCoverageBasisV2({
-        excludedLocatorRefs: facts.excludedLedger.map((entry) => entry.locatorRef),
+        excludedLocatorRefs: facts.excludedLedger.map(
+          (entry) => entry.locatorRef,
+        ),
         mixedIncludedLocatorRefs: [],
         stableEligiblePool: registered.eligibleDiscovery,
         snapshotProof: registered.proof,

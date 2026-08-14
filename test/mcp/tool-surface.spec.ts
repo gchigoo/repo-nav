@@ -35,7 +35,8 @@ interface ConnectedSurface {
 async function connectSurface(
   handler: () => Promise<CallToolResult>,
 ): Promise<ConnectedSurface> {
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const [clientTransport, serverTransport] =
+    InMemoryTransport.createLinkedPair();
   const server = createRepoNavMcpServer(async () => await handler());
   const client = new Client({ name: 'repo-nav-tests', version: '0.1.0' });
   await server.connect(serverTransport);
@@ -58,7 +59,10 @@ function loadToolSchemaSnapshot(): z.infer<typeof ToolSchema> {
     import.meta.dirname,
     '..',
     '..',
-    '.codestable',
+    'docs',
+    'superpowers',
+    'archive',
+    'codestable',
     'features',
     '2026-07-10-mcp-locate-surface',
     'mcp-locate-surface-tool-schema.json',
@@ -122,13 +126,16 @@ describe.runIf(selected('tool-list-schema'))('MCP tool schemas', () => {
     expect(validator(validRequest)).toBe(true);
     expect(validator({ ...validRequest, repoPath: '' })).toBe(false);
     expect(validator({ ...validRequest, terms: [''] })).toBe(false);
-    expect(REPO_NAV_LOCATE_INPUT_SCHEMA.$comment).toContain('UTF-8 byte budget');
+    expect(REPO_NAV_LOCATE_INPUT_SCHEMA.$comment).toContain(
+      'UTF-8 byte budget',
+    );
     // F6：repoPath 保留空白 code units；空串仍拒绝
     expect(
       LocateRequestSchema.safeParse({ ...validRequest, repoPath: '' }).success,
     ).toBe(false);
     expect(
-      LocateRequestSchema.safeParse({ ...validRequest, repoPath: '   ' }).success,
+      LocateRequestSchema.safeParse({ ...validRequest, repoPath: '   ' })
+        .success,
     ).toBe(true);
     expect(
       LocateRequestSchema.safeParse({
@@ -287,26 +294,29 @@ describe.runIf(selected('unknown-tool-jsonrpc-boundary'))(
   },
 );
 
-describe.runIf(selected('invalid-input'))('MCP protocol-invalid boundary', () => {
-  it('leaves a non-object arguments envelope in the SDK error channel', async () => {
-    let calls = 0;
-    const surface = await connectSurface(async () => {
-      calls += 1;
-      return { content: [] };
+describe.runIf(selected('invalid-input'))(
+  'MCP protocol-invalid boundary',
+  () => {
+    it('leaves a non-object arguments envelope in the SDK error channel', async () => {
+      let calls = 0;
+      const surface = await connectSurface(async () => {
+        calls += 1;
+        return { content: [] };
+      });
+      try {
+        const invalidRequest = {
+          method: 'tools/call',
+          params: {
+            name: REPO_NAV_LOCATE_TOOL_NAME,
+            arguments: 'not-an-object',
+          },
+        } as unknown as ClientRequest;
+        const call = surface.client.request(invalidRequest, z.unknown());
+        await expect(call).rejects.toBeInstanceOf(McpError);
+        expect(calls).toBe(0);
+      } finally {
+        await surface.close();
+      }
     });
-    try {
-      const invalidRequest = {
-        method: 'tools/call',
-        params: {
-          name: REPO_NAV_LOCATE_TOOL_NAME,
-          arguments: 'not-an-object',
-        },
-      } as unknown as ClientRequest;
-      const call = surface.client.request(invalidRequest, z.unknown());
-      await expect(call).rejects.toBeInstanceOf(McpError);
-      expect(calls).toBe(0);
-    } finally {
-      await surface.close();
-    }
-  });
-});
+  },
+);

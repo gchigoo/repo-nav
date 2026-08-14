@@ -47,8 +47,7 @@ function record(
     matchedTerms,
     focusLines: [lineCount, lineCount],
     focusExcerpt,
-    canonicalSymbols:
-      canonicalSymbol === undefined ? [] : [canonicalSymbol],
+    canonicalSymbols: canonicalSymbol === undefined ? [] : [canonicalSymbol],
   };
 }
 
@@ -58,275 +57,334 @@ const emptyContext = {
   negativeTerms: [],
 } as const;
 
-describe.runIf(isSelected(classifierIdentity))('direct mapping classifier', () => {
-  it.each([
-    ['assignment', 'targetField = row.source_field;'],
-    ['return object', 'return { targetField: row.source_field };'],
-    ['assigned object', 'const mapped = { targetField: row.source_field };'],
-    ['call object', 'emit({ targetField: row.source_field });'],
-    ['SQL file', 'SELECT row.source_field AS targetField FROM source'],
-    ['SQL call', 'query("SELECT row.source_field AS targetField FROM source")'],
-  ])('confirms supported %s syntax', (_name, excerpt) => {
-    const file = _name === 'SQL file' ? 'db/mapping.sql' : 'server/mapping.ts';
-    const result = classifyDiscoveryRecords([record(file, excerpt)], emptyContext);
-    expect(result.confirmed).toHaveLength(1);
-    expect(result.confirmed[0]).toMatchObject({
-      role: 'value-mapping',
-      reasonCodes: ['EXACT_TERM_MATCH', 'DIRECT_ALIAS_MAPPING'],
-    });
-    expect(result.candidates).toEqual([]);
-  });
-
-  it.each([
-    ['equality', 'targetField == row.source_field;'],
-    ['type default', 'type targetField = row.source_field;'],
-    ['comment', '// targetField = row.source_field;'],
-    ['string example', 'const example = "targetField = row.source_field";'],
-    ['one-sided use', 'consume(row.source_field);'],
-    ['interface property', 'interface Dto { targetField: row.source_field }'],
-    ['decorator metadata', '@Field({ targetField: row.source_field })'],
-    ['shorthand', 'return { targetField };'],
-    ['dynamic SQL', 'query(`SELECT row.source_field AS targetField ${where}`)'],
-    ['SQL call inside string', 'const example = "query(\\\"SELECT row.source_field AS targetField\\\")";'],
-    ['SQL alias comment', '// query("SELECT row.source_field AS targetField")'],
-    ['mixed type declaration', 'const harmless = {}; type targetField = row.source_field;'],
-    ['mixed interface declaration', 'const harmless = {}; interface Dto { targetField: row.source_field }'],
-    ['regex literal', 'const pattern = /targetField = row.source_field/;'],
-    ['arrow regex literal', 'const pattern = () => /targetField = row.source_field/;'],
-    ['control-flow regex literal', 'if (ready) /targetField = row.source_field/.test(text);'],
-    ['loop regex literal', 'while (ready) /targetField = row.source_field/.test(text);'],
-    ['SQL quoted literal', "SELECT 'row.source_field AS targetField' AS note"],
-    ['SQL dollar-quoted literal', 'SELECT $$ row.source_field AS targetField ; $$ AS note'],
-    ['SQL comment alias', '-- SELECT row.source_field AS targetField'],
-    ['SQL nested block comment', '/* outer /* inner */ row.source_field AS targetField */ SELECT 1'],
-  ])('does not confirm %s decoy', (_name, excerpt) => {
-    const matched = excerpt.includes('row.source_field')
-      ? mappingTerms
-      : mappingTerms.slice(0, 1);
-    const file = _name.startsWith('SQL ') ? 'db/decoy.sql' : 'server/decoy.ts';
-    const result = classifyDiscoveryRecords(
-      [record(file, excerpt, matched)],
-      emptyContext,
-    );
-    expect(result.confirmed).toEqual([]);
-    expect(result.candidates[0]).toMatchObject({
-      reasonCodes: ['EXACT_TERM_WITHOUT_DIRECT_MAPPING'],
-      promotionRequirements: [
-        'USER_SEMANTIC_CONFIRMATION',
-        'DIRECT_REFERENCE_REQUIRED',
-      ],
-    });
-  });
-
-  it('handles explicit symbol definitions separately from references', () => {
-    const symbolTerm = [{ value: 'mapRow', caseSensitive: true }] as const;
-    const anchors = [
-      { kind: 'symbol', value: 'mapRow', caseSensitive: true },
-    ] as const;
-    const implementation = record(
-      'server/map.ts',
-      'function mapRow(row) { return row; }',
-      symbolTerm,
-      'mapRow',
-    );
-    const method = record(
-      'server/mapper.ts',
-      'public async mapRow<T>(row: T) { return row; }',
-      symbolTerm,
-      'mapRow',
-    );
-    const inlineClassMethod = record(
-      'server/inline-class.ts',
-      'class Mapper { mapRow(row) { return row; } }',
-      symbolTerm,
-      'mapRow',
-    );
-    const inlineObjectMethod = record(
-      'server/inline-object.ts',
-      'const mapper = { mapRow(row) { return row; } };',
-      symbolTerm,
-      'mapRow',
-    );
-    const reference = record(
-      'server/use.ts',
-      'const result = mapRow(row);',
-      symbolTerm,
-      'mapRow',
-    );
-    const alias = record(
-      'server/alias.ts',
-      'const mapRow = importedMapRow;',
-      symbolTerm,
-      'mapRow',
-    );
-    const conditionalCall = record(
-      'server/conditional.ts',
-      'if (mapRow()) {',
-      symbolTerm,
-      'mapRow',
-    );
-    const loopCall = record(
-      'server/loop.ts',
-      'while (mapRow()) {',
-      symbolTerm,
-      'mapRow',
-    );
-    const result = classifyDiscoveryRecords(
+describe.runIf(isSelected(classifierIdentity))(
+  'direct mapping classifier',
+  () => {
+    it.each([
+      ['assignment', 'targetField = row.source_field;'],
+      ['return object', 'return { targetField: row.source_field };'],
+      ['assigned object', 'const mapped = { targetField: row.source_field };'],
+      ['call object', 'emit({ targetField: row.source_field });'],
+      ['SQL file', 'SELECT row.source_field AS targetField FROM source'],
       [
-        reference,
-        implementation,
-        method,
-        inlineClassMethod,
-        inlineObjectMethod,
-        alias,
-        conditionalCall,
-        loopCall,
+        'SQL call',
+        'query("SELECT row.source_field AS targetField FROM source")',
       ],
-      { ...emptyContext, anchors },
-    );
-    expect(result.confirmed[0]).toMatchObject({
-      role: 'execution-site',
-      reasonCodes: ['EXACT_SYMBOL_ANCHOR'],
+    ])('confirms supported %s syntax', (_name, excerpt) => {
+      const file =
+        _name === 'SQL file' ? 'db/mapping.sql' : 'server/mapping.ts';
+      const result = classifyDiscoveryRecords(
+        [record(file, excerpt)],
+        emptyContext,
+      );
+      expect(result.confirmed).toHaveLength(1);
+      expect(result.confirmed[0]).toMatchObject({
+        role: 'value-mapping',
+        reasonCodes: ['EXACT_TERM_MATCH', 'DIRECT_ALIAS_MAPPING'],
+      });
+      expect(result.candidates).toEqual([]);
     });
-    expect(result.confirmed).toHaveLength(4);
-    expect(result.candidates).toHaveLength(4);
-    expect(result.candidates).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          reasonCodes: ['SYMBOL_REFERENCE_ONLY'],
-          promotionRequirements: ['DIRECT_REFERENCE_REQUIRED', 'CALL_PATH_REQUIRED'],
-        }),
-      ]),
-    );
-  });
 
-  it('selects the highest-priority definition from all canonical symbol facts', () => {
-    const excerpt = 'function Zeta(){ Alpha(); }';
-    const base = record(
-      'server/symbols.ts',
-      excerpt,
-      [],
-      undefined,
-    );
-    const anchors = [
-      { kind: 'symbol', value: 'Alpha', caseSensitive: true },
-      { kind: 'symbol', value: 'Zeta', caseSensitive: true },
-    ] as const;
-    const classify = (canonicalSymbols: readonly string[]) =>
-      classifyDiscoveryRecords(
-        [{ ...base, canonicalSymbols }],
+    it.each([
+      ['equality', 'targetField == row.source_field;'],
+      ['type default', 'type targetField = row.source_field;'],
+      ['comment', '// targetField = row.source_field;'],
+      ['string example', 'const example = "targetField = row.source_field";'],
+      ['one-sided use', 'consume(row.source_field);'],
+      ['interface property', 'interface Dto { targetField: row.source_field }'],
+      ['decorator metadata', '@Field({ targetField: row.source_field })'],
+      ['shorthand', 'return { targetField };'],
+      [
+        'dynamic SQL',
+        'query(`SELECT row.source_field AS targetField ${where}`)',
+      ],
+      [
+        'SQL call inside string',
+        String.raw`const example = "query(\"SELECT row.source_field AS targetField\")";`,
+      ],
+      [
+        'SQL alias comment',
+        '// query("SELECT row.source_field AS targetField")',
+      ],
+      [
+        'mixed type declaration',
+        'const harmless = {}; type targetField = row.source_field;',
+      ],
+      [
+        'mixed interface declaration',
+        'const harmless = {}; interface Dto { targetField: row.source_field }',
+      ],
+      ['regex literal', 'const pattern = /targetField = row.source_field/;'],
+      [
+        'arrow regex literal',
+        'const pattern = () => /targetField = row.source_field/;',
+      ],
+      [
+        'control-flow regex literal',
+        'if (ready) /targetField = row.source_field/.test(text);',
+      ],
+      [
+        'loop regex literal',
+        'while (ready) /targetField = row.source_field/.test(text);',
+      ],
+      [
+        'SQL quoted literal',
+        "SELECT 'row.source_field AS targetField' AS note",
+      ],
+      [
+        'SQL dollar-quoted literal',
+        'SELECT $$ row.source_field AS targetField ; $$ AS note',
+      ],
+      ['SQL comment alias', '-- SELECT row.source_field AS targetField'],
+      [
+        'SQL nested block comment',
+        '/* outer /* inner */ row.source_field AS targetField */ SELECT 1',
+      ],
+    ])('does not confirm %s decoy', (_name, excerpt) => {
+      const matched = excerpt.includes('row.source_field')
+        ? mappingTerms
+        : mappingTerms.slice(0, 1);
+      const file = _name.startsWith('SQL ')
+        ? 'db/decoy.sql'
+        : 'server/decoy.ts';
+      const result = classifyDiscoveryRecords(
+        [record(file, excerpt, matched)],
+        emptyContext,
+      );
+      expect(result.confirmed).toEqual([]);
+      expect(result.candidates[0]).toMatchObject({
+        reasonCodes: ['EXACT_TERM_WITHOUT_DIRECT_MAPPING'],
+        promotionRequirements: [
+          'USER_SEMANTIC_CONFIRMATION',
+          'DIRECT_REFERENCE_REQUIRED',
+        ],
+      });
+    });
+
+    it('handles explicit symbol definitions separately from references', () => {
+      const symbolTerm = [{ value: 'mapRow', caseSensitive: true }] as const;
+      const anchors = [
+        { kind: 'symbol', value: 'mapRow', caseSensitive: true },
+      ] as const;
+      const implementation = record(
+        'server/map.ts',
+        'function mapRow(row) { return row; }',
+        symbolTerm,
+        'mapRow',
+      );
+      const method = record(
+        'server/mapper.ts',
+        'public async mapRow<T>(row: T) { return row; }',
+        symbolTerm,
+        'mapRow',
+      );
+      const inlineClassMethod = record(
+        'server/inline-class.ts',
+        'class Mapper { mapRow(row) { return row; } }',
+        symbolTerm,
+        'mapRow',
+      );
+      const inlineObjectMethod = record(
+        'server/inline-object.ts',
+        'const mapper = { mapRow(row) { return row; } };',
+        symbolTerm,
+        'mapRow',
+      );
+      const reference = record(
+        'server/use.ts',
+        'const result = mapRow(row);',
+        symbolTerm,
+        'mapRow',
+      );
+      const alias = record(
+        'server/alias.ts',
+        'const mapRow = importedMapRow;',
+        symbolTerm,
+        'mapRow',
+      );
+      const conditionalCall = record(
+        'server/conditional.ts',
+        'if (mapRow()) {',
+        symbolTerm,
+        'mapRow',
+      );
+      const loopCall = record(
+        'server/loop.ts',
+        'while (mapRow()) {',
+        symbolTerm,
+        'mapRow',
+      );
+      const result = classifyDiscoveryRecords(
+        [
+          reference,
+          implementation,
+          method,
+          inlineClassMethod,
+          inlineObjectMethod,
+          alias,
+          conditionalCall,
+          loopCall,
+        ],
         { ...emptyContext, anchors },
       );
-    const forward = classify(['Alpha', 'Zeta']);
-    const reversed = classify(['Zeta', 'Alpha']);
-    expect(forward).toEqual(reversed);
-    expect(forward).toMatchObject({
-      confirmed: [
-        {
-          role: 'execution-site',
-          location: { symbol: 'Zeta' },
-          reasonCodes: ['EXACT_SYMBOL_ANCHOR'],
-        },
-      ],
-      candidates: [],
+      expect(result.confirmed[0]).toMatchObject({
+        role: 'execution-site',
+        reasonCodes: ['EXACT_SYMBOL_ANCHOR'],
+      });
+      expect(result.confirmed).toHaveLength(4);
+      expect(result.candidates).toHaveLength(4);
+      expect(result.candidates).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            reasonCodes: ['SYMBOL_REFERENCE_ONLY'],
+            promotionRequirements: [
+              'DIRECT_REFERENCE_REQUIRED',
+              'CALL_PATH_REQUIRED',
+            ],
+          }),
+        ]),
+      );
     });
-  });
 
-  it('does not let member-name division mask a later supported assignment', () => {
-    for (const member of ['return', 'await', 'do', 'else']) {
-      const excerpt = `const ratio = obj.${member} / divisor; targetField = row.source_field;`;
-      const result = classifyDiscoveryRecords(
-        [record('server/mapping.ts', excerpt)],
+    it('selects the highest-priority definition from all canonical symbol facts', () => {
+      const excerpt = 'function Zeta(){ Alpha(); }';
+      const base = record('server/symbols.ts', excerpt, [], undefined);
+      const anchors = [
+        { kind: 'symbol', value: 'Alpha', caseSensitive: true },
+        { kind: 'symbol', value: 'Zeta', caseSensitive: true },
+      ] as const;
+      const classify = (canonicalSymbols: readonly string[]) =>
+        classifyDiscoveryRecords([{ ...base, canonicalSymbols }], {
+          ...emptyContext,
+          anchors,
+        });
+      const forward = classify(['Alpha', 'Zeta']);
+      const reversed = classify(['Zeta', 'Alpha']);
+      expect(forward).toEqual(reversed);
+      expect(forward).toMatchObject({
+        confirmed: [
+          {
+            role: 'execution-site',
+            location: { symbol: 'Zeta' },
+            reasonCodes: ['EXACT_SYMBOL_ANCHOR'],
+          },
+        ],
+        candidates: [],
+      });
+    });
+
+    it('does not let member-name division mask a later supported assignment', () => {
+      for (const member of ['return', 'await', 'do', 'else']) {
+        const excerpt = `const ratio = obj.${member} / divisor; targetField = row.source_field;`;
+        const result = classifyDiscoveryRecords(
+          [record('server/mapping.ts', excerpt)],
+          emptyContext,
+        );
+        expect(result.confirmed).toHaveLength(1);
+        expect(result.candidates).toEqual([]);
+      }
+      for (const member of ['if', 'while', 'for', 'with']) {
+        const excerpt = `const ratio = control.${member}(value) / divisor; targetField = row.source_field;`;
+        const result = classifyDiscoveryRecords(
+          [record('server/mapping.ts', excerpt)],
+          emptyContext,
+        );
+        expect(result.confirmed).toHaveLength(1);
+        expect(result.candidates).toEqual([]);
+      }
+    });
+
+    it('binds mapping predicates to the focus line inside a bounded logical window', () => {
+      const multiline = 'return {\n  targetField: row.source_field';
+      const confirmed = classifyDiscoveryRecords(
+        [
+          record(
+            'server/map.ts',
+            multiline,
+            mappingTerms,
+            undefined,
+            '  targetField: row.source_field',
+          ),
+        ],
         emptyContext,
       );
-      expect(result.confirmed).toHaveLength(1);
-      expect(result.candidates).toEqual([]);
-    }
-    for (const member of ['if', 'while', 'for', 'with']) {
-      const excerpt = `const ratio = control.${member}(value) / divisor; targetField = row.source_field;`;
-      const result = classifyDiscoveryRecords(
-        [record('server/mapping.ts', excerpt)],
+      expect(confirmed.confirmed).toHaveLength(1);
+
+      const unrelated = classifyDiscoveryRecords(
+        [
+          record(
+            'server/map.ts',
+            'targetField = row.source_field;\nconsume(row.source_field);',
+            mappingTerms,
+            undefined,
+            'consume(row.source_field);',
+          ),
+        ],
         emptyContext,
       );
-      expect(result.confirmed).toHaveLength(1);
-      expect(result.candidates).toEqual([]);
-    }
-  });
+      expect(unrelated.confirmed).toEqual([]);
 
-  it('binds mapping predicates to the focus line inside a bounded logical window', () => {
-    const multiline = 'return {\n  targetField: row.source_field';
-    const confirmed = classifyDiscoveryRecords(
-      [record('server/map.ts', multiline, mappingTerms, undefined, '  targetField: row.source_field')],
-      emptyContext,
-    );
-    expect(confirmed.confirmed).toHaveLength(1);
+      const focus = '  targetField: row.source_field';
+      const fixedBytes = Buffer.byteLength(`return {\n${focus}`, 'utf8');
+      const atLimit = `return {${' '.repeat(4096 - fixedBytes)}\n${focus}`;
+      const overLimit = `return {${' '.repeat(4097 - fixedBytes)}\n${focus}`;
+      expect(Buffer.byteLength(atLimit, 'utf8')).toBe(4096);
+      expect(
+        classifyDiscoveryRecords(
+          [record('server/map.ts', atLimit, mappingTerms, undefined, focus)],
+          emptyContext,
+        ).confirmed,
+      ).toHaveLength(1);
+      expect(
+        classifyDiscoveryRecords(
+          [record('server/map.ts', overLimit, mappingTerms, undefined, focus)],
+          emptyContext,
+        ).confirmed,
+      ).toEqual([]);
 
-    const unrelated = classifyDiscoveryRecords(
-      [
-        record(
-          'server/map.ts',
-          'targetField = row.source_field;\nconsume(row.source_field);',
-          mappingTerms,
-          undefined,
-          'consume(row.source_field);',
-        ),
-      ],
-      emptyContext,
-    );
-    expect(unrelated.confirmed).toEqual([]);
-
-    const focus = '  targetField: row.source_field';
-    const fixedBytes = Buffer.byteLength(`return {\n${focus}`, 'utf8');
-    const atLimit = `return {${' '.repeat(4096 - fixedBytes)}\n${focus}`;
-    const overLimit = `return {${' '.repeat(4097 - fixedBytes)}\n${focus}`;
-    expect(Buffer.byteLength(atLimit, 'utf8')).toBe(4096);
-    expect(
-      classifyDiscoveryRecords(
-        [record('server/map.ts', atLimit, mappingTerms, undefined, focus)],
-        emptyContext,
-      ).confirmed,
-    ).toHaveLength(1);
-    expect(
-      classifyDiscoveryRecords(
-        [record('server/map.ts', overLimit, mappingTerms, undefined, focus)],
-        emptyContext,
-      ).confirmed,
-    ).toEqual([]);
-
-    const thirteenLines = [
-      'return {',
-      ...Array.from({ length: 11 }, () => ''),
-      focus,
-    ].join('\n');
-    expect(thirteenLines.split('\n')).toHaveLength(13);
-    expect(
-      classifyDiscoveryRecords(
-        [record('server/map.ts', thirteenLines, mappingTerms, undefined, focus)],
-        emptyContext,
-      ).confirmed,
-    ).toEqual([]);
-  });
-
-  it('resolves layer paths deterministically and never confirms test/docs mappings', () => {
-    expect(resolveRepositoryLayer('docs/__tests__/mapping.ts')).toBe('test');
-    expect(resolveRepositoryLayer('SERVER\\MAPPING.SPEC.TS')).toBe('test');
-    expect(resolveRepositoryLayer('Examples/guide.ts')).toBe('docs');
-    expect(resolveRepositoryLayer('README.MDX')).toBe('docs');
-    expect(resolveRepositoryLayer('server/mapping.ts')).toBe('server');
-    expect(resolveRepositoryLayer('packages/mapping.ts')).toBe('unknown');
-
-    const testResult = classifyDiscoveryRecords(
-      [record('tests/mapping.spec.ts', 'targetField = row.source_field;')],
-      { ...emptyContext, layers: ['test'] },
-    );
-    expect(testResult.confirmed).toEqual([]);
-    expect(testResult.candidates[0]).toMatchObject({
-      evidenceClass: 'candidate',
-      role: 'reference',
-      reasonCodes: ['EXACT_TERM_WITHOUT_DIRECT_MAPPING'],
+      const thirteenLines = [
+        'return {',
+        ...Array.from({ length: 11 }, () => ''),
+        focus,
+      ].join('\n');
+      expect(thirteenLines.split('\n')).toHaveLength(13);
+      expect(
+        classifyDiscoveryRecords(
+          [
+            record(
+              'server/map.ts',
+              thirteenLines,
+              mappingTerms,
+              undefined,
+              focus,
+            ),
+          ],
+          emptyContext,
+        ).confirmed,
+      ).toEqual([]);
     });
-  });
-});
+
+    it('resolves layer paths deterministically and never confirms test/docs mappings', () => {
+      expect(resolveRepositoryLayer('docs/__tests__/mapping.ts')).toBe('test');
+      expect(resolveRepositoryLayer('SERVER\\MAPPING.SPEC.TS')).toBe('test');
+      expect(resolveRepositoryLayer('Examples/guide.ts')).toBe('docs');
+      expect(resolveRepositoryLayer('README.MDX')).toBe('docs');
+      expect(resolveRepositoryLayer('server/mapping.ts')).toBe('server');
+      expect(resolveRepositoryLayer('packages/mapping.ts')).toBe('unknown');
+
+      const testResult = classifyDiscoveryRecords(
+        [record('tests/mapping.spec.ts', 'targetField = row.source_field;')],
+        { ...emptyContext, layers: ['test'] },
+      );
+      expect(testResult.confirmed).toEqual([]);
+      expect(testResult.candidates[0]).toMatchObject({
+        evidenceClass: 'candidate',
+        role: 'reference',
+        reasonCodes: ['EXACT_TERM_WITHOUT_DIRECT_MAPPING'],
+      });
+    });
+  },
+);
 
 describe.runIf(
   isSelected({
@@ -356,18 +414,15 @@ describe.runIf(
   }),
 )('F8-MOVE-001 move-only-characterization', () => {
   it('keeps maskNonCode/maskSqlNonCode legacy export parity after kernel extract', async () => {
-    const { maskNonCode, maskSqlNonCode } = await import(
-      '../../src/evidence/direct-mapping-classifier.js'
-    );
-    const { maskNonCode: kernelMask } = await import(
-      '../../src/evidence/language/ecmascript-lexical-kernel-v2.js'
-    );
-    const { maskSqlNonCode: kernelSql } = await import(
-      '../../src/evidence/language/sql-lexical-kernel-v2.js'
-    );
+    const { maskNonCode, maskSqlNonCode } =
+      await import('../../src/evidence/direct-mapping-classifier.js');
+    const { maskNonCode: kernelMask } =
+      await import('../../src/evidence/language/ecmascript-lexical-kernel-v2.js');
+    const { maskSqlNonCode: kernelSql } =
+      await import('../../src/evidence/language/sql-lexical-kernel-v2.js');
     const sample = "const x = 'a'; // c\n/*b*/ y = 1;";
     expect(maskNonCode(sample)).toBe(kernelMask(sample));
-    const sql = "select a AS b -- c\n/*x*/";
+    const sql = 'select a AS b -- c\n/*x*/';
     expect(maskSqlNonCode(sql)).toBe(kernelSql(sql));
   });
 });
@@ -381,7 +436,13 @@ describe.runIf(
   it('keeps explicit test/docs searchable but candidate-only', () => {
     const excerpt = CANDIDATE_CEILING_V1.mappingExcerpt;
     const testResult = classifyDiscoveryRecords(
-      [record(CANDIDATE_CEILING_V1.explicitTestFile, excerpt, CANDIDATE_CEILING_V1.terms)],
+      [
+        record(
+          CANDIDATE_CEILING_V1.explicitTestFile,
+          excerpt,
+          CANDIDATE_CEILING_V1.terms,
+        ),
+      ],
       { anchors: [], layers: ['test'], negativeTerms: [] },
     );
     expect(testResult.confirmed).toEqual([]);
@@ -389,7 +450,13 @@ describe.runIf(
     expect(testResult.candidates[0]?.evidenceClass).toBe('candidate');
 
     const docsResult = classifyDiscoveryRecords(
-      [record(CANDIDATE_CEILING_V1.explicitDocsFile, excerpt, CANDIDATE_CEILING_V1.terms)],
+      [
+        record(
+          CANDIDATE_CEILING_V1.explicitDocsFile,
+          excerpt,
+          CANDIDATE_CEILING_V1.terms,
+        ),
+      ],
       { anchors: [], layers: ['docs'], negativeTerms: [] },
     );
     expect(docsResult.confirmed).toEqual([]);
@@ -404,7 +471,10 @@ describe.runIf(isSelected(orderingIdentity))('evidence ID and ordering', () => {
       record('server/a.ts', 'targetField = row.source_field;'),
     ];
     const forward = classifyDiscoveryRecords(records, emptyContext);
-    const reversed = classifyDiscoveryRecords([...records].reverse(), emptyContext);
+    const reversed = classifyDiscoveryRecords(
+      [...records].reverse(),
+      emptyContext,
+    );
 
     expect(forward).toEqual(reversed);
     expect(forward.recordsClassified).toBe(2);
@@ -417,7 +487,10 @@ describe.runIf(isSelected(orderingIdentity))('evidence ID and ordering', () => {
   it('applies negative and layer filters before classification with exact counts', () => {
     const result = classifyDiscoveryRecords(
       [
-        record('server/negative.ts', 'forbidden targetField = row.source_field;'),
+        record(
+          'server/negative.ts',
+          'forbidden targetField = row.source_field;',
+        ),
         record('client/outside.ts', 'targetField = row.source_field;'),
         record('server/mapping.ts', 'targetField = row.source_field;'),
       ],

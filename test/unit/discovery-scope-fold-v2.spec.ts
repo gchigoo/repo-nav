@@ -4,9 +4,7 @@ import {
   bindRawDiscoveryLocatorV2,
   projectExpandedSafePreCapPoolV2,
 } from '../../src/evidence/request-snapshot/discovery-lane-universe-v2.js';
-import {
-  DISCOVERY_RESERVATION_CAP_V2,
-} from '../../src/evidence/request-snapshot/discovery-reservation-v2.js';
+import { DISCOVERY_RESERVATION_CAP_V2 } from '../../src/evidence/request-snapshot/discovery-reservation-v2.js';
 import {
   registerLegacySelectedPathV2,
   readLegacySelectedPathForTestV2,

@@ -291,7 +291,11 @@
       "languageFamily": "js",
       "request": {
         "question": "Find bench status route mapping",
-        "terms": ["benchRouteTarget", "row.bench_route_source", "/api/bench/status"],
+        "terms": [
+          "benchRouteTarget",
+          "row.bench_route_source",
+          "/api/bench/status"
+        ],
         "termCase": "sensitive",
         "anchors": [
           {

@@ -1,5 +1,22 @@
+import type { spawn } from 'node:child_process';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { resolve } from 'node:path';
+
 import { describe, expect, it, vi } from 'vitest';
 
+import type {
+  SafeProcessRequest,
+  SafeProcessResult,
+  SafeProcessStreamingResultV2,
+  SafeStdoutConsumerV2,
+} from '../../src/contracts/safe-process.js';
+import { BoundedByteCollectorV2 } from '../../src/process/bounded-byte-collector-v2.js';
+import { projectBufferedCompatibilityResultV2 } from '../../src/process/buffered-compatibility-projection-v2.js';
+import { SafeProcessExecutionKernelV2 } from '../../src/process/safe-process-execution-kernel-v2.js';
+import { CodeGraphBackend } from '../../src/repository/codegraph-backend.js';
+import { NodeSafeProcessRunner } from '../../src/repository/node-safe-process-runner.js';
+import { RipgrepBackend } from '../../src/repository/ripgrep-backend.js';
 import {
   PUBLIC_LOCATE_EXECUTION_APPLICATION_V2,
   type PublicLocateExecutionApplicationV2,
@@ -8,10 +25,16 @@ import {
   REPOSITORY_READER,
   REPOSITORY_SEARCH_BACKENDS,
 } from '../../src/runtime/tokens.js';
-import { CliErrorOutputSchema, ProbeOutputSchema } from '../../src/cli/contracts.js';
+import {
+  CliErrorOutputSchema,
+  ProbeOutputSchema,
+} from '../../src/cli/contracts.js';
+import {
+  createCliApplicationAdapter,
+  type CliApplicationContext,
+} from '../../src/cli/application-adapter.js';
 import {
   executeCli,
-  type CliApplicationContext,
   type CliExecutionDependencies,
 } from '../../src/cli/execute.js';
 import {
@@ -25,7 +48,7 @@ function dependencies(
 ): {
   readonly dependencies: CliExecutionDependencies;
   readonly close: typeof close;
-  readonly create: ReturnType<typeof vi.fn>;
+  readonly load: ReturnType<typeof vi.fn>;
 } {
   const context: CliApplicationContext = {
     get: <T>(token: symbol): T => {
@@ -34,11 +57,14 @@ function dependencies(
     },
     close,
   };
-  const create = vi.fn(async () => context);
+  const adapter = createCliApplicationAdapter({
+    createApplicationContext: async () => context,
+  });
+  const load = vi.fn(async () => adapter);
   return {
-    dependencies: { createApplicationContext: create },
+    dependencies: { loadApplicationAdapter: load },
     close,
-    create,
+    load,
   };
 }
 
@@ -46,6 +72,86 @@ function fakeLocateApplication(
   impl: PublicLocateExecutionApplicationV2['execute'],
 ): PublicLocateExecutionApplicationV2 {
   return { execute: impl };
+}
+
+class CliSpawnFailureRunner extends NodeSafeProcessRunner {
+  public constructor(private readonly spawnImpl: typeof spawn) {
+    super();
+  }
+
+  public override async run(
+    request: SafeProcessRequest,
+    signal: AbortSignal,
+  ): Promise<SafeProcessResult> {
+    const streaming = await this.runStreaming(
+      request,
+      signal,
+      new BoundedByteCollectorV2(),
+    );
+    return projectBufferedCompatibilityResultV2(streaming);
+  }
+
+  public override runStreaming<TPartial, TComplete>(
+    request: SafeProcessRequest,
+    signal: AbortSignal,
+    consumer: SafeStdoutConsumerV2<TPartial, TComplete>,
+  ): Promise<SafeProcessStreamingResultV2<TPartial, TComplete>> {
+    return new SafeProcessExecutionKernelV2({
+      spawn: this.spawnImpl,
+    }).runStreaming(request, signal, consumer);
+  }
+}
+
+function failingSpawn(code: string): typeof spawn {
+  return () => {
+    throw Object.assign(new Error(`${code}: secret /private/repo-nav-bin`), {
+      code,
+      path: '/private/repo-nav-bin',
+    });
+  };
+}
+
+class CliAvailabilityResultRunner extends NodeSafeProcessRunner {
+  private nextIndex = 0;
+
+  public constructor(
+    private readonly results: readonly SafeProcessStreamingResultV2<
+      Uint8Array,
+      Uint8Array
+    >[],
+  ) {
+    super();
+  }
+
+  public override runStreaming<TPartial, TComplete>(
+    _request: SafeProcessRequest,
+    _signal: AbortSignal,
+    _consumer: SafeStdoutConsumerV2<TPartial, TComplete>,
+  ): Promise<SafeProcessStreamingResultV2<TPartial, TComplete>> {
+    const result = this.results[this.nextIndex];
+    this.nextIndex += 1;
+    if (result === undefined) {
+      return Promise.reject(new Error('Unexpected availability invocation.'));
+    }
+    return Promise.resolve(
+      result as SafeProcessStreamingResultV2<TPartial, TComplete>,
+    );
+  }
+}
+
+function completedAvailability(
+  stdout: string,
+  exitCode: number,
+): SafeProcessStreamingResultV2<Uint8Array, Uint8Array> {
+  return {
+    ok: true,
+    kind: 'completed',
+    startState: 'started',
+    exitCode,
+    terminationSignal: null,
+    stdout: { kind: 'complete', value: Buffer.from(stdout, 'utf8') },
+    stderr: new Uint8Array(),
+  };
 }
 
 const locateArgs = [
@@ -62,7 +168,7 @@ const locateArgs = [
 describe.runIf(
   isSelected({ group: 'debug-cli-shell', caseId: 'debug-cli-shell' }),
 )('debug CLI shell', () => {
-  it('returns help without creating an application context', async () => {
+  it('returns help without loading the application adapter', async () => {
     assertRunnerSurface('unit');
     const fixture = dependencies(new Map());
     const result = await executeCli(
@@ -72,7 +178,18 @@ describe.runIf(
     );
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('repo-nav debug');
-    expect(fixture.create).not.toHaveBeenCalled();
+    expect(fixture.load).not.toHaveBeenCalled();
+  });
+
+  it('returns version without loading the application adapter', async () => {
+    const fixture = dependencies(new Map());
+    const result = await executeCli(
+      ['--version'],
+      new AbortController().signal,
+      fixture.dependencies,
+    );
+    expect(result).toMatchObject({ exitCode: 0, stdout: '1.1.0' });
+    expect(fixture.load).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -92,7 +209,7 @@ describe.runIf(
         CliErrorOutputSchema.parse(JSON.parse(result.stdout) as unknown).error
           .message,
       ).toContain(message);
-      expect(fixture.create).not.toHaveBeenCalled();
+      expect(fixture.load).not.toHaveBeenCalled();
     },
   );
 
@@ -135,7 +252,9 @@ describe.runIf(
       }),
     );
     const fixture = dependencies(
-      new Map([[PUBLIC_LOCATE_EXECUTION_APPLICATION_V2, fakeLocateApplication(locate)]]),
+      new Map([
+        [PUBLIC_LOCATE_EXECUTION_APPLICATION_V2, fakeLocateApplication(locate)],
+      ]),
     );
     const toolError = await executeCli(
       locateArgs,
@@ -160,6 +279,117 @@ describe.runIf(
 describe.runIf(
   isSelected({ group: 'debug-cli-probe', caseId: 'debug-cli-probe' }),
 )('debug CLI probe', () => {
+  it('starts backend probes concurrently and preserves registration order', async () => {
+    const reader = {
+      resolveRoot: vi.fn(async () => '/repo'),
+    };
+    let resolveCodeGraph: ((value: { state: 'available' }) => void) | undefined;
+    let resolveRipgrep: ((value: { state: 'available' }) => void) | undefined;
+    const codegraphProbe = vi.fn(
+      () =>
+        new Promise<{ state: 'available' }>((resolveProbe) => {
+          resolveCodeGraph = resolveProbe;
+        }),
+    );
+    const ripgrepProbe = vi.fn(
+      () =>
+        new Promise<{ state: 'available' }>((resolveProbe) => {
+          resolveRipgrep = resolveProbe;
+        }),
+    );
+    const fixture = dependencies(
+      new Map<symbol, unknown>([
+        [REPOSITORY_READER, reader],
+        [
+          REPOSITORY_SEARCH_BACKENDS,
+          [
+            { id: 'codegraph', probe: codegraphProbe, search: vi.fn() },
+            { id: 'ripgrep', probe: ripgrepProbe, search: vi.fn() },
+          ],
+        ],
+      ]),
+    );
+
+    const pending = executeCli(
+      ['debug', 'probe', '--repo', '.'],
+      new AbortController().signal,
+      fixture.dependencies,
+    );
+    await vi.waitFor(() => {
+      expect(codegraphProbe).toHaveBeenCalledTimes(1);
+      expect(ripgrepProbe).toHaveBeenCalledTimes(1);
+    });
+    resolveRipgrep?.({ state: 'available' });
+    resolveCodeGraph?.({ state: 'available' });
+
+    const result = await pending;
+    expect(ProbeOutputSchema.parse(JSON.parse(result.stdout)).backends).toEqual(
+      [
+        { backend: 'codegraph', health: { state: 'available' } },
+        { backend: 'ripgrep', health: { state: 'available' } },
+      ],
+    );
+  });
+
+  it('waits for every started probe before closing after an unexpected rejection', async () => {
+    const reader = {
+      resolveRoot: vi.fn(async () => '/repo'),
+    };
+    let rejectCodeGraph: ((reason: Error) => void) | undefined;
+    let resolveRipgrep: ((value: { state: 'available' }) => void) | undefined;
+    const codegraphProbe = vi.fn(
+      () =>
+        new Promise<{ state: 'available' }>((_resolveProbe, rejectProbe) => {
+          rejectCodeGraph = rejectProbe;
+        }),
+    );
+    const ripgrepProbe = vi.fn(
+      () =>
+        new Promise<{ state: 'available' }>((resolveProbe) => {
+          resolveRipgrep = resolveProbe;
+        }),
+    );
+    const close = vi.fn(async () => undefined);
+    const fixture = dependencies(
+      new Map<symbol, unknown>([
+        [REPOSITORY_READER, reader],
+        [
+          REPOSITORY_SEARCH_BACKENDS,
+          [
+            { id: 'codegraph', probe: codegraphProbe, search: vi.fn() },
+            { id: 'ripgrep', probe: ripgrepProbe, search: vi.fn() },
+          ],
+        ],
+      ]),
+      close,
+    );
+
+    const pending = executeCli(
+      ['debug', 'probe', '--repo', '.'],
+      new AbortController().signal,
+      fixture.dependencies,
+    );
+    await vi.waitFor(() => {
+      expect(codegraphProbe).toHaveBeenCalledTimes(1);
+      expect(ripgrepProbe).toHaveBeenCalledTimes(1);
+    });
+    rejectCodeGraph?.(new Error('private path /secret/repository'));
+    await Promise.resolve();
+    expect(close).not.toHaveBeenCalled();
+    resolveRipgrep?.({ state: 'available' });
+
+    const result = await pending;
+    expect(close).toHaveBeenCalledTimes(1);
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).not.toContain('secret');
+    expect(result.stdout).not.toContain('/private/');
+    expect(CliErrorOutputSchema.parse(JSON.parse(result.stdout))).toMatchObject(
+      {
+        error: { code: 'CLI_INTERNAL' },
+      },
+    );
+  });
+
   it('probes backends through the application context', async () => {
     const reader = {
       resolveRoot: vi.fn(async () => '/repo'),
@@ -188,4 +418,113 @@ describe.runIf(
       repositoryRootRedacted: '<repository-root>',
     });
   });
+
+  it('rejects nonzero production availability completions in CLI diagnostics', async () => {
+    const repository = mkdtempSync(resolve(tmpdir(), 'repo-nav-cli-nonzero-'));
+    try {
+      const reader = {
+        resolveRoot: vi.fn(async () => repository),
+      };
+      const runner = new CliAvailabilityResultRunner([
+        completedAvailability(
+          JSON.stringify({ initialized: true, version: '99.0.0' }),
+          7,
+        ),
+        completedAvailability('ripgrep 99.0.0\n', 7),
+      ]);
+      const fixture = dependencies(
+        new Map<symbol, unknown>([
+          [REPOSITORY_READER, reader],
+          [
+            REPOSITORY_SEARCH_BACKENDS,
+            [new CodeGraphBackend(runner), new RipgrepBackend(runner)],
+          ],
+        ]),
+      );
+      const result = await executeCli(
+        ['debug', 'probe', '--repo', '.'],
+        new AbortController().signal,
+        fixture.dependencies,
+      );
+      expect(result.exitCode).toBe(0);
+      expect(
+        ProbeOutputSchema.parse(JSON.parse(result.stdout)).backends,
+      ).toEqual([
+        {
+          backend: 'codegraph',
+          health: {
+            state: 'error',
+            reasonCode: 'BACKEND_PROCESS_FAILED',
+          },
+        },
+        {
+          backend: 'ripgrep',
+          health: {
+            state: 'error',
+            reasonCode: 'BACKEND_PROCESS_FAILED',
+          },
+        },
+      ]);
+    } finally {
+      rmSync(repository, { recursive: true, force: true });
+    }
+  });
+
+  it.each([
+    [
+      'ENOENT',
+      { state: 'unavailable', reasonCode: 'CODEGRAPH_UNAVAILABLE' },
+      { state: 'missing', reasonCode: 'RIPGREP_UNAVAILABLE' },
+    ],
+    [
+      'EACCES',
+      { state: 'error', reasonCode: 'BACKEND_PROCESS_FAILED' },
+      { state: 'error', reasonCode: 'BACKEND_PROCESS_FAILED' },
+    ],
+    [
+      'EPERM',
+      { state: 'error', reasonCode: 'BACKEND_PROCESS_FAILED' },
+      { state: 'error', reasonCode: 'BACKEND_PROCESS_FAILED' },
+    ],
+    [
+      'EMFILE',
+      { state: 'error', reasonCode: 'BACKEND_PROCESS_FAILED' },
+      { state: 'error', reasonCode: 'BACKEND_PROCESS_FAILED' },
+    ],
+  ] as const)(
+    'preserves sanitized %s availability classification in production backend diagnostics',
+    async (code, codegraphHealth, ripgrepHealth) => {
+      const repository = mkdtempSync(resolve(tmpdir(), 'repo-nav-cli-probe-'));
+      try {
+        const reader = {
+          resolveRoot: vi.fn(async () => repository),
+        };
+        const runner = new CliSpawnFailureRunner(failingSpawn(code));
+        const fixture = dependencies(
+          new Map<symbol, unknown>([
+            [REPOSITORY_READER, reader],
+            [
+              REPOSITORY_SEARCH_BACKENDS,
+              [new CodeGraphBackend(runner), new RipgrepBackend(runner)],
+            ],
+          ]),
+        );
+        const result = await executeCli(
+          ['debug', 'probe', '--repo', '.'],
+          new AbortController().signal,
+          fixture.dependencies,
+        );
+        expect(result.exitCode).toBe(0);
+        const parsed = ProbeOutputSchema.parse(JSON.parse(result.stdout));
+        expect(parsed.backends).toEqual([
+          { backend: 'codegraph', health: codegraphHealth },
+          { backend: 'ripgrep', health: ripgrepHealth },
+        ]);
+        expect(result.stdout).not.toContain('secret');
+        expect(result.stdout).not.toContain('/private/');
+      } finally {
+        rmSync(repository, { recursive: true, force: true });
+      }
+    },
+  );
 });

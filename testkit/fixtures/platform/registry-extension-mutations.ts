@@ -7,8 +7,7 @@ import {
   type SyntheticPlatformContractIdV1,
 } from '../../contracts/platform-contract.js';
 
-const SYNTHETIC_OWNER =
-  'test/unit/cross-platform-ci-contract.spec.ts' as const;
+const SYNTHETIC_OWNER = 'test/unit/cross-platform-ci-contract.spec.ts' as const;
 const SYNTHETIC_FIXTURE =
   'testkit/fixtures/platform/registry-extension-mutations.ts' as const;
 
@@ -202,10 +201,7 @@ export function listSyntheticExtensionMutationsV1(): readonly SyntheticExtension
       id: 'unknown-id',
       expectedIds: SYNTHETIC_PLATFORM_CONTRACT_IDS_V1,
       snapshot: {
-        allowedIds: [
-          ...SYNTHETIC_PLATFORM_CONTRACT_IDS_V1,
-          'UNKNOWN-EXT-001',
-        ],
+        allowedIds: [...SYNTHETIC_PLATFORM_CONTRACT_IDS_V1, 'UNKNOWN-EXT-001'],
         bindings: [
           ...complete.bindings,
           {

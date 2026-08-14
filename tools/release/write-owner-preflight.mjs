@@ -8,8 +8,8 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const paths = [
-  '.codestable/features/2026-07-24-public-beta-release/public-beta-release-design.md',
-  '.codestable/features/2026-07-24-public-beta-release/public-beta-release-checklist.yaml',
+  'docs/superpowers/archive/codestable/features/2026-07-24-public-beta-release/public-beta-release-design.md',
+  'docs/superpowers/archive/codestable/features/2026-07-24-public-beta-release/public-beta-release-checklist.yaml',
 ];
 
 function sha256Raw(buf) {
@@ -84,7 +84,8 @@ const securityChannel = {
 };
 
 const preflight = { license, securityChannel };
-const outRel = '.codestable/runtime/public-beta-release-owner-preflight.json';
+const outRel =
+  'docs/superpowers/evidence/release-runtime/public-beta-release-owner-preflight.json';
 const outAbs = join(root, outRel);
 mkdirSync(dirname(outAbs), { recursive: true });
 writeFileSync(outAbs, `${JSON.stringify(preflight, null, 2)}\n`);

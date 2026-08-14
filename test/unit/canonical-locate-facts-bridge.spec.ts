@@ -291,7 +291,9 @@ describe.runIf(seamSelected)(
       }
       // F9 production seams intentionally import SnapshotTrustProofV2 + F2 stages registrar
       expect(locateJoined.includes('SnapshotTrustProofV2')).toBe(true);
-      expect(locateJoined.includes('f2-locate-projection-stages-v2')).toBe(true);
+      expect(locateJoined.includes('f2-locate-projection-stages-v2')).toBe(
+        true,
+      );
     });
 
     it('zeroes stage callbacks when any prerequisite is missing', () => {
@@ -449,13 +451,12 @@ describe.runIf(
     expect(() =>
       requireRequestOutcomeAggregationProofV2(
         aggregated.proof,
-        createOpaqueTokenV2() as never,
+        createOpaqueTokenV2(),
       ),
     ).toThrow(/not trusted/);
     void LocateAbortCoordinatorV2;
   });
 });
-
 
 describe.runIf(
   isSelected({
@@ -469,58 +470,40 @@ describe.runIf(
       sealCapabilityRetainedDecisionsV2,
       registerCapabilityRetainedDecisionLedgerV2,
     } = await import('../../src/evidence/language/capability-coverage-v2.js');
-    const { createTrustedLanguageCapabilityObservationV2 } = await import(
-      '../../src/evidence/language/language-capability-observation-v2.js'
-    );
-    const { createTrustedPreFinalCapabilityViewForTestV2 } = await import(
-      '../../src/evidence/request-snapshot/capability-classification-views-v2.js'
-    );
+    const { createTrustedLanguageCapabilityObservationV2 } =
+      await import('../../src/evidence/language/language-capability-observation-v2.js');
+    const { createTrustedPreFinalCapabilityViewForTestV2 } =
+      await import('../../src/evidence/request-snapshot/capability-classification-views-v2.js');
     const { createTrustedPreFinalScopeClassificationViewForTestV2 } =
-      await import(
-        '../../src/evidence/request-snapshot/scope-classification-views-v2.js'
-      );
+      await import('../../src/evidence/request-snapshot/scope-classification-views-v2.js');
     const {
       createVerifiedLanguageConsumerAdmissionV2,
       registerVerifiedLanguageConsumerV2,
-    } = await import(
-      '../../src/evidence/request-snapshot/verified-language-consumer-v2.js'
-    );
-    const { requireStableEligibleCapabilityViewV2 } = await import(
-      '../../src/evidence/request-snapshot/capability-classification-views-v2.js'
-    );
+    } =
+      await import('../../src/evidence/request-snapshot/verified-language-consumer-v2.js');
+    const { requireStableEligibleCapabilityViewV2 } =
+      await import('../../src/evidence/request-snapshot/capability-classification-views-v2.js');
     const {
       bindEmptyStableEligibleScopeDecisionsV2,
       requireStableEligibleScopeViewV2,
-    } = await import(
-      '../../src/evidence/request-snapshot/scope-classification-views-v2.js'
-    );
-    const { runFinalSnapshotCheckV2 } = await import(
-      '../../src/evidence/request-snapshot/final-snapshot-check-v2.js'
-    );
-    const { projectExpandedSafePreCapPoolV2 } = await import(
-      '../../src/evidence/request-snapshot/discovery-lane-universe-v2.js'
-    );
-    const {
-      readScopeFoldedSafePoolProofV2,
-      scopeFoldSafeCandidatePoolV2,
-    } = await import(
-      '../../src/evidence/request-snapshot/scope-folded-discovery-selector-v2.js'
-    );
-    const { createScopeCoverageBasisV2 } = await import(
-      '../../src/evidence/request-snapshot/scope-coverage-basis-v2.js'
-    );
-    const { resolveRepositoryScopeV1 } = await import(
-      '../../src/evidence/scope/resolve-repository-scope-v1.js'
-    );
-    const { buildScopeCoverageV1, requireScopeCoverageFactsV1 } = await import(
-      '../../src/evidence/scope/scope-coverage-v1.js'
-    );
-    const { issueEvidenceRankingOutcomeV2 } = await import(
-      '../../src/evidence/ranking/evidence-ranking-outcome-v2.js'
-    );
-    const { createOpaqueTokenV2 } = await import(
-      '../../src/evidence/request-snapshot/opaque-token-v2.js'
-    );
+    } =
+      await import('../../src/evidence/request-snapshot/scope-classification-views-v2.js');
+    const { runFinalSnapshotCheckV2 } =
+      await import('../../src/evidence/request-snapshot/final-snapshot-check-v2.js');
+    const { projectExpandedSafePreCapPoolV2 } =
+      await import('../../src/evidence/request-snapshot/discovery-lane-universe-v2.js');
+    const { readScopeFoldedSafePoolProofV2, scopeFoldSafeCandidatePoolV2 } =
+      await import('../../src/evidence/request-snapshot/scope-folded-discovery-selector-v2.js');
+    const { createScopeCoverageBasisV2 } =
+      await import('../../src/evidence/request-snapshot/scope-coverage-basis-v2.js');
+    const { resolveRepositoryScopeV1 } =
+      await import('../../src/evidence/scope/resolve-repository-scope-v1.js');
+    const { buildScopeCoverageV1, requireScopeCoverageFactsV1 } =
+      await import('../../src/evidence/scope/scope-coverage-v1.js');
+    const { issueEvidenceRankingOutcomeV2 } =
+      await import('../../src/evidence/ranking/evidence-ranking-outcome-v2.js');
+    const { createOpaqueTokenV2 } =
+      await import('../../src/evidence/request-snapshot/opaque-token-v2.js');
     const execution = requireLocateProjectionExecutionTokenV2(
       issueLocateProjectionExecutionCapabilityV2(),
     );
@@ -547,7 +530,7 @@ describe.runIf(
     });
     const emptyPool = Object.freeze({ records: Object.freeze([]) });
     const capabilityView = createTrustedPreFinalCapabilityViewForTestV2({
-      pool: emptyPool as never,
+      pool: emptyPool,
       execution,
       entries: [],
     });
@@ -619,9 +602,10 @@ describe.runIf(
       scopeFactsView.proof,
       execution,
     );
-    const brand = createOpaqueTokenV2<
-      import('../../src/evidence/request-snapshot/pre-ranking-evidence-pool-v2.js').TrustedStableRecordViewV2
-    >();
+    const brand =
+      createOpaqueTokenV2<
+        import('../../src/evidence/request-snapshot/pre-ranking-evidence-pool-v2.js').TrustedStableRecordViewV2
+      >();
     const retainedView = Object.freeze({
       ...brand,
       recordRef: createOpaqueTokenV2(),

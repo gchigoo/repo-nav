@@ -68,14 +68,19 @@ export function createMcpShutdownCoordinator(
   return { shutdown };
 }
 
-export function createMcpStartupShutdownController(): McpStartupShutdownController {
+export function createMcpStartupShutdownController(
+  reporter: McpShutdownReporter = NODE_PROCESS_REPORTER,
+): McpStartupShutdownController {
   let coordinator: McpShutdownCoordinator | undefined;
   let pendingIntent: McpShutdownIntent | undefined;
 
   return {
     request: (reason, exitCode) => {
       if (coordinator !== undefined) {
-        void coordinator.shutdown(reason, exitCode);
+        void coordinator.shutdown(reason, exitCode).catch(() => {
+          reporter.reportFailure();
+          reporter.setExitCode(1);
+        });
         return;
       }
       pendingIntent ??= { reason, exitCode };

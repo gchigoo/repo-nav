@@ -78,15 +78,35 @@ class RequestRepositorySnapshotImplV2 implements RequestRepositorySnapshotV2 {
     gitState: RepositoryGitStateV2,
     snapshotRef?: string,
   ): Promise<TrustedFinalSnapshotPoolsV2> {
-    return runFinalSnapshotCheckV2({
+    if (this.cache.isDisposed()) {
+      throw new RepositoryAccessError('FILE_UNREADABLE');
+    }
+    this.cache.sealForFinalCheck();
+    const lifecycleRevision = this.cache.getLifecycleRevision();
+    const result = await runFinalSnapshotCheckV2({
       repositoryRoot: this.repositoryRoot,
       loadedFiles: this.cache.listLoadedCanonicalFiles(),
+      invalidatedCanonicalKeys: this.cache.listInvalidatedCanonicalKeys(),
       evidencePool,
       eligiblePool: eligibleDiscoveryPool,
       gitState,
       ...(snapshotRef === undefined ? {} : { snapshotRef }),
       signal,
+      readVerifiedFile: (input) =>
+        this.source.readVerifiedFile(
+          input.repositoryRoot,
+          input.locator,
+          input.maxFileBytes,
+          input.signal,
+        ),
     });
+    if (
+      this.cache.isDisposed() ||
+      this.cache.getLifecycleRevision() !== lifecycleRevision
+    ) {
+      throw new RepositoryAccessError('FILE_UNREADABLE');
+    }
+    return result;
   }
 
   public dispose(): void {

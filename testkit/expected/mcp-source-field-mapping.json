@@ -23,26 +23,15 @@
           "file": "server/mapping.ts",
           "resolvable": true,
           "symbol": "hcpId",
-          "lines": [
-            1,
-            1
-          ],
+          "lines": [1, 1],
           "excerpt": "hcpId = hcp_id;"
         },
         "provenance": {
-          "discoveredBy": [
-            "ripgrep"
-          ],
+          "discoveredBy": ["ripgrep"],
           "verifiedBy": "filesystem",
-          "operations": [
-            "RIPGREP_SEARCH",
-            "FILESYSTEM_READ_RANGE"
-          ]
+          "operations": ["RIPGREP_SEARCH", "FILESYSTEM_READ_RANGE"]
         },
-        "reasonCodes": [
-          "EXACT_TERM_MATCH",
-          "DIRECT_ALIAS_MAPPING"
-        ]
+        "reasonCodes": ["EXACT_TERM_MATCH", "DIRECT_ALIAS_MAPPING"]
       }
     ],
     "candidates": [],
@@ -73,23 +62,13 @@
       },
       "scope": {
         "requested": [],
-        "effective": [
-          "client",
-          "server",
-          "db",
-          "config",
-          "unknown"
-        ],
+        "effective": ["client", "server", "db", "config", "unknown"],
         "policyVersion": "repo-scope-v1",
         "unmatchedLayers": []
       },
       "capabilities": {
         "textSearch": "supported-text-files",
-        "semanticClassification": [
-          "typescript",
-          "javascript",
-          "sql"
-        ],
+        "semanticClassification": ["typescript", "javascript", "sql"],
         "unsupportedLanguageHits": 0
       }
     },

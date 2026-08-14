@@ -1,5 +1,6 @@
 import type { BackendExecutionTraceV2 } from '../../contracts/v2/backend-execution-outcome-v2.js';
 import type { LocateExecutionTokenV2 } from '../../contracts/v2/locate-fact-envelope-v2.js';
+import { requireBackendExecutionTraceV2 } from '../../process/backend-execution-context-v2.js';
 import { createOpaqueTokenV2 } from '../request-snapshot/opaque-token-v2.js';
 
 declare const TRUSTED_FALLBACK_DECISION_V2: unique symbol;
@@ -24,7 +25,7 @@ const fallbackPrivate = new WeakMap<
 >();
 
 /**
- * 签发 fallback decision；绑定 same F5 trace / execution。
+ * 测试签发 seam；production 使用 ordered trace derivation。
  */
 export function issueTrustedFallbackDecisionV2(input: {
   readonly execution: LocateExecutionTokenV2;
@@ -45,6 +46,44 @@ export function issueTrustedFallbackDecisionV2(input: {
     }),
   );
   return token;
+}
+
+/**
+ * 从 ordered backend trace 推导 fallback 事实。
+ */
+export function deriveTrustedFallbackDecisionV2(input: {
+  readonly execution: LocateExecutionTokenV2;
+  readonly backendTrace: BackendExecutionTraceV2;
+}): TrustedFallbackDecisionV2 {
+  const traceView = requireBackendExecutionTraceV2(
+    input.backendTrace,
+    input.execution,
+  );
+  const outcomes = traceView.outcomes;
+  const primary = outcomes[0];
+  const fallback = outcomes[1];
+
+  const primaryIsCodeGraph =
+    primary !== undefined && primary.backend === 'codegraph';
+  const primaryCompleteSafe =
+    primaryIsCodeGraph &&
+    primary.status === 'used' &&
+    primary.completion === 'complete';
+  const fallbackRan = fallback !== undefined && fallback.backend === 'ripgrep';
+  const required = primaryIsCodeGraph && (!primaryCompleteSafe || fallbackRan);
+  const completeEquivalentFallback =
+    required &&
+    fallbackRan &&
+    fallback.status === 'used' &&
+    fallback.completion === 'complete';
+
+  return issueTrustedFallbackDecisionV2({
+    execution: input.execution,
+    backendTrace: input.backendTrace,
+    checked: fallbackRan,
+    required,
+    completeEquivalentFallback,
+  });
 }
 
 /**

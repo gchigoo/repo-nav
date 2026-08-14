@@ -1,12 +1,12 @@
-import type { BackendHit, BackendSearchResult } from '../../../src/contracts/index.js';
+import type {
+  BackendHit,
+  BackendSearchResult,
+} from '../../../src/contracts/index.js';
 
 /**
  * F3-LEGACY-POOL-001：single-call selector 冻结 selectedCount/proof。
  */
-export function createLegacyHitV2(
-  file: string,
-  line: number,
-): BackendHit {
+export function createLegacyHitV2(file: string, line: number): BackendHit {
   return Object.freeze({
     file,
     lines: Object.freeze([line, line] as [number, number]),

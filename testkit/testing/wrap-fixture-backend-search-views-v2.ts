@@ -11,6 +11,7 @@ import type {
   SearchBackendId,
 } from '../../src/contracts/index.js';
 import type { LocateExecutionTokenV2 } from '../../src/contracts/v2/locate-fact-envelope-v2.js';
+import type { TraceableRepositorySearchBackendV2 } from '../../src/contracts/v2/traceable-repository-search-backend-v2.js';
 import type {
   BackendExecutionContextV2,
   BackendExecutionOutcomeV2,
@@ -243,6 +244,12 @@ export function wrapFixtureBackendSearchViewsV2<
  */
 export function wrapFixtureBackendsSearchViewsV2(
   backends: readonly RepositorySearchBackend[],
-): readonly RepositorySearchBackend[] {
-  return Object.freeze(backends.map((backend) => wrapFixtureBackendSearchViewsV2(backend)));
+): readonly TraceableRepositorySearchBackendV2[] {
+  return Object.freeze(
+    backends.map(
+      (backend) =>
+        wrapFixtureBackendSearchViewsV2(backend) as RepositorySearchBackend &
+          TraceableRepositorySearchBackendV2,
+    ),
+  );
 }

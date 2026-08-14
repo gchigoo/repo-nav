@@ -10,7 +10,12 @@ const repositoryRoot = resolve(moduleDirectory, '..', '..');
 if (process.env['REPO_NAV_PLATFORM_TSX_ACTIVE'] !== '1') {
   const relaunch = spawnSync(
     process.execPath,
-    ['--import', 'tsx', fileURLToPath(import.meta.url), ...process.argv.slice(2)],
+    [
+      '--import',
+      'tsx',
+      fileURLToPath(import.meta.url),
+      ...process.argv.slice(2),
+    ],
     {
       cwd: repositoryRoot,
       env: { ...process.env, REPO_NAV_PLATFORM_TSX_ACTIVE: '1' },
@@ -38,9 +43,7 @@ const {
     resolve(repositoryRoot, 'testkit/contracts/platform-contract.ts'),
   ).href
 );
-const {
-  validatePlatformCoreCommandReportV1,
-} = await import(
+const { validatePlatformCoreCommandReportV1 } = await import(
   pathToFileURL(
     resolve(repositoryRoot, 'testkit/contracts/platform-evidence-report.ts'),
   ).href
@@ -76,11 +79,23 @@ function assertWorkflowContract(workflowPath) {
   const absolute = resolve(repositoryRoot, workflowPath);
   const raw = readFileSync(absolute, 'utf8');
   assert(!/secrets\./u.test(raw), 'workflow must not reference secrets');
-  assert(!/continue-on-error/u.test(raw), 'workflow must not continue-on-error');
-  assert(!/ubuntu-latest|windows-latest|macos-latest/u.test(raw), 'no *-latest runners');
-  assert(!/@v\d+/u.test(raw), 'actions must be pinned by SHA, not floating tags');
+  assert(
+    !/continue-on-error/u.test(raw),
+    'workflow must not continue-on-error',
+  );
+  assert(
+    !/ubuntu-latest|windows-latest|macos-latest/u.test(raw),
+    'no *-latest runners',
+  );
+  assert(
+    !/@v\d+/u.test(raw),
+    'actions must be pinned by SHA, not floating tags',
+  );
   const doc = parseYaml(raw);
-  assert(doc?.permissions?.contents === 'read', 'permissions.contents must be read');
+  assert(
+    doc?.permissions?.contents === 'read',
+    'permissions.contents must be read',
+  );
   assert(
     doc?.concurrency?.['cancel-in-progress'] === true,
     'concurrency.cancel-in-progress must be true',
@@ -104,15 +119,24 @@ function assertWorkflowContract(workflowPath) {
 
   const matrixJob = doc?.jobs?.[PLATFORM_MATRIX_JOB_ID_V1];
   assert(matrixJob !== undefined, 'platform-matrix job missing');
-  assert(matrixJob.strategy?.['fail-fast'] === false, 'fail-fast must be false');
+  assert(
+    matrixJob.strategy?.['fail-fast'] === false,
+    'fail-fast must be false',
+  );
   const include = matrixJob.strategy?.matrix?.include;
   assert(Array.isArray(include), 'matrix.include required');
-  assert(include.length === PLATFORM_CELLS_V1.length, 'matrix must have six cells');
+  assert(
+    include.length === PLATFORM_CELLS_V1.length,
+    'matrix must have six cells',
+  );
   for (let index = 0; index < PLATFORM_CELLS_V1.length; index += 1) {
     const expected = PLATFORM_CELLS_V1[index];
     const actual = include[index];
     assert(actual?.cellId === expected.id, `cell order mismatch at ${index}`);
-    assert(actual?.runner === expected.runner, `runner mismatch for ${expected.id}`);
+    assert(
+      actual?.runner === expected.runner,
+      `runner mismatch for ${expected.id}`,
+    );
     assert(
       Number(actual?.nodeMajor) === expected.nodeMajor,
       `nodeMajor mismatch for ${expected.id}`,
@@ -137,11 +161,15 @@ function assertWorkflowContract(workflowPath) {
   const upload = steps.find((step) =>
     String(step.uses ?? '').startsWith('actions/upload-artifact@'),
   );
-  const checkoutPin = PLATFORM_ACTION_PINS_V1.find((pin) => pin.id === 'checkout');
+  const checkoutPin = PLATFORM_ACTION_PINS_V1.find(
+    (pin) => pin.id === 'checkout',
+  );
   const setupPythonPin = PLATFORM_ACTION_PINS_V1.find(
     (pin) => pin.id === 'setup-python',
   );
-  const setupPin = PLATFORM_ACTION_PINS_V1.find((pin) => pin.id === 'setup-node');
+  const setupPin = PLATFORM_ACTION_PINS_V1.find(
+    (pin) => pin.id === 'setup-node',
+  );
   const uploadPin = PLATFORM_ACTION_PINS_V1.find(
     (pin) => pin.id === 'upload-artifact',
   );
@@ -189,7 +217,10 @@ function assertWorkflowContract(workflowPath) {
     'assert-cell step must be always()',
   );
   assert(upload?.if === 'always()', 'upload must be always()');
-  assert(upload?.with?.['if-no-files-found'] === 'error', 'upload must error if missing');
+  assert(
+    upload?.with?.['if-no-files-found'] === 'error',
+    'upload must error if missing',
+  );
   assert(upload?.with?.['retention-days'] === 14, 'retention-days must be 14');
 
   const aggregate = doc?.jobs?.[PLATFORM_AGGREGATE_JOB_ID_V1];
@@ -209,10 +240,16 @@ function assertWorkflowContract(workflowPath) {
     'aggregate needs must be [platform-matrix]',
   );
   assert(aggregate.if === 'always()', 'aggregate must use if: always()');
-  assert(!Array.isArray(aggregate.steps) || !aggregate.steps.some((step) => step.uses), 'aggregate must not checkout/setup');
   assert(
     !Array.isArray(aggregate.steps) ||
-      !aggregate.steps.some((step) => /npm\s+ci|npm\s+install/u.test(String(step.run ?? ''))),
+      !aggregate.steps.some((step) => step.uses),
+    'aggregate must not checkout/setup',
+  );
+  assert(
+    !Array.isArray(aggregate.steps) ||
+      !aggregate.steps.some((step) =>
+        /npm\s+ci|npm\s+install/u.test(String(step.run ?? '')),
+      ),
     'aggregate must not install dependencies',
   );
   const requireStep = aggregate.steps?.find((step) =>
@@ -230,7 +267,9 @@ function assertWorkflowContract(workflowPath) {
 }
 
 function assertCellReport(cellReportPath) {
-  const report = JSON.parse(readFileSync(resolve(repositoryRoot, cellReportPath), 'utf8'));
+  const report = JSON.parse(
+    readFileSync(resolve(repositoryRoot, cellReportPath), 'utf8'),
+  );
   const repository = createFilesystemPlatformContractRepository(repositoryRoot);
   const snapshot = validateProductionPlatformContractSnapshotV1(
     PRODUCTION_PLATFORM_CONTRACT_SNAPSHOT_V1,
@@ -240,7 +279,9 @@ function assertCellReport(cellReportPath) {
   const cell = PLATFORM_CELLS_V1.find((entry) => entry.id === cellId);
   assert(cell !== undefined, 'unknown cell in report');
   const applicable = applicableBindingsForOs(snapshot, cell.os);
-  const expectedCaseIds = applicable.map((binding) => binding.contractId).sort();
+  const expectedCaseIds = applicable
+    .map((binding) => binding.contractId)
+    .sort();
   const expectedMarkers = applicable
     .flatMap((binding) =>
       binding.requiredAssertionIds.map((assertionId) => ({
@@ -296,7 +337,9 @@ function main() {
   }
   if (args.workflowPath === undefined && args.cellReportPath === undefined) {
     assertWorkflowContract(PLATFORM_WORKFLOW_PATH_V1);
-    process.stdout.write(`workflow contract ok: ${PLATFORM_WORKFLOW_PATH_V1}\n`);
+    process.stdout.write(
+      `workflow contract ok: ${PLATFORM_WORKFLOW_PATH_V1}\n`,
+    );
   }
 }
 

@@ -72,10 +72,7 @@ describe.runIf(selected)('evidence output redaction', () => {
       ['password="my secret value"', 'password="[REDACTED]"'],
       ['password="abc,def"', 'password="[REDACTED]"'],
       ["password='abc;def'", "password='[REDACTED]'"],
-      [
-        String.raw`password="my \"escaped\" secret"`,
-        'password="[REDACTED]"',
-      ],
+      [String.raw`password="my \"escaped\" secret"`, 'password="[REDACTED]"'],
       ['password=`my secret value`', 'password=`[REDACTED]`'],
       ['password=`abc,def`', 'password=`[REDACTED]`'],
     ] as const) {
@@ -91,10 +88,7 @@ describe.runIf(selected)('evidence output redaction', () => {
     ]);
     expect(redactPublicText('password=`${process.env.SECRET}`')).toEqual({
       value: OVERSIZED_CONTENT_PLACEHOLDER,
-      reasonCodes: [
-        'SECRET_LIKE_VALUE',
-        'BINARY_OR_OVERSIZED_CONTENT',
-      ],
+      reasonCodes: ['SECRET_LIKE_VALUE', 'BINARY_OR_OVERSIZED_CONTENT'],
     });
   });
 
@@ -245,10 +239,7 @@ describe.runIf(selected)('safe public errors and diagnostics', () => {
       createNextActions({
         status: 'partial',
         hasCandidates: false,
-        limitsReached: [
-          'MAX_FILE_BYTES_REACHED',
-          'MAX_EXCERPT_BYTES_REACHED',
-        ],
+        limitsReached: ['MAX_FILE_BYTES_REACHED', 'MAX_EXCERPT_BYTES_REACHED'],
         abortSource: 'none',
         limits: resolveLocateLimits(),
       }),

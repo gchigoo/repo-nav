@@ -8,8 +8,8 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
 export const RELEASE_DESIGN_REVISION_PATHS_V1 = Object.freeze([
-  '.codestable/features/2026-07-24-public-beta-release/public-beta-release-design.md',
-  '.codestable/features/2026-07-24-public-beta-release/public-beta-release-checklist.yaml',
+  'docs/superpowers/archive/codestable/features/2026-07-24-public-beta-release/public-beta-release-design.md',
+  'docs/superpowers/archive/codestable/features/2026-07-24-public-beta-release/public-beta-release-checklist.yaml',
 ]);
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../..');

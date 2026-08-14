@@ -56,14 +56,22 @@ describe.runIf(
       'after-close-ignored',
       'no-timer-listener-leak',
     ]);
-    const a = LocateAbortCoordinatorV2.create(new AbortController().signal, 1000, {
-      setTimeout: ((_fn: () => void) => 1) as unknown as typeof setTimeout,
-      clearTimeout: (() => undefined) as unknown as typeof clearTimeout,
-    });
-    const b = LocateAbortCoordinatorV2.create(new AbortController().signal, 1000, {
-      setTimeout: ((_fn: () => void) => 2) as unknown as typeof setTimeout,
-      clearTimeout: (() => undefined) as unknown as typeof clearTimeout,
-    });
+    const a = LocateAbortCoordinatorV2.create(
+      new AbortController().signal,
+      1000,
+      {
+        setTimeout: ((_fn: () => void) => 1) as unknown as typeof setTimeout,
+        clearTimeout: (() => undefined) as unknown as typeof clearTimeout,
+      },
+    );
+    const b = LocateAbortCoordinatorV2.create(
+      new AbortController().signal,
+      1000,
+      {
+        setTimeout: ((_fn: () => void) => 2) as unknown as typeof setTimeout,
+        clearTimeout: (() => undefined) as unknown as typeof clearTimeout,
+      },
+    );
     const decision = a.closeFinalization();
     expect(() => requireFinalizedAbortDecisionV2(decision, b)).toThrow(
       /not trusted/,

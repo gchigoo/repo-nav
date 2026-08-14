@@ -25,7 +25,9 @@ describe.runIf(
       expect(parsed.isError).toBe(false);
       expect(parsed.output.ok).toBe(true);
       if (!parsed.output.ok) {
-        throw new Error(`Candidate MCP loop failed: ${parsed.output.error.code}`);
+        throw new Error(
+          `Candidate MCP loop failed: ${parsed.output.error.code}`,
+        );
       }
       const evidence = parsed.output.evidence;
       expect(evidence.confirmed).toContainEqual(
@@ -54,18 +56,12 @@ describe.runIf(
         {
           role: 'related',
           symbol: 'hcpName',
-          reasonCodes: [
-            'SAME_SCOPE_SIMILAR_IDENTIFIER',
-            'SAME_ENTITY_SIBLING',
-          ],
+          reasonCodes: ['SAME_SCOPE_SIMILAR_IDENTIFIER', 'SAME_ENTITY_SIBLING'],
         },
         {
           role: 'related',
           symbol: 'hcpEmail',
-          reasonCodes: [
-            'SAME_SCOPE_SIMILAR_IDENTIFIER',
-            'SAME_ENTITY_SIBLING',
-          ],
+          reasonCodes: ['SAME_SCOPE_SIMILAR_IDENTIFIER', 'SAME_ENTITY_SIBLING'],
         },
       ]);
       expect(

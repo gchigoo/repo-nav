@@ -1,0 +1,49 @@
+schema: rolekit/task-packet@1
+taskId: repo-nav-example-explore
+roleId: explorer
+objective: Identify the files and constraints relevant to RepoNav workflow migration after destructive cleanup.
+input:
+  request: Inspect the active workflow documentation, RoleKit contracts, Grok host bridge, and historical archive indexes for RepoNav after old workflow roots were removed.
+  focusPaths:
+    - docs/superpowers/**
+    - rolekit.yaml
+    - rolekit/**
+    - .grok/workflows/rolekit-host-bridge.rhai
+  knownConstraints:
+    - Do not modify files.
+    - Historical CodeStable and Superpowers payloads live only under docs/superpowers/archive.
+    - Distinguish observed facts from assumptions.
+context:
+  - id: readme
+    type: file
+    value: README.md
+  - id: workflow-readme
+    type: file
+    value: docs/superpowers/README.md
+  - id: codestable-archive-index
+    type: file
+    value: docs/superpowers/archive/codestable/INDEX.md
+  - id: superpowers-archive-index
+    type: file
+    value: docs/superpowers/archive/superpowers/INDEX.md
+constraints:
+  - Read-only investigation only.
+  - Do not access external services.
+  - Do not inspect archive payload files unless the task explicitly asks for historical evidence.
+acceptanceCriteria:
+  - Output cites relevant files and observed facts.
+  - Output names residual migration risks.
+allowedPaths:
+  - README.md
+  - docs/superpowers/README.md
+  - docs/superpowers/reference/**
+  - docs/superpowers/archive/codestable/INDEX.md
+  - docs/superpowers/archive/codestable/MANIFEST.tsv
+  - docs/superpowers/archive/superpowers/INDEX.md
+  - docs/superpowers/archive/superpowers/MANIFEST.tsv
+  - rolekit.yaml
+  - rolekit/**
+  - .grok/workflows/rolekit-host-bridge.rhai
+expectedArtifacts:
+  - name: exploration-summary
+    kind: structured-json

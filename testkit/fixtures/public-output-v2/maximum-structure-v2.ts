@@ -20,10 +20,7 @@ function maxRawEvidence(index: number, kind: 'confirmed' | 'candidate') {
       provenance: {
         discoveredBy: ['codegraph', 'filesystem'] as const,
         verifiedBy: 'filesystem' as const,
-        operations: [
-          'CODEGRAPH_QUERY',
-          'FILESYSTEM_READ_RANGE',
-        ] as const,
+        operations: ['CODEGRAPH_QUERY', 'FILESYSTEM_READ_RANGE'] as const,
       },
       reasonCodes: ['DIRECT_ALIAS_MAPPING'] as const,
     };
@@ -89,10 +86,7 @@ export function createMaximumUnsafeSourceV2(): FinalizedUnsafeLocateResultV2 {
         fallbackChecked: true,
         indexState: 'available',
         indexFreshness: 'not-applicable',
-        limitsReached: [
-          'MAX_CONFIRMED_REACHED',
-          'MAX_CANDIDATES_REACHED',
-        ],
+        limitsReached: ['MAX_CONFIRMED_REACHED', 'MAX_CANDIDATES_REACHED'],
         degradations: [],
         exclusionSummary: {
           NEGATIVE_TERM_MATCH: 1,

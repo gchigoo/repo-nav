@@ -2,7 +2,10 @@
  * F1B-LEGACY-ISOLATION-001: v2 shadow failures must not mutate production v1 engine results.
  */
 
-import { utf8Repeat, createPoisonConfirmedArray } from './resource-budgets-v2.js';
+import {
+  utf8Repeat,
+  createPoisonConfirmedArray,
+} from './resource-budgets-v2.js';
 import { createUnsafeLocateSuccessV2 } from './synthetic-locate-v2.js';
 
 export function v2ShadowFailureInputs(): readonly unknown[] {

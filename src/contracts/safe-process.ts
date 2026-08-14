@@ -2,6 +2,8 @@ import { Buffer } from 'node:buffer';
 
 import { z } from 'zod';
 
+import type { SpawnFailureReasonV2 } from '../process/spawn-failure-reason-v2.js';
+
 export const SAFE_PROCESS_FAILURE_KINDS = [
   'invalid-request',
   'spawn-error',
@@ -180,15 +182,26 @@ export type SafeProcessStreamingFailureKindV2 =
   | 'consumer-invalid'
   | 'cleanup-invariant';
 
-export type SafeProcessNoChildResultV2 = Readonly<{
-  ok: false;
-  kind: 'invalid-request' | 'other-spawn-error' | 'aborted';
-  startState: 'no-child';
-  exitCode: null;
-  terminationSignal: null;
-  stdout: Readonly<{ kind: 'unavailable' }>;
-  stderr: Uint8Array;
-}>;
+export type SafeProcessNoChildResultV2 =
+  | Readonly<{
+      ok: false;
+      kind: 'invalid-request' | 'aborted';
+      startState: 'no-child';
+      exitCode: null;
+      terminationSignal: null;
+      stdout: Readonly<{ kind: 'unavailable' }>;
+      stderr: Uint8Array;
+    }>
+  | Readonly<{
+      ok: false;
+      kind: 'other-spawn-error';
+      startState: 'no-child';
+      spawnFailureReason: SpawnFailureReasonV2;
+      exitCode: null;
+      terminationSignal: null;
+      stdout: Readonly<{ kind: 'unavailable' }>;
+      stderr: Uint8Array;
+    }>;
 
 export type SafeProcessStreamingResultV2<TPartial, TComplete> =
   | SafeProcessNoChildResultV2

@@ -206,24 +206,18 @@ describe.runIf(
       ACCEPTED_COMPLETE_REAL_LOCATE_SHADOW_ORCHESTRATOR_V2,
       createAcceptedCompleteRealLocateShadowOrchestratorV2,
       registerAcceptedCompleteRealAggregationBundleV2,
-    } = await import(
-      '../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js'
-    );
-    const { createFourPrerequisiteCanonicalInputV2 } = await import(
-      '../../testkit/fixtures/canonical-locate-bridge-v2/four-prerequisite-base-v2.js'
-    );
-    const { buildAggregationHarnessV2 } = await import(
-      '../../testkit/fixtures/request-outcome-v2/build-aggregation-harness-v2.js'
-    );
-    const { issueEvidenceRankingOutcomeV2 } = await import(
-      '../../src/evidence/ranking/evidence-ranking-outcome-v2.js'
-    );
-    const { registerF2RankingOutcomeForExecutionV2 } = await import(
-      '../../src/evidence/public-output/f2-locate-projection-stages-v2.js'
-    );
-    const { readCompleteRealLocateShadowFailureObservationV2 } = await import(
-      '../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js'
-    );
+    } =
+      await import('../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js');
+    const { createFourPrerequisiteCanonicalInputV2 } =
+      await import('../../testkit/fixtures/canonical-locate-bridge-v2/four-prerequisite-base-v2.js');
+    const { buildAggregationHarnessV2 } =
+      await import('../../testkit/fixtures/request-outcome-v2/build-aggregation-harness-v2.js');
+    const { issueEvidenceRankingOutcomeV2 } =
+      await import('../../src/evidence/ranking/evidence-ranking-outcome-v2.js');
+    const { registerF2RankingOutcomeForExecutionV2 } =
+      await import('../../src/evidence/public-output/f2-locate-projection-stages-v2.js');
+    const { readCompleteRealLocateShadowFailureObservationV2 } =
+      await import('../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js');
     const application = await createRepoNavApplicationContext();
     try {
       const projector = application.get(LOCATE_RESULT_PROJECTOR);

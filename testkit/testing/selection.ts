@@ -5,6 +5,12 @@ export interface TestIdentity {
   readonly caseId: string;
 }
 
+const IDENTITY_KEY_SEPARATOR = '\u0000';
+
+function identityKey(identity: TestIdentity): string {
+  return `${identity.group}${IDENTITY_KEY_SEPARATOR}${identity.caseId}`;
+}
+
 function parseSelection(name: string): ReadonlySet<string> {
   const raw = process.env[name];
   if (raw === undefined) {
@@ -20,14 +26,56 @@ function parseSelection(name: string): ReadonlySet<string> {
   return new Set(parsed);
 }
 
-export function isSelected(identity: TestIdentity): boolean {
-  const groups = parseSelection('REPO_NAV_TEST_GROUPS');
-  const cases = parseSelection('REPO_NAV_TEST_CASES');
-
+function isTestIdentity(value: unknown): value is TestIdentity {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const record = value as Readonly<Record<string, unknown>>;
+  const keys = Object.keys(record);
   return (
-    (groups.size === 0 || groups.has(identity.group)) &&
-    (cases.size === 0 || cases.has(identity.caseId))
+    keys.length === 2 &&
+    typeof record['group'] === 'string' &&
+    record['group'].length > 0 &&
+    typeof record['caseId'] === 'string' &&
+    record['caseId'].length > 0
   );
+}
+
+function parseIdentitySelection(): ReadonlySet<string> | null {
+  const raw = process.env['REPO_NAV_TEST_IDENTITIES'];
+  if (raw === undefined) {
+    return new Set();
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+
+  if (!Array.isArray(parsed) || !parsed.every(isTestIdentity)) {
+    return null;
+  }
+
+  return new Set(parsed.map((value) => identityKey(value)));
+}
+
+export function isSelected(identity: TestIdentity): boolean {
+  const identities = parseIdentitySelection();
+  if (identities === null) {
+    return false;
+  }
+  if (identities.size > 0) {
+    return identities.has(identityKey(identity));
+  }
+
+  const groups = parseSelection('REPO_NAV_TEST_GROUPS');
+  if (groups.size > 0) {
+    return groups.has(identity.group);
+  }
+
+  return true;
 }
 
 export function assertRunnerSurface(expected: string): void {

@@ -48,4 +48,4 @@ v2 tool error:
 
 ## Install notes
 
-Installed package `engines.node` is exactly `^22.0.0 || ^24.0.0`. Node 22 and 24 are supported; other majors are outside the declared engines range. Install with `npm install -g repo-nav`.
+Installed package `engines.node` is exactly `^22.0.0 || ^24.0.0`. Node 22 and 24 are supported; other majors are outside the declared engines range. Install with `npm i -g repo-nav@1.1.0`.

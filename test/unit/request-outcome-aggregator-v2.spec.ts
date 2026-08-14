@@ -135,7 +135,7 @@ describe.runIf(
       aggregateRequestOutcomeV2({
         ...harness.input,
         contributions: [
-          cloned as typeof harness.input.contributions[0],
+          cloned as (typeof harness.input.contributions)[0],
           harness.input.contributions[1],
           harness.input.contributions[2],
           harness.input.contributions[3],
@@ -156,7 +156,9 @@ describe.runIf(
     const harness = await buildAggregationHarnessV2({});
     const aggregated = aggregateRequestOutcomeV2(harness.input);
     expect(
-      aggregated.requestOutcome.value.degradations.includes('LOCATION_REDACTED'),
+      aggregated.requestOutcome.value.degradations.includes(
+        'LOCATION_REDACTED',
+      ),
     ).toBe(harness.input.contributions[0].locationRedacted);
     expect(countF2CoreAccessorProductionImportersV2()).toBe(0);
   });
@@ -266,8 +268,8 @@ describe.runIf(
       return source.includes('registerCompleteLocateFactEnvelopeV2');
     });
     expect(registrarHits).toEqual([]);
-    expect(describeFutureF8AggregationMountAbiV2().productionCoreAccessorOwner).toBe(
-      'F8',
-    );
+    expect(
+      describeFutureF8AggregationMountAbiV2().productionCoreAccessorOwner,
+    ).toBe('F8');
   });
 });

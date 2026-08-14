@@ -114,7 +114,10 @@ describe.runIf(isSelected(identity))('evidence discovery merge', () => {
   it('rejects a stale line hit and verifies unlocated hits through findMatches', async () => {
     const stale = await merge(
       [hit('ripgrep', ['LITERAL_TERM_HIT'])],
-      new FakeReader({ ...currentLocation, excerpt: 'const target = New.Value;' }),
+      new FakeReader({
+        ...currentLocation,
+        excerpt: 'const target = New.Value;',
+      }),
     );
     expect(stale.records).toEqual([]);
     expect(stale.unverifiedLocations).toBe(1);
@@ -162,7 +165,10 @@ describe.runIf(isSelected(identity))('evidence discovery merge', () => {
     });
 
     class EscapingReader extends FakeReader {
-      public constructor(private readonly code: 'PATH_OUTSIDE_ROOT' | 'INVALID_RELATIVE_PATH' | 'INVALID_REPOSITORY') {
+      public constructor(
+        private readonly code:
+          'PATH_OUTSIDE_ROOT' | 'INVALID_RELATIVE_PATH' | 'INVALID_REPOSITORY',
+      ) {
         super();
       }
       public override async readRange(): Promise<EvidenceLocation> {
@@ -175,10 +181,7 @@ describe.runIf(isSelected(identity))('evidence discovery merge', () => {
       'INVALID_REPOSITORY',
     ] as const) {
       await expect(
-        merge(
-          [hit('ripgrep', ['LITERAL_TERM_HIT'])],
-          new EscapingReader(code),
-        ),
+        merge([hit('ripgrep', ['LITERAL_TERM_HIT'])], new EscapingReader(code)),
       ).rejects.toMatchObject({ code });
     }
   });

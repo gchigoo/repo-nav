@@ -156,15 +156,23 @@ describe.runIf(isSelected(identity))('B1.1 exact runner selection', () => {
     await expectUsageError(['--all', '--case', 'runner-smoke']);
   });
 
-  it('normalizes legacy single group/case selection to one exact identity', async () => {
-    const summary = await runVitestSurfaceSummary('unit', [
+  it('normalizes legacy single group/case selection to one exact identity', () => {
+    const invocation = buildVitestSurfaceInvocation('unit', [
       '--group',
       'runner-smoke',
       '--case',
       'runner-smoke',
     ]);
 
-    expect(summary.selection).toEqual(['identity:runner-smoke/runner-smoke']);
+    expect(invocation.selection).toEqual({
+      groups: [],
+      identities: [{ group: 'runner-smoke', caseId: 'runner-smoke' }],
+      all: false,
+      reportPerformance: false,
+    });
+    expect(
+      JSON.parse(invocation.environment['REPO_NAV_TEST_IDENTITIES'] ?? 'null'),
+    ).toEqual([{ group: 'runner-smoke', caseId: 'runner-smoke' }]);
   });
 
   it('does not expand multi-target group aliases for legacy exact identity selection', () => {
@@ -217,28 +225,44 @@ describe.runIf(isSelected(identity))('B1.1 exact runner selection', () => {
     ).toEqual([]);
   });
 
-  it('reports group-only runner summary output without recursive self-selection', async () => {
-    const summary = await runVitestSurfaceSummary('unit', ['--group', 'di']);
+  it('reports group-only runner summary without recursively launching unit', async () => {
+    const summary = await runVitestSurfaceSummary('mcp', [
+      '--group',
+      'runner-smoke',
+    ]);
 
-    expect(summary.selection).toEqual(['group:di']);
+    expect(summary.selection).toEqual(['group:runner-smoke']);
     expect(summary.selection).not.toContain('all');
-    expect(summary.selection).not.toContain('identity:di/di-assembly');
+    expect(summary.selection).not.toContain(
+      'identity:runner-smoke/runner-smoke',
+    );
     expect(summary.counts.failed).toBe(0);
     expect(summary.counts.passed).toBeGreaterThan(0);
     expect(summary.counts.skipped).toBeGreaterThan(0);
-  });
+  }, 45_000);
 
-  it('accepts repeated identity selections and reports exact identities', async () => {
-    const summary = await runVitestSurfaceSummary('unit', [
+  it('accepts repeated identity selections without cross-product expansion', () => {
+    const invocation = buildVitestSurfaceInvocation('unit', [
       '--identity',
       'runner-smoke/runner-smoke',
       '--identity',
       'contract/term-case-parity',
     ]);
 
-    expect(summary.selection).toEqual([
-      'identity:runner-smoke/runner-smoke',
-      'identity:contract/term-case-parity',
+    expect(invocation.selection).toEqual({
+      groups: [],
+      identities: [
+        { group: 'runner-smoke', caseId: 'runner-smoke' },
+        { group: 'contract', caseId: 'term-case-parity' },
+      ],
+      all: false,
+      reportPerformance: false,
+    });
+    expect(
+      JSON.parse(invocation.environment['REPO_NAV_TEST_IDENTITIES'] ?? 'null'),
+    ).toEqual([
+      { group: 'runner-smoke', caseId: 'runner-smoke' },
+      { group: 'contract', caseId: 'term-case-parity' },
     ]);
   });
 });

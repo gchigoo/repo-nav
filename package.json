@@ -68,7 +68,7 @@
     "build": "npm run clean && tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint --max-warnings=0 .",
-    "format:check": "prettier --check \"src/**/*.{ts,json,md,mjs}\" \"tools/**/*.{ts,mts,json,md,mjs,yaml,yml}\" \"scripts/**/*.{ts,mts,json,md,mjs,yaml,yml}\" \"test/**/*.{ts,json,md,mjs}\" \"testkit/**/*.{ts,json,md,mjs,yaml,yml}\" \"docs/**/*.md\" \"README.md\" \"SECURITY.md\" \"vitest*.config.ts\" \"*.{json,yaml,yml,mjs,ts}\" \".prettierrc.json\" --ignore-path .prettierignore",
+    "format:check": "prettier --check \"src/**/*.{ts,json,md,mjs}\" \"tools/**/*.{ts,mts,json,md,mjs,yaml,yml}\" \"scripts/**/*.{ts,mts,json,md,mjs,yaml,yml}\" \"test/**/*.{ts,json,md,mjs}\" \"testkit/**/*.{ts,json,md,mjs,yaml,yml}\" \".github/workflows/*.{yaml,yml}\" \"docs/**/*.md\" \"README.md\" \"SECURITY.md\" \"vitest*.config.ts\" \"*.{json,yaml,yml,mjs,ts}\" \".prettierrc.json\" --ignore-path .prettierignore",
     "test": "tsx testkit/runners/unit-runner.ts",
     "test:integration:codegraph": "vitest run --config vitest.integration-codegraph.config.ts",
     "test:golden": "tsx testkit/runners/golden-runner.ts",

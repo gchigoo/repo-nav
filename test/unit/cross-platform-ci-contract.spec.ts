@@ -220,10 +220,20 @@ describe.runIf(
       });
     }
     const matrixRuns = stepRuns(matrixJob);
+    const matrixRunsJoined = matrixRuns.join('\n');
     expect(matrixRuns.filter((run) => run === 'npm run build')).toHaveLength(1);
     expect(
       matrixRuns.filter((run) => run.includes('npm run build')),
     ).toHaveLength(1);
+    expect(matrixRunsJoined).toContain('@vscode/ripgrep@1.15.9');
+    expect(matrixRunsJoined).not.toContain('@colbymchenry/codegraph');
+    expect(matrixRunsJoined).not.toContain('CG_SHIM');
+    const hostToolInstaller = readFileSync(
+      resolve(repositoryRoot, 'tools/ci/install-host-tools.mjs'),
+      'utf8',
+    );
+    expect(hostToolInstaller).toContain("'@vscode/ripgrep@1.15.9'");
+    expect(hostToolInstaller).not.toContain('codegraph');
     expect(matrixRuns).toContain('npm run test:mcp:built -- --all');
     expect(matrixRuns).toContain('npm run test:docs:built');
     expect(matrixRuns).toContain('npm run test:platform');

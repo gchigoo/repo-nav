@@ -6,6 +6,7 @@ import tseslint from 'typescript-eslint';
 import { describe, expect, it } from 'vitest';
 
 import { isSelected } from '../../testkit/testing/selection.js';
+import { TYPED_LINT_BASELINE_INVENTORY_V1 } from '../../testkit/testing/typed-lint-baseline-inventory.js';
 
 const repositoryRoot = resolve(import.meta.dirname, '../..');
 
@@ -151,6 +152,17 @@ describe.runIf(
       expect(typedOverride).toContain('{ checksVoidReturn: true }');
     }
     expect(testOverride).toContain("reportUnusedDisableDirectives: 'error'");
+    expect(TYPED_LINT_BASELINE_INVENTORY_V1).toEqual({
+      schemaVersion: 1,
+      owner: 'eslint.config.mjs',
+      gate: 'npm run lint',
+      scopes: ['test/**/*.ts', 'testkit/**/*.ts'],
+      rules: [
+        '@typescript-eslint/no-floating-promises',
+        '@typescript-eslint/no-misused-promises',
+      ],
+      acceptedViolations: 0,
+    });
   });
 
   it('rejects unobserved promises and accepts detached work with rejection handling', async () => {
@@ -182,5 +194,14 @@ describe.runIf(
         `${fixturePrefix}register(() => {\n  void run().catch(() => undefined);\n});\n`,
       ),
     ).resolves.toEqual([]);
+  });
+
+  it('keeps workflow YAML inside the standard format gate', () => {
+    const pkg = JSON.parse(
+      readFileSync(resolve(repositoryRoot, 'package.json'), 'utf8'),
+    ) as { scripts?: Record<string, string> };
+    expect(pkg.scripts?.['format:check']).toContain(
+      '.github/workflows/*.{yaml,yml}',
+    );
   });
 });

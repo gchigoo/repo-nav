@@ -73,7 +73,7 @@ jobs:
         name: Install
         run: npm ci
 
-      - name: Install host tools
+      - name: Install pinned ripgrep
         shell: bash
         env:
           # @vscode/ripgrep postinstall hits GitHub API; unauthenticated runners get 403.
@@ -83,21 +83,14 @@ jobs:
           TOOLS="${RUNNER_TEMP}/repo-nav-host-tools"
           mkdir -p "$TOOLS"
           npm install --prefix "$TOOLS" --no-save --no-package-lock --no-fund --no-audit \
-            @vscode/ripgrep@1.15.9 \
-            @colbymchenry/codegraph@1.1.6
-          BIN_DIR="$TOOLS/node_modules/.bin"
+            @vscode/ripgrep@1.15.9
           RG_BIN="$TOOLS/node_modules/@vscode/ripgrep/bin"
-          CG_SHIM="$TOOLS/node_modules/@colbymchenry/codegraph/npm-shim.js"
           if [[ "${RUNNER_OS}" == "Windows" ]]; then
             echo "$(cygpath -w "$RG_BIN")" >> "$GITHUB_PATH"
-            echo "$(cygpath -w "$BIN_DIR")" >> "$GITHUB_PATH"
             "${RG_BIN}/rg.exe" --version
-            node "$(cygpath -w "$CG_SHIM")" --version
           else
             echo "$RG_BIN" >> "$GITHUB_PATH"
-            echo "$BIN_DIR" >> "$GITHUB_PATH"
             "${RG_BIN}/rg" --version
-            node "$CG_SHIM" --version
           fi
 
       - id: runtime

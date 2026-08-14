@@ -9,7 +9,7 @@ import {
   closeSync,
   fstatSync,
 } from 'node:fs';
-import { join, relative, resolve, sep } from 'node:path';
+import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 
 const GIT_ENV_KEYS = new Set([
   'GIT_ALTERNATE_OBJECT_DIRECTORIES',
@@ -38,6 +38,14 @@ function hashBytes(bytes) {
 
 function isPlainObject(value) {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isWithinOrEqual(parent, candidate) {
+  const offset = relative(parent, candidate);
+  return (
+    offset === '' ||
+    (offset !== '..' && !offset.startsWith(`..${sep}`) && !isAbsolute(offset))
+  );
 }
 
 function runGit(repositoryRoot, args, env = gitEnv()) {
@@ -69,7 +77,7 @@ function walkWorktree(root, directory, gitDir, entries) {
   for (const name of readdirSync(directory).sort()) {
     const absolute = join(directory, name);
     const resolved = resolve(absolute);
-    if (resolved === gitDir || resolved.startsWith(`${gitDir}${sep}`)) {
+    if (isWithinOrEqual(gitDir, resolved)) {
       continue;
     }
     const stat = lstatSync(absolute, { bigint: true });

@@ -73,6 +73,7 @@ describe.runIf(selected)('H1 real-consumer candidate cleanup', () => {
   it('fails closed when process-group absence cannot be proven', async () => {
     await expect(
       reapCandidateProcessGroup(12345, {
+        platform: 'linux',
         timeoutMs: 0,
         pollIntervalMs: 0,
         probe: () => 'unknown',

@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'node:url';
+
 import type {
   BackendHealth,
   BackendHit,
@@ -39,7 +41,7 @@ import { RipgrepBackend } from '../../../src/repository/ripgrep-backend.js';
 import { candidateFixtureRoot } from '../candidate-policy/candidate-fixture-backend.js';
 import { createCanonicalLocateEngineHarnessV2 } from '../../testing/create-canonical-locate-engine-harness-v2.js';
 
-const repositoryRoot = new URL('../../../', import.meta.url).pathname;
+const repositoryRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const emptyBytes = new Uint8Array();
 
 function executionContext(): LocateExecutionContext {

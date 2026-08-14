@@ -11,6 +11,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
@@ -588,7 +589,7 @@ describe.runIf(
       writeFileSync(probePath, DENY_PROBE_SOURCE, 'utf8');
       const result = spawnSync(
         process.execPath,
-        ['--import', denyModule, probePath],
+        ['--import', pathToFileURL(denyModule).href, probePath],
         {
           cwd: repositoryRoot,
           encoding: 'utf8',

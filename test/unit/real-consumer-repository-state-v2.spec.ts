@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
@@ -43,7 +43,7 @@ describe.runIf(selected)('H1 real-consumer repository state', () => {
         worktreeEntryCount: 2,
       });
       expect(before.headSha).toMatch(/^[0-9a-f]{40}$/u);
-      expect(before.indexPath).toMatch(/\/index$/u);
+      expect(basename(before.indexPath)).toBe('index');
       expect(before.indexSha256).toMatch(/^[0-9a-f]{64}$/u);
       expect(before.worktreeTreeSha256).toMatch(/^[0-9a-f]{64}$/u);
       expect(() => assertRepositoryStateUnchanged(before, after)).not.toThrow();

@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { realpathSync } from 'node:fs';
+import { relative } from 'node:path';
 
 import { gitEnv } from './real-consumer-snapshot.mjs';
 
@@ -175,7 +176,7 @@ export function validateRealConsumerConfirmation(confirmation) {
   const gitRoot = realpathSync(
     runGit(canonicalRepositoryPath, ['rev-parse', '--show-toplevel']),
   );
-  if (gitRoot !== canonicalRepositoryPath) {
+  if (relative(gitRoot, canonicalRepositoryPath) !== '') {
     throw new Error(
       'confirmation.repository.canonicalRepositoryPath must equal realpath(git show-toplevel)',
     );

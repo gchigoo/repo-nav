@@ -167,13 +167,15 @@ export function validateRealConsumerConfirmation(confirmation) {
 
   let canonicalRepositoryPath;
   try {
-    canonicalRepositoryPath = realpathSync(repository.canonicalRepositoryPath);
+    canonicalRepositoryPath = realpathSync.native(
+      repository.canonicalRepositoryPath,
+    );
   } catch {
     throw new Error(
       'confirmation.repository.canonicalRepositoryPath unreadable',
     );
   }
-  const gitRoot = realpathSync(
+  const gitRoot = realpathSync.native(
     runGit(canonicalRepositoryPath, ['rev-parse', '--show-toplevel']),
   );
   if (relative(gitRoot, canonicalRepositoryPath) !== '') {

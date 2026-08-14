@@ -43,7 +43,7 @@ function createRepository(): {
   execFileSync('git', ['add', 'package.json'], { cwd: path });
   execFileSync('git', ['commit', '-m', 'fixture'], { cwd: path });
   return {
-    path: realpathSync(path),
+    path: realpathSync.native(path),
     branch: execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
       cwd: path,
       encoding: 'utf8',

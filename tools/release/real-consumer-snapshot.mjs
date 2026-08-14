@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import {
   lstatSync,
   openSync,
+  realpathSync,
   readFileSync,
   readlinkSync,
   readdirSync,
@@ -123,7 +124,7 @@ export function gitEnv() {
 }
 
 export function resolveGitIndexAbsolute(repositoryRoot, env = gitEnv()) {
-  return resolve(
+  return realpathSync.native(
     runGit(
       repositoryRoot,
       ['rev-parse', '--path-format=absolute', '--git-path', 'index'],
@@ -133,8 +134,8 @@ export function resolveGitIndexAbsolute(repositoryRoot, env = gitEnv()) {
 }
 
 export function captureWorktreeSnapshot(repositoryRoot) {
-  const root = resolve(repositoryRoot);
-  const gitDir = resolve(
+  const root = realpathSync.native(resolve(repositoryRoot));
+  const gitDir = realpathSync.native(
     runGit(root, ['rev-parse', '--path-format=absolute', '--absolute-git-dir']),
   );
   const entries = [];
@@ -146,7 +147,7 @@ export function captureWorktreeSnapshot(repositoryRoot) {
 }
 
 export function captureGitState(repositoryRoot) {
-  const root = resolve(repositoryRoot);
+  const root = realpathSync.native(resolve(repositoryRoot));
   const indexPath = resolveGitIndexAbsolute(root);
   return {
     branch: runGit(root, ['rev-parse', '--abbrev-ref', 'HEAD']),

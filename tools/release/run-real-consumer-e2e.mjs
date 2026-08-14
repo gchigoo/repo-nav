@@ -536,7 +536,7 @@ async function main(confirmationPath) {
     throw new Error('owner confirmation is unreadable');
   }
   const validated = validateRealConsumerConfirmation(confirmation);
-  if (validated.canonicalRepositoryPath === realpathSync(root)) {
+  if (validated.canonicalRepositoryPath === realpathSync.native(root)) {
     throw new Error('package source repository cannot be the consumer target');
   }
   const request = {
@@ -556,7 +556,7 @@ async function main(confirmationPath) {
   ) {
     throw new Error('owner-confirmed repository revision changed');
   }
-  const consumer = realpathSync(
+  const consumer = realpathSync.native(
     mkdtempSync(join(tmpdir(), 'repo-nav-real-consumer-')),
   );
   let consumerRecord;

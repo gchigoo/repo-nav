@@ -33,7 +33,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { exec, execFile, execFileSync, fork, spawn, spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 
 const results = [];
@@ -372,7 +372,8 @@ await recordAllowed('child-process-guard-name-collision', () => {
       encoding: 'utf8',
       env: {
         ...process.env,
-        NODE_OPTIONS: '--import=' + JSON.stringify(collisionImportPath),
+        NODE_OPTIONS:
+          '--import=' + JSON.stringify(pathToFileURL(collisionImportPath).href),
       },
     },
   );

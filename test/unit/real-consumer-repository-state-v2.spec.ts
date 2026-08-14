@@ -28,7 +28,7 @@ function createRepository(): string {
   writeFileSync(join(path, 'tracked.txt'), 'baseline\n');
   execFileSync('git', ['add', 'tracked.txt'], { cwd: path });
   execFileSync('git', ['commit', '-m', 'fixture'], { cwd: path });
-  return realpathSync(path);
+  return realpathSync.native(path);
 }
 
 describe.runIf(selected)('H1 real-consumer repository state', () => {

@@ -1,6 +1,6 @@
 # RepoNav RoleKit-first Host Bridge Migration Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Status (reviewed 2026-08-15): Complete.** The RoleKit contracts, Grok Build host bridge, durable documentation, archive manifests, and approved destructive cleanup are all present on `main`. This file is retained as the completed implementation record, not an active task list. Constraints below describe the migration execution context at the time.
 
 **Goal:** Complete a non-destructive migration from CodeStable-driven workflow artifacts to a RoleKit-first contract model with a Grok Build host bridge and `docs/superpowers` archives.
 

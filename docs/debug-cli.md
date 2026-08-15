@@ -1,6 +1,8 @@
 # RepoNav Debug CLI
 
-Debug CLI 是本地诊断入口，不是第二套业务语义。`locate` 复用生产 Evidence Service（schema `2.0`），`probe` 只报告基础设施健康。正式 JSON 写 stdout，安全诊断写 stderr。Public Golden 命令已移除；源码仓使用 `npm run test:golden`。
+当前文档对应 `repo-nav@1.1.0`。Debug CLI 是本地诊断入口，不是第二套业务语义。`locate` 复用生产 Evidence Service（schema `2.0`），`probe` 只报告基础设施健康。正式 JSON 写 stdout，安全诊断写 stderr。Public Golden 命令已移除；源码仓使用 `npm run test:golden`。
+
+`--help` 与 `--version` 使用轻量路径，不加载 Nest/MCP application graph。`locate` 与 `probe` 在参数解析成功后才加载 application adapter；`probe` 并发检查 backend，但按配置顺序输出。
 
 ## 帮助
 

@@ -1,12 +1,29 @@
 # RepoNav 后续开发重规划（2026-08-12）
 
+> **执行状态（2026-08-15）：** `1.1.0` hardening checkpoint 已通过 [PR #2](https://github.com/gchigoo/repo-nav/pull/2) 合入 `main`，merge commit 为 `3da72f8c38c11eeab9b5480d5d6435efa72a3f53`。原集成分支、其他无用分支和集成 worktree 已清理。当前剩余主线只有 `S2`、`C2`、`C3`、`C4` 与原子 `V2` cutover。项目现状摘要见 [`../../project-status.md`](../../project-status.md)。
+
 ## 目标
 
-以远端 `origin/main` 的 `1.1.0` 为新的 1.x 基线，安全吸收当前工作区已经实现但尚未提交的硬化内容；先形成可审查、可回滚、通过完整门禁的 1.x hardening checkpoint，再完成 verified-file、CLI fast path、canonical v2 authority、质量边界和 snapshot policy，最后在一个原子变更中切换到 `2.0.0` 并仅移除 `repo-nav/legacy-v1`。
+以 `1.1.0` 为 1.x 基线形成可审查、可回滚、通过完整门禁的 hardening checkpoint，再完成 canonical v2 authority 与 snapshot policy，最后在一个原子变更中切换到 `2.0.0` 并仅移除 `repo-nav/legacy-v1`。第一个 checkpoint 已完成并合入；当前计划从 `S2` 与 `C2` 继续。
 
-本计划不执行 publish、tag、push、release 或其他远端写入。
+本计划本身不授权 publish、tag、release 或其他远端写入。此前 integration push、PR 与 merge 均在单独授权后完成；后续远端或发布动作仍需单独明确授权。
 
-## 当前事实基线
+## 当前执行边界
+
+| 阶段    | 状态   | 当前事实                                                                                                  |
+| ------- | ------ | --------------------------------------------------------------------------------------------------------- |
+| `R0–R1` | 完成   | 已吸收 `1.1.0` 上游基线并冻结 root/subpath/version authority。                                            |
+| `H1–H6` | 完成   | Real-consumer、backend trace、spawn classification、verified snapshot、hermetic CI、SDK/audit 已合入。    |
+| `T1–T2` | 完成   | Exact identity registry 与 batched platform execution 已合入。                                            |
+| `F1–F2` | 完成   | CLI lazy application adapter、并发有序 probe 与 cold-start benchmark 已合入。                             |
+| `S1`    | 完成   | Candidate benchmark、authoritative CI job 与 provenance artifact 生成已合入。                             |
+| `S2`    | 阻塞   | 尚未导入并验证 authoritative artifact，也没有 committed selected policy constant。                        |
+| `C1`    | 完成   | Characterization matrix 与 authority inventory 已合入；production authority 尚未切换。                    |
+| `C2–C4` | 未开始 | Immutable facts/finalizer、production cutover、legacy decision removal 与 transport flattening 仍待实现。 |
+| `Q1–Q4` | 完成   | Formatting、typed lint、`no-floating-promises` 与 `no-misused-promises` 已覆盖 source/test/testkit。      |
+| `V2`    | 未开始 | 当前仍为 `1.1.0` 且 `repo-nav/legacy-v1` 仍公开；`2.0.0` 必须保持原子变更。                               |
+
+## 规划时事实基线（历史）
 
 ### 已提交
 
@@ -15,7 +32,7 @@
 - CLI closed-stdin 修复 `A1`：`8dd36f0`
 - RoleKit 文档与 host bridge 已提交。
 
-### 当前工作区已有实现证据，但尚未形成可接受提交
+### 规划时原工作区已有实现证据，但尚未形成可接受提交
 
 - `A2` real-consumer fail-closed evidence
 - `A3` mandatory backend trace 与 fallback 推导
@@ -26,7 +43,7 @@
 - `B1.1–B1.4` exact test identity、registry、platform batch、process budget
 - `D1` 仅部分完成：仍有重复 verified-open 路径
 
-### 本次 fresh checks
+### 规划时 fresh checks
 
 - `A2/A7` focused identities：479 passed，exit 0
 - `A3/A4` focused identities：30 passed，exit 0
@@ -37,9 +54,9 @@
 - `npm run format:check`：PASS
 - `git diff --check`：FAIL，仅 `test/unit/backend-physical-attempt-executor-v2.spec.ts` 文件末尾多一个空行
 
-这些结果只证明当前脏工作区的 focused/static 状态；尚未运行 build、全量 unit、Golden、MCP、docs、platform、CodeGraph integration 和完整 package gates。
+这些结果在规划时只证明原脏工作区的 focused/static 状态；当时尚未运行 build、全量 unit、Golden、MCP、docs、platform、CodeGraph integration 和完整 package gates。
 
-### 新的上游约束
+### 规划时新的上游约束
 
 `origin/main` 比本地多一个 `d34a08e` 提交，带来：
 
@@ -51,11 +68,13 @@
 
 远端改动与当前未提交工作重叠 16 个路径，包括 package/workflow、canonical executor、snapshot、runner registry 和 release tooling。禁止把当前 diff 直接整体套到远端基线，否则容易回退 1.1.0 行为或删除新增公开 API/workflow。
 
-## 总体策略
+## 总体策略（已执行的集成策略）
 
-1. **保持当前脏工作区不动，把它当作只读实现来源。**
-2. 在 sibling worktree 创建 clean integration branch，从当前已提交 `HEAD` 开始，以 merge 方式吸收 `origin/main`；不 rebase、不改写当前 main 历史。
-3. 在 integration worktree 按任务语义重放当前工作区改动，不整包复制，不把多个任务混成一个 WIP 提交。
+以下步骤记录 2026-08-12 至 2026-08-14 已完成的安全集成过程，不再是当前 worktree 操作指令。
+
+1. **保持当时的脏工作区不动，把它当作只读实现来源。**
+2. 在 sibling worktree 创建 clean integration branch，从当时已提交的 `HEAD` 开始，以 merge 方式吸收 `origin/main`；不 rebase、不改写当时的 main 历史。
+3. 在 integration worktree 按任务语义重放原工作区改动，不整包复制，不把多个任务混成一个 WIP 提交。
 4. 将旧计划保留为历史输入；新建 `docs/superpowers/plans/2026-08-12-repository-hardening-v2-replan.md` 作为后续唯一执行计划，避免覆盖当前用户修改过的旧计划。
 5. 每个任务先 focused tests，再 affected suites，再 static gates；process、snapshot、release、breaking cutover 使用独立 reviewer。
 6. 最终回到 `main`、push、创建 PR 或触发远程 CI 都是单独授权动作；计划执行本身不默认获得这些权限。
@@ -569,10 +588,18 @@ publish、tag、push 或 GitHub Release 始终需要另行明确授权。
 
 ## 完成定义
 
-- 当前实现已按上述提交边界重放到含 `origin/main` 的 clean integration history。
-- 1.1.0 新 public subpaths、workflow 和 authoritative-selection 行为无回退。
-- H/T/F/S/C/Q 所有验收通过。
-- `2.0.0` 原子提交只移除 `repo-nav/legacy-v1`，全部版本权威一致。
-- build、typecheck、lint、format、unit、Golden、MCP、docs、platform、CodeGraph、package、audit、SBOM、benchmarks、六格和 real-consumer 证据均绑定 final candidate SHA。
-- owner/reviewer evidence完整，readiness明确未 publish。
-- 未经授权不更新 main、不 push、不 tag、不 publish。
+### 已达到的 `1.1.0` checkpoint
+
+- [x] 当前实现已按计划边界重放到包含上游 `1.1.0` 的 integration history，并通过普通 PR merge 合入 `main`。
+- [x] `repo-nav/backends`、`repo-nav/node`、`repo-nav/advanced`、nightly/release-tag workflow 与 authoritative-selection 行为无回退。
+- [x] `H`、`T`、`F`、`S1`、`C1`、`Q` 验收已通过；main-branch cross-platform 与 package/release workflow 在 merge commit 上通过。
+- [x] 当前 package/version authority 仍为 `1.1.0`，`repo-nav/legacy-v1` 仍公开。
+
+### 最终 `2.0.0` 完成条件
+
+- [ ] `S2` 导入 authoritative snapshot artifact 并提交可重建的 selected policy。
+- [ ] `C2–C4` 完成 immutable facts/finalizer、production authority cutover、schema-1 decision removal 与 materialization/transport flattening。
+- [ ] `V2` 原子提交只移除 `repo-nav/legacy-v1`，并把全部版本权威一致切换到 `2.0.0`。
+- [ ] build、typecheck、lint、format、unit、Golden、MCP、docs、platform、CodeGraph、package、audit、SBOM、benchmarks、六格和 real-consumer 证据均绑定 final candidate SHA。
+- [ ] owner/reviewer evidence 完整，readiness 明确 `publishPerformed: false`。
+- [ ] 未经单独授权不 push、不 tag、不 publish，也不执行其他远端或 owner-only 动作。

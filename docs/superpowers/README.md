@@ -1,6 +1,8 @@
 # RepoNav Superpowers Workflow
 
-RepoNav now uses a RoleKit-first workflow for new agentic work.
+**Status:** Current workflow documentation, reviewed 2026-08-15.
+
+RepoNav uses a RoleKit-first workflow for new agentic work. Product and hardening status is tracked in [`../project-status.md`](../project-status.md); the maintained hardening execution plan is [`plans/2026-08-12-repository-hardening-v2-replan.md`](plans/2026-08-12-repository-hardening-v2-replan.md).
 
 ## Default flow
 
@@ -31,4 +33,6 @@ Historical records now live only in the archive indexes:
 - [CodeStable archive](archive/codestable/INDEX.md)
 - [Superpowers archive](archive/superpowers/INDEX.md)
 
-Owner/runtime release evidence that used to live under `.codestable/runtime/` now belongs under `docs/superpowers/evidence/release-runtime/`, which remains untracked.
+Archive payloads preserve their original versions, paths, and task state. They are historical evidence, are excluded from routine formatting/linting, and must not be treated as current product documentation.
+
+Owner/runtime release evidence that used to live under `.codestable/runtime/` now belongs under `docs/superpowers/evidence/release-runtime/`, which remains ignored and untracked.

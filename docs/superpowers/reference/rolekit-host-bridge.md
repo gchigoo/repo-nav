@@ -1,5 +1,7 @@
 # Grok Build Host Bridge for RoleKit Tasks
 
+**Status:** Current scaffold, reviewed 2026-08-15.
+
 The project workflow `.grok/workflows/rolekit-host-bridge.rhai` executes exactly one RepoNav RoleKit task through a Grok Build subagent.
 
 ## Run shape

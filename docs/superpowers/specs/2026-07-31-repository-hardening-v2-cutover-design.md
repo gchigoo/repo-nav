@@ -2,7 +2,9 @@
 
 **Date:** 2026-07-31
 
-**Status:** Approved for implementation planning
+**Status:** Partially implemented. The `1.1.0` hardening foundation merged on 2026-08-14; the 2026-08-12 replan is the current execution authority. Reviewed 2026-08-15.
+
+The implemented checkpoint covers the correctness/release blockers, feedback-loop work, verified-file consolidation, CLI fast path, snapshot candidate measurement, characterization, and quality boundaries described here. Snapshot policy selection and the canonical-authority/atomic `2.0.0` work remain pending. See [`../plans/2026-08-12-repository-hardening-v2-replan.md`](../plans/2026-08-12-repository-hardening-v2-replan.md) and [`../../project-status.md`](../../project-status.md).
 
 ## 1. Context
 

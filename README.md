@@ -8,6 +8,10 @@ candidates, coverage details, and next actions.
 RepoNav prefers CodeGraph when the target repository is indexed and falls back
 to text search when necessary. It does not modify the target repository.
 
+The repository is currently on the `1.1.0` release line. The hardening foundation
+has merged; the canonical-authority refactor and atomic `2.0.0` cutover remain
+future work. See [the current project status](docs/project-status.md).
+
 ## Requirements
 
 - Node.js `^22.0.0 || ^24.0.0`
@@ -67,18 +71,22 @@ semantics.
 ## Programmatic API
 
 Root package exports (`repo-nav`) expose the v2 request/result contract and
-application helpers. Prefer these stable surfaces:
+application helpers. The current public export map is:
 
-```text
-repo-nav              request/result + application API
-repo-nav/backends     RipgrepBackend / CodeGraphBackend
-repo-nav/node         NodeRepositoryReader / NodeSafeProcessRunner
-repo-nav/advanced     DI tokens / CodeGraph planner helpers
-repo-nav/legacy-v1    legacy v1 contracts
-```
+| Import                  | Purpose                                                |
+| ----------------------- | ------------------------------------------------------ |
+| `repo-nav`              | v2 request/result contracts and application helpers    |
+| `repo-nav/backends`     | `RipgrepBackend` and `CodeGraphBackend`                |
+| `repo-nav/node`         | `NodeRepositoryReader` and `NodeSafeProcessRunner`     |
+| `repo-nav/advanced`     | advanced DI tokens and CodeGraph planning helpers      |
+| `repo-nav/legacy-v1`    | historical v1 contracts retained for 1.x compatibility |
+| `repo-nav/package.json` | package metadata                                       |
 
-Root still re-exports some adapter symbols for 1.x compatibility; new code should
-import them from the subpaths above.
+The root still re-exports some adapter symbols for 1.x compatibility; new code
+should import them from the dedicated subpaths. `repo-nav/advanced` is public but
+is not the preferred high-level API. The planned `2.0.0` cutover removes only
+`repo-nav/legacy-v1`; it has not happened yet. Deep imports outside the export
+map are unsupported.
 
 ## Development from source
 
@@ -101,14 +109,22 @@ Golden regressions run from a source checkout via `npm run test:golden` only.
 ## Verification
 
 ```powershell
-npm run build && npm run typecheck && npm test
+npm run build
+npm run typecheck
+npm run lint
+npm run format:check
+npm test
 npm run test:golden -- --all
-npm run test:mcp -- --all
-npm run test:docs
+npm run test:mcp:built -- --all
+npm run test:docs:built
+npm run test:platform
 ```
 
-The MVP acceptance contract and evidence are documented in
-[`docs/acceptance/mvp.md`](docs/acceptance/mvp.md).
+`npm run test:integration:codegraph` is a separate live integration surface and
+requires CodeGraph `1.1.6` on `PATH`. Package and release-oriented checks are
+listed in [`docs/acceptance/mvp.md`](docs/acceptance/mvp.md). The current CI
+matrix and remaining hardening work are summarized in
+[`docs/project-status.md`](docs/project-status.md).
 
 ## Design principles
 

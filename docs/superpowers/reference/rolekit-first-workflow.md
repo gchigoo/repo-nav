@@ -1,5 +1,7 @@
 # RoleKit-first Workflow
 
+**Status:** Current workflow, reviewed 2026-08-15.
+
 RepoNav uses RoleKit as the single source of truth for reusable agent role and task contracts.
 
 ## Responsibilities

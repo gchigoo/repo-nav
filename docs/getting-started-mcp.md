@@ -2,7 +2,7 @@
 
 ## 安装
 
-要求 Node.js `^22.0.0 || ^24.0.0`（不支持 Node 20/23）。
+要求 Node.js `^22.0.0 || ^24.0.0`（不支持 Node 20/23）和 `rg`（ripgrep）。CodeGraph 是可选的索引检索后端；未安装或目标仓库未建立索引时，RepoNav 会按受控策略回退到文本搜索。
 
 ```powershell
 npm i -g repo-nav@1.1.0
@@ -32,7 +32,16 @@ npm i -g repo-nav@1.1.0
 
 ## 程序化 API
 
-根包导出（`repo-nav`）仅含 v2 契约与稳定客户端 API。v1 契约请从 `repo-nav/legacy-v1` 导入。
+当前 `1.1.0` package export map：
+
+- `repo-nav`：v2 契约与 application helpers；仍含部分 deprecated 1.x adapter re-export。
+- `repo-nav/backends`：`RipgrepBackend`、`CodeGraphBackend`。
+- `repo-nav/node`：`NodeRepositoryReader`、`NodeSafeProcessRunner`。
+- `repo-nav/advanced`：高级 DI token 与 CodeGraph planner helper。
+- `repo-nav/legacy-v1`：1.x 兼容所需的历史 v1 契约。
+- `repo-nav/package.json`：package metadata。
+
+生产 locate 输出只有 schema `2.0`，没有 v1 negotiation。计划中的 `2.0.0` 会原子删除 `repo-nav/legacy-v1`，但当前版本仍可导入该 subpath。不要使用 export map 之外的 deep import。迁移说明见 [`migration-v1-to-v2.md`](migration-v1-to-v2.md)，当前项目状态见 [`project-status.md`](project-status.md)。
 
 ### 找到证据
 

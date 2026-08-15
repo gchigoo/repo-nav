@@ -2,15 +2,17 @@
 
 **Date:** 2026-08-03
 
-**Status:** Destructive cleanup completed after explicit approval
+**Status:** Implemented; destructive cleanup completed after explicit approval. Reviewed 2026-08-15.
 
 ## 1. Context
 
-RepoNav currently has three workflow surfaces:
+At migration start, RepoNav had three workflow surfaces:
 
 1. `.codestable/` — the historical workflow system, including roadmap, requirements, feature records, gates, Python tooling, architecture/reference material, implementation scopes, review packets, QA reports, and evidence packs.
-2. `.superpowers/` — task execution ledgers and review artifacts for the current repository-hardening v2 cutover.
-3. `docs/superpowers/` — the emerging durable docs location, currently containing the repository-hardening v2 cutover design and plan.
+2. `.superpowers/` — task execution ledgers and review artifacts for the repository-hardening v2 cutover.
+3. `docs/superpowers/` — the emerging durable docs location, then containing the repository-hardening v2 cutover design and plan.
+
+The implemented state now consists of `rolekit.yaml`, `rolekit/`, `.grok/workflows/rolekit-host-bridge.rhai`, and maintained documentation under `docs/superpowers/`. The former `.codestable/` and `.superpowers/` roots have been removed; their immutable historical copies remain under `docs/superpowers/archive/`.
 
 The CodeStable surface is too heavy for routine work. It creates many required gates and repeated review loops, which costs time and tokens. The migration target is therefore not a one-for-one rewrite of CodeStable. The target is a simpler RoleKit-first workflow where RoleKit owns role/task contracts, Grok Build acts as the host harness, and `docs/superpowers` stores durable specifications, plans, evidence, and historical archives.
 
@@ -145,10 +147,10 @@ RepoNav business tests are not required unless runtime/package/source files are 
 
 ## 10. Risks and mitigations
 
-| Risk                                                    | Mitigation                                                                                                                                         |
-| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Duplicating historical files increases repository size. | This is intentional for a traceable complete migration. The old roots were deleted only after separate explicit approval and archive verification. |
-| RoleKit is private and not a RepoNav dependency.        | Do not change `package.json`; use config/examples/docs and host mode.                                                                              |
-| Host bridge could overclaim sandbox guarantees.         | Host profiles document advisory/host-attested behavior and do not claim OS sandbox proof.                                                          |
-| Existing hardening work is mid-flight.                  | Do not edit the active modified hardening plan.                                                                                                    |
-| Review simplification could miss high-risk issues.      | Security/release reviewer remains mandatory for high-risk categories.                                                                              |
+| Risk                                                                 | Mitigation                                                                                                                                         |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Duplicating historical files increases repository size.              | This is intentional for a traceable complete migration. The old roots were deleted only after separate explicit approval and archive verification. |
+| RoleKit is private and not a RepoNav dependency.                     | Do not change `package.json`; use config/examples/docs and host mode.                                                                              |
+| Host bridge could overclaim sandbox guarantees.                      | Host profiles document advisory/host-attested behavior and do not claim OS sandbox proof.                                                          |
+| Repository Hardening v2 continues after its merged 1.1.0 checkpoint. | Keep current status in `docs/project-status.md` and execution details in the 2026-08-12 replan; preserve earlier plans as historical context.      |
+| Review simplification could miss high-risk issues.                   | Security/release reviewer remains mandatory for high-risk categories.                                                                              |

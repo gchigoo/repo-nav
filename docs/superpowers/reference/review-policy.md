@@ -1,5 +1,7 @@
 # RepoNav Review Policy
 
+**Status:** Current policy, reviewed 2026-08-15.
+
 RepoNav review is risk-tiered. The default is no longer CodeStable's many-round gate sequence.
 
 ## Risk tiers

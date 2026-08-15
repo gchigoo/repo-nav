@@ -1,6 +1,6 @@
 # Repository Hardening and v2 Cutover Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Status (reviewed 2026-08-15): Superseded for execution.** This 2026-07-31 plan preserves the original task decomposition and historical `1.0.6` assumptions. Do not execute it as the current plan. The maintained plan is [`2026-08-12-repository-hardening-v2-replan.md`](2026-08-12-repository-hardening-v2-replan.md), and the current merged/pending boundary is summarized in [`../../project-status.md`](../../project-status.md).
 
 **Goal:** 修复 RepoNav 的正确性、发布门禁、快照一致性与跨平台测试缺陷，收敛到单一 canonical v2 facts 权威，删除公开 `repo-nav/legacy-v1`，并准备不发布、不打 tag 的 `2.0.0` release candidate。
 

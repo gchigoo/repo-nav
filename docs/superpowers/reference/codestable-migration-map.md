@@ -1,6 +1,8 @@
 # CodeStable Migration Map
 
-This repository keeps CodeStable history but does not use CodeStable as the default future workflow engine.
+**Status:** Migration and destructive cleanup completed; reviewed 2026-08-15.
+
+This repository keeps CodeStable history but does not use CodeStable as the default future workflow engine. Archive payloads remain unchanged as historical evidence.
 
 ## Source to target mapping
 

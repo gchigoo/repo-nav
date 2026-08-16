@@ -92,7 +92,9 @@ function runNpm(root, npmCli, args, cwd = root) {
     throw result.error;
   }
   if (result.signal !== null || result.status !== 0) {
-    throw new Error(`npm ${args.join(' ')} failed`);
+    throw new Error(
+      result.stderr || result.stdout || `npm ${args.join(' ')} failed`,
+    );
   }
   return result.stdout;
 }
@@ -893,7 +895,7 @@ export function installReleaseCandidateV1(input) {
     input.npmCli,
     [
       'install',
-      '--offline',
+      '--prefer-offline',
       '--ignore-scripts',
       '--no-audit',
       '--no-fund',

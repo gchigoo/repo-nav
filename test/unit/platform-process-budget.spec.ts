@@ -257,6 +257,25 @@ function stepRuns(job: Record<string, unknown> | undefined): readonly string[] {
     .filter((run) => run.length > 0);
 }
 
+function checkoutFetchDepth(job: Record<string, unknown> | undefined): unknown {
+  if (job === undefined || !Array.isArray(job['steps'])) {
+    return undefined;
+  }
+  const checkout = job['steps'].find(
+    (step) =>
+      typeof step === 'object' &&
+      step !== null &&
+      (step as Record<string, unknown>)['name'] === 'Checkout',
+  );
+  if (typeof checkout !== 'object' || checkout === null) {
+    return undefined;
+  }
+  const configuration = (checkout as Record<string, unknown>)['with'];
+  return typeof configuration === 'object' && configuration !== null
+    ? (configuration as Record<string, unknown>)['fetch-depth']
+    : undefined;
+}
+
 function createFreshBuildBudgetFixture(
   options: {
     readonly includeGit?: boolean;
@@ -720,8 +739,11 @@ syncBuiltinESMExports();
         .replaceAll('\r', '\n');
       const workflow = parseYaml(workflowRaw) as Record<string, unknown>;
       const jobs = workflow['jobs'] as Record<string, Record<string, unknown>>;
-      const matrixRuns = stepRuns(jobs[PLATFORM_MATRIX_JOB_ID_V1]);
+      const matrixJob = jobs[PLATFORM_MATRIX_JOB_ID_V1];
+      const matrixRuns = stepRuns(matrixJob);
 
+      expect(checkoutFetchDepth(matrixJob)).toBe(0);
+      expect(checkoutFetchDepth(jobs['macos-arm-unit'])).toBe(0);
       expect(matrixRuns.filter((run) => run === 'npm run build')).toHaveLength(
         1,
       );

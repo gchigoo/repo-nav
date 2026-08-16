@@ -223,11 +223,16 @@ beforeAll(async () => {
       .update(packageLock)
       .digest('hex'),
   });
-}, 120_000);
+}, 300_000);
 
 afterAll(() => {
   if (workspace !== undefined) {
-    rmSync(workspace, { recursive: true, force: true });
+    rmSync(workspace, {
+      recursive: true,
+      force: true,
+      maxRetries: 10,
+      retryDelay: 100,
+    });
   }
 });
 

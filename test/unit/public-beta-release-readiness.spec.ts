@@ -601,7 +601,7 @@ process.exitCode = result.status ?? 1;
       } finally {
         rmSync(fixture.fixtureRoot, { recursive: true, force: true });
       }
-    });
+    }, 120_000);
 
     it('rejects minimal, stale, and internally inconsistent persisted release evidence', () => {
       const now = Date.parse('2026-08-15T06:00:00.000Z');

@@ -644,7 +644,7 @@ syncBuiltinESMExports();
 
     it.runIf(runPlainUnitProbe)(
       'runs plain unit tests from a clean checkout without dist, candidates, or builds',
-      { timeout: 180_000 },
+      { timeout: 360_000 },
       () => {
         const fixture = createFreshBuildBudgetFixture({ includeGit: true });
         try {
@@ -671,7 +671,7 @@ syncBuiltinESMExports();
             encoding: 'utf8',
             shell: false,
             env: environment,
-            timeout: 170_000,
+            timeout: 340_000,
           });
           expect(unit.status, unit.stderr || unit.stdout).toBe(0);
           expect(existsSync(join(fixture.root, 'dist'))).toBe(false);

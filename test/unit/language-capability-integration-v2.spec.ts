@@ -1,16 +1,22 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
+import type { CanonicalFileKeyV2 } from '../../src/evidence/request-snapshot/canonical-file-identity-v2.js';
 import { createOpaqueTokenV2 } from '../../src/evidence/request-snapshot/opaque-token-v2.js';
-import type {
-  EligibleDiscoveryRefV2,
-  OpaqueFileBucketRefV2,
-  PreFinalEligibleDiscoveryPoolV2,
+import {
+  buildPreRankingStablePoolsV2,
+  type EligibleDiscoveryRefV2,
+  type OpaqueFileBucketRefV2,
+  type PreFinalEligibleDiscoveryPoolV2,
 } from '../../src/evidence/request-snapshot/pre-ranking-evidence-pool-v2.js';
 import {
   createTrustedPreFinalCapabilityViewForTestV2,
   requireStableEligibleCapabilityViewV2,
 } from '../../src/evidence/request-snapshot/capability-classification-views-v2.js';
 import {
+  bindStableEligibleScopeDecisionsV2,
   createTrustedPreFinalScopeClassificationViewForTestV2,
   requireStableEligibleScopeViewV2,
 } from '../../src/evidence/request-snapshot/scope-classification-views-v2.js';
@@ -44,7 +50,7 @@ import {
 } from '../../src/evidence/scope/scope-bound-producer-registrar-v2.js';
 import { issueLocateProjectionExecutionCapabilityV2 } from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
 import { requireLocateProjectionExecutionTokenV2 } from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
-import { REQUEST_OUTCOME_CONTRIBUTION_OWNER_ORDER_V2 } from '../../src/evidence/request-outcome/request-outcome-contribution-registry-v2.js';
+import { LOCATE_EXECUTION_FACT_FAMILIES_V2 } from '../../src/contracts/v2/locate-execution-facts-v2.js';
 import { issueEvidenceRankingOutcomeV2 } from '../../src/evidence/ranking/evidence-ranking-outcome-v2.js';
 import { runFinalSnapshotCheckV2 } from '../../src/evidence/request-snapshot/final-snapshot-check-v2.js';
 import { projectExpandedSafePreCapPoolV2 } from '../../src/evidence/request-snapshot/discovery-lane-universe-v2.js';
@@ -340,6 +346,7 @@ describe.runIf(
       eligiblePool: { records: [] },
       gitState: 'unknown',
       signal: new AbortController().signal,
+      execution,
     });
     // bind one stable eligible matching observation ref via empty pool + count 0 path:
     // empty stable pool still exercises create/require; fixture rows document policy
@@ -352,17 +359,17 @@ describe.runIf(
       foldProof,
       execution,
     });
-    const stableCapability = requireStableEligibleCapabilityViewV2(
-      final.eligibleDiscovery,
-      final.proof,
-      foldProof,
-      execution,
-      [],
-    );
     const stableScope = requireStableEligibleScopeViewV2(
       final.eligibleDiscovery,
       final.proof,
       foldProof,
+      execution,
+    );
+    const stableCapability = requireStableEligibleCapabilityViewV2(
+      final.eligibleDiscovery,
+      final.proof,
+      foldProof,
+      stableScope,
       execution,
     );
     const resolvedScope = resolveRepositoryScopeV1(undefined);
@@ -429,13 +436,8 @@ describe.runIf(
     caseId: 'capability-contribution',
   }),
 )('F8-CONTRIBUTION-001 capability-contribution', () => {
-  it('builds capability contribution through seal and four-tuple order', async () => {
-    expect(REQUEST_OUTCOME_CONTRIBUTION_OWNER_ORDER_V2).toEqual([
-      'public-materialization',
-      'snapshot-observation',
-      'scope',
-      'capability',
-    ]);
+  it('builds capability facts through the trusted language boundary', async () => {
+    expect(LOCATE_EXECUTION_FACT_FAMILIES_V2).toContain('capability');
     const execution = executionToken();
     const final = await runFinalSnapshotCheckV2({
       repositoryRoot: '/tmp/f8-contrib',
@@ -448,6 +450,7 @@ describe.runIf(
       eligiblePool: { records: [] },
       gitState: 'unknown',
       signal: new AbortController().signal,
+      execution,
     });
     const preCap = projectExpandedSafePreCapPoolV2([], true, execution);
     const folded = scopeFoldSafeCandidatePoolV2(preCap, [], execution);
@@ -485,17 +488,17 @@ describe.runIf(
       registered,
       execution,
     );
-    const stableCapability = requireStableEligibleCapabilityViewV2(
-      final.eligibleDiscovery,
-      final.proof,
-      foldProof,
-      execution,
-      [],
-    );
     const stableScope = requireStableEligibleScopeViewV2(
       final.eligibleDiscovery,
       final.proof,
       foldProof,
+      execution,
+    );
+    const stableCapability = requireStableEligibleCapabilityViewV2(
+      final.eligibleDiscovery,
+      final.proof,
+      foldProof,
+      stableScope,
       execution,
     );
     const resolvedScope = resolveRepositoryScopeV1(undefined);
@@ -592,5 +595,199 @@ describe.runIf(
       'javascript',
       'sql',
     ]);
+  });
+
+  it('requires an authentic ranking outcome for nonempty capability records', async () => {
+    const execution = executionToken();
+    const relative = 'src/nonempty.py';
+    const canonicalFileKey = relative as CanonicalFileKeyV2;
+    const fileSnapshot = Object.freeze({
+      locator: relative,
+      canonicalFileKey,
+      identity: Object.freeze({
+        dev: 1n,
+        ino: 2n,
+        size: 6n,
+        mtimeNs: 3n,
+        ctimeNs: 4n,
+      }),
+      contentSha256: 'a'.repeat(64),
+    });
+    const pools = buildPreRankingStablePoolsV2([
+      Object.freeze({
+        discoveryKey: `discovery:v1\u0000${relative}\u0000nonempty`,
+        canonicalFileKey,
+        safeKey: 'nonempty',
+        rankingSignals: Object.freeze({
+          kind: 'direct' as const,
+          focusLines: Object.freeze([1, 1] as [number, number]),
+          focusExcerpt: 'x = 1',
+        }),
+        classificationDefined: true,
+      }),
+    ]);
+    const final = await runFinalSnapshotCheckV2({
+      repositoryRoot: '/unused',
+      loadedFiles: Object.freeze([
+        Object.freeze({
+          canonicalFileKey,
+          snapshot: fileSnapshot,
+          aliases: Object.freeze([relative]),
+        }),
+      ]),
+      evidencePool: pools.evidence,
+      eligiblePool: pools.eligible,
+      gitState: 'unknown',
+      signal: new AbortController().signal,
+      execution,
+      readVerifiedFile: async (input) =>
+        Object.freeze({
+          snapshot: Object.freeze({ ...fileSnapshot, locator: input.locator }),
+          bytes: Buffer.from('x = 1\n', 'utf8'),
+        }),
+    });
+    const retained = final.retainedEligible[0];
+    expect(retained).toBeDefined();
+    if (retained === undefined) return;
+
+    const preCap = projectExpandedSafePreCapPoolV2([], true, execution);
+    const folded = scopeFoldSafeCandidatePoolV2(preCap, [], execution);
+    const foldProof = readScopeFoldedSafePoolProofV2(folded, execution);
+    bindStableEligibleScopeDecisionsV2({
+      pool: final.eligibleDiscovery,
+      snapshotProof: final.proof,
+      foldProof,
+      execution,
+      records: Object.freeze([
+        Object.freeze({
+          eligibleRef: retained.eligibleRef,
+          fileBucketRef: retained.fileBucketRef,
+          decision: Object.freeze({
+            layer: 'server' as const,
+            included: true,
+            confirmation: 'allowed' as const,
+          }),
+        }),
+      ]),
+    });
+    const preFinalPool: PreFinalEligibleDiscoveryPoolV2 = Object.freeze({
+      records: Object.freeze([retained]),
+    });
+    const capabilityView = createTrustedPreFinalCapabilityViewForTestV2({
+      pool: preFinalPool,
+      execution,
+      entries: Object.freeze([
+        Object.freeze({
+          eligibleRef: retained.eligibleRef,
+          fileBucketRef: retained.fileBucketRef,
+          posixPath: relative,
+          sourceText: 'x = 1',
+        }),
+      ]),
+    });
+    const scopeView = createTrustedPreFinalScopeClassificationViewForTestV2(
+      execution,
+      new Map([
+        [
+          retained.eligibleRef,
+          Object.freeze({
+            layer: 'server' as const,
+            included: true,
+            confirmation: 'allowed' as const,
+          }),
+        ],
+      ]),
+    );
+    const admission = createVerifiedLanguageConsumerAdmissionV2(
+      'language-capability',
+      execution,
+    );
+    const registered = registerVerifiedLanguageConsumerV2(
+      admission,
+      { async consumeVerifiedContext() {} },
+      execution,
+    );
+    const observation = createTrustedLanguageCapabilityObservationV2(
+      capabilityView,
+      scopeView,
+      registered,
+      execution,
+    );
+    const stableScope = requireStableEligibleScopeViewV2(
+      final.eligibleDiscovery,
+      final.proof,
+      foldProof,
+      execution,
+    );
+    const stableCapability = requireStableEligibleCapabilityViewV2(
+      final.eligibleDiscovery,
+      final.proof,
+      foldProof,
+      stableScope,
+      execution,
+    );
+    const resolvedScope = resolveRepositoryScopeV1(undefined);
+    const coverageBasis = createScopeCoverageBasisV2({
+      excludedLocatorRefs: [],
+      mixedIncludedLocatorRefs: [],
+      stableEligiblePool: final.eligibleDiscovery,
+      snapshotProof: final.proof,
+      foldProof,
+      execution,
+    });
+    const scopeFacts = buildScopeCoverageV1(
+      final.eligibleDiscovery,
+      final.proof,
+      foldProof,
+      coverageBasis,
+      resolvedScope,
+      execution,
+    );
+    const scopeFactsView = requireScopeCoverageFactsV1(
+      scopeFacts,
+      final.eligibleDiscovery,
+      final.proof,
+      foldProof,
+      coverageBasis,
+      resolvedScope,
+      execution,
+    );
+    const count = createCapabilityPreBudgetCountV2(
+      observation,
+      stableCapability,
+      stableScope,
+      final.eligibleDiscovery,
+      final.proof,
+      foldProof,
+      scopeFactsView.proof,
+      execution,
+    );
+
+    expect(() =>
+      sealCapabilityRetainedDecisionsV2(
+        count,
+        undefined,
+        observation,
+        final.eligibleDiscovery,
+        final.proof,
+        foldProof,
+        scopeFactsView.proof,
+        execution,
+      ),
+    ).toThrow(/nonempty capability decisions require ranking/u);
+  });
+
+  it('keeps production capability construction free of test issuers and synthetic rankings', () => {
+    const source = readFileSync(
+      resolve(
+        import.meta.dirname,
+        '../../src/evidence/language/build-execution-capability-coverage-v2.ts',
+      ),
+      'utf8',
+    );
+
+    expect(source).not.toContain('ForTestV2');
+    expect(source).not.toContain('issueEvidenceRankingOutcomeV2');
+    expect(source).toContain('input.rankingOutcome');
   });
 });

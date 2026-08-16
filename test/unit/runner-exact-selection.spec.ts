@@ -6,6 +6,7 @@ import {
   runVitestSurfaceSummary,
 } from '../../testkit/runners/run-vitest-surface.js';
 import {
+  isExplicitlySelected,
   isSelected,
   type TestIdentity,
 } from '../../testkit/testing/selection.js';
@@ -80,6 +81,27 @@ describe.runIf(isSelected(identity))('B1.1 exact runner selection', () => {
         expect(isSelected({ group: 'g2', caseId: 'c2' })).toBe(true);
         expect(isSelected({ group: 'g1', caseId: 'c2' })).toBe(false);
         expect(isSelected({ group: 'g2', caseId: 'c1' })).toBe(false);
+      },
+    );
+  });
+
+  it('distinguishes default selection from an explicit identity or group', () => {
+    withSelectionEnvironment({}, () => {
+      expect(isSelected({ group: 'g1', caseId: 'c1' })).toBe(true);
+      expect(isExplicitlySelected({ group: 'g1', caseId: 'c1' })).toBe(false);
+    });
+    withSelectionEnvironment(
+      setSelection([{ group: 'g1', caseId: 'c1' }]),
+      () => {
+        expect(isExplicitlySelected({ group: 'g1', caseId: 'c1' })).toBe(true);
+        expect(isExplicitlySelected({ group: 'g1', caseId: 'c2' })).toBe(false);
+      },
+    );
+    withSelectionEnvironment(
+      { REPO_NAV_TEST_GROUPS: JSON.stringify(['g1']) },
+      () => {
+        expect(isExplicitlySelected({ group: 'g1', caseId: 'c1' })).toBe(true);
+        expect(isExplicitlySelected({ group: 'g2', caseId: 'c1' })).toBe(false);
       },
     );
   });

@@ -20,4 +20,4 @@ expected:
   candidates: []
   forbiddenEvidenceIds: []
   requiredCoverageCodes: []
-  minimumExclusionCounts: {}
+  minimumExclusionCounts: { UNVERIFIED_FILE_CONTENT: 1 }

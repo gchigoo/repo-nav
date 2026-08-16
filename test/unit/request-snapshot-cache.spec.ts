@@ -10,6 +10,10 @@ import { dirname, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import {
+  issueLocateProjectionExecutionCapabilityV2,
+  requireLocateProjectionExecutionTokenV2,
+} from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
 import type { CanonicalFileKeyV2 } from '../../src/evidence/request-snapshot/canonical-file-identity-v2.js';
 import { buildPreRankingStablePoolsV2 } from '../../src/evidence/request-snapshot/pre-ranking-evidence-pool-v2.js';
 import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
@@ -27,6 +31,12 @@ import {
   SINGLE_DECODE_LIMITS_V2,
 } from '../../testkit/fixtures/request-snapshot-v2/single-decode-v2.js';
 import { isSelected } from '../../testkit/testing/selection.js';
+
+function executionToken() {
+  return requireLocateProjectionExecutionTokenV2(
+    issueLocateProjectionExecutionCapabilityV2(),
+  );
+}
 
 async function withTempRepo(
   files: Readonly<Record<string, string>>,
@@ -373,6 +383,7 @@ describe.runIf(aliasSelected)(
           ]);
           const checked = await snapshot.finalCheck(
             new AbortController().signal,
+            executionToken(),
             pools.evidence,
             pools.eligible,
             'dirty',

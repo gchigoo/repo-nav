@@ -4,7 +4,10 @@ import type {
   BackendHit,
   BackendSearchResult,
 } from '../../src/contracts/index.js';
-import { resolveVerificationHitsV2 } from '../../src/evidence/locate-execution/resolve-verification-hits-v2.js';
+import {
+  resolveVerificationHitsV2,
+  selectLegacyVerificationHitsV2,
+} from '../../src/evidence/locate-execution/resolve-verification-hits-v2.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
 const selected = isSelected({
@@ -78,5 +81,28 @@ describe.runIf(selected)('resolveVerificationHitsV2', () => {
     expect(resolved.mode).toBe('legacy-bridge');
     expect(resolved.usedAuthoritative).toBe(false);
     expect(resolved.hits).toEqual([legacyHit]);
+  });
+
+  it('derives the compatibility selection as immutable plain data', () => {
+    const secondFile = Object.freeze({
+      ...legacyHit,
+      file: 'server/second.ts',
+      lines: Object.freeze([2, 2] as [number, number]),
+    });
+    const thirdFile = Object.freeze({
+      ...legacyHit,
+      file: 'server/third.ts',
+      lines: Object.freeze([3, 3] as [number, number]),
+    });
+    const selected = selectLegacyVerificationHitsV2(
+      [availableResult([thirdFile, legacyHit, secondFile], true)],
+      2,
+    );
+    expect(selected).toEqual({
+      hits: [legacyHit, secondFile],
+      filesTruncated: true,
+    });
+    expect(Object.isFrozen(selected)).toBe(true);
+    expect(Object.isFrozen(selected.hits)).toBe(true);
   });
 });

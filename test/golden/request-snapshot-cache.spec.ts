@@ -4,6 +4,10 @@ import { dirname, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import {
+  issueLocateProjectionExecutionCapabilityV2,
+  requireLocateProjectionExecutionTokenV2,
+} from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
 import type { CanonicalFileKeyV2 } from '../../src/evidence/request-snapshot/canonical-file-identity-v2.js';
 import { buildPreRankingStablePoolsV2 } from '../../src/evidence/request-snapshot/pre-ranking-evidence-pool-v2.js';
 import { createRequestRepositorySnapshotV2 } from '../../src/evidence/request-snapshot/request-repository-snapshot-v2.js';
@@ -13,6 +17,12 @@ import {
   SNAPSHOT_MUTATION_GOLDEN_CASE_ID,
 } from '../../testkit/fixtures/request-snapshot-v2/mutation-golden-v2.js';
 import { isSelected } from '../../testkit/testing/selection.js';
+
+function executionToken() {
+  return requireLocateProjectionExecutionTokenV2(
+    issueLocateProjectionExecutionCapabilityV2(),
+  );
+}
 
 const mutationSelected = isSelected({
   group: 'request-snapshot-cache',
@@ -98,6 +108,7 @@ describe.runIf(mutationSelected)(
           ]);
           const result = await snapshot.finalCheck(
             new AbortController().signal,
+            executionToken(),
             pools.evidence,
             pools.eligible,
             'dirty',

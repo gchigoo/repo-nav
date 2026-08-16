@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import { createCanonicalLocateEngineHarnessV2 } from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
-import {
-  CANONICAL_V1_BRIDGE_GOLDEN_CASE_ID,
-  CANONICAL_V1_BRIDGE_SCHEMA_VERSION,
-} from '../../testkit/fixtures/canonical-locate-bridge-v2/v1-bridge-golden-v2.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 import type {
   BackendHealth,
@@ -16,7 +12,7 @@ import type {
 
 const selected = isSelected({
   group: 'canonical-locate-bridge',
-  caseId: CANONICAL_V1_BRIDGE_GOLDEN_CASE_ID,
+  caseId: 'canonical-v1-bridge-parity',
 });
 
 class EmptyBackend implements RepositorySearchBackend {
@@ -62,9 +58,6 @@ describe.runIf(selected)('F1C-V1-GOLDEN-001 canonical v2 bridge parity', () => {
     );
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error('expected success');
-    expect(result.evidence.schemaVersion).toBe(
-      CANONICAL_V1_BRIDGE_SCHEMA_VERSION,
-    );
     expect(result.evidence.schemaVersion).toBe('2.0');
     expect(result.evidence.repositoryRef).toBe('local-repository');
   });

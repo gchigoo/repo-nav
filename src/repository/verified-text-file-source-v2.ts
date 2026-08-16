@@ -5,9 +5,12 @@ import {
 import {
   readVerifiedFileV2,
   resolveVerifiedRepositoryRootV2,
+  verifyVerifiedFileMetadataV2,
   type ReadVerifiedFileInputV2,
+  type VerifiedFileMetadataV2,
   type VerifiedFileReadV2,
   type VerifiedFileSnapshotV2,
+  type VerifyVerifiedFileMetadataInputV2,
 } from './verified-file-snapshot-v2.js';
 
 export interface VerifiedTextFileV2 {
@@ -19,15 +22,23 @@ export interface VerifiedTextFileSourceOptionsV2 {
   readonly readVerifiedFile?: (
     input: ReadVerifiedFileInputV2,
   ) => Promise<VerifiedFileReadV2>;
+  readonly verifyVerifiedFileMetadata?: (
+    input: VerifyVerifiedFileMetadataInputV2,
+  ) => Promise<VerifiedFileMetadataV2>;
 }
 
 export class VerifiedTextFileSourceV2 {
   private readonly readVerifiedFileImpl: (
     input: ReadVerifiedFileInputV2,
   ) => Promise<VerifiedFileReadV2>;
+  private readonly verifyVerifiedFileMetadataImpl: (
+    input: VerifyVerifiedFileMetadataInputV2,
+  ) => Promise<VerifiedFileMetadataV2>;
 
   public constructor(options: VerifiedTextFileSourceOptionsV2 = {}) {
     this.readVerifiedFileImpl = options.readVerifiedFile ?? readVerifiedFileV2;
+    this.verifyVerifiedFileMetadataImpl =
+      options.verifyVerifiedFileMetadata ?? verifyVerifiedFileMetadataV2;
   }
 
   public async resolveRoot(
@@ -47,6 +58,18 @@ export class VerifiedTextFileSourceV2 {
       repositoryRoot,
       locator,
       maxFileBytes,
+      signal,
+    });
+  }
+
+  public async verifyVerifiedFileMetadata(
+    repositoryRoot: string,
+    locator: string,
+    signal: AbortSignal,
+  ): Promise<VerifiedFileMetadataV2> {
+    return this.verifyVerifiedFileMetadataImpl({
+      repositoryRoot,
+      locator,
       signal,
     });
   }

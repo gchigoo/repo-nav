@@ -81,7 +81,7 @@ export const LOCATE_EXECUTION_GOLDEN_CHARACTERIZATION_ROWS_V2 = Object.freeze([
     caseId: 'codegraph-incomplete',
     ownerFile: 'test/golden/codegraph-fallback.spec.ts',
     semanticSha256:
-      '4b7a8404aa1b63e9edb062d67f3a5f9be54021d70bf5bf30067e6d2438734179',
+      '84b384fc2d2e6e6f73a2236710af0c1765fa9d8be146b3fcaca6274964941958',
   }),
   Object.freeze({
     family: 'verified-primary-skip',
@@ -121,7 +121,7 @@ export const LOCATE_EXECUTION_GOLDEN_CHARACTERIZATION_ROWS_V2 = Object.freeze([
     caseId: 'codegraph-secondary-provenance-table',
     ownerFile: 'test/golden/codegraph-fallback.spec.ts',
     semanticSha256:
-      '411b6e94317943a2bf32168f4873c5366fffe6839f30ddded7fe5d593f27febc',
+      'd6784baabf607fc628ec088d74eef6ad5ea8568218765dfc262b897ea70d6703',
   }),
   Object.freeze({
     family: 'backend-order',
@@ -129,7 +129,7 @@ export const LOCATE_EXECUTION_GOLDEN_CHARACTERIZATION_ROWS_V2 = Object.freeze([
     caseId: 'codegraph-incomplete',
     ownerFile: 'test/golden/codegraph-fallback.spec.ts',
     semanticSha256:
-      '4b7a8404aa1b63e9edb062d67f3a5f9be54021d70bf5bf30067e6d2438734179',
+      '84b384fc2d2e6e6f73a2236710af0c1765fa9d8be146b3fcaca6274964941958',
   }),
 ] as const satisfies readonly GoldenCompanionCharacterizationRowV2[]);
 

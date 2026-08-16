@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "authority": "source-bound-real-final-check+filesystem-metadata",
+  "sourcePaths": [
+    "src/evidence/request-snapshot/final-snapshot-check-v2.ts",
+    "src/evidence/request-snapshot/snapshot-revalidation-policy-v2.ts",
+    "src/evidence/request-snapshot/selected-snapshot-revalidation-policy-v2.ts",
+    "tools/benchmark/snapshot-revalidation-clean-branch-probe.ts"
+  ],
+  "sourceSha256": "0614f75927b831907af0ea4e870c1c098ed9acad9c9db770dc8cae2ff2188762",
+  "policy": "conditional-digest",
+  "gitState": "clean",
+  "branch": "eligible-only-metadata",
+  "metadataChecks": 1,
+  "digestChecks": 0,
+  "filesChecked": 1,
+  "changedCanonicalKeyCount": 0,
+  "retainedEvidenceCount": 0,
+  "retainedEligibleCount": 1,
+  "trustedEligibleCount": 1,
+  "consistency": "stable",
+  "stableEligibleRetained": true
+}

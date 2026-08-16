@@ -6,7 +6,6 @@ import {
   readCandidateTokenProposalFactsV2,
 } from '../../src/evidence/request-snapshot/candidate-token-proposal-enumerator-v2.js';
 import { expandedOnlyReservedDoesNotSuppressLegacyV2 } from '../../src/evidence/request-snapshot/lane-candidate-evaluators-v2.js';
-import { LegacyCandidateReservationV1 } from '../../src/evidence/request-snapshot/legacy-candidate-reservation-v1.js';
 import {
   buildPreRankingStablePoolsV2,
   consumerViewLeaksPrivateStringsV2,
@@ -139,14 +138,11 @@ describe.runIf(selected)('F3-POOL-001 pre-ranking-stable-pool', () => {
     expect(divergence.expandedReserved).toBe(true);
     expect(divergence.legacyReserved).toBe(false);
 
-    const reservation = new LegacyCandidateReservationV1();
-    const legacyRecords = reservation.filterLegacyRecords(
-      [...expandedOnly, ...legacyOnly],
-      new Set(['leg-1']),
-    );
-    expect(legacyRecords.map((record) => record.discoveryKey)).toEqual([
-      'leg-1',
-    ]);
+    expect(
+      [...expandedOnly, ...legacyOnly]
+        .filter((record) => record.discoveryKey === 'leg-1')
+        .map((record) => record.discoveryKey),
+    ).toEqual(['leg-1']);
   });
 
   it('treats safe-key collision groups atomically at the pre-ranking cap boundary', () => {

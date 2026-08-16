@@ -8,7 +8,11 @@ import {
   type DiscoveryLocatorRefV2,
 } from './discovery-lane-universe-v2.js';
 import {
-  isRegisteredSnapshotTrustProofV2,
+  requireBoundDiscoverySelectionV2,
+  type BoundSafeDiscoverySelectionV2,
+} from './discovery-selection-binding-v2.js';
+import {
+  requireTrustedStableEligibleDiscoveryRecordsV2,
   type SnapshotTrustProofV2,
   type TrustedStableEligibleDiscoveryPoolV2,
 } from './final-snapshot-check-v2.js';
@@ -16,13 +20,21 @@ import type {
   EligibleDiscoveryRefV2,
   OpaqueFileBucketRefV2,
   PreFinalEligibleDiscoveryPoolV2,
+  PreFinalEligibleDiscoveryRecordV2,
 } from './pre-ranking-evidence-pool-v2.js';
-import type {
-  ScopeFoldedSafePoolProofV2,
-  TrustedScopeFoldedSelectorViewV2,
+import {
+  readScopeFoldedSafePoolProofV2,
+  type ScopeFoldedSafePoolProofV2,
+  type TrustedScopeFoldedSelectorViewV2,
 } from './scope-folded-discovery-selector-v2.js';
-import type { BoundSafeDiscoverySelectionV2 } from './discovery-selection-binding-v2.js';
-import type { TrustedScopeEligibilityObservationV2 } from './trusted-scope-policy-adapter-v2.js';
+import {
+  readStableEligibleScopeRecordsV2,
+  type TrustedStableEligibleScopeViewV2,
+} from './scope-classification-views-v2.js';
+import {
+  requireTrustedScopeEligibilityObservationV2,
+  type TrustedScopeEligibilityObservationV2,
+} from './trusted-scope-policy-adapter-v2.js';
 import {
   createVerifiedLanguageContextRefV2,
   type VerifiedLanguageContextRefV2,
@@ -137,18 +149,17 @@ function basenameFromPosix(posixPath: string): string {
   return parts.at(-1) ?? '';
 }
 
-/**
- * 测试/composition：绑定 eligible→posix/sourceText 后签发 pre-final capability view。
- */
-export function createTrustedPreFinalCapabilityViewForTestV2(input: {
+interface PreFinalCapabilityEntryV2 {
+  readonly eligibleRef: EligibleDiscoveryRefV2;
+  readonly fileBucketRef: OpaqueFileBucketRefV2;
+  readonly posixPath: string;
+  readonly sourceText: string;
+}
+
+function createTrustedPreFinalCapabilityViewV2(input: {
   readonly pool: PreFinalEligibleDiscoveryPoolV2;
   readonly execution: LocateExecutionTokenV2;
-  readonly entries: readonly {
-    readonly eligibleRef: EligibleDiscoveryRefV2;
-    readonly fileBucketRef: OpaqueFileBucketRefV2;
-    readonly posixPath: string;
-    readonly sourceText: string;
-  }[];
+  readonly entries: readonly PreFinalCapabilityEntryV2[];
 }): TrustedPreFinalCapabilityViewV2 {
   const extensionByRef = new Map<EligibleDiscoveryRefV2, string | undefined>();
   const contextByRef = new Map<
@@ -163,6 +174,9 @@ export function createTrustedPreFinalCapabilityViewForTestV2(input: {
   const posixByRef = new Map<EligibleDiscoveryRefV2, string>();
   const records: TrustedPreFinalCapabilityRecordViewV2[] = [];
   for (const entry of input.entries) {
+    if (contextByRef.has(entry.eligibleRef)) {
+      throw new TypeError('duplicate capability eligible ref');
+    }
     const basename = basenameFromPosix(entry.posixPath);
     extensionByRef.set(
       entry.eligibleRef,
@@ -217,39 +231,65 @@ export function createTrustedPreFinalCapabilityViewForTestV2(input: {
   return view;
 }
 
+/**
+ * 测试/composition：绑定 eligible→posix/sourceText 后签发 pre-final capability view。
+ */
+export function createTrustedPreFinalCapabilityViewForTestV2(input: {
+  readonly pool: PreFinalEligibleDiscoveryPoolV2;
+  readonly execution: LocateExecutionTokenV2;
+  readonly entries: readonly PreFinalCapabilityEntryV2[];
+}): TrustedPreFinalCapabilityViewV2 {
+  return createTrustedPreFinalCapabilityViewV2(input);
+}
+
+function posixPathFromPoolRecordV2(
+  record: PreFinalEligibleDiscoveryRecordV2,
+): string {
+  const parts = record.discoveryKey.split('\u0000');
+  return parts[0] === 'discovery:v1' && parts[1] !== undefined
+    ? parts[1].replaceAll('\\', '/')
+    : String(record.canonicalFileKey).replaceAll('\\', '/');
+}
+
 export function requirePreFinalCapabilityViewV2(
   pool: PreFinalEligibleDiscoveryPoolV2,
-  _observation: TrustedScopeEligibilityObservationV2,
-  _foldedView: TrustedScopeFoldedSelectorViewV2,
-  _boundSelection: BoundSafeDiscoverySelectionV2,
+  observation: TrustedScopeEligibilityObservationV2,
+  foldedView: TrustedScopeFoldedSelectorViewV2,
+  boundSelection: BoundSafeDiscoverySelectionV2,
   execution: LocateExecutionTokenV2,
-  bindings?: readonly {
-    readonly eligibleRef: EligibleDiscoveryRefV2;
-    readonly fileBucketRef: OpaqueFileBucketRefV2;
-    readonly posixPath: string;
-    readonly sourceText: string;
-  }[],
+  sourceTextByRef?: ReadonlyMap<EligibleDiscoveryRefV2, string>,
 ): TrustedPreFinalCapabilityViewV2 {
-  if (bindings !== undefined) {
-    return createTrustedPreFinalCapabilityViewForTestV2({
-      pool,
-      execution,
-      entries: bindings,
-    });
+  requireTrustedScopeEligibilityObservationV2(observation, execution);
+  readScopeFoldedSafePoolProofV2(foldedView, execution);
+  const bound = requireBoundDiscoverySelectionV2(boundSelection, execution);
+  if (bound.draft.selectorView !== foldedView) {
+    throw new TypeError('capability selection is not tied to folded view');
   }
-  // production path：仅有 eligibleRef/fileBucket，无 source 时仍可建 empty-source view
-  const entries = pool.records.map((record) =>
-    Object.freeze({
-      eligibleRef: record.eligibleRef,
-      fileBucketRef: record.fileBucketRef,
-      posixPath: String(record.canonicalFileKey),
-      sourceText: '',
-    }),
-  );
-  return createTrustedPreFinalCapabilityViewForTestV2({
+  return createTrustedPreFinalCapabilityViewV2({
     pool,
     execution,
-    entries,
+    entries: pool.records.map((record) =>
+      Object.freeze({
+        eligibleRef: record.eligibleRef,
+        fileBucketRef: record.fileBucketRef,
+        posixPath: posixPathFromPoolRecordV2(record),
+        sourceText: sourceTextByRef?.get(record.eligibleRef) ?? '',
+      }),
+    ),
+  });
+}
+
+export function createEmptyTrustedPreFinalCapabilityViewV2(
+  pool: PreFinalEligibleDiscoveryPoolV2,
+  execution: LocateExecutionTokenV2,
+): TrustedPreFinalCapabilityViewV2 {
+  if (pool.records.length !== 0) {
+    throw new TypeError('empty capability view requires an empty pool');
+  }
+  return createTrustedPreFinalCapabilityViewV2({
+    pool,
+    execution,
+    entries: Object.freeze([]),
   });
 }
 
@@ -257,15 +297,32 @@ export function requireStableEligibleCapabilityViewV2(
   pool: TrustedStableEligibleDiscoveryPoolV2,
   proof: SnapshotTrustProofV2,
   foldProof: ScopeFoldedSafePoolProofV2,
+  stableScopeView: TrustedStableEligibleScopeViewV2,
   execution: LocateExecutionTokenV2,
-  records: readonly TrustedStableEligibleCapabilityRecordViewV2[],
 ): TrustedStableEligibleCapabilityViewV2 {
-  if (!isRegisteredSnapshotTrustProofV2(proof)) {
-    throw new TypeError('stable capability view snapshot proof mismatch');
-  }
-  void pool;
-  void execution;
-  void foldProof;
+  const eligibleRecords = requireTrustedStableEligibleDiscoveryRecordsV2(
+    pool,
+    proof,
+  );
+  const eligibleByRef = new Map(
+    eligibleRecords.map((record) => [record.eligibleRef, record]),
+  );
+  const records = readStableEligibleScopeRecordsV2(
+    stableScopeView,
+    execution,
+  ).map((scopeRecord) => {
+    const eligible = eligibleByRef.get(scopeRecord.eligibleRef);
+    if (
+      eligible === undefined ||
+      eligible.fileBucketRef !== scopeRecord.fileBucketRef
+    ) {
+      throw new TypeError('stable capability record is outside eligible pool');
+    }
+    return Object.freeze({
+      eligibleRef: eligible.eligibleRef,
+      fileBucketRef: eligible.fileBucketRef,
+    });
+  });
   const view = {
     pool,
     proof,
@@ -281,7 +338,7 @@ export function requireStableEligibleCapabilityViewV2(
       pool,
       snapshotProof: proof,
       foldProof,
-      records: Object.freeze([...records]),
+      records: Object.freeze(records),
     }),
   );
   return view;

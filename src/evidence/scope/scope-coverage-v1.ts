@@ -85,10 +85,6 @@ const factsPrivate = new WeakMap<
   ScopeCoverageFactsV1,
   CoverageFactsPrivateV1
 >();
-const contributionPrivate = new WeakMap<
-  ScopeOutcomeContributionV2,
-  CoverageFactsPrivateV1
->();
 
 export class ScopeCoverageInvariantError extends Error {
   public readonly code = 'SCOPE_COVERAGE_INVARIANT' as const;
@@ -162,7 +158,6 @@ export function buildScopeCoverageV1(
     matchedLayers: matched,
   });
   factsPrivate.set(facts, privateRecord);
-  contributionPrivate.set(contribution, privateRecord);
   return facts;
 }
 
@@ -223,7 +218,7 @@ export function requireScopeCoverageFactsV1(
 }
 
 export function requireScopeOutcomeContributionV2(
-  contribution: ScopeOutcomeContributionV2,
+  facts: ScopeCoverageFactsV1,
   proof: ScopeCoverageProofV1,
   expectedEligiblePool: TrustedStableEligibleDiscoveryPoolV2,
   expectedSnapshotProof: SnapshotTrustProofV2,
@@ -233,7 +228,7 @@ export function requireScopeOutcomeContributionV2(
   expectedExecution: LocateExecutionTokenV2,
 ): ScopeOutcomeContributionV2 {
   const privateRecord = validateCoverageBindingV1(
-    contributionPrivate.get(contribution),
+    factsPrivate.get(facts),
     expectedEligiblePool,
     expectedSnapshotProof,
     expectedFoldProof,

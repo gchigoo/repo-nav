@@ -12,6 +12,10 @@ import { dirname, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import {
+  issueLocateProjectionExecutionCapabilityV2,
+  requireLocateProjectionExecutionTokenV2,
+} from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
 import type { CanonicalFileKeyV2 } from '../../src/evidence/request-snapshot/canonical-file-identity-v2.js';
 import { runFinalSnapshotCheckV2 } from '../../src/evidence/request-snapshot/final-snapshot-check-v2.js';
 import { buildPreRankingStablePoolsV2 } from '../../src/evidence/request-snapshot/pre-ranking-evidence-pool-v2.js';
@@ -22,6 +26,12 @@ import {
   type VerifiedFileSnapshotV2,
 } from '../../src/repository/verified-file-snapshot-v2.js';
 import { isSelected } from '../../testkit/testing/selection.js';
+
+function executionToken() {
+  return requireLocateProjectionExecutionTokenV2(
+    issueLocateProjectionExecutionCapabilityV2(),
+  );
+}
 
 const selected = isSelected({
   group: 'request-snapshot-cache',
@@ -103,6 +113,7 @@ describe.runIf(selected)('H4 snapshot-content-identity', () => {
         const pools = stablePools(relative, 'const value = 1;');
         const checked = await snapshot.finalCheck(
           new AbortController().signal,
+          executionToken(),
           pools.evidence,
           pools.eligible,
           'dirty',
@@ -157,6 +168,7 @@ describe.runIf(selected)('H4 snapshot-content-identity', () => {
       eligiblePool: pools.eligible,
       gitState: 'dirty',
       signal: new AbortController().signal,
+      execution: executionToken(),
       readVerifiedFile: async (input) =>
         Object.freeze({
           snapshot: Object.freeze({ ...after, locator: input.locator }),
@@ -195,6 +207,7 @@ describe.runIf(selected)('H4 snapshot-content-identity', () => {
         const pools = stablePools(relative, 'const deleted = 1;');
         const checked = await snapshot.finalCheck(
           new AbortController().signal,
+          executionToken(),
           pools.evidence,
           pools.eligible,
           'dirty',

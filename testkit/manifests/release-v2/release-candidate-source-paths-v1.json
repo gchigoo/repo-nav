@@ -3,13 +3,20 @@
   "paths": [
     "package.json",
     "npm-shrinkwrap.json",
+    "tsconfig.json",
     "tsconfig.build.json",
     "src",
     "tools/release",
+    "tools/ci",
+    "tools/benchmark",
+    ".github/workflows",
+    "test",
+    "testkit",
     "LICENSE",
     "SECURITY.md",
     "README.md",
     "docs/migration-v1-to-v2.md",
-    "testkit/manifests/release-v2/release-candidate-source-paths-v1.json"
+    "docs/superpowers/archive/codestable/features/2026-07-24-public-beta-release/public-beta-release-design.md",
+    "docs/superpowers/archive/codestable/features/2026-07-24-public-beta-release/public-beta-release-checklist.yaml"
   ]
 }

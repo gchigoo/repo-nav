@@ -61,7 +61,9 @@
       "indexFreshness": "unknown",
       "limitsReached": ["MAX_CANDIDATES_REACHED", "MAX_BACKEND_HITS_REACHED"],
       "degradations": [],
-      "exclusionSummary": {},
+      "exclusionSummary": {
+        "DUPLICATE_LOCATION": 1
+      },
       "abortSource": "none",
       "unsatisfiedAnchors": [],
       "snapshot": {

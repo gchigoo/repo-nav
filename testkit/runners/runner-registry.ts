@@ -2250,14 +2250,6 @@ export const RUNNER_IDENTITY_REGISTRY = defineRunnerIdentityRegistry([
     surface: 'unit',
     identity: {
       group: 'request-snapshot-cache',
-      caseId: 'legacy-scope-policy-pool',
-    },
-    ownerFiles: ['test/unit/discovery-scope-fold-v2.spec.ts'],
-  },
-  {
-    surface: 'unit',
-    identity: {
-      group: 'request-snapshot-cache',
       caseId: 'pre-ranking-stable-pool',
     },
     ownerFiles: ['test/unit/pre-ranking-evidence-pool.spec.ts'],

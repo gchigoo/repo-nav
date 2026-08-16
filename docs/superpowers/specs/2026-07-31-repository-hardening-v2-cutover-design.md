@@ -2,9 +2,9 @@
 
 **Date:** 2026-07-31
 
-**Status:** Partially implemented. The `1.1.0` hardening foundation merged on 2026-08-14; the 2026-08-12 replan is the current execution authority. Reviewed 2026-08-15.
+**Status:** Implemented in the `2.0.0` source candidate. The `1.1.0` hardening foundation merged on 2026-08-14; snapshot policy selection, canonical authority, transport flattening, and the atomic package cutover were implemented on 2026-08-16. Publishing and owner-bound release evidence remain external. Reviewed 2026-08-16.
 
-The implemented checkpoint covers the correctness/release blockers, feedback-loop work, verified-file consolidation, CLI fast path, snapshot candidate measurement, characterization, and quality boundaries described here. Snapshot policy selection and the canonical-authority/atomic `2.0.0` work remain pending. See [`../plans/2026-08-12-repository-hardening-v2-replan.md`](../plans/2026-08-12-repository-hardening-v2-replan.md) and [`../../project-status.md`](../../project-status.md).
+The implementation covers the correctness/release blockers, feedback-loop work, verified-file consolidation, CLI fast path, authoritative snapshot policy selection, canonical execution facts, one pure finalizer, flattened transport, quality boundaries, and removal of the public `repo-nav/legacy-v1` subpath. See [`../plans/2026-08-12-repository-hardening-v2-replan.md`](../plans/2026-08-12-repository-hardening-v2-replan.md) and [`../../project-status.md`](../../project-status.md).
 
 ## 1. Context
 
@@ -325,4 +325,4 @@ Changes to public output, process execution, snapshot behavior, release tooling,
 
 ## 10. Rollback Boundaries
 
-Each PR must be independently revertible. Phase A fixes do not depend on Phase C. If canonical-facts or projection flattening fails review, the corrected Phase A behavior remains shippable. The legacy-v1 export is removed only in its dedicated breaking PR, so the owner can stop before C4 and ship the non-breaking hardening work separately. The 2.0.0 version cutover remains isolated in C5 and does not include npm publication.
+Each pre-cutover PR must be independently revertible. Phase A fixes do not depend on Phase C. If canonical-facts or projection flattening fails review, the corrected Phase A behavior remains shippable. The final V2 source cutover is one atomic commit that changes all version authorities to `2.0.0` and removes only `repo-nav/legacy-v1`; reverting that commit restores both the prior version authorities and the legacy subpath together. The atomic source cutover does not include npm publication.

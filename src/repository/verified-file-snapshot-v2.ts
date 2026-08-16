@@ -42,6 +42,18 @@ export interface ReadVerifiedFileInputV2 {
   readonly signal: AbortSignal;
 }
 
+export interface VerifyVerifiedFileMetadataInputV2 {
+  readonly repositoryRoot: string;
+  readonly locator: string;
+  readonly signal: AbortSignal;
+}
+
+export interface VerifiedFileMetadataV2 {
+  readonly locator: string;
+  readonly canonicalFileKey: CanonicalFileKeyV2;
+  readonly identity: FileIdentityV2;
+}
+
 const READ_CHUNK_BYTES = 64 * 1024;
 
 let afterInitialTargetResolveForTestV2: (() => void) | undefined;
@@ -217,6 +229,113 @@ export async function readVerifiedFileV2(
       contentSha256,
     });
     completed = Object.freeze({ snapshot, bytes });
+  } catch (error: unknown) {
+    normalizedError =
+      error instanceof RepositoryAccessError
+        ? error
+        : input.signal.aborted
+          ? new RepositoryAccessError('ABORTED', locator)
+          : new RepositoryAccessError('FILE_UNREADABLE', locator);
+  } finally {
+    try {
+      await handle?.close();
+    } catch {
+      normalizedError = new RepositoryAccessError('FILE_UNREADABLE', locator);
+    }
+  }
+  if (normalizedError !== undefined) {
+    throw normalizedError;
+  }
+  if (completed !== undefined) {
+    return completed;
+  }
+  throw new RepositoryAccessError('FILE_UNREADABLE', locator);
+}
+
+export async function verifyVerifiedFileMetadataV2(
+  input: VerifyVerifiedFileMetadataInputV2,
+): Promise<VerifiedFileMetadataV2> {
+  const locator = validateRelativeLocator(input.locator);
+  assertNotAborted(input.signal, locator);
+
+  let resolvedRoot: string;
+  try {
+    resolvedRoot = await realpath(input.repositoryRoot);
+  } catch {
+    throw new RepositoryAccessError('INVALID_REPOSITORY');
+  }
+  assertNotAborted(input.signal, locator);
+
+  const targetPath = resolve(resolvedRoot, ...locator.split('/'));
+  let resolvedTargetBefore: string;
+  try {
+    resolvedTargetBefore = await realpath(targetPath);
+  } catch {
+    throw new RepositoryAccessError('FILE_UNREADABLE', locator);
+  }
+  assertInsideRoot(resolvedRoot, resolvedTargetBefore, locator);
+  assertNotAborted(input.signal, locator);
+
+  let handle: FileHandle | undefined;
+  let completed: VerifiedFileMetadataV2 | undefined;
+  let normalizedError: RepositoryAccessError | undefined;
+  try {
+    const targetStatBeforeOpen = await stat(resolvedTargetBefore, {
+      bigint: true,
+    });
+    const targetIdentityBeforeOpen = identityFromStatV2(targetStatBeforeOpen);
+    afterInitialTargetResolveForTestV2?.();
+    assertNotAborted(input.signal, locator);
+
+    handle = await open(resolvedTargetBefore, 'r');
+    assertNotAborted(input.signal, locator);
+
+    const handleStat = await handle.stat({ bigint: true });
+    assertNotAborted(input.signal, locator);
+    if (!handleStat.isFile()) {
+      throw new RepositoryAccessError('NOT_REGULAR_FILE', locator);
+    }
+    const initialIdentity = identityFromStatV2(handleStat);
+    if (!fileIdentitiesEqualV2(targetIdentityBeforeOpen, initialIdentity)) {
+      throw new RepositoryAccessError('FILE_UNREADABLE', locator);
+    }
+
+    const resolvedTargetAfter = await realpath(targetPath);
+    assertInsideRoot(resolvedRoot, resolvedTargetAfter, locator);
+    if (resolvedTargetAfter !== resolvedTargetBefore) {
+      throw new RepositoryAccessError('FILE_UNREADABLE', locator);
+    }
+    await assertPathBindsHandleV2(
+      resolvedTargetAfter,
+      initialIdentity,
+      locator,
+    );
+    assertNotAborted(input.signal, locator);
+
+    const handleStatFinal = await handle.stat({ bigint: true });
+    if (!handleStatFinal.isFile()) {
+      throw new RepositoryAccessError('NOT_REGULAR_FILE', locator);
+    }
+    const identity = identityFromStatV2(handleStatFinal);
+    if (!fileIdentitiesEqualV2(initialIdentity, identity)) {
+      throw new RepositoryAccessError('FILE_UNREADABLE', locator);
+    }
+    const resolvedTargetFinal = await realpath(targetPath);
+    assertInsideRoot(resolvedRoot, resolvedTargetFinal, locator);
+    if (resolvedTargetFinal !== resolvedTargetAfter) {
+      throw new RepositoryAccessError('FILE_UNREADABLE', locator);
+    }
+    await assertPathBindsHandleV2(resolvedTargetFinal, identity, locator);
+    assertNotAborted(input.signal, locator);
+
+    completed = Object.freeze({
+      locator,
+      canonicalFileKey: canonicalKeyFromResolvedTargetV2(
+        resolvedRoot,
+        resolvedTargetFinal,
+      ),
+      identity,
+    });
   } catch (error: unknown) {
     normalizedError =
       error instanceof RepositoryAccessError

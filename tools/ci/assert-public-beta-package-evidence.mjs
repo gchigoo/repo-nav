@@ -1,192 +1,288 @@
 /**
- * Validate PublicBetaSixCellEvidenceV1 from safe platform reports (local or CI).
- * Requires six-cell reports under artifacts/platform when present; otherwise
- * validates schema helpers and fails closed if --require-six-cell is set.
+ * Validate six strict platform reports against one current packed candidate.
  */
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
-const requireSix = process.argv.includes('--require-six-cell');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
+if (process.env['REPO_NAV_PLATFORM_TSX_ACTIVE'] !== '1') {
+  const relaunch = spawnSync(
+    process.execPath,
+    [
+      '--import',
+      'tsx',
+      fileURLToPath(import.meta.url),
+      ...process.argv.slice(2),
+    ],
+    {
+      cwd: root,
+      env: { ...process.env, REPO_NAV_PLATFORM_TSX_ACTIVE: '1' },
+      stdio: 'inherit',
+      windowsHide: true,
+    },
+  );
+  process.exit(relaunch.status ?? 1);
+}
+
+const {
+  PLATFORM_CELLS_V1,
+  PRODUCTION_PLATFORM_CONTRACT_SNAPSHOT_V1,
+  applicableBindingsForOs,
+  createFilesystemPlatformContractRepository,
+  validateProductionPlatformContractSnapshotV1,
+} = await import(
+  pathToFileURL(resolve(root, 'testkit/contracts/platform-contract.ts')).href
+);
+const { validatePlatformCoreCommandReportV1 } = await import(
+  pathToFileURL(resolve(root, 'testkit/contracts/platform-evidence-report.ts'))
+    .href
+);
+const { loadReleaseCandidateV1 } = await import(
+  pathToFileURL(resolve(root, 'tools/release/release-candidate.mjs')).href
+);
+
+const npmCli = resolve(root, 'node_modules/npm/bin/npm-cli.js');
 const REQUIRED_CASE_ID = 'F9-PACK-001';
-const REQUIRED_MARKERS = Object.freeze([
-  'tarball-allowlist-exact',
-  'package-bins-executable',
-  'node-engine-range-declared',
-  'mcp-v2-installed-parity',
-  'package-runtime-closure',
-]);
 const REQUIRED_HASH_IDS = Object.freeze([
   'candidate-id',
   'semantic-manifest',
   'production-closure',
 ]);
-const REQUIRED_CELL_IDS = Object.freeze([
-  'linux-node22',
-  'linux-node24',
-  'windows-node22',
-  'windows-node24',
-  'macos-intel-node22',
-  'macos-intel-node24',
-]);
+const REQUIRED_CELL_IDS = Object.freeze(
+  PLATFORM_CELLS_V1.map((cell) => cell.id).sort(),
+);
+const MAX_REPORT_AGE_MS = 24 * 60 * 60 * 1000;
+const SHA256_PATTERN = /^[0-9a-f]{64}$/u;
+const GIT_SHA_PATTERN = /^[0-9a-f]{40}$/u;
 
-function fail(msg) {
-  process.stderr.write(`${msg}\n`);
-  process.exit(1);
+function fail(message) {
+  throw new Error(message);
 }
 
-function f9AssertionIds(markers) {
-  return (markers ?? [])
-    .filter(
-      (marker) =>
-        marker &&
-        typeof marker === 'object' &&
-        marker.contractId === REQUIRED_CASE_ID &&
-        typeof marker.assertionId === 'string',
-    )
-    .map((marker) => marker.assertionId)
-    .sort();
-}
-
-function f9EvidenceHashes(entries) {
-  const out = {};
-  for (const entry of entries ?? []) {
-    if (
-      entry &&
-      typeof entry === 'object' &&
-      entry.contractId === REQUIRED_CASE_ID &&
-      typeof entry.evidenceId === 'string' &&
-      typeof entry.sha256 === 'string'
-    ) {
-      out[entry.evidenceId] = entry.sha256;
+function parseArgs(argv) {
+  const args = {
+    requireSix: false,
+    reportDir: resolve(root, 'artifacts/platform'),
+  };
+  for (let index = 0; index < argv.length; index += 1) {
+    const flag = argv[index];
+    if (flag === '--require-six-cell') {
+      args.requireSix = true;
+      continue;
     }
+    if (flag === '--report-dir') {
+      const value = argv[++index];
+      if (value === undefined) fail('--report-dir requires a value');
+      args.reportDir = resolve(root, value);
+      continue;
+    }
+    fail(`unsupported argument: ${flag}`);
   }
-  return out;
+  return args;
 }
 
-const reportDir = join(root, 'artifacts/platform');
-const hasReports = existsSync(reportDir);
-
-if (!hasReports) {
-  if (requireSix) {
-    fail('artifacts/platform missing and --require-six-cell set');
+function currentGitSha() {
+  const result = spawnSync('git', ['rev-parse', 'HEAD'], {
+    cwd: root,
+    encoding: 'utf8',
+    shell: false,
+  });
+  const sha = result.stdout.trim();
+  if (
+    result.status !== 0 ||
+    result.signal !== null ||
+    result.error !== undefined ||
+    !GIT_SHA_PATTERN.test(sha)
+  ) {
+    fail('current Git source revision unavailable');
   }
+  return sha;
+}
+
+function evidenceHashes(report) {
+  const hashes = new Map();
+  for (const entry of report.contractEvidenceHashes ?? []) {
+    if (entry?.contractId !== REQUIRED_CASE_ID) continue;
+    if (
+      typeof entry.evidenceId !== 'string' ||
+      typeof entry.sha256 !== 'string' ||
+      hashes.has(entry.evidenceId)
+    ) {
+      fail(`invalid duplicate F9 evidence in ${report.cellId ?? 'unknown'}`);
+    }
+    hashes.set(entry.evidenceId, entry.sha256);
+  }
+  return hashes;
+}
+
+function expectationsForCell(cellId, hashes, snapshot) {
+  const cell = PLATFORM_CELLS_V1.find((entry) => entry.id === cellId);
+  if (cell === undefined) fail(`unknown platform cell ${cellId}`);
+  const applicable = applicableBindingsForOs(snapshot, cell.os);
+  const expectedMarkers = applicable.flatMap((binding) =>
+    binding.requiredAssertionIds.map((assertionId) => ({
+      contractId: binding.contractId,
+      assertionId,
+    })),
+  );
+  const expectedEvidence = applicable.flatMap((binding) =>
+    binding.requiredEvidenceHashIds.map((evidenceId) => {
+      const sha256 = hashes.get(evidenceId);
+      if (sha256 === undefined) {
+        fail(`missing expected evidence ${binding.contractId}/${evidenceId}`);
+      }
+      return { contractId: binding.contractId, evidenceId, sha256 };
+    }),
+  );
+  return {
+    expectedMarkers,
+    expectedEvidence,
+    expectedCaseIds: applicable.map((binding) => binding.contractId).sort(),
+  };
+}
+
+function validateFreshTimestamp(timestamp, now, cellId) {
+  if (typeof timestamp !== 'string') {
+    fail(`completedAt missing in ${cellId}`);
+  }
+  const parsed = Date.parse(timestamp);
+  if (Number.isNaN(parsed)) fail(`completedAt invalid in ${cellId}`);
+  const age = now - parsed;
+  if (age < -60_000 || age > MAX_REPORT_AGE_MS) {
+    fail(`platform report stale in ${cellId}`);
+  }
+}
+
+function main() {
+  const args = parseArgs(process.argv.slice(2));
+  if (!existsSync(args.reportDir)) {
+    if (args.requireSix) {
+      fail('platform report directory missing and --require-six-cell set');
+    }
+    process.stdout.write(
+      `${JSON.stringify(
+        {
+          ok: true,
+          mode: 'local-schema-only',
+          requiredCaseId: REQUIRED_CASE_ID,
+          requiredHashIds: REQUIRED_HASH_IDS,
+          residual: 'remote-six-cell-safe-reports-absent',
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    return;
+  }
+
+  const files = readdirSync(args.reportDir)
+    .filter((name) => name.endsWith('.json'))
+    .sort();
+  if (files.length !== REQUIRED_CELL_IDS.length) {
+    fail(`expected exactly six safe reports, got ${files.length}`);
+  }
+  const cells = files.map((name) =>
+    JSON.parse(readFileSync(resolve(args.reportDir, name), 'utf8')),
+  );
+  const cellIds = cells.map((cell) => cell?.cellId).sort();
+  if (JSON.stringify(cellIds) !== JSON.stringify(REQUIRED_CELL_IDS)) {
+    fail(`cellId set mismatch: got ${cellIds.join(',')}`);
+  }
+
+  const candidate = loadReleaseCandidateV1(root, npmCli);
+  const sourceSha = currentGitSha();
+  const first = cells[0];
+  if (first === undefined) fail('platform reports unavailable');
+  const firstHashes = evidenceHashes(first);
+  const productionClosureSha256 = firstHashes.get('production-closure');
+  if (
+    typeof productionClosureSha256 !== 'string' ||
+    !SHA256_PATTERN.test(productionClosureSha256)
+  ) {
+    fail('production closure evidence hash invalid');
+  }
+  const expectedHashes = new Map([
+    ['candidate-id', candidate.tarballSha256],
+    ['semantic-manifest', candidate.sourceSha256],
+    ['production-closure', productionClosureSha256],
+  ]);
+  const repository = createFilesystemPlatformContractRepository(root);
+  const snapshot = validateProductionPlatformContractSnapshotV1(
+    PRODUCTION_PLATFORM_CONTRACT_SNAPSHOT_V1,
+    repository,
+  ).snapshot;
+  const runId = first.run?.workflowRunId;
+  const attempt = first.run?.runAttempt;
+  const workflowSha = first.revision?.workflowSha;
+  const eventName = first.revision?.eventName;
+  const now = Date.now();
+
+  for (const cell of cells) {
+    const expectations = expectationsForCell(
+      cell.cellId,
+      expectedHashes,
+      snapshot,
+    );
+    validatePlatformCoreCommandReportV1(cell, {
+      ...expectations,
+      requireAllCommandsSuccess: true,
+    });
+    if (cell.run.workflowRunId !== runId || cell.run.runAttempt !== attempt) {
+      fail('six-cell workflowRunId/runAttempt mismatch');
+    }
+    if (
+      cell.revision.workflowSha !== workflowSha ||
+      cell.revision.eventName !== eventName ||
+      cell.revision.sourceSha !== sourceSha
+    ) {
+      fail(`revision mismatch in ${cell.cellId}`);
+    }
+    validateFreshTimestamp(cell.completedAt, now, cell.cellId);
+  }
+
+  const evidence = {
+    schemaVersion: 1,
+    run: {
+      workflowRunId: runId,
+      runAttempt: attempt,
+      workflowSha,
+      sourceSha,
+      eventName,
+    },
+    candidate: {
+      name: candidate.name,
+      version: candidate.version,
+      tarballSha256: candidate.tarballSha256,
+      sourceSha256: candidate.sourceSha256,
+      designRevisionSha256: candidate.designRevisionSha256,
+    },
+    productionClosureSha256,
+    cells: cells.map((cell) => ({
+      cellId: cell.cellId,
+      completedAt: cell.completedAt,
+    })),
+  };
+  const sixCellEvidenceSha256 = createHash('sha256')
+    .update(JSON.stringify(evidence))
+    .digest('hex');
   process.stdout.write(
     `${JSON.stringify(
-      {
-        ok: true,
-        mode: 'local-schema-only',
-        requiredCaseId: REQUIRED_CASE_ID,
-        requiredMarkers: REQUIRED_MARKERS,
-        requiredHashIds: REQUIRED_HASH_IDS,
-        residual: 'remote-six-cell-safe-reports-absent',
-      },
+      { ok: true, ...evidence, sixCellEvidenceSha256 },
       null,
       2,
     )}\n`,
   );
-  process.exit(0);
 }
 
-const files = readdirSync(reportDir).filter((n) => n.endsWith('.json'));
-if (files.length < 6 && requireSix) {
-  fail(`expected >=6 safe reports, got ${files.length}`);
-}
-
-const cells = [];
-for (const name of files) {
-  const report = JSON.parse(readFileSync(join(reportDir, name), 'utf8'));
-  cells.push(report);
-}
-
-if (cells.length === 0) {
-  if (requireSix) {
-    fail('no platform reports loaded');
-  }
-  process.exit(0);
-}
-
-const runId = cells[0]?.run?.workflowRunId;
-const attempt = cells[0]?.run?.runAttempt;
-const revision = cells[0]?.revision;
-const cellIds = cells.map((cell) => cell.cellId).sort();
-if (
-  requireSix &&
-  JSON.stringify(cellIds) !== JSON.stringify([...REQUIRED_CELL_IDS].sort())
-) {
-  fail(
-    `cellId set mismatch: got ${cellIds.join(',')} expected ${REQUIRED_CELL_IDS.join(',')}`,
+try {
+  main();
+} catch (error) {
+  process.stderr.write(
+    `${error instanceof Error ? error.message : String(error)}\n`,
   );
+  process.exitCode = 1;
 }
-
-for (const cell of cells) {
-  if (cell.run?.workflowRunId !== runId || cell.run?.runAttempt !== attempt) {
-    fail('six-cell workflowRunId/runAttempt mismatch');
-  }
-  if (
-    cell.revision?.workflowSha !== revision?.workflowSha ||
-    cell.revision?.sourceSha !== revision?.sourceSha ||
-    cell.revision?.eventName !== revision?.eventName
-  ) {
-    fail(`revision mismatch in ${cell.cellId ?? 'unknown'}`);
-  }
-  const commands = cell.commands ?? [];
-  for (const command of commands) {
-    if (command.outcome !== 'success') {
-      fail(`command ${command.id} not success in ${cell.cellId}`);
-    }
-  }
-  const requiredCaseIds = cell.requiredCaseIds ?? [];
-  if (!requiredCaseIds.includes(REQUIRED_CASE_ID)) {
-    fail(`missing ${REQUIRED_CASE_ID} in requiredCaseIds for ${cell.cellId}`);
-  }
-  const markers = f9AssertionIds(cell.passedAssertionMarkers);
-  if (
-    JSON.stringify(markers) !== JSON.stringify([...REQUIRED_MARKERS].sort())
-  ) {
-    fail(
-      `F9 marker set mismatch in ${cell.cellId ?? 'unknown'}: got ${markers.join(',')}`,
-    );
-  }
-  const hashes = f9EvidenceHashes(cell.contractEvidenceHashes);
-  for (const id of REQUIRED_HASH_IDS) {
-    const value = hashes[id];
-    if (typeof value !== 'string' || !/^[0-9a-f]{64}$/u.test(value)) {
-      fail(`missing/invalid evidence hash ${id} in ${cell.cellId}`);
-    }
-  }
-}
-
-const evidence = {
-  schemaVersion: 1,
-  run: {
-    workflowRunId: runId,
-    runAttempt: attempt,
-    revision,
-  },
-  cells: [...cells]
-    .sort((left, right) =>
-      String(left.cellId).localeCompare(String(right.cellId)),
-    )
-    .map((cell) => {
-      const hashes = f9EvidenceHashes(cell.contractEvidenceHashes);
-      return {
-        cellId: cell.cellId,
-        requiredCaseId: REQUIRED_CASE_ID,
-        passedAssertionIds: f9AssertionIds(cell.passedAssertionMarkers),
-        candidateIdSha256: hashes['candidate-id'],
-        semanticManifestSha256: hashes['semantic-manifest'],
-        productionClosureSha256: hashes['production-closure'],
-      };
-    }),
-};
-const sixCellEvidenceSha256 = createHash('sha256')
-  .update(JSON.stringify(evidence))
-  .digest('hex');
-
-process.stdout.write(
-  `${JSON.stringify({ ok: true, ...evidence, sixCellEvidenceSha256 }, null, 2)}\n`,
-);

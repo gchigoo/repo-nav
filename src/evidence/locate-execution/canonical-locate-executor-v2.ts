@@ -8,104 +8,112 @@ import {
   normalizeSearchTerms,
   RepositoryAccessError,
   resolveLocateLimits,
-  type BackendAttempt,
   type BackendHealth,
   type BackendSearchResult,
+  type CandidateEvidence,
+  type ConfirmedEvidence,
   type ExclusionReasonCode,
   type LimitReasonCode,
   type LocateExecutionContext,
-  requireCallerSignal,
   type LocateRequest,
-  type LocateResult,
   type NormalizedLocateAnchor,
   type NormalizedSearchTerm,
+  type RepoLayer,
   type RepositoryReader,
   type ResolvedLocateLimits,
   type SearchBackendId,
+  requireCallerSignal,
 } from '../../contracts/index.js';
-import {
-  createLocateFactEnvelopeBuilderV2,
-  type CanonicalLocateExecutionV2,
-  type CanonicalLocateExecutorV2,
-  type LocateProjectionExecutionCapabilityV2,
-  type RankedEvidenceFactsV2,
-  type SnapshotFactsV2,
-  type UnsafeToolErrorFactsV2,
+import type {
+  CanonicalLocateExecutionReceiptV2,
+  CanonicalLocateExecutionV2,
+  CanonicalLocateExecutorV2,
+  LocateProjectionExecutionCapabilityV2,
+} from '../../contracts/v2/canonical-locate-execution-v2.js';
+import type { BackendExecutionContextV2 } from '../../contracts/v2/backend-execution-outcome-v2.js';
+import type {
+  LocateExecutionBackendAttemptFactsV2,
+  LocateExecutionErrorFactsV2,
+} from '../../contracts/v2/locate-execution-facts-v2.js';
+import type {
+  RankedEvidenceFactsV2,
+  SnapshotFactsV2,
 } from '../../contracts/v2/locate-fact-envelope-v2.js';
-import { EvidenceRankerV2 } from '../ranking/evidence-ranker-v2.js';
-import { normalizeAnchorIntentsV2 } from '../ranking/anchor-intent-normalizer-v2.js';
-import { requireEvidenceRankingOutcomeV2 } from '../ranking/evidence-ranking-outcome-v2.js';
-import { runAuthoritativeExpandedSelectionPhaseV2 } from './authoritative-expanded-selection-phase-v2.js';
-import { resolveVerificationHitsV2 } from './resolve-verification-hits-v2.js';
+import type { TraceableRepositorySearchBackendV2 } from '../../contracts/v2/traceable-repository-search-backend-v2.js';
 import type { LocateAnchor, TermCaseMode } from '../../contracts/request.js';
+import { createBackendExecutionContextV2 } from '../../process/backend-execution-context-v2.js';
+import { NodeRepositoryReader } from '../../repository/node-repository-reader.js';
+import { NodeSafeProcessRunner } from '../../repository/node-safe-process-runner.js';
 import {
   REPOSITORY_READER,
   REPOSITORY_SEARCH_BACKENDS,
 } from '../../runtime/tokens.js';
 import {
   LocateAbortCoordinatorV2,
-  type FinalizedAbortDecisionV2,
+  requireFinalizedAbortDecisionV2,
   type LocateAbortSource,
 } from '../abort-source.js';
-import { closeAndFinalizeLocateSynchronouslyV2 } from './canonical-locate-finalization-v2.js';
 import {
-  issuePassthroughRankingOutcomeFromLegacyEvidenceV2,
-  registerProductionAcceptedProjectionSeamsV2,
-} from './register-production-accepted-projection-seams-v2.js';
-import type { BackendExecutionContextV2 } from '../../contracts/v2/backend-execution-outcome-v2.js';
-import type { TraceableRepositorySearchBackendV2 } from '../../contracts/v2/traceable-repository-search-backend-v2.js';
-import {
+  applyCandidatePolicy,
   createVerifiedCandidateContext,
   materializeCandidateDraft,
 } from '../candidate-policy.js';
 import { classifyDiscoveryRecords } from '../direct-mapping-classifier.js';
 import { verifyAndMergeBackendHits } from '../discovery-record.js';
-import { evaluateLocateStatus } from '../locate-status-evaluator.js';
-import { createNextActions } from '../next-action-policy.js';
+import { buildExecutionCapabilityCoverageMountV2 } from '../language/build-execution-capability-coverage-v2.js';
+import { normalizeAnchorIntentsV2 } from '../ranking/anchor-intent-normalizer-v2.js';
+import { EvidenceRankerV2 } from '../ranking/evidence-ranker-v2.js';
+import {
+  requireEvidenceRankingOutcomeV2,
+  type EvidenceRankingOutcomeV2,
+} from '../ranking/evidence-ranking-outcome-v2.js';
 import {
   selectCandidateBudget,
   selectConfirmedBudget,
 } from '../result-budget-selector.js';
 import {
+  bindSelectedVerificationOutcomeToSnapshotV2,
   buildPreRankingStablePoolsV2,
+  buildStableEligibleScopeRecordsFromObservationV2,
   CandidateTokenProposalEnumeratorV2,
   createMultiViewBackendSearchRequestV2,
   createRequestRepositorySnapshotV2,
   createZeroReadSnapshotFactsV2,
   evaluateExpandedCandidateProposalsV2,
-  LegacyCandidateReservationV1,
   legacyMaxHitsFromPublicLimitsV2,
   probeRepositoryGitStateDetailedV2,
-  buildStableEligibleScopeRecordsFromObservationV2,
   registerDualLaneExecutionReceiptV2,
   searchBackendMultiViewV2,
-  selectAndFreezeLegacyBackendHitsV1,
   VerifiedDiscoveryObservationCacheV2,
   type BoundSafeDiscoverySelectionV2,
   type RequestRepositorySnapshotV2,
+  type SelectedVerificationOutcomeV2,
   type TrustedScopeEligibilityObservationV2,
   type TrustedScopeFoldedSelectorViewV2,
 } from '../request-snapshot/index.js';
 import {
+  buildPreRankingPoolInputsV2,
+  purgeEvidenceByChangedKeysV2,
+} from '../request-snapshot/execution-evidence-bridge-v2.js';
+import {
   buildExecutionScopeCoverageMountV1,
   classifyDiscoveryRecordsThroughScopeBoundProducersV2,
 } from '../scope/index.js';
-import { buildExecutionCapabilityCoverageMountV2 } from '../language/build-execution-capability-coverage-v2.js';
-import type { EvidenceRankingOutcomeV2 } from '../ranking/evidence-ranking-outcome-v2.js';
-import type { RepoLayer } from '../../contracts/index.js';
-import type { LocateFactPayloadsV2 } from '../../contracts/v2/locate-fact-envelope-v2.js';
+import { runAuthoritativeExpandedSelectionPhaseV2 } from './authoritative-expanded-selection-phase-v2.js';
+import { closeAndFinalizeLocateSynchronouslyV2 } from './canonical-locate-finalization-v2.js';
 import {
-  applyMutationStatusPrecedenceV2,
-  buildPreRankingPoolInputsFromLegacyEvidenceV2,
-  purgeLegacyEvidenceByChangedKeysV2,
-} from '../request-snapshot/executor-snapshot-bridge-v2.js';
-import { createBackendExecutionContextV2 } from '../../process/backend-execution-context-v2.js';
-import { NodeRepositoryReader } from '../../repository/node-repository-reader.js';
-import { NodeSafeProcessRunner } from '../../repository/node-safe-process-runner.js';
+  createLocateExecutionFactsFromDraftV2,
+  createPassthroughRankedEvidenceFactsV2,
+  type LocateExecutionDraftV2,
+} from './locate-execution-draft-v2.js';
 import {
-  registerCanonicalLocateExecutionInputV2,
+  createCanonicalLocateExecutionReceiptV2,
   requireLocateProjectionExecutionTokenV2,
 } from './locate-projection-execution-capability-v2.js';
+import {
+  resolveVerificationHitsV2,
+  selectLegacyVerificationHitsV2,
+} from './resolve-verification-hits-v2.js';
 
 /**
  * Production Nest 注入的是精确 NodeRepositoryReader；测试 double / 子类仍走注入 reader，
@@ -132,19 +140,15 @@ export function setBeforeFinalSnapshotCheckForTestV2(
 const CLASSIFICATION_MAX_LINES = 12;
 const CLASSIFICATION_MAX_BYTES = 4 * 1024;
 
-type LocateSuccessEvidence = Extract<
-  LocateResult,
-  { readonly ok: true }
->['evidence'];
-
 interface TimeoutResultOptions {
-  readonly attempts?: readonly BackendAttempt[];
+  readonly attempts?: readonly LocateExecutionBackendAttemptFactsV2[];
   readonly codeGraphHealth?: BackendHealth;
-  readonly confirmed?: LocateSuccessEvidence['confirmed'];
-  readonly candidates?: LocateSuccessEvidence['candidates'];
+  readonly confirmed?: readonly ConfirmedEvidence[];
+  readonly candidates?: readonly CandidateEvidence[];
   readonly limitsReached?: readonly LimitReasonCode[];
-  readonly exclusionSummary?: LocateSuccessEvidence['coverage']['exclusionSummary'];
-  readonly fallbackChecked?: boolean;
+  readonly exclusionSummary?: Readonly<
+    Partial<Record<ExclusionReasonCode, number>>
+  >;
 }
 
 function verificationTerms(
@@ -194,20 +198,28 @@ function attemptFor(
   backend: SearchBackendId,
   health: BackendHealth,
   hitCount: number,
-): BackendAttempt {
-  const status: BackendAttempt['status'] =
-    health.state === 'available'
+  sequence = 0,
+): LocateExecutionBackendAttemptFactsV2 {
+  const aborted = health.reasonCode === 'BACKEND_ABORTED';
+  const outcome: LocateExecutionBackendAttemptFactsV2['outcome'] =
+    health.state === 'available' || aborted
       ? 'used'
       : health.state === 'missing' || health.state === 'unavailable'
         ? 'unavailable'
         : 'failed';
+  const reasonCode = health.reasonCode;
   return Object.freeze({
+    sequence,
     backend,
-    status,
-    hitCount,
-    ...(health.reasonCode === undefined
-      ? {}
-      : { reasonCode: health.reasonCode }),
+    outcome,
+    completion: 'incomplete' as const,
+    termination: aborted
+      ? ('aborted' as const)
+      : outcome === 'failed'
+        ? ('process-error' as const)
+        : ('none' as const),
+    observedHitCount: hitCount,
+    ...(reasonCode === undefined ? {} : { reasonCode }),
   });
 }
 
@@ -220,17 +232,16 @@ function indexStateFor(
 function indexFreshnessFor(
   health: BackendHealth | undefined,
 ): 'not-applicable' | 'unknown' | 'possibly-stale' {
-  if (
-    health === undefined ||
-    health.state === 'missing' ||
-    health.state === 'unavailable'
-  ) {
+  if (health === undefined) {
+    return 'unknown';
+  }
+  if (health.state === 'missing' || health.state === 'unavailable') {
     return 'not-applicable';
   }
   return health.possibleStaleIndex === true ? 'possibly-stale' : 'unknown';
 }
 
-function decideToolError(error: unknown): UnsafeToolErrorFactsV2 {
+function decideToolError(error: unknown): LocateExecutionErrorFactsV2 {
   if (error instanceof RepositoryAccessError) {
     if (error.code === 'INVALID_REPOSITORY') {
       return Object.freeze({ code: 'INVALID_REPOSITORY' as const });
@@ -255,61 +266,27 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
   ) {}
 
   private terminalSuccess(
-    legacy: LocateResult,
+    draft: LocateExecutionDraftV2,
+    resolvedLimits: ResolvedLocateLimits,
+    facts: import('../../contracts/v2/locate-execution-facts-v2.js').LocateExecutionFactsV2,
     projectionExecution: LocateProjectionExecutionCapabilityV2,
-    snapshotFacts: SnapshotFactsV2 = createZeroReadSnapshotFactsV2(),
-    rankingFacts?: RankedEvidenceFactsV2,
-    scopeFragment?: LocateFactPayloadsV2['scope'],
-    capabilityFragment?: LocateFactPayloadsV2['capability'],
-  ): CanonicalLocateExecutionV2 {
-    if (!legacy.ok) {
-      return this.terminalFailure(
-        Object.freeze({ code: 'INTERNAL_ERROR' as const }),
-        projectionExecution,
-      );
-    }
+  ): CanonicalLocateExecutionReceiptV2 {
     const execution =
       requireLocateProjectionExecutionTokenV2(projectionExecution);
-    const builder = createLocateFactEnvelopeBuilderV2(
-      legacy.evidence.repositoryRoot,
-      legacy.evidence.normalizedTerms,
-    );
-    // F3/F2/F7/F8：snapshot；ranking；scope；capability（四 prerequisite）
-    builder.add('snapshot', snapshotFacts);
-    if (rankingFacts !== undefined) {
-      builder.add('ranking', rankingFacts);
-    } else if (
-      scopeFragment !== undefined &&
-      capabilityFragment !== undefined
-    ) {
-      // zero-read / no-selection：补空 ranking，使四 prerequisite 齐全
-      builder.add(
-        'ranking',
-        Object.freeze({
-          confirmed: Object.freeze([]),
-          candidates: Object.freeze([]),
-          unsatisfiedAnchors: Object.freeze([]),
-        }),
-      );
-    }
-    if (scopeFragment !== undefined) {
-      builder.add('scope', scopeFragment);
-    }
-    if (capabilityFragment !== undefined) {
-      builder.add('capability', capabilityFragment);
-    }
-    // legacy LocateResult remains an internal construction aid only; not part of execution ABI
-    void legacy;
     const input: CanonicalLocateExecutionV2 = Object.freeze({
       ok: true as const,
-      envelope: builder.freeze(),
+      repositoryRoot: draft.repositoryRoot,
+      normalizedTerms: Object.freeze(
+        draft.normalizedTerms.map((term) => Object.freeze({ ...term })),
+      ),
+      resolvedLimits: Object.freeze({ ...resolvedLimits }),
+      facts,
     });
-    registerCanonicalLocateExecutionInputV2(
+    return createCanonicalLocateExecutionReceiptV2(
       input,
       projectionExecution,
       execution,
     );
-    return input;
   }
 
   /**
@@ -317,44 +294,45 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
    * 并把真实 SnapshotFacts 传入 terminalSuccess；零 decode 才走 zero-read。
    */
   private async terminalSuccessWithSnapshot(
-    legacy: LocateResult,
+    draft: LocateExecutionDraftV2,
     projectionExecution: LocateProjectionExecutionCapabilityV2,
     options: {
       readonly requestSnapshot: RequestRepositorySnapshotV2 | undefined;
       readonly signal: AbortSignal;
       readonly discoveryRecords?: Parameters<
-        typeof buildPreRankingPoolInputsFromLegacyEvidenceV2
+        typeof buildPreRankingPoolInputsV2
       >[0]['discoveryRecords'];
-      readonly confirmed?: LocateSuccessEvidence['confirmed'];
-      readonly candidates?: LocateSuccessEvidence['candidates'];
-      /** Expanded-only drafts：仅进 pre-ranking pool，不改 v1 candidates。 */
-      readonly expandedPoolCandidates?: LocateSuccessEvidence['candidates'];
-      readonly limits?: ResolvedLocateLimits;
+      readonly confirmed?: readonly ConfirmedEvidence[];
+      readonly candidates?: readonly CandidateEvidence[];
+      readonly expandedPoolCandidates?: readonly CandidateEvidence[];
+      readonly limits: ResolvedLocateLimits;
       readonly abortSource?: LocateAbortSource;
       readonly abortCoordinator?: ReturnType<
         typeof LocateAbortCoordinatorV2.create
       >;
       readonly rawAnchors?: readonly LocateAnchor[];
       readonly termCase?: TermCaseMode;
-      /** read 前已 bind 的 discovery selection；ranking 必须复用同一 token。 */
       readonly discoverySelection?: BoundSafeDiscoverySelectionV2;
-      /** Expanded fold view：scope coverage 复用同一 fold proof。 */
+      readonly selectedVerificationOutcome?: SelectedVerificationOutcomeV2;
       readonly foldedView?: TrustedScopeFoldedSelectorViewV2;
-      /** Same-execution scope observation：post-final matched bind 权威源。 */
       readonly scopeObservation?: TrustedScopeEligibilityObservationV2;
       readonly requestedLayers?: readonly RepoLayer[];
       readonly backendExecutionContext?: BackendExecutionContextV2;
     },
-  ): Promise<CanonicalLocateExecutionV2> {
+  ): Promise<CanonicalLocateExecutionReceiptV2> {
     const execution =
       requireLocateProjectionExecutionTokenV2(projectionExecution);
     const snapshot = options.requestSnapshot;
-    const resolvedLimits = options.limits ?? resolveLocateLimits(undefined);
-    if (
-      snapshot === undefined ||
-      snapshot.getDecodeInvocationCount() === 0 ||
-      !legacy.ok
-    ) {
+    const confirmed = options.confirmed ?? draft.confirmed;
+    const candidates = options.candidates ?? draft.candidates;
+    const abortCoordinator =
+      options.abortCoordinator ??
+      LocateAbortCoordinatorV2.create(
+        new AbortController().signal,
+        options.limits.timeoutMs,
+      );
+
+    if (snapshot === undefined || snapshot.getDecodeInvocationCount() === 0) {
       const scopeMount = await buildExecutionScopeCoverageMountV1({
         execution,
         requestedLayers: options.requestedLayers,
@@ -370,40 +348,15 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
         snapshotProof: scopeMount.snapshotProof,
         retainedEligible: Object.freeze([]),
       });
-      const abortCoordinator =
-        options.abortCoordinator ??
-        LocateAbortCoordinatorV2.create(
-          new AbortController().signal,
-          resolvedLimits.timeoutMs,
-        );
       const abortDecision = abortCoordinator.closeFinalization();
-      const rankingOutcome = legacy.ok
-        ? issuePassthroughRankingOutcomeFromLegacyEvidenceV2({
-            evidence: legacy.evidence,
-            snapshotProof: scopeMount.snapshotProof,
-            execution,
-          })
-        : undefined;
-      registerProductionAcceptedProjectionSeamsV2({
-        execution,
-        snapshotProof: scopeMount.snapshotProof,
-        rankingOutcome,
-        scopeMount,
-        capabilityMount,
-        resolvedLimits,
-        abortCoordinator,
+      const abortSource = requireFinalizedAbortDecisionV2(
         abortDecision,
-        backendExecutionContext: options.backendExecutionContext,
-        discardedEvidenceCount: 0,
-      });
-      const retainedFiles = legacy.ok
-        ? new Set(
-            [...legacy.evidence.confirmed, ...legacy.evidence.candidates].map(
-              (item) => item.location.file,
-            ),
-          ).size
-        : 0;
-      const snapshotFacts =
+        abortCoordinator,
+      );
+      const retainedFiles = new Set(
+        [...confirmed, ...candidates].map((item) => item.location.file),
+      ).size;
+      const snapshotFacts: SnapshotFactsV2 =
         retainedFiles > 0
           ? Object.freeze({
               coverage: Object.freeze({
@@ -415,63 +368,41 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
               finalStableEvidence: Object.freeze([]),
             })
           : createZeroReadSnapshotFactsV2();
-      // Legacy evidence location/redaction shapes differ from contract drafts;
-      // match F2 ranker bridge and assert contract shape at the projection seam.
-      const rankingFacts: RankedEvidenceFactsV2 | undefined = legacy.ok
-        ? (Object.freeze({
-            confirmed: Object.freeze(
-              legacy.evidence.confirmed.map((item) =>
-                Object.freeze({
-                  evidenceClass: 'confirmed' as const,
-                  role: item.role,
-                  location: Object.freeze({
-                    ...item.location,
-                    resolvable: true as const,
-                  }),
-                  provenance: item.provenance,
-                  reasonCodes: item.reasonCodes,
-                }),
-              ),
-            ),
-            candidates: Object.freeze(
-              legacy.evidence.candidates.map((item) =>
-                Object.freeze({
-                  evidenceClass: 'candidate' as const,
-                  role: item.role,
-                  location: Object.freeze({
-                    ...item.location,
-                    resolvable: true as const,
-                  }),
-                  provenance: item.provenance,
-                  reasonCodes: item.reasonCodes,
-                  promotionRequirements: item.promotionRequirements,
-                }),
-              ),
-            ),
-            unsatisfiedAnchors: Object.freeze([]),
-          }) as RankedEvidenceFactsV2)
-        : undefined;
-      return this.terminalSuccess(
-        legacy,
-        projectionExecution,
+      const rankingFacts = createPassthroughRankedEvidenceFactsV2({
+        confirmed,
+        candidates,
+      });
+      const finalizedDraft: LocateExecutionDraftV2 = Object.freeze({
+        ...draft,
+        confirmed,
+        candidates,
+        abortSource,
+      });
+      const facts = createLocateExecutionFactsFromDraftV2({
+        draft: finalizedDraft,
         snapshotFacts,
         rankingFacts,
-        scopeMount.fragmentValue,
-        capabilityMount.fragmentValue,
+        rankingOutcome: undefined,
+        scopeMount,
+        capabilityMount,
+        backendExecutionContext: options.backendExecutionContext,
+        execution,
+      });
+      return this.terminalSuccess(
+        finalizedDraft,
+        options.limits,
+        facts,
+        projectionExecution,
       );
     }
 
     await beforeFinalSnapshotCheckForTestV2?.();
 
     const gitProbe = await probeRepositoryGitStateDetailedV2(
-      legacy.evidence.repositoryRoot,
+      draft.repositoryRoot,
       new NodeSafeProcessRunner(),
       options.signal,
     );
-    const gitState = gitProbe.gitState;
-
-    const confirmed = options.confirmed ?? legacy.evidence.confirmed;
-    const candidates = options.candidates ?? legacy.evidence.candidates;
     const discoveryRecords = options.discoveryRecords ?? [];
     const legacyKeys = new Set(
       [...confirmed, ...candidates].map((item) =>
@@ -481,106 +412,97 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
     const expandedOnlyForPool = (options.expandedPoolCandidates ?? []).filter(
       (item) => !legacyKeys.has(createDiscoveryKey(item.location)),
     );
-    const poolInputs = buildPreRankingPoolInputsFromLegacyEvidenceV2({
+    const poolInputs = buildPreRankingPoolInputsV2({
       discoveryRecords,
       confirmed,
       candidates: Object.freeze([...candidates, ...expandedOnlyForPool]),
       canonicalFileKeyFor: (locator) => snapshot.canonicalFileKeyFor(locator),
     });
     const pools = buildPreRankingStablePoolsV2(poolInputs);
-    // 最后一次 await：F3 finalCheck；随后关闭 latch 并同步 finalize
     const finalPools = await snapshot.finalCheck(
       options.signal,
+      execution,
       pools.evidence,
       pools.eligible,
-      gitState,
+      gitProbe.gitState,
       gitProbe.snapshotRef,
+      options.selectedVerificationOutcome === undefined ||
+        options.discoverySelection === undefined
+        ? undefined
+        : Object.freeze({
+            boundSelection: options.discoverySelection,
+            selectedVerificationOutcome: options.selectedVerificationOutcome,
+          }),
     );
+    const snapshotBoundSelectedVerificationOutcome =
+      options.selectedVerificationOutcome === undefined ||
+      options.discoverySelection === undefined
+        ? undefined
+        : bindSelectedVerificationOutcomeToSnapshotV2({
+            outcome: options.selectedVerificationOutcome,
+            boundSelection: options.discoverySelection,
+            snapshotProof: finalPools.proof,
+            execution,
+          });
 
-    const finalizeSync = (abortSource: LocateAbortSource) => {
-      const purgedConfirmed = purgeLegacyEvidenceByChangedKeysV2(
-        confirmed,
-        finalPools.changedCanonicalKeys,
-        (locator) => snapshot.canonicalFileKeyFor(locator),
-      );
-      const purgedCandidates = purgeLegacyEvidenceByChangedKeysV2(
-        candidates,
-        finalPools.changedCanonicalKeys,
-        (locator) => snapshot.canonicalFileKeyFor(locator),
-      );
+    const finalizeSync = (abortSource: LocateAbortSource) =>
+      Object.freeze({
+        confirmed: purgeEvidenceByChangedKeysV2(
+          confirmed,
+          finalPools.changedCanonicalKeys,
+          (locator) => snapshot.canonicalFileKeyFor(locator),
+        ),
+        candidates: purgeEvidenceByChangedKeysV2(
+          candidates,
+          finalPools.changedCanonicalKeys,
+          (locator) => snapshot.canonicalFileKeyFor(locator),
+        ),
+        abortSource,
+      });
 
-      const status = applyMutationStatusPrecedenceV2(
-        legacy.evidence.status,
-        finalPools.facts.coverage.consistency,
-      );
-      const limits = options.limits;
-      const nextActions =
-        status === legacy.evidence.status || limits === undefined
-          ? legacy.evidence.nextActions
-          : createNextActions({
-              status,
-              hasCandidates: purgedCandidates.length > 0,
-              limitsReached: legacy.evidence.coverage.limitsReached,
-              abortSource,
-              limits,
-            });
-
-      // Internal construction aid only; public authority is v2 F8 materialization.
-      return Object.freeze({
-        ok: true as const,
-        evidence: {
-          ...legacy.evidence,
-          status,
-          confirmed: [...purgedConfirmed],
-          candidates: [...purgedCandidates],
-          nextActions,
-        },
-      }) as LocateResult;
-    };
-
-    let abortDecision: FinalizedAbortDecisionV2 | undefined;
-    const adjusted: LocateResult =
+    const adjusted =
       options.abortCoordinator === undefined
-        ? finalizeSync(options.abortSource ?? 'none')
+        ? (() => {
+            const decision = abortCoordinator.closeFinalization();
+            return finalizeSync(
+              requireFinalizedAbortDecisionV2(decision, abortCoordinator),
+            );
+          })()
         : closeAndFinalizeLocateSynchronouslyV2(
-            options.abortCoordinator,
-            ({ abortDecision: decision, abortSource }) => {
-              abortDecision = decision;
-              return finalizeSync(abortSource);
-            },
+            abortCoordinator,
+            ({ abortSource }) => finalizeSync(abortSource),
           );
 
-    // F2：final purge 后对 trusted pool 排序；必须复用 read 前 bound selection
-    let rankingFacts: RankedEvidenceFactsV2 | undefined;
     let rankingOutcome: EvidenceRankingOutcomeV2 | undefined;
+    let rankingFacts: RankedEvidenceFactsV2;
     if (options.discoverySelection !== undefined) {
       const intents = normalizeAnchorIntentsV2(
         options.rawAnchors ?? [],
         options.termCase ?? 'smart',
       );
-      const outcome = new EvidenceRankerV2().rank({
+      rankingOutcome = new EvidenceRankerV2().rank({
         finalPools,
         pool: finalPools.evidence,
         snapshotFacts: finalPools.facts,
         snapshotProof: finalPools.proof,
-        normalizedTerms: legacy.evidence.normalizedTerms,
+        normalizedTerms: draft.normalizedTerms,
         anchorIntents: intents,
         limits: {
-          maxFiles: options.limits?.maxFiles ?? 20,
-          maxConfirmed: options.limits?.maxConfirmed ?? 20,
-          maxCandidates: options.limits?.maxCandidates ?? 20,
+          maxFiles: options.limits.maxFiles,
+          maxConfirmed: options.limits.maxConfirmed,
+          maxCandidates: options.limits.maxCandidates,
         },
         discoverySelection: options.discoverySelection,
         execution,
         preRankingPoolTruncated: pools.evidence.preRankingPoolTruncated,
       });
-      // trust / invariant 失败 fail-closed（不静默吞掉）。
       rankingFacts = requireEvidenceRankingOutcomeV2(
-        outcome,
+        rankingOutcome,
         finalPools.proof,
         execution,
       ).fragment.value;
-      rankingOutcome = outcome;
+    } else {
+      rankingFacts = createPassthroughRankedEvidenceFactsV2(adjusted);
     }
 
     const stableScopeRecords =
@@ -609,63 +531,72 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
       snapshotProof: finalPools.proof,
       retainedEligible: finalPools.retainedEligible,
       ...(rankingOutcome === undefined ? {} : { rankingOutcome }),
+      ...(options.scopeObservation === undefined ||
+      options.foldedView === undefined ||
+      options.discoverySelection === undefined
+        ? {}
+        : {
+            scopeAuthority: Object.freeze({
+              observation: options.scopeObservation,
+              foldedView: options.foldedView,
+              boundSelection: options.discoverySelection,
+            }),
+          }),
     });
-
-    const abortCoordinator =
-      options.abortCoordinator ??
-      LocateAbortCoordinatorV2.create(
-        new AbortController().signal,
-        resolvedLimits.timeoutMs,
-      );
-    if (abortDecision === undefined) {
-      abortDecision = abortCoordinator.closeFinalization();
-    }
-    registerProductionAcceptedProjectionSeamsV2({
-      execution,
-      snapshotProof: finalPools.proof,
+    const finalizedDraft: LocateExecutionDraftV2 = Object.freeze({
+      ...draft,
+      confirmed: adjusted.confirmed,
+      candidates: adjusted.candidates,
+      abortSource: adjusted.abortSource,
+    });
+    const facts = createLocateExecutionFactsFromDraftV2({
+      draft: finalizedDraft,
+      snapshotFacts: finalPools.facts,
+      rankingFacts,
       rankingOutcome,
       scopeMount,
       capabilityMount,
-      resolvedLimits,
-      abortCoordinator,
-      abortDecision,
       backendExecutionContext: options.backendExecutionContext,
-      discardedEvidenceCount: finalPools.facts.coverage.discardedEvidenceCount,
+      execution,
+      ...(snapshotBoundSelectedVerificationOutcome === undefined ||
+      options.discoverySelection === undefined
+        ? {}
+        : {
+            selectedVerificationOutcome:
+              snapshotBoundSelectedVerificationOutcome,
+            boundSelection: options.discoverySelection,
+          }),
     });
-
     return this.terminalSuccess(
-      adjusted,
+      finalizedDraft,
+      options.limits,
+      facts,
       projectionExecution,
-      finalPools.facts,
-      rankingFacts,
-      scopeMount.fragmentValue,
-      capabilityMount.fragmentValue,
     );
   }
 
   private terminalFailure(
-    error: UnsafeToolErrorFactsV2,
+    error: LocateExecutionErrorFactsV2,
     projectionExecution: LocateProjectionExecutionCapabilityV2,
-  ): CanonicalLocateExecutionV2 {
+  ): CanonicalLocateExecutionReceiptV2 {
     const execution =
       requireLocateProjectionExecutionTokenV2(projectionExecution);
     const input: CanonicalLocateExecutionV2 = Object.freeze({
       ok: false as const,
       error,
     });
-    registerCanonicalLocateExecutionInputV2(
+    return createCanonicalLocateExecutionReceiptV2(
       input,
       projectionExecution,
       execution,
     );
-    return input;
   }
 
   public async execute(
     request: LocateRequest,
     context: LocateExecutionContext,
     projectionExecution: LocateProjectionExecutionCapabilityV2,
-  ): Promise<CanonicalLocateExecutionV2> {
+  ): Promise<CanonicalLocateExecutionReceiptV2> {
     const executionToken =
       requireLocateProjectionExecutionTokenV2(projectionExecution);
     const limits = resolveLocateLimits(request.limits);
@@ -782,7 +713,6 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
       const expandedBackendResults: BackendSearchResult[] = [];
       let lastSharedSearchMaxHits = multiView.expandedMaxHits as number;
       let skipFallback = false;
-      let fallbackChecked = false;
 
       if (codegraph !== undefined) {
         const codegraphLanes = await searchBackendMultiViewV2(
@@ -833,12 +763,6 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
           codegraphResult.canSkipFallbackIfVerified === true &&
           codegraphResult.hits.length > 0
         ) {
-          // legacy 仅 telemetry；skip-fallback 预检也走 authoritative expanded selection
-          void selectAndFreezeLegacyBackendHitsV1(
-            [codegraphResult],
-            limits.maxFiles,
-            executionToken,
-          );
           const primarySelection = runAuthoritativeExpandedSelectionPhaseV2({
             expandedResults: expandedBackendResults,
             anchors: request.anchors ?? [],
@@ -986,7 +910,6 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
       }
 
       if (!skipFallback && ripgrep !== undefined) {
-        fallbackChecked = codegraphResult !== undefined;
         const ripgrepLanes = await searchBackendMultiViewV2(
           ripgrep,
           multiView,
@@ -1002,11 +925,10 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
       const backendResults = [codegraphResult, ripgrepResult].filter(
         (result): result is BackendSearchResult => result !== undefined,
       );
-      // legacy：telemetry；仅在 expanded selection 为空时作 incomplete/unsafe 兼容桥
-      const legacyFrozen = selectAndFreezeLegacyBackendHitsV1(
+      // Compatibility verification input is plain readonly data, not a second authority.
+      const legacySelection = selectLegacyVerificationHitsV2(
         backendResults,
         limits.maxFiles,
-        executionToken,
       );
 
       const authoritativeSelection = runAuthoritativeExpandedSelectionPhaseV2({
@@ -1025,8 +947,8 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
         authoritativeHits: authoritativeSelection.hits,
         authoritativeFilesTruncated: authoritativeSelection.filesTruncated,
         expandedResults: expandedBackendResults,
-        legacyHits: legacyFrozen.result.hits,
-        legacyFilesTruncated: legacyFrozen.result.filesTruncated,
+        legacyHits: legacySelection.hits,
+        legacyFilesTruncated: legacySelection.filesTruncated,
       });
       const verifyHits = verificationResolution.hits;
       const filesTruncated = verificationResolution.filesTruncated;
@@ -1040,6 +962,14 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
         maxMatchesPerHit,
         signal: abortCoordinator.signal,
         ...(observationCache === undefined ? {} : { observationCache }),
+        ...(verificationResolution.usedAuthoritative
+          ? {
+              selectedDiscoveryAuthority: Object.freeze({
+                boundSelection: discoverySelection,
+                execution: executionToken,
+              }),
+            }
+          : {}),
       });
       const initialExclusions: Partial<Record<ExclusionReasonCode, number>> =
         {};
@@ -1119,9 +1049,7 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
           throw error;
         }
       }
-      // Legacy candidate：LegacyCandidateReservationV1 严格复现 v1 applyCandidatePolicy
-      const legacyReservation = new LegacyCandidateReservationV1();
-      const candidatePolicy = legacyReservation.reserve({
+      const candidatePolicy = applyCandidatePolicy({
         records: merged.records,
         contexts: candidateContexts,
         maxCandidates: Math.max(
@@ -1155,7 +1083,7 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
         scopeFoldInvoked: authoritativeSelection.scopeFoldInvoked,
         scopeFoldCandidateCount: authoritativeSelection.scopeFoldCandidateCount,
         scopeFoldFilesTruncated: authoritativeSelection.scopeFoldFilesTruncated,
-        usedLegacyCandidateReservation: true,
+        usedCandidatePolicyReservation: true,
         expandedProposalCount: expandedProposals.length,
         expandedEvaluatedDraftCount: expandedCandidateDrafts.length,
         verificationSelectionMode: verificationResolution.mode,
@@ -1187,70 +1115,10 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
         candidatePolicy.truncated ||
         candidateSelection.truncated;
 
-      // authoritative 路径以 expanded completeness 为准，避免 legacy 决策 completeness
-      const strategyComplete =
-        verificationResolution.mode === 'authoritative-complete'
-          ? true
-          : verificationResolution.mode === 'authoritative-partial'
-            ? false
-            : skipFallback
-              ? codegraphResult?.health.state === 'available' &&
-                codegraphResult.complete
-              : ripgrepResult?.health.state === 'available' &&
-                ripgrepResult.complete;
-      const finalBackendResult = ripgrepResult ?? codegraphResult;
-      const limitReasons: LimitReasonCode[] = [];
-      if (filesTruncated) {
-        limitReasons.push('MAX_FILES_REACHED');
-      }
-      for (const failure of merged.failures) {
-        if (failure.code === 'MAX_FILE_BYTES_REACHED') {
-          limitReasons.push('MAX_FILE_BYTES_REACHED');
-        }
-        if (failure.code === 'MAX_EXCERPT_BYTES_REACHED') {
-          limitReasons.push('MAX_EXCERPT_BYTES_REACHED');
-        }
-      }
-      if (candidateContextFileLimit) {
-        limitReasons.push('MAX_FILE_BYTES_REACHED');
-      }
-      if (candidateContextExcerptLimit) {
-        limitReasons.push('MAX_EXCERPT_BYTES_REACHED');
-      }
-      if (confirmedTruncated) {
-        limitReasons.push('MAX_CONFIRMED_REACHED');
-      }
-      if (candidatesTruncated) {
-        limitReasons.push('MAX_CANDIDATES_REACHED');
-      }
-      if (
-        abortCoordinator.peekSource() !== 'none' ||
-        merged.aborted ||
-        abortCoordinator.signal.aborted
-      ) {
-        limitReasons.push('TIMEOUT_REACHED');
-      }
-      const limitsReached = uniqueSchemaOrder(limitReasons, LIMIT_REASON_CODES);
-      const finalHealth = finalBackendResult?.health ?? {
-        state: 'unavailable' as const,
-        reasonCode: 'RIPGREP_UNAVAILABLE' as const,
-      };
-      const status = evaluateLocateStatus({
-        abortSource: abortCoordinator.peekSource(),
-        finalBackendHealth: finalHealth,
-        strategyComplete: strategyComplete === true,
-        evidenceCount: confirmed.length + candidates.length,
-        limitsReached,
-      }).status;
-      const nextActions = createNextActions({
-        status,
-        hasCandidates: candidates.length > 0,
-        limitsReached,
-        abortSource: abortCoordinator.peekSource(),
-        limits,
-        initializeCodeGraph: codegraphResult?.health.state === 'missing',
-      });
-      const attempts = Object.freeze([
+      // Only selected candidate-context reads contribute public read limits.
+      const maximumFileBytesReached = candidateContextFileLimit;
+      const maximumExcerptBytesReached = candidateContextExcerptLimit;
+      const fallbackAttempts = Object.freeze([
         ...(codegraphResult === undefined
           ? []
           : [
@@ -1258,6 +1126,7 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
                 'codegraph',
                 codegraphResult.health,
                 codegraphResult.hits.length,
+                0,
               ),
             ]),
         ...(ripgrepResult === undefined
@@ -1267,30 +1136,38 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
                 'ripgrep',
                 ripgrepResult.health,
                 ripgrepResult.hits.length,
+                codegraphResult === undefined ? 0 : 1,
               ),
             ]),
       ]);
-      return await this.terminalSuccessWithSnapshot(
-        Object.freeze({
-          ok: true as const,
-          evidence: {
-            schemaVersion: '1.0' as const,
-            status,
-            repositoryRoot,
-            normalizedTerms,
-            confirmed,
-            candidates,
-            coverage: {
-              backends: attempts,
-              fallbackChecked,
-              indexState: indexStateFor(codegraphResult?.health),
-              indexFreshness: indexFreshnessFor(codegraphResult?.health),
-              limitsReached,
-              exclusionSummary: classified.exclusionSummary,
-            },
-            nextActions,
-          },
+      const draft: LocateExecutionDraftV2 = Object.freeze({
+        repositoryRoot,
+        normalizedTerms,
+        confirmed,
+        candidates,
+        backend: Object.freeze({
+          fallbackAttempts,
+          index: Object.freeze({
+            state: indexStateFor(codegraphResult?.health),
+            freshness: indexFreshnessFor(codegraphResult?.health),
+          }),
+          codegraphInitializationSuggested:
+            codegraphResult?.health.state === 'missing',
         }),
+        snapshotRead: Object.freeze({
+          maximumFilesReached: filesTruncated,
+          maximumFileBytesReached,
+          maximumExcerptBytesReached,
+        }),
+        rankingBudget: Object.freeze({
+          maximumConfirmedReached: confirmedTruncated,
+          maximumCandidatesReached: candidatesTruncated,
+        }),
+        exclusions: classified.exclusionSummary,
+        abortSource: abortCoordinator.peekSource(),
+      });
+      return await this.terminalSuccessWithSnapshot(
+        draft,
         projectionExecution,
         {
           requestSnapshot,
@@ -1305,6 +1182,11 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
           rawAnchors: request.anchors ?? [],
           termCase: mode,
           discoverySelection,
+          ...(merged.selectedVerificationOutcome === undefined
+            ? {}
+            : {
+                selectedVerificationOutcome: merged.selectedVerificationOutcome,
+              }),
           foldedView: authoritativeSelection.foldedView,
           scopeObservation,
           backendExecutionContext,
@@ -1359,78 +1241,99 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
     repositoryRoot: string,
     normalizedTerms: ReturnType<typeof normalizeSearchTerms>,
     abortSource: LocateAbortSource,
-    limits: ResolvedLocateLimits,
+    _limits: ResolvedLocateLimits,
     options: TimeoutResultOptions = {},
-  ): LocateResult {
-    const attempts = options.attempts ?? [
-      {
-        backend: 'ripgrep' as const,
-        status: 'skipped' as const,
-        reasonCode: 'BACKEND_ABORTED' as const,
-        hitCount: 0,
-      },
-    ];
+  ): LocateExecutionDraftV2 {
+    const attempts =
+      options.attempts ??
+      Object.freeze([
+        Object.freeze({
+          sequence: 0,
+          backend: 'ripgrep' as const,
+          outcome: 'used' as const,
+          completion: 'incomplete' as const,
+          termination: 'aborted' as const,
+          reasonCode: 'BACKEND_ABORTED' as const,
+          observedHitCount: 0,
+        }),
+      ]);
     const confirmed = options.confirmed ?? [];
     const candidates = options.candidates ?? [];
     const limitsReached = options.limitsReached ?? ['TIMEOUT_REACHED'];
     return Object.freeze({
-      ok: true as const,
-      evidence: {
-        schemaVersion: '1.0' as const,
-        status: 'timeout' as const,
-        repositoryRoot,
-        normalizedTerms,
-        confirmed,
-        candidates,
-        coverage: {
-          backends: attempts,
-          fallbackChecked: options.fallbackChecked ?? false,
-          indexState: indexStateFor(options.codeGraphHealth),
-          indexFreshness: indexFreshnessFor(options.codeGraphHealth),
-          limitsReached,
-          exclusionSummary: options.exclusionSummary ?? {},
-        },
-        nextActions: createNextActions({
-          status: 'timeout',
-          hasCandidates: candidates.length > 0,
-          limitsReached,
-          abortSource,
-          limits,
+      repositoryRoot,
+      normalizedTerms,
+      confirmed,
+      candidates,
+      backend: Object.freeze({
+        fallbackAttempts: attempts,
+        index: Object.freeze({
+          state: indexStateFor(options.codeGraphHealth),
+          freshness: indexFreshnessFor(options.codeGraphHealth),
         }),
-      },
+        codegraphInitializationSuggested:
+          options.codeGraphHealth?.state === 'missing',
+      }),
+      snapshotRead: Object.freeze({
+        maximumFilesReached: limitsReached.includes('MAX_FILES_REACHED'),
+        maximumFileBytesReached: limitsReached.includes(
+          'MAX_FILE_BYTES_REACHED',
+        ),
+        maximumExcerptBytesReached: limitsReached.includes(
+          'MAX_EXCERPT_BYTES_REACHED',
+        ),
+      }),
+      rankingBudget: Object.freeze({
+        maximumConfirmedReached: limitsReached.includes(
+          'MAX_CONFIRMED_REACHED',
+        ),
+        maximumCandidatesReached: limitsReached.includes(
+          'MAX_CANDIDATES_REACHED',
+        ),
+      }),
+      exclusions: options.exclusionSummary ?? Object.freeze({}),
+      abortSource,
     });
   }
 
   private backendUnavailableResult(
     repositoryRoot: string,
     normalizedTerms: ReturnType<typeof normalizeSearchTerms>,
-  ): LocateResult {
-    return {
-      ok: true,
-      evidence: {
-        schemaVersion: '1.0',
-        status: 'backend_unavailable',
-        repositoryRoot,
-        normalizedTerms,
-        confirmed: [],
-        candidates: [],
-        coverage: {
-          backends: [
-            {
-              backend: 'ripgrep',
-              status: 'unavailable',
-              reasonCode: 'RIPGREP_UNAVAILABLE',
-              hitCount: 0,
-            },
-          ],
-          fallbackChecked: false,
-          indexState: 'unknown',
-          indexFreshness: 'not-applicable',
-          limitsReached: [],
-          exclusionSummary: {},
-        },
-        nextActions: [],
-      },
-    };
+  ): LocateExecutionDraftV2 {
+    return Object.freeze({
+      repositoryRoot,
+      normalizedTerms,
+      confirmed: Object.freeze([]),
+      candidates: Object.freeze([]),
+      backend: Object.freeze({
+        fallbackAttempts: Object.freeze([
+          Object.freeze({
+            sequence: 0,
+            backend: 'ripgrep' as const,
+            outcome: 'unavailable' as const,
+            completion: 'incomplete' as const,
+            termination: 'none' as const,
+            reasonCode: 'RIPGREP_UNAVAILABLE' as const,
+            observedHitCount: 0,
+          }),
+        ]),
+        index: Object.freeze({
+          state: 'unknown' as const,
+          freshness: 'unknown' as const,
+        }),
+        codegraphInitializationSuggested: false,
+      }),
+      snapshotRead: Object.freeze({
+        maximumFilesReached: false,
+        maximumFileBytesReached: false,
+        maximumExcerptBytesReached: false,
+      }),
+      rankingBudget: Object.freeze({
+        maximumConfirmedReached: false,
+        maximumCandidatesReached: false,
+      }),
+      exclusions: Object.freeze({}),
+      abortSource: 'none' as const,
+    });
   }
 }

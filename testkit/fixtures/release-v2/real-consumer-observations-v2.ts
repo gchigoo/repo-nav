@@ -85,7 +85,7 @@ const BASELINE_LOCATE_RESULT_V2 = LocateResultV2Schema.parse({
           file: 'package.json',
           resolvable: true,
           lines: [1, 2],
-          excerpt: '{\n  "name": "repo-nav",\n  "version": "1.1.0"\n}',
+          excerpt: '{\n  "name": "repo-nav",\n  "version": "2.0.0"\n}',
         },
         provenance: {
           discoveredBy: ['ripgrep'],

@@ -84,7 +84,7 @@ describe.runIf(
       "from '../../dist/",
     );
     const packageCandidateIndex = runner.indexOf(
-      'const candidate = packageCandidate(consumer)',
+      'const candidate = packageCandidate()',
     );
     const schemaReloadIndex = runner.indexOf(
       'await reloadLocateResultSchema()',

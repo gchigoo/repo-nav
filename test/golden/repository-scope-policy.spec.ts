@@ -17,7 +17,6 @@ import {
   requireLocateProjectionExecutionTokenV2,
 } from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
 import { V2LocateResultProjector } from '../../src/evidence/locate-execution/v2-locate-result-projector.js';
-import { createAcceptedCompleteRealLocateShadowOrchestratorV2 } from '../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js';
 import { projectAndScopeFoldExpandedHitsV2 } from '../../src/evidence/request-snapshot/expanded-lane-bridge-v2.js';
 import { runFinalSnapshotCheckV2 } from '../../src/evidence/request-snapshot/final-snapshot-check-v2.js';
 import { createScopeCoverageBasisV2 } from '../../src/evidence/request-snapshot/scope-coverage-basis-v2.js';
@@ -91,15 +90,16 @@ describe.runIf(
         { signal: new AbortController().signal },
         capability,
       );
-      const projector = new V2LocateResultProjector(
-        createAcceptedCompleteRealLocateShadowOrchestratorV2(),
-      );
+      const projector = new V2LocateResultProjector();
       const first = projector.project(executed, capability);
       const second = projector.project(executed, capability);
       // Same capability/input → deep-equal public projection (identity not required).
       expect(second.value).toStrictEqual(first.value);
       expect(first.value).toBeDefined();
-      expect(first.receipt).toBeDefined();
+      expect(first.compactJson).toBe(JSON.stringify(first.value));
+      expect(first.utf8Bytes).toBe(
+        Buffer.byteLength(first.compactJson, 'utf8'),
+      );
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -176,6 +176,7 @@ describe.runIf(
         eligiblePool: { records: [] },
         gitState: 'unknown',
         signal: new AbortController().signal,
+        execution,
       });
       const foldProof = readScopeFoldedSafePoolProofV2(
         expanded.foldedView,

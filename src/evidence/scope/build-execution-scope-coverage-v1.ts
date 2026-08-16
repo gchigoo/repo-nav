@@ -87,6 +87,7 @@ export async function buildExecutionScopeCoverageMountV1(input: {
       eligiblePool: { records: [] },
       gitState: 'unknown',
       signal: new AbortController().signal,
+      execution: input.execution,
     });
     eligiblePool = registered.eligibleDiscovery;
     snapshotProof = registered.proof;

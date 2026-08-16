@@ -1,6 +1,5 @@
 /**
  * F9 / public package root — v2 request/result + stable client API.
- * Legacy v1 contracts: `repo-nav/legacy-v1`.
  * Backend adapters: `repo-nav/backends`.
  * Node adapters: `repo-nav/node`.
  * DI tokens / planners: `repo-nav/advanced`.

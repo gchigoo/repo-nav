@@ -1,72 +1,28 @@
-/**
- * Production v2 locate result projector.
- * Injects F8 ACCEPTED_COMPLETE_REAL_LOCATE_SHADOW_ORCHESTRATOR_V2 ready singleton only.
- */
-
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import type {
-  CanonicalLocateExecutionV2,
+  CanonicalLocateExecutionReceiptV2,
   LocateProjectionExecutionCapabilityV2,
-  LocateResultProjector,
-} from '../../contracts/v2/locate-fact-envelope-v2.js';
-import {
-  ACCEPTED_COMPLETE_REAL_LOCATE_SHADOW_ORCHESTRATOR_V2,
-  requireAcceptedCompleteRealLocateShadowV2,
-  type AcceptedCompleteRealLocateShadowOrchestratorV2,
-} from '../canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js';
-import { createTrustedSerializedPublicToolErrorV2 } from '../canonical/trusted-serialized-locate-result-v2.js';
-import {
-  promoteAcceptedCompleteRealLocateShadowV2,
-  promoteTrustedSerializedPublicToolErrorV2,
-  type TrustedPublicLocateTransportBundleV2,
-} from './public-locate-transport-registry-v2.js';
+  LocateResultProjectorV2,
+  SerializedLocateResultV2,
+} from '../../contracts/v2/canonical-locate-execution-v2.js';
+import { finalizeLocateResultV2 } from './finalize-locate-result-v2.js';
+import { requireCanonicalLocateExecutionInputV2 } from './locate-projection-execution-capability-v2.js';
 
 @Injectable()
-export class V2LocateResultProjector implements LocateResultProjector<TrustedPublicLocateTransportBundleV2> {
-  public constructor(
-    @Inject(ACCEPTED_COMPLETE_REAL_LOCATE_SHADOW_ORCHESTRATOR_V2)
-    private readonly orchestrator: AcceptedCompleteRealLocateShadowOrchestratorV2,
-  ) {}
-
-  /**
-   * Project canonical execution to a trusted public transport receipt bundle.
-   */
+export class V2LocateResultProjector implements LocateResultProjectorV2 {
   public project(
-    input: CanonicalLocateExecutionV2,
+    receipt: CanonicalLocateExecutionReceiptV2,
     execution: LocateProjectionExecutionCapabilityV2,
-  ): TrustedPublicLocateTransportBundleV2 {
-    if (!input.ok) {
-      const serialized = createTrustedSerializedPublicToolErrorV2(
-        input.error.code,
-        input.error.suggestedAction === 'ADD_TERM' ? 'ADD_TERM' : undefined,
-        execution,
-      );
-      return promoteTrustedSerializedPublicToolErrorV2(serialized, execution);
+  ): SerializedLocateResultV2 {
+    try {
+      const input = requireCanonicalLocateExecutionInputV2(receipt, execution);
+      return finalizeLocateResultV2(input);
+    } catch {
+      return finalizeLocateResultV2({
+        ok: false,
+        error: { code: 'INTERNAL_ERROR' },
+      });
     }
-
-    const attempt = this.orchestrator.projectAcceptedExecution(
-      input,
-      execution,
-    );
-    if (!attempt.ok) {
-      const serialized = createTrustedSerializedPublicToolErrorV2(
-        'INTERNAL_ERROR',
-        undefined,
-        execution,
-      );
-      return promoteTrustedSerializedPublicToolErrorV2(serialized, execution);
-    }
-
-    const accepted = requireAcceptedCompleteRealLocateShadowV2(
-      attempt.accepted,
-      input,
-      execution,
-    );
-    return promoteAcceptedCompleteRealLocateShadowV2(
-      accepted,
-      input,
-      execution,
-    );
   }
 }

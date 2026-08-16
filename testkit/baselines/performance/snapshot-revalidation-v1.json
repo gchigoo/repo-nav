@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "repository": "gchigoo/repo-nav",
+    "workflow": "package-release-ci",
+    "workflowPath": ".github/workflows/package-release-ci.yml",
+    "job": "snapshot-revalidation-benchmark",
+    "headSha": "3da72f8c38c11eeab9b5480d5d6435efa72a3f53",
+    "runId": 31809134722,
+    "runAttempt": 1,
+    "artifactName": "snapshot-revalidation-candidate-v1",
+    "artifactId": 9222384999,
+    "artifactDigest": "sha256:4bd68e3f73796e8a68c26850b5d4ffd2786f3c51167dbd3232a577de48ed09d9",
+    "artifactCreatedAt": "2026-08-14T14:22:12Z",
+    "artifactExpiresAt": "2026-08-21T14:22:11Z",
+    "catalogSha256": "b4655bd6cc700ea65e8114f249f68d39478f969235f2d8d88d3a474e8045aa48",
+    "reportSha256": "ba5806b2262f1ff0cd50ad13e2dab941cf1d9e22f6a12baeb7b26b38d0fd90ab"
+  },
+  "report": {
+    "schemaVersion": 1,
+    "catalogSha256": "b4655bd6cc700ea65e8114f249f68d39478f969235f2d8d88d3a474e8045aa48",
+    "environment": {
+      "runner": "ubuntu-24.04",
+      "nodeMajor": 22,
+      "platform": "linux",
+      "arch": "x64"
+    },
+    "sampling": {
+      "warmupRuns": 1,
+      "measuredRuns": 5,
+      "quantile": "nearest-rank"
+    },
+    "policies": [
+      {
+        "policy": "all-loaded-baseline",
+        "loadedCount": 17,
+        "retainedCount": 6,
+        "eligibleCount": 12,
+        "metadataChecks": 17,
+        "digestChecks": 17,
+        "digestBytes": 992,
+        "samplesMicroseconds": [12073, 10936, 11571, 12034, 12004],
+        "p50Microseconds": 12004,
+        "p95Microseconds": 12073,
+        "eligibleDecisionSafe": true
+      },
+      {
+        "policy": "retained-digest",
+        "loadedCount": 17,
+        "retainedCount": 6,
+        "eligibleCount": 12,
+        "metadataChecks": 6,
+        "digestChecks": 6,
+        "digestBytes": 367,
+        "samplesMicroseconds": [4227, 4216, 4802, 4613, 3709],
+        "p50Microseconds": 4227,
+        "p95Microseconds": 4802,
+        "eligibleDecisionSafe": false
+      },
+      {
+        "policy": "conditional-digest",
+        "loadedCount": 17,
+        "retainedCount": 6,
+        "eligibleCount": 12,
+        "metadataChecks": 12,
+        "digestChecks": 12,
+        "digestBytes": 738,
+        "samplesMicroseconds": [8561, 7447, 7520, 6939, 6852],
+        "p50Microseconds": 7447,
+        "p95Microseconds": 8561,
+        "eligibleDecisionSafe": true
+      }
+    ],
+    "correctness": [
+      {
+        "policy": "all-loaded-baseline",
+        "retainedMutationDetected": true,
+        "eligibleDecisionSafe": true,
+        "abortPurged": true,
+        "unreadablePurged": true
+      },
+      {
+        "policy": "retained-digest",
+        "retainedMutationDetected": true,
+        "eligibleDecisionSafe": false,
+        "abortPurged": true,
+        "unreadablePurged": true
+      },
+      {
+        "policy": "conditional-digest",
+        "retainedMutationDetected": true,
+        "eligibleDecisionSafe": true,
+        "abortPurged": true,
+        "unreadablePurged": true
+      }
+    ],
+    "selected": null
+  },
+  "selected": "conditional-digest",
+  "decision": {
+    "minimumP95ImprovementBasisPoints": 1500,
+    "tieBreakPolicy": "conditional-digest",
+    "correctnessSafePolicies": ["all-loaded-baseline", "conditional-digest"],
+    "baselineP95Microseconds": 12073,
+    "selectedP95Microseconds": 8561,
+    "selectedImprovementBasisPoints": 2908
+  }
+}

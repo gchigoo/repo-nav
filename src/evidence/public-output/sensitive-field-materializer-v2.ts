@@ -17,7 +17,6 @@ import {
   SpanContractViolationError,
 } from './sensitive-span-merge-v2.js';
 import {
-  assertCorpusProvenanceV2,
   isAuthenticSensitiveCorpusV2,
   matchExactTextCorpusSpansV2,
   matchPathSegmentCorpusHitV2,
@@ -157,14 +156,4 @@ export function redactPublicFieldV2(
   return field === 'file'
     ? redactFile(value, corpus)
     : redactText(value, field, corpus);
-}
-
-export function redactPublicFieldForSourceV2(
-  source: object,
-  value: string,
-  field: PublicFieldKindV2,
-  corpus: SensitiveCorpusV2,
-): PublicFieldRedactionV2 {
-  assertCorpusProvenanceV2(source, corpus);
-  return redactPublicFieldV2(value, field, corpus);
 }

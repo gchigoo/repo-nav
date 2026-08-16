@@ -7,10 +7,6 @@ import {
   REPOSITORY_READER,
 } from '../runtime/tokens.js';
 import {
-  ACCEPTED_COMPLETE_REAL_LOCATE_SHADOW_ORCHESTRATOR_V2,
-  createAcceptedCompleteRealLocateShadowOrchestratorV2,
-} from './canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js';
-import {
   CANONICAL_LOCATE_EXECUTOR_V2,
   LOCATE_RESULT_PROJECTOR,
 } from './locate-execution/locate-execution.tokens.js';
@@ -34,10 +30,6 @@ import { RepositoryEvidenceEngine } from './repository-evidence-engine.js';
     {
       provide: CANONICAL_LOCATE_EXECUTOR_V2,
       useExisting: CanonicalRepositoryLocateExecutorV2,
-    },
-    {
-      provide: ACCEPTED_COMPLETE_REAL_LOCATE_SHADOW_ORCHESTRATOR_V2,
-      useFactory: createAcceptedCompleteRealLocateShadowOrchestratorV2,
     },
     V2LocateResultProjector,
     {

@@ -3,9 +3,19 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { LocateResultV2Schema } from '../../src/contracts/v2/locate-result-v2.js';
 import {
-  C1_PRODUCTION_BOUNDARY_V2,
+  LOCATE_EXECUTION_FACT_FAMILIES_V2,
+  assertLocateExecutionFactFamilySetV2,
+  createLocateExecutionFactsV2,
+  type FinalizeLocateResultInputV2,
+  type LocateExecutionErrorFactsV2,
+  type LocateExecutionFactsV2,
+  type LocateExecutionResolvedLimitsV2,
+} from '../../src/contracts/v2/locate-execution-facts-v2.js';
+import { LocateResultV2Schema } from '../../src/contracts/v2/locate-result-v2.js';
+import { finalizeLocateResultV2 } from '../../src/evidence/locate-execution/finalize-locate-result-v2.js';
+import {
+  C3_C4_CUTOVER_BOUNDARY_V2,
   LOCATE_AUTHORITY_LAYER_INVENTORY_V2,
   LOCATE_PARALLEL_AUTHORITY_INVENTORY_V2,
   LOCATE_PUBLIC_FIELD_OWNER_DEFINITION_V2,
@@ -30,6 +40,13 @@ import {
   locateExecutionSemanticSha256V2,
   readGoldenCompanionResultV2,
 } from '../../testkit/fixtures/locate-execution-v2/characterization-matrix-v2.js';
+import {
+  LOCATE_EXECUTION_DEFAULT_RESOLVED_LIMITS_V2,
+  LOCATION_REDACTION_FINALIZE_INPUT_V2,
+  LOCATION_REDACTION_LOCATE_EXECUTION_FACTS_V2,
+  locateExecutionErrorFactsFromPublicResultV2,
+  locateExecutionFinalizerInputFromCharacterizedSubsystemsV2,
+} from '../../testkit/fixtures/locate-execution-v2/finalizer-facts-v2.js';
 import {
   observeProductionDeadlineV2,
   observeProductionLocationRedactionV2,
@@ -65,6 +82,95 @@ function requireSuccess(result: unknown) {
     throw new TypeError('characterization fixture must be a success');
   }
   return parsed;
+}
+
+function expectTransportEqualsV2(
+  actual: ReturnType<typeof finalizeLocateResultV2>,
+  expected: unknown,
+): void {
+  const parsed = LocateResultV2Schema.parse(expected);
+  const compactJson = JSON.stringify(parsed);
+  expect(actual.value).toEqual(parsed);
+  expect(actual.compactJson).toBe(compactJson);
+  expect(actual.utf8Bytes).toBe(Buffer.byteLength(compactJson, 'utf8'));
+  expect(Object.isFrozen(actual)).toBe(true);
+}
+
+function expectDeepFrozenV2(value: unknown, seen = new Set<object>()): void {
+  if (typeof value !== 'object' || value === null || seen.has(value)) {
+    return;
+  }
+  seen.add(value);
+  expect(Object.isFrozen(value)).toBe(true);
+  for (const child of Object.values(value)) {
+    expectDeepFrozenV2(child, seen);
+  }
+}
+
+type FinalizeSuccessInputV2 = Extract<
+  FinalizeLocateResultInputV2,
+  Readonly<{ ok: true }>
+>;
+
+function mutableFactsV2(facts: LocateExecutionFactsV2): any {
+  return structuredClone(facts);
+}
+
+function resolvedLimitsV2(
+  overrides: Partial<LocateExecutionResolvedLimitsV2>,
+): LocateExecutionResolvedLimitsV2 {
+  return Object.freeze({
+    ...LOCATE_EXECUTION_DEFAULT_RESOLVED_LIMITS_V2,
+    ...overrides,
+  });
+}
+
+function finalizerLimitsForCaseV2(
+  caseId: string,
+): LocateExecutionResolvedLimitsV2 {
+  switch (caseId) {
+    case 'deadline-abort':
+      return resolvedLimitsV2({ timeoutMs: 1_000 });
+    case 'upstream-expanded-hit':
+      return resolvedLimitsV2({ maxFiles: 1 });
+    default:
+      return LOCATE_EXECUTION_DEFAULT_RESOLVED_LIMITS_V2;
+  }
+}
+
+function finalizerInputForCharacterizedV2(
+  caseId: string,
+  expected: unknown,
+): FinalizeSuccessInputV2 {
+  if (caseId === 'location-redaction') {
+    return LOCATION_REDACTION_FINALIZE_INPUT_V2;
+  }
+  return locateExecutionFinalizerInputFromCharacterizedSubsystemsV2(
+    LocateResultV2Schema.parse(expected),
+    finalizerLimitsForCaseV2(caseId),
+  ) as FinalizeSuccessInputV2;
+}
+
+function finalizeMutatedFactsV2(input: FinalizeSuccessInputV2, facts: unknown) {
+  return finalizeLocateResultV2({
+    ...input,
+    facts: facts as LocateExecutionFactsV2,
+  });
+}
+
+function expectMutatedFactsRejectedV2(
+  caseId: string,
+  expected: unknown,
+  mutate: (facts: any) => void,
+): void {
+  const parsed = LocateResultV2Schema.parse(expected);
+  const input = finalizerInputForCharacterizedV2(caseId, parsed);
+  const facts = mutableFactsV2(input.facts);
+  mutate(facts);
+  const view = finalizeMutatedFactsV2(input, facts);
+  expect(
+    evaluateLocateExecutionCharacterizationResultV2(parsed, view.value),
+  ).toBe(false);
 }
 
 function mutateBackendOrderV2(): unknown {
@@ -234,7 +340,7 @@ describe.runIf(selected)('C1 locate execution characterization', () => {
     expect(LOCATE_EXECUTION_COMPANION_SEMANTIC_SHA256_V2).toEqual(
       expect.objectContaining({
         'codegraph-incomplete':
-          '4b7a8404aa1b63e9edb062d67f3a5f9be54021d70bf5bf30067e6d2438734179',
+          '84b384fc2d2e6e6f73a2236710af0c1765fa9d8be146b3fcaca6274964941958',
       }),
     );
 
@@ -423,6 +529,183 @@ describe.runIf(selected)('C1 locate execution characterization', () => {
     ).toBe(false);
   });
 
+  it('finalizes immutable C2 facts to exact C1 public transport views', () => {
+    const successRows = [
+      ...LOCATE_EXECUTION_GOLDEN_CHARACTERIZATION_ROWS_V2.map((row) => ({
+        caseId: row.caseId,
+        expected: readGoldenCompanionResultV2(row.caseId),
+      })),
+      {
+        caseId: 'output-limit',
+        expected: OUTPUT_LIMIT_CHARACTERIZATION_RESULT_V2,
+      },
+      {
+        caseId: 'deadline-abort',
+        expected: DEADLINE_CHARACTERIZATION_RESULT_V2,
+      },
+      {
+        caseId: 'snapshot-mutation',
+        expected: SNAPSHOT_MUTATION_CHARACTERIZATION_RESULT_V2,
+      },
+      {
+        caseId: 'location-redaction',
+        expected: LOCATION_REDACTION_CHARACTERIZATION_RESULT_V2,
+      },
+      {
+        caseId: 'upstream-expanded-hit',
+        expected: UPSTREAM_EXPANDED_HIT_CHARACTERIZATION_RESULT_V2,
+      },
+    ] as const;
+
+    for (const row of successRows) {
+      const input = finalizerInputForCharacterizedV2(row.caseId, row.expected);
+      const before = structuredClone(input);
+      expectDeepFrozenV2(input.facts);
+      const first = finalizeLocateResultV2(input);
+      const second = finalizeLocateResultV2(input);
+      expect(second).toEqual(first);
+      expect(input).toEqual(before);
+      expectTransportEqualsV2(first, row.expected);
+      expect(locateExecutionSemanticSha256V2(first.value), row.caseId).toBe(
+        locateExecutionSemanticSha256V2(row.expected),
+      );
+    }
+
+    for (const row of SAFE_ERROR_CHARACTERIZATION_ROWS_V2) {
+      const error = locateExecutionErrorFactsFromPublicResultV2(row.expected);
+      expectDeepFrozenV2(error);
+      const view = finalizeLocateResultV2({ ok: false, error });
+      expectTransportEqualsV2(view, row.expected);
+      expect(locateExecutionSemanticSha256V2(view.value), row.caseId).toBe(
+        LOCATE_EXECUTION_INLINE_SEMANTIC_SHA256_V2.safeErrors[row.caseId],
+      );
+    }
+  });
+
+  it('freezes C2 facts and rejects finalizer mutation attempts', () => {
+    const characterizedInput = finalizerInputForCharacterizedV2(
+      'codegraph-incomplete',
+      readGoldenCompanionResultV2('codegraph-incomplete'),
+    );
+    const facts = characterizedInput.facts;
+    expect(LOCATE_EXECUTION_FACT_FAMILIES_V2).toEqual([
+      'backend',
+      'snapshot',
+      'ranking',
+      'scope',
+      'capability',
+      'abort',
+    ]);
+    expect(() =>
+      assertLocateExecutionFactFamilySetV2(LOCATE_EXECUTION_FACT_FAMILIES_V2),
+    ).not.toThrow();
+    expect(() =>
+      assertLocateExecutionFactFamilySetV2([
+        ...LOCATE_EXECUTION_FACT_FAMILIES_V2,
+        'backend',
+      ]),
+    ).toThrow(TypeError);
+    expect(() =>
+      assertLocateExecutionFactFamilySetV2(
+        LOCATE_EXECUTION_FACT_FAMILIES_V2.slice(1),
+      ),
+    ).toThrow(TypeError);
+    expectDeepFrozenV2(facts);
+    expect(JSON.stringify(facts)).not.toContain('evidence:v2:');
+    expect(() =>
+      (facts.backend.attempts as unknown as unknown[]).reverse(),
+    ).toThrow(TypeError);
+
+    const extraFamily = structuredClone(facts) as Record<string, unknown>;
+    extraFamily.extra = {};
+    expect(() => createLocateExecutionFactsV2(extraFamily as any)).toThrow(
+      TypeError,
+    );
+    const missingFamily = structuredClone(facts) as Record<string, unknown>;
+    delete missingFamily.abort;
+    expect(() => createLocateExecutionFactsV2(missingFamily as any)).toThrow(
+      TypeError,
+    );
+
+    expectMutatedFactsRejectedV2(
+      'codegraph-incomplete',
+      readGoldenCompanionResultV2('codegraph-incomplete'),
+      (mutable) => {
+        mutable.backend.attempts[0]!.sequence = 1;
+        mutable.backend.attempts[1]!.sequence = 0;
+      },
+    );
+    expectMutatedFactsRejectedV2(
+      'codegraph-incomplete',
+      readGoldenCompanionResultV2('codegraph-incomplete'),
+      (mutable) => {
+        mutable.backend.attempts[1]!.completion = 'incomplete';
+        mutable.backend.attempts[1]!.termination = 'early-stop';
+      },
+    );
+    expectMutatedFactsRejectedV2(
+      'deadline-abort',
+      DEADLINE_CHARACTERIZATION_RESULT_V2,
+      (mutable) => {
+        mutable.abort.source = 'caller';
+      },
+    );
+    expectMutatedFactsRejectedV2(
+      'output-limit',
+      OUTPUT_LIMIT_CHARACTERIZATION_RESULT_V2,
+      (mutable) => {
+        mutable.backend.attempts[0]!.termination = 'early-stop';
+        mutable.backend.attempts[0]!.observedHitCount = 1;
+      },
+    );
+    expectMutatedFactsRejectedV2(
+      'snapshot-mutation',
+      SNAPSHOT_MUTATION_CHARACTERIZATION_RESULT_V2,
+      (mutable) => {
+        const stable = mutable.ranking.confirmed[0]!;
+        mutable.ranking.confirmed.push({
+          ...stable,
+          location: {
+            ...stable.location,
+            file: 'server/changed.ts',
+            excerpt: 'const changedId = row.changed_id;',
+          },
+        });
+      },
+    );
+
+    const redactionFacts = mutableFactsV2(
+      LOCATION_REDACTION_FINALIZE_INPUT_V2.facts,
+    );
+    redactionFacts.ranking.candidates[0]!.location.file = '[REDACTED_PATH]';
+    redactionFacts.ranking.candidates[0]!.location.excerpt =
+      'password=[REDACTED]';
+    expect(
+      evaluateLocateExecutionCharacterizationResultV2(
+        LOCATION_REDACTION_CHARACTERIZATION_RESULT_V2,
+        finalizeMutatedFactsV2(
+          LOCATION_REDACTION_FINALIZE_INPUT_V2,
+          redactionFacts,
+        ).value,
+      ),
+    ).toBe(false);
+    expect(LOCATION_REDACTION_FINALIZE_INPUT_V2.facts).toBe(
+      LOCATION_REDACTION_LOCATE_EXECUTION_FACTS_V2,
+    );
+
+    const forgedSafeError = finalizeLocateResultV2({
+      ok: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'unsafe internal detail',
+      } as unknown as LocateExecutionErrorFactsV2,
+    });
+    expect(forgedSafeError.value).toEqual(
+      SAFE_ERROR_CHARACTERIZATION_ROWS_V2[3]!.expected,
+    );
+    expect(forgedSafeError.compactJson).not.toContain('unsafe internal detail');
+  });
+
   it('assigns every materialized public field to one final owner and inventories all authority layers', async () => {
     expect(LOCATE_PUBLIC_FIELD_OWNER_DEFINITION_V2).toContain(
       'final production symbol',
@@ -451,16 +734,16 @@ describe.runIf(selected)('C1 locate execution characterization', () => {
     ).toMatchObject({
       resultBranch: 'success',
       field: 'ok',
-      finalOwner: 'composition',
-      symbol: 'MaterializedLocateResultComposerV2Impl.compose',
+      finalOwner: 'pure-finalizer',
+      symbol: 'finalizeLocateResultV2',
     });
     expect(
       LOCATE_PUBLIC_FIELD_OWNERS_V2.find((row) => row.ownerPath === 'error.ok'),
     ).toMatchObject({
       resultBranch: 'error',
       field: 'ok',
-      finalOwner: 'safe-error-serialization',
-      symbol: 'createTrustedSerializedPublicToolErrorV2',
+      finalOwner: 'pure-finalizer',
+      symbol: 'finalizeLocateResultV2',
     });
 
     for (const row of LOCATE_PUBLIC_FIELD_OWNERS_V2) {
@@ -505,9 +788,14 @@ describe.runIf(selected)('C1 locate execution characterization', () => {
       'serialization-transport',
     ]);
     for (const row of LOCATE_PARALLEL_AUTHORITY_INVENTORY_V2) {
-      expect(row.legacyAuthority.length, row.decision).toBeGreaterThan(0);
-      expect(row.v2Authority.length, row.decision).toBeGreaterThan(0);
-      for (const authority of [...row.legacyAuthority, ...row.v2Authority]) {
+      expect(row.legacyAuthority, row.decision).toEqual([]);
+      expect(row.v2Authority, row.decision).toEqual([
+        {
+          source: 'src/evidence/locate-execution/finalize-locate-result-v2.ts',
+          symbol: 'finalizeLocateResultV2',
+        },
+      ]);
+      for (const authority of row.v2Authority) {
         expect(
           existsSync(resolve(repositoryRoot, authority.source)),
           authority.source,
@@ -519,33 +807,15 @@ describe.runIf(selected)('C1 locate execution characterization', () => {
       }
     }
 
-    const safeErrorAuthority = {
-      source: 'src/evidence/canonical/trusted-serialized-locate-result-v2.ts',
-      symbol: 'createTrustedSerializedPublicToolErrorV2',
-    };
-    for (const decision of ['schema-assembly', 'serialization-transport']) {
-      expect(
-        LOCATE_PARALLEL_AUTHORITY_INVENTORY_V2.find(
-          (row) => row.decision === decision,
-        )?.v2Authority,
-        decision,
-      ).toContainEqual(safeErrorAuthority);
-    }
-
     expect(LOCATE_AUTHORITY_LAYER_INVENTORY_V2.map((row) => row.layer)).toEqual(
       [
-        'schema-1.0-construction',
-        'fact-envelope',
-        'backend-trace',
-        'production-seam-registration',
-        'f2-source-materialization-registration',
-        'projection-registries',
-        'request-outcome-aggregation',
-        'accepted-aggregation-registration',
-        'required-owner-finalization',
-        'public-composition',
-        'schema-and-serialization',
-        'public-transport-registry',
+        'canonical-executor-abi',
+        'plain-facts-contract',
+        'canonical-facts-builder',
+        'pure-finalizer',
+        'canonical-projector',
+        'flat-application-transport',
+        'runtime-capability-binding',
       ],
     );
     for (const layer of LOCATE_AUTHORITY_LAYER_INVENTORY_V2) {
@@ -558,30 +828,23 @@ describe.runIf(selected)('C1 locate execution characterization', () => {
         expect(sourceContainsSymbol(layer.source, symbol), symbol).toBe(true);
       }
     }
-    expect(
-      LOCATE_AUTHORITY_LAYER_INVENTORY_V2.find(
-        (row) => row.layer === 'schema-and-serialization',
-      )?.symbols,
-    ).toContain(safeErrorAuthority.symbol);
   });
 
-  it('keeps C1 characterization-only without changing ABI or cutting production authority', () => {
-    expect(C1_PRODUCTION_BOUNDARY_V2).toEqual({
+  it('cuts production authority over to canonical facts and flat transport', () => {
+    expect(C3_C4_CUTOVER_BOUNDARY_V2).toEqual({
       executorAbi:
-        'src/contracts/v2/locate-fact-envelope-v2.ts#CanonicalLocateExecutorV2.execute',
+        'src/contracts/v2/canonical-locate-execution-v2.ts#CanonicalLocateExecutorV2.execute',
       productionExecutor:
         'src/evidence/locate-execution/canonical-locate-executor-v2.ts#CanonicalRepositoryLocateExecutorV2',
       productionProjector:
         'src/evidence/locate-execution/v2-locate-result-projector.ts#V2LocateResultProjector',
-      internalLegacySchemaVersion: '1.0',
+      factsContract:
+        'src/contracts/v2/locate-execution-facts-v2.ts#LocateExecutionFactsV2',
+      pureFinalizer:
+        'src/evidence/locate-execution/finalize-locate-result-v2.ts#finalizeLocateResultV2',
       publicSchemaVersion: '2.0',
-      c1Disposition: 'characterize-only',
-      forbiddenC1Changes: [
-        'LocateExecutionFactsV2',
-        'executor-abi-change',
-        'production-authority-cutover',
-        'schema-1.0-removal',
-      ],
+      disposition: 'production-authority',
+      transportShape: ['value', 'compactJson', 'utf8Bytes'],
     });
     const executorSource = readFileSync(
       resolve(
@@ -590,20 +853,110 @@ describe.runIf(selected)('C1 locate execution characterization', () => {
       ),
       'utf8',
     );
-    expect(executorSource).toContain("schemaVersion: '1.0'");
-    expect(executorSource).toContain('LegacyCandidateReservationV1');
-    expect(executorSource).toContain('evaluateLocateStatus');
-    expect(executorSource).toContain('createNextActions');
-    expect(executorSource).toContain(
-      'registerProductionAcceptedProjectionSeamsV2',
-    );
-    expect(
-      existsSync(
-        resolve(
-          repositoryRoot,
-          'src/contracts/v2/locate-execution-facts-v2.ts',
-        ),
+    const projectorSource = readFileSync(
+      resolve(
+        repositoryRoot,
+        'src/evidence/locate-execution/v2-locate-result-projector.ts',
       ),
-    ).toBe(false);
+      'utf8',
+    );
+    const finalizerSource = readFileSync(
+      resolve(
+        repositoryRoot,
+        'src/evidence/locate-execution/finalize-locate-result-v2.ts',
+      ),
+      'utf8',
+    );
+    const factsSource = readFileSync(
+      resolve(repositoryRoot, 'src/contracts/v2/locate-execution-facts-v2.ts'),
+      'utf8',
+    );
+    const transportContractSource = readFileSync(
+      resolve(
+        repositoryRoot,
+        'src/contracts/v2/canonical-locate-execution-v2.ts',
+      ),
+      'utf8',
+    );
+    const applicationSource = readFileSync(
+      resolve(
+        repositoryRoot,
+        'src/evidence/locate-execution/public-locate-execution-application-v2.ts',
+      ),
+      'utf8',
+    );
+    for (const removedAuthority of [
+      "schemaVersion: '1.0'",
+      'LegacyCandidateReservationV1',
+      'evaluateLocateStatus',
+      'createNextActions',
+      'registerProductionAcceptedProjectionSeamsV2',
+      'selectAndFreezeLegacyBackendHitsV1',
+      'LocateResult',
+    ]) {
+      expect(executorSource).not.toContain(removedAuthority);
+    }
+    expect(executorSource).toContain('createLocateExecutionFactsFromDraftV2');
+    expect(projectorSource).toContain('finalizeLocateResultV2');
+    expect(projectorSource).toContain('requireCanonicalLocateExecutionInputV2');
+    expect(projectorSource).not.toContain('ORCHESTRATOR');
+    expect(applicationSource).toContain('SerializedLocateResultV2');
+    expect(applicationSource).not.toContain('Receipt');
+    expect(transportContractSource).toContain(
+      'export interface SerializedLocateResultV2',
+    );
+    for (const field of ['value', 'compactJson', 'utf8Bytes']) {
+      expect(transportContractSource).toContain(`readonly ${field}`);
+    }
+    for (const forbidden of [
+      'WeakMap',
+      'WeakSet',
+      'requireTrusted',
+      'Registry',
+      'node:fs',
+      'node:path',
+      'node:child_process',
+      'child_process',
+      'readFileSync',
+      'assemblePublicLocateResultV2',
+      'createPublicLocateTransportViewV2',
+      "schemaVersion: '1.0'",
+    ]) {
+      expect(finalizerSource).not.toContain(forbidden);
+    }
+    expect(finalizerSource).not.toMatch(/from ['"].*contracts\/index/u);
+    expect(finalizerSource).not.toMatch(/from ['"].*contracts\/constants/u);
+    expect(finalizerSource).not.toMatch(/async |Promise</u);
+    for (const forbidden of [
+      'requestOutcome',
+      'request-outcome',
+      'status',
+      'strategyComplete',
+      'fallbackChecked',
+      'nextActions',
+      'schemaVersion',
+      'FinalizedUnsafeLocateResultV2',
+      'LocateResultV2',
+    ]) {
+      expect(factsSource).not.toContain(forbidden);
+    }
+    for (const removedPath of [
+      'src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.ts',
+      'src/evidence/canonical/locate-projection-stage-registrar-v2.ts',
+      'src/evidence/canonical/materialized-locate-result-composer-v2.ts',
+      'src/evidence/canonical/required-owner-finalizer-v2.ts',
+      'src/evidence/canonical/trusted-serialized-locate-result-v2.ts',
+      'src/evidence/public-output/f2-locate-projection-stages-v2.ts',
+      'src/evidence/public-output/materialized-evidence-core-v2.ts',
+      'src/evidence/locate-execution/public-locate-transport-registry-v2.ts',
+      'src/evidence/locate-execution/register-production-accepted-projection-seams-v2.ts',
+      'src/evidence/request-snapshot/legacy-candidate-reservation-v1.ts',
+      'src/evidence/request-snapshot/executor-snapshot-bridge-v2.ts',
+    ]) {
+      expect(
+        existsSync(resolve(repositoryRoot, removedPath)),
+        removedPath,
+      ).toBe(false);
+    }
   });
 });

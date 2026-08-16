@@ -5,7 +5,10 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { SBOM_SPEC_VERSION_V2 } from '../../testkit/fixtures/release-v2/dependency-closure-v2.js';
-import { isSelected } from '../../testkit/testing/selection.js';
+import {
+  isExplicitlySelected,
+  isSelected,
+} from '../../testkit/testing/selection.js';
 import {
   evaluateProductionAudit,
   validateProductionAuditPolicy,
@@ -1030,7 +1033,10 @@ describe.runIf(
 });
 
 describe.runIf(
-  isSelected({ group: 'public-beta-release', caseId: 'installed-sbom' }),
+  isExplicitlySelected({
+    group: 'public-beta-release',
+    caseId: 'installed-sbom',
+  }),
 )('F9-SBOM-001 installed-sbom', () => {
   it('runs verify-installed-sbom against canonical shrinkwrap graph', () => {
     const r = spawnSync(
@@ -1044,10 +1050,16 @@ describe.runIf(
       specVersion: string;
       componentCount: number;
       edgeCount: number;
+      tarballSha256: string;
+      authority: string;
     };
     expect(report.ok).toBe(true);
     expect(report.specVersion).toBe(SBOM_SPEC_VERSION_V2);
     expect(report.componentCount).toBeGreaterThan(0);
     expect(report.edgeCount).toBeGreaterThanOrEqual(0);
+    expect(report.tarballSha256).toMatch(/^[0-9a-f]{64}$/u);
+    expect(report.authority).toBe(
+      'exact-packed-candidate+immutable-copy+fresh-consumer-package-lock-sbom',
+    );
   }, 120_000);
 });

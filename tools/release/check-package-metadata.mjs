@@ -1,6 +1,6 @@
 /**
  * Verify package.json / shrinkwrap / runtime version authority parity and
- * release documentation metadata for the supported 1.x corrective line.
+ * release documentation metadata for the 2.0.0 package line.
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -9,15 +9,11 @@ import { spawnSync } from 'node:child_process';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
-const REQUIRED_INSTALL_LINE = 'npm i -g repo-nav@1.1.0';
+const REQUIRED_INSTALL_LINE = 'npm i -g repo-nav@2.0.0';
 const REQUIRED_MCP_SDK_VERSION = '1.30.0';
-const REQUIRED_PACKAGE_VERSION = '1.1.0';
+const REQUIRED_PACKAGE_VERSION = '2.0.0';
 const REQUIRED_EXPORTS = Object.freeze({
   '.': { types: './dist/index.d.ts', import: './dist/index.js' },
-  './legacy-v1': {
-    types: './dist/legacy-v1.d.ts',
-    import: './dist/legacy-v1.js',
-  },
   './backends': {
     types: './dist/backends.d.ts',
     import: './dist/backends.js',
@@ -99,7 +95,7 @@ const bins = pkg.bin ?? {};
 if (bins['repo-nav-mcp'] !== 'dist/main.js') fail('bin repo-nav-mcp mismatch');
 if (bins['repo-nav'] !== 'dist/cli/main.js') fail('bin repo-nav mismatch');
 if (JSON.stringify(pkg.exports) !== JSON.stringify(REQUIRED_EXPORTS)) {
-  fail('package exports must preserve the 1.1.0 compatibility surface');
+  fail('package exports must match the retained 2.0.0 public surface');
 }
 
 for (const relativePath of [
@@ -114,7 +110,7 @@ for (const relativePath of [
   if (text.includes('repo-nav@beta')) {
     fail(`${relativePath} must not reference repo-nav@beta`);
   }
-  if (/npm (?:i|install) -g repo-nav@(?!1\.1\.0\b)\S+/u.test(text)) {
+  if (/npm (?:i|install) -g repo-nav@(?!2\.0\.0\b)\S+/u.test(text)) {
     fail(`${relativePath} contains a conflicting versioned install command`);
   }
   if (/npm (?:i|install) -g repo-nav(?:\s|`|$)/u.test(text)) {
@@ -122,11 +118,11 @@ for (const relativePath of [
   }
 }
 const security = readText('SECURITY.md');
-if (!/\|\s*1\.x\s*\|\s*supported\s*\|/u.test(security)) {
-  fail('SECURITY.md must list 1.x as supported');
+if (!/\|\s*2\.x\s*\|\s*supported\s*\|/u.test(security)) {
+  fail('SECURITY.md must list 2.x as supported');
 }
-if (!/\|\s*<1\.0\s*\|\s*unsupported\s*\|/u.test(security)) {
-  fail('SECURITY.md must list <1.0 as unsupported');
+if (!/\|\s*<2\.0\s*\|\s*unsupported\s*\|/u.test(security)) {
+  fail('SECURITY.md must list <2.0 as unsupported');
 }
 if (security.includes('0.2.0-beta.x') || security.includes('< 0.2.0')) {
   fail('SECURITY.md must not reference obsolete beta support range');
@@ -135,8 +131,8 @@ const supportRows =
   security.match(/^\|\s*[^|]+\|\s*(?:supported|unsupported)\s*\|$/gmu) ?? [];
 if (
   supportRows.length !== 2 ||
-  !supportRows.some((row) => /\|\s*1\.x\s*\|\s*supported\s*\|/u.test(row)) ||
-  !supportRows.some((row) => /\|\s*<1\.0\s*\|\s*unsupported\s*\|/u.test(row))
+  !supportRows.some((row) => /\|\s*2\.x\s*\|\s*supported\s*\|/u.test(row)) ||
+  !supportRows.some((row) => /\|\s*<2\.0\s*\|\s*unsupported\s*\|/u.test(row))
 ) {
   fail('SECURITY.md contains conflicting support rows');
 }

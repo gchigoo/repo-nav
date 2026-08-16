@@ -8,10 +8,6 @@ export interface WeakRegistryDispositionV2 {
 
 const RUNTIME_CAPABILITY_RATIONALE =
   'Retain: authenticates an opaque runtime token, proof, or ownership binding without exposing mutable authority.';
-const ORDINARY_DATA_C2_RATIONALE =
-  'Remove in C2: carries legacy-only ordinary data that must stop acting as an internal authority.';
-const ORDINARY_DATA_C3_RATIONALE =
-  'Remove in C3: carries ordinary projection data through object identity instead of an explicit readonly value.';
 const IDENTITY_CACHE_RATIONALE =
   'Retain: bounded identity cache or deduplication set; it does not transport projection authority.';
 
@@ -29,95 +25,11 @@ function row(
 export const WEAK_REGISTRY_DISPOSITIONS_V2: readonly WeakRegistryDispositionV2[] =
   Object.freeze([
     row(
-      'src/contracts/v2/locate-fact-envelope-v2.ts',
-      'prerequisiteRegistry',
-      'runtime-capability',
-      'retain',
-      RUNTIME_CAPABILITY_RATIONALE,
-    ),
-    row(
       'src/evidence/abort-source.ts',
       'finalizedAbortPrivate',
       'runtime-capability',
       'retain',
       RUNTIME_CAPABILITY_RATIONALE,
-    ),
-    row(
-      'src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.ts',
-      'aggregationBundleByExecution',
-      'ordinary-data',
-      'remove-c3',
-      ORDINARY_DATA_C3_RATIONALE,
-    ),
-    row(
-      'src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.ts',
-      'acceptedPrivate',
-      'ordinary-data',
-      'remove-c3',
-      ORDINARY_DATA_C3_RATIONALE,
-    ),
-    row(
-      'src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.ts',
-      'failurePrivate',
-      'ordinary-data',
-      'remove-c3',
-      ORDINARY_DATA_C3_RATIONALE,
-    ),
-    row(
-      'src/evidence/canonical/locate-projection-stage-registrar-v2.ts',
-      'sourceRegistry',
-      'ordinary-data',
-      'remove-c3',
-      ORDINARY_DATA_C3_RATIONALE,
-    ),
-    row(
-      'src/evidence/canonical/locate-projection-stage-registrar-v2.ts',
-      'materializationRegistry',
-      'ordinary-data',
-      'remove-c3',
-      ORDINARY_DATA_C3_RATIONALE,
-    ),
-    row(
-      'src/evidence/canonical/locate-projection-stage-registrar-v2.ts',
-      'aggregationRegistry',
-      'ordinary-data',
-      'remove-c3',
-      ORDINARY_DATA_C3_RATIONALE,
-    ),
-    row(
-      'src/evidence/canonical/materialized-locate-result-composer-v2.ts',
-      'materializedRegistry',
-      'ordinary-data',
-      'remove-c3',
-      ORDINARY_DATA_C3_RATIONALE,
-    ),
-    row(
-      'src/evidence/canonical/required-owner-finalizer-v2.ts',
-      'finalizedRegistry',
-      'ordinary-data',
-      'remove-c3',
-      ORDINARY_DATA_C3_RATIONALE,
-    ),
-    row(
-      'src/evidence/canonical/trusted-serialized-locate-result-v2.ts',
-      'schemaRegistry',
-      'ordinary-data',
-      'remove-c3',
-      ORDINARY_DATA_C3_RATIONALE,
-    ),
-    row(
-      'src/evidence/canonical/trusted-serialized-locate-result-v2.ts',
-      'serializedRegistry',
-      'ordinary-data',
-      'remove-c3',
-      ORDINARY_DATA_C3_RATIONALE,
-    ),
-    row(
-      'src/evidence/language/capability-coverage-v2.ts',
-      'retainedDecisionLedgerByExecution',
-      'ordinary-data',
-      'remove-c3',
-      ORDINARY_DATA_C3_RATIONALE,
     ),
     row(
       'src/evidence/language/capability-coverage-v2.ts',
@@ -136,13 +48,6 @@ export const WEAK_REGISTRY_DISPOSITIONS_V2: readonly WeakRegistryDispositionV2[]
     row(
       'src/evidence/language/capability-coverage-v2.ts',
       'factsPrivate',
-      'runtime-capability',
-      'retain',
-      RUNTIME_CAPABILITY_RATIONALE,
-    ),
-    row(
-      'src/evidence/language/capability-coverage-v2.ts',
-      'contributionPrivate',
       'runtime-capability',
       'retain',
       RUNTIME_CAPABILITY_RATIONALE,
@@ -212,59 +117,17 @@ export const WEAK_REGISTRY_DISPOSITIONS_V2: readonly WeakRegistryDispositionV2[]
     ),
     row(
       'src/evidence/locate-execution/locate-projection-execution-capability-v2.ts',
-      'inputToBinding',
+      'capabilityToAuthority',
       'runtime-capability',
       'retain',
       RUNTIME_CAPABILITY_RATIONALE,
     ),
     row(
-      'src/evidence/locate-execution/public-locate-transport-registry-v2.ts',
-      'receiptRegistry',
-      'ordinary-data',
-      'remove-c3',
-      ORDINARY_DATA_C3_RATIONALE,
-    ),
-    row(
-      'src/evidence/locate-execution/public-locate-transport-registry-v2.ts',
-      'valueToReceipt',
-      'ordinary-data',
-      'remove-c3',
-      ORDINARY_DATA_C3_RATIONALE,
-    ),
-    row(
-      'src/evidence/public-output/f2-locate-projection-stages-v2.ts',
-      'outcomeByExecution',
-      'ordinary-data',
-      'remove-c3',
-      ORDINARY_DATA_C3_RATIONALE,
-    ),
-    row(
-      'src/evidence/public-output/f2-locate-projection-stages-v2.ts',
-      'sourcePayloadByToken',
-      'ordinary-data',
-      'remove-c3',
-      ORDINARY_DATA_C3_RATIONALE,
-    ),
-    row(
-      'src/evidence/public-output/f2-locate-projection-stages-v2.ts',
-      'coreByMaterialization',
-      'ordinary-data',
-      'remove-c3',
-      ORDINARY_DATA_C3_RATIONALE,
-    ),
-    row(
-      'src/evidence/public-output/materialized-evidence-core-v2.ts',
-      'coreRecords',
-      'ordinary-data',
-      'remove-c3',
-      ORDINARY_DATA_C3_RATIONALE,
-    ),
-    row(
-      'src/evidence/public-output/materialized-evidence-core-v2.ts',
-      'contributionBindings',
-      'ordinary-data',
-      'remove-c3',
-      ORDINARY_DATA_C3_RATIONALE,
+      'src/evidence/locate-execution/locate-projection-execution-capability-v2.ts',
+      'authorityToBinding',
+      'runtime-capability',
+      'retain',
+      RUNTIME_CAPABILITY_RATIONALE,
     ),
     row(
       'src/evidence/public-output/sensitive-corpus-v2.ts',
@@ -274,29 +137,8 @@ export const WEAK_REGISTRY_DISPOSITIONS_V2: readonly WeakRegistryDispositionV2[]
       RUNTIME_CAPABILITY_RATIONALE,
     ),
     row(
-      'src/evidence/public-output/sensitive-corpus-v2.ts',
-      'corpusBySource',
-      'identity-cache',
-      'retain',
-      IDENTITY_CACHE_RATIONALE,
-    ),
-    row(
       'src/evidence/ranking/evidence-ranking-outcome-v2.ts',
       'outcomeRecords',
-      'runtime-capability',
-      'retain',
-      RUNTIME_CAPABILITY_RATIONALE,
-    ),
-    row(
-      'src/evidence/request-outcome/request-outcome-aggregator-v2.ts',
-      'aggregationProofPrivate',
-      'runtime-capability',
-      'retain',
-      RUNTIME_CAPABILITY_RATIONALE,
-    ),
-    row(
-      'src/evidence/request-outcome/trusted-fallback-decision-v2.ts',
-      'fallbackPrivate',
       'runtime-capability',
       'retain',
       RUNTIME_CAPABILITY_RATIONALE,
@@ -352,6 +194,13 @@ export const WEAK_REGISTRY_DISPOSITIONS_V2: readonly WeakRegistryDispositionV2[]
     ),
     row(
       'src/evidence/request-snapshot/discovery-selection-binding-v2.ts',
+      'selectionDraftRecords',
+      'runtime-capability',
+      'retain',
+      RUNTIME_CAPABILITY_RATIONALE,
+    ),
+    row(
+      'src/evidence/request-snapshot/discovery-selection-binding-v2.ts',
       'boundSelectionRecords',
       'runtime-capability',
       'retain',
@@ -384,27 +233,6 @@ export const WEAK_REGISTRY_DISPOSITIONS_V2: readonly WeakRegistryDispositionV2[]
       'runtime-capability',
       'retain',
       RUNTIME_CAPABILITY_RATIONALE,
-    ),
-    row(
-      'src/evidence/request-snapshot/legacy-scope-policy-pool-v1.ts',
-      'legacySelectionRecords',
-      'ordinary-data',
-      'remove-c2',
-      ORDINARY_DATA_C2_RATIONALE,
-    ),
-    row(
-      'src/evidence/request-snapshot/legacy-scope-policy-pool-v1.ts',
-      'legacyReceiptRecords',
-      'ordinary-data',
-      'remove-c2',
-      ORDINARY_DATA_C2_RATIONALE,
-    ),
-    row(
-      'src/evidence/request-snapshot/legacy-scope-policy-pool-v1.ts',
-      'sealedLegacyPools',
-      'ordinary-data',
-      'remove-c2',
-      ORDINARY_DATA_C2_RATIONALE,
     ),
     row(
       'src/evidence/request-snapshot/pre-ranking-evidence-pool-v2.ts',
@@ -457,13 +285,6 @@ export const WEAK_REGISTRY_DISPOSITIONS_V2: readonly WeakRegistryDispositionV2[]
     ),
     row(
       'src/evidence/request-snapshot/scope-classification-views-v2.ts',
-      'legacyPrivate',
-      'runtime-capability',
-      'retain',
-      RUNTIME_CAPABILITY_RATIONALE,
-    ),
-    row(
-      'src/evidence/request-snapshot/scope-classification-views-v2.ts',
       'stablePrivate',
       'runtime-capability',
       'retain',
@@ -491,15 +312,22 @@ export const WEAK_REGISTRY_DISPOSITIONS_V2: readonly WeakRegistryDispositionV2[]
       RUNTIME_CAPABILITY_RATIONALE,
     ),
     row(
-      'src/evidence/request-snapshot/snapshot-outcome-contribution-v2.ts',
-      'contributionPrivate',
+      'src/evidence/request-snapshot/selected-verification-outcome-v2.ts',
+      'selectedVerificationRecords',
+      'runtime-capability',
+      'retain',
+      RUNTIME_CAPABILITY_RATIONALE,
+    ),
+    row(
+      'src/evidence/request-snapshot/selected-verification-outcome-v2.ts',
+      'snapshotBoundRecords',
       'runtime-capability',
       'retain',
       RUNTIME_CAPABILITY_RATIONALE,
     ),
     row(
       'src/evidence/request-snapshot/snapshot-outcome-contribution-v2.ts',
-      'contributionByValue',
+      'contributionPrivate',
       'runtime-capability',
       'retain',
       RUNTIME_CAPABILITY_RATIONALE,
@@ -584,20 +412,13 @@ export const WEAK_REGISTRY_DISPOSITIONS_V2: readonly WeakRegistryDispositionV2[]
     row(
       'src/evidence/scope/scope-bound-producer-registrar-v2.ts',
       'sources',
-      'runtime-capability',
+      'identity-cache',
       'retain',
-      RUNTIME_CAPABILITY_RATIONALE,
+      IDENTITY_CACHE_RATIONALE,
     ),
     row(
       'src/evidence/scope/scope-coverage-v1.ts',
       'factsPrivate',
-      'runtime-capability',
-      'retain',
-      RUNTIME_CAPABILITY_RATIONALE,
-    ),
-    row(
-      'src/evidence/scope/scope-coverage-v1.ts',
-      'contributionPrivate',
       'runtime-capability',
       'retain',
       RUNTIME_CAPABILITY_RATIONALE,

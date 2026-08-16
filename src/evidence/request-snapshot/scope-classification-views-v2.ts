@@ -21,10 +21,7 @@ import type {
   PreFinalEligibleDiscoveryPoolV2,
   PreFinalEligibleDiscoveryRecordV2,
 } from './pre-ranking-evidence-pool-v2.js';
-import {
-  readDiscoveryLocatorPosixPathV2,
-  type DiscoveryLocatorRefV2,
-} from './discovery-lane-universe-v2.js';
+import { readDiscoveryLocatorPosixPathV2 } from './discovery-lane-universe-v2.js';
 import {
   readScopeFoldedSafePoolProofV2,
   readScopeFoldedSelectorFactsV2,
@@ -33,7 +30,6 @@ import {
   type TrustedScopeFoldedSelectorViewV2,
 } from './scope-folded-discovery-selector-v2.js';
 import {
-  readObservedScopeDecisionV2,
   requireTrustedScopeEligibilityObservationV2,
   type TrustedScopeEligibilityObservationV2,
 } from './trusted-scope-policy-adapter-v2.js';
@@ -111,11 +107,6 @@ export type TrustedPreFinalScopeClassificationViewV2 = Readonly<object> & {
   readonly [TRUSTED_PRE_FINAL_SCOPE_CLASSIFICATION_VIEW_V2]: never;
 };
 
-declare const TRUSTED_LEGACY_SCOPE_CLASSIFICATION_VIEW_V2: unique symbol;
-export type TrustedLegacyScopeClassificationViewV2 = Readonly<object> & {
-  readonly [TRUSTED_LEGACY_SCOPE_CLASSIFICATION_VIEW_V2]: never;
-};
-
 declare const TRUSTED_STABLE_ELIGIBLE_SCOPE_VIEW_V2: unique symbol;
 export type TrustedStableEligibleScopeViewV2 = Readonly<object> & {
   readonly [TRUSTED_STABLE_ELIGIBLE_SCOPE_VIEW_V2]: never;
@@ -127,11 +118,6 @@ export interface TrustedPreFinalScopeRecordViewV2 {
   readonly decision: ScopeEligibilityDecisionV2;
 }
 
-export interface TrustedLegacyScopeRecordViewV2 {
-  readonly locatorRef: DiscoveryLocatorRefV2;
-  readonly decision: ScopeEligibilityDecisionV2;
-}
-
 export interface TrustedStableScopeRecordViewV2 {
   readonly eligibleRef: EligibleDiscoveryRefV2;
   readonly fileBucketRef: OpaqueFileBucketRefV2;
@@ -140,21 +126,15 @@ export interface TrustedStableScopeRecordViewV2 {
 
 interface PreFinalPrivateV2 {
   readonly execution: LocateExecutionTokenV2;
-  readonly observation: TrustedScopeEligibilityObservationV2;
-  readonly foldedView: TrustedScopeFoldedSelectorViewV2;
-  readonly boundSelection: BoundSafeDiscoverySelectionV2;
+  readonly observation?: TrustedScopeEligibilityObservationV2;
+  readonly foldedView?: TrustedScopeFoldedSelectorViewV2;
+  readonly boundSelection?: BoundSafeDiscoverySelectionV2;
   readonly pool: PreFinalEligibleDiscoveryPoolV2;
   readonly records: readonly TrustedPreFinalScopeRecordViewV2[];
   readonly decisionsByEligibleRef: ReadonlyMap<
     EligibleDiscoveryRefV2,
     ScopeEligibilityDecisionV2
   >;
-}
-
-interface LegacyPrivateV2 {
-  readonly execution: LocateExecutionTokenV2;
-  readonly observation: TrustedScopeEligibilityObservationV2;
-  readonly records: readonly TrustedLegacyScopeRecordViewV2[];
 }
 
 interface StablePrivateV2 {
@@ -173,10 +153,6 @@ interface StablePrivateV2 {
 const preFinalPrivate = new WeakMap<
   TrustedPreFinalScopeClassificationViewV2,
   PreFinalPrivateV2
->();
-const legacyPrivate = new WeakMap<
-  TrustedLegacyScopeClassificationViewV2,
-  LegacyPrivateV2
 >();
 const stablePrivate = new WeakMap<
   TrustedStableEligibleScopeViewV2,
@@ -390,34 +366,6 @@ export function createTrustedPreFinalScopeClassificationViewV2(input: {
   return view;
 }
 
-export function requireLegacyScopeClassificationViewV2(
-  observation: TrustedScopeEligibilityObservationV2,
-  expectedExecution: LocateExecutionTokenV2,
-): TrustedLegacyScopeClassificationViewV2 {
-  const observed = requireTrustedScopeEligibilityObservationV2(
-    observation,
-    expectedExecution,
-  );
-  const records = Object.freeze(
-    observed.decisions.map((entry) =>
-      Object.freeze({
-        locatorRef: entry.locatorRef,
-        decision: entry.decision,
-      }),
-    ),
-  );
-  const view = createOpaqueTokenV2<TrustedLegacyScopeClassificationViewV2>();
-  legacyPrivate.set(
-    view,
-    Object.freeze({
-      execution: expectedExecution,
-      observation,
-      records,
-    }),
-  );
-  return view;
-}
-
 /**
  * Post-final matched/count seam。
  */
@@ -546,16 +494,24 @@ export function readStableScopeDecisionForEligibleRefV2(
   return decision;
 }
 
-export function readLegacyScopeDecisionForLocatorV2(
-  view: TrustedLegacyScopeClassificationViewV2,
-  locatorRef: DiscoveryLocatorRefV2,
+export function createEmptyTrustedPreFinalScopeClassificationViewV2(
+  pool: PreFinalEligibleDiscoveryPoolV2,
   execution: LocateExecutionTokenV2,
-): ScopeEligibilityDecisionV2 {
-  const record = legacyPrivate.get(view);
-  if (record === undefined || record.execution !== execution) {
-    throw new TypeError('legacy scope view is not trusted');
+): TrustedPreFinalScopeClassificationViewV2 {
+  if (pool.records.length !== 0) {
+    throw new TypeError('empty scope view requires an empty pool');
   }
-  return readObservedScopeDecisionV2(record.observation, locatorRef, execution);
+  const view = createOpaqueTokenV2<TrustedPreFinalScopeClassificationViewV2>();
+  preFinalPrivate.set(
+    view,
+    Object.freeze({
+      execution,
+      pool,
+      records: Object.freeze([]),
+      decisionsByEligibleRef: new Map(),
+    }),
+  );
+  return view;
 }
 
 /**

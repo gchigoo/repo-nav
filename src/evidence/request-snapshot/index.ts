@@ -25,17 +25,6 @@ export {
   type MultiViewBackendSearchRequestV2,
 } from './discovery-reservation-v2.js';
 export {
-  registerLegacySelectedPathV2,
-  readLegacySelectedPathForTestV2,
-  sealTrustedLegacySelectedPathPoolV2,
-  selectAndFreezeLegacyBackendHitsV1,
-  type FrozenLegacySelectionV1,
-  type LegacyDiscoverySelectionResultV1,
-  type LegacySelectedPathReceiptV2,
-  type TrustedLegacySelectedPathPoolV2,
-  type TrustedLegacySelectionProofV1,
-} from './legacy-scope-policy-pool-v1.js';
-export {
   VerifiedDiscoveryObservationCacheV2,
   encodeVerifiedObservationReadKeyV2,
   type VerifiedDiscoveryObservationV2,
@@ -108,7 +97,6 @@ export {
   type CandidateTokenProposalFactsV2,
   type VerifiedCandidateTokenProposalV2,
 } from './candidate-token-proposal-enumerator-v2.js';
-export { LegacyCandidateReservationV1 } from './legacy-candidate-reservation-v1.js';
 export {
   evaluateExpandedCandidateProposalsV2,
   evaluateLegacyCandidateProposalsV2,
@@ -118,6 +106,7 @@ export {
 export {
   runFinalSnapshotCheckV2,
   requireTrustedSnapshotPoolsV2,
+  requireTrustedStableEligibleDiscoveryRecordsV2,
   snapshotTrustProofOwnKeysV2,
   isRegisteredSnapshotTrustProofV2,
   setAfterSuccessfulFinalFileCheckForTestV2,
@@ -155,16 +144,15 @@ export {
 } from './scope-coverage-basis-v2.js';
 export {
   requirePreFinalScopeClassificationViewV2,
-  requireLegacyScopeClassificationViewV2,
   requireStableEligibleScopeViewV2,
   bindStableEligibleScopeDecisionsV2,
   bindEmptyStableEligibleScopeDecisionsV2,
   buildStableEligibleScopeRecordsFromObservationV2,
+  createEmptyTrustedPreFinalScopeClassificationViewV2,
   createTrustedPreFinalScopeClassificationViewV2,
   createTrustedPreFinalScopeClassificationViewForTestV2,
   readStableEligibleMatchedLayersV2,
   type TrustedPreFinalScopeClassificationViewV2,
-  type TrustedLegacyScopeClassificationViewV2,
   type TrustedStableEligibleScopeViewV2,
   type TrustedStableScopeRecordViewV2,
 } from './scope-classification-views-v2.js';
@@ -177,6 +165,7 @@ export {
   type VerifiedLanguageCursorConsumerV2,
 } from './verified-language-consumer-v2.js';
 export {
+  createEmptyTrustedPreFinalCapabilityViewV2,
   createTrustedPreFinalCapabilityViewForTestV2,
   requirePreFinalCapabilityViewV2,
   requireStableEligibleCapabilityViewV2,
@@ -191,12 +180,18 @@ export {
   type SnapshotOutcomeContributionV2,
   type SnapshotOutcomeContributionTokenV2,
 } from './snapshot-outcome-contribution-v2.js';
+export {
+  bindSelectedVerificationOutcomeToSnapshotV2,
+  requireSnapshotBoundSelectedVerificationOutcomeV2,
+  type SelectedVerificationOutcomeFactsV2,
+  type SelectedVerificationOutcomeV2,
+  type SnapshotBoundSelectedVerificationOutcomeV2,
+} from './selected-verification-outcome-v2.js';
 export { createZeroReadSnapshotFactsV2 } from './zero-read-snapshot-facts-v2.js';
 export {
-  applyMutationStatusPrecedenceV2,
-  buildPreRankingPoolInputsFromLegacyEvidenceV2,
-  purgeLegacyEvidenceByChangedKeysV2,
-} from './executor-snapshot-bridge-v2.js';
+  buildPreRankingPoolInputsV2,
+  purgeEvidenceByChangedKeysV2,
+} from './execution-evidence-bridge-v2.js';
 export {
   deriveLaneBackendResultV2,
   resolveExpandedLaneFromHandoffViewV2,
@@ -218,10 +213,13 @@ export {
 
 export {
   bindDiscoverySelectionV2,
+  createSafeDiscoverySelectionDraftV2,
   requireBoundDiscoverySelectionV2,
+  requireSafeDiscoverySelectionDraftV2,
   readBoundSelectionProofV2,
   type BoundSafeDiscoverySelectionV2,
   type SafeDiscoverySelectionDraftV2,
+  type SafeDiscoverySelectionFactsV2,
   type SafeDiscoverySelectionProofV2,
 } from './discovery-selection-binding-v2.js';
 export {

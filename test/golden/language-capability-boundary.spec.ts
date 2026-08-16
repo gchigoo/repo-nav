@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { createAcceptedCompleteRealLocateShadowOrchestratorV2 } from '../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js';
 import { requireDefaultLanguageEvidenceAdapterRegistryV2 } from '../../src/evidence/language/language-adapter-registry-v2.js';
-import { V2LocateResultProjector } from '../../src/evidence/locate-execution/v2-locate-result-projector.js';
-import { createFourPrerequisiteCanonicalInputV2 } from '../../testkit/fixtures/canonical-locate-bridge-v2/four-prerequisite-base-v2.js';
+import { finalizeLocateResultV2 } from '../../src/evidence/locate-execution/finalize-locate-result-v2.js';
+import { locateExecutionFinalizerInputFromUnsafePublicSourceV2 } from '../../testkit/fixtures/locate-execution-v2/finalizer-facts-v2.js';
+import { createUnsafeLocateSuccessV2 } from '../../testkit/fixtures/public-output-v2/synthetic-locate-v2.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
 describe.runIf(
@@ -11,28 +11,23 @@ describe.runIf(
     group: 'language-capability-boundary',
     caseId: 'v2-shadow-and-v1-parity',
   }),
-)('F8-V1-001 v2-shadow-and-v1-parity', () => {
-  it('uses production v2 projector; shadow remains internal and fail-closed without aggregation', () => {
-    const { input, capability } = createFourPrerequisiteCanonicalInputV2();
-    const projector = new V2LocateResultProjector(
-      createAcceptedCompleteRealLocateShadowOrchestratorV2(),
-    );
-    const produced = projector.project(input, capability);
-    expect(produced.value.ok).toBe(false);
-    if (produced.value.ok) {
-      throw new Error('expected fail-closed without aggregation registration');
-    }
-    expect(produced.value.error.code).toBe('INTERNAL_ERROR');
-
-    const orchestrator = createAcceptedCompleteRealLocateShadowOrchestratorV2();
-    const shadow = orchestrator.projectAcceptedExecution(input, capability);
-    expect(shadow.ok).toBe(false);
-
+)('language capability finalizer parity', () => {
+  it('projects canonical capabilities without a shadow aggregation stage', () => {
     const registry = requireDefaultLanguageEvidenceAdapterRegistryV2();
     expect(registry.semanticClassification).toEqual([
       'typescript',
       'javascript',
       'sql',
     ]);
+
+    const result = finalizeLocateResultV2(
+      locateExecutionFinalizerInputFromUnsafePublicSourceV2(
+        createUnsafeLocateSuccessV2(),
+      ),
+    ).value;
+    if (!result.ok) throw new Error('Expected finalizer success.');
+    expect(
+      result.evidence.coverage.capabilities.semanticClassification,
+    ).toEqual(registry.semanticClassification);
   });
 });

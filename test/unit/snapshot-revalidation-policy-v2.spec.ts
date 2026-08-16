@@ -9,12 +9,25 @@ import {
   createSnapshotBenchmarkRevalidationPlanV2,
   createSnapshotRevalidationPlanV2,
 } from '../../src/evidence/request-snapshot/snapshot-revalidation-policy-v2.js';
+import { SELECTED_SNAPSHOT_REVALIDATION_POLICY_V2 } from '../../src/evidence/request-snapshot/selected-snapshot-revalidation-policy-v2.js';
+import {
+  importSnapshotRevalidationCandidateV1,
+  renderSnapshotRevalidationSelectionArtifactsV1,
+  selectSnapshotRevalidationPolicyV1,
+  SnapshotRevalidationSelectionBaselineV1Schema,
+} from '../../tools/benchmark/import-snapshot-revalidation-candidate.js';
 import {
   isUbuntu2404OsReleaseV2,
   SnapshotRevalidationBenchmarkV1Schema,
   runSnapshotRevalidationBenchmarkV2,
   runSnapshotRevalidationCorrectnessProbesV2,
 } from '../../tools/benchmark/snapshot-revalidation-benchmark.js';
+import {
+  renderSnapshotCleanBranchEvidenceV1,
+  runSelectedSnapshotCleanBranchProbeV1,
+  snapshotCleanBranchSourceSha256V1,
+  SnapshotRevalidationCleanBranchEvidenceV1Schema,
+} from '../../tools/benchmark/snapshot-revalidation-clean-branch-probe.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
 const selected = isSelected({
@@ -34,6 +47,26 @@ const requestSnapshotSource = readFileSync(
     '../../src/evidence/request-snapshot/request-repository-snapshot-v2.ts',
   ),
   'utf8',
+);
+const baselinePath = resolve(
+  import.meta.dirname,
+  '../../testkit/baselines/performance/snapshot-revalidation-v1.json',
+);
+const selectedPolicySourcePath = resolve(
+  import.meta.dirname,
+  '../../src/evidence/request-snapshot/selected-snapshot-revalidation-policy-v2.ts',
+);
+const evidencePath = resolve(
+  import.meta.dirname,
+  '../../docs/superpowers/evidence/repository-hardening-v2/snapshot-revalidation-selection-v1.md',
+);
+const cleanBranchBaselinePath = resolve(
+  import.meta.dirname,
+  '../../testkit/baselines/performance/snapshot-revalidation-clean-branch-v1.json',
+);
+const cleanBranchEvidencePath = resolve(
+  import.meta.dirname,
+  '../../docs/superpowers/evidence/repository-hardening-v2/snapshot-revalidation-clean-branch-v1.md',
 );
 
 function key(value: string): CanonicalFileKeyV2 {
@@ -115,14 +148,16 @@ function validReportFixture() {
 }
 
 describe.runIf(selected)('snapshot revalidation policy candidates', () => {
-  it('keeps production final check on all loaded files until authoritative selection is imported', () => {
-    expect(finalSnapshotCheckSource).not.toContain(
-      'snapshot-revalidation-policy-v2',
-    );
-    expect(finalSnapshotCheckSource).not.toContain(
-      'SELECTED_SNAPSHOT_REVALIDATION_POLICY_V2',
+  it('uses the imported authoritative selection in the production final check', () => {
+    expect(SELECTED_SNAPSHOT_REVALIDATION_POLICY_V2).toBe('conditional-digest');
+    expect(finalSnapshotCheckSource).toContain(
+      'createSnapshotRevalidationPlanV2',
     );
     expect(finalSnapshotCheckSource).toContain(
+      'SELECTED_SNAPSHOT_REVALIDATION_POLICY_V2',
+    );
+    expect(finalSnapshotCheckSource).toContain('verifyVerifiedFileMetadataV2');
+    expect(finalSnapshotCheckSource).not.toContain(
       'const sorted = [...input.loadedFiles].sort',
     );
     expect(requestSnapshotSource).toContain(
@@ -169,6 +204,154 @@ describe.runIf(selected)('snapshot revalidation policy candidates', () => {
       metadataCanonicalKeys: ['alpha.ts', 'eligible.ts', 'zeta.ts'],
       digestCanonicalKeys: ['alpha.ts', 'zeta.ts'],
       eligibleDecisionSafe: true,
+    });
+  });
+
+  it('retains a clean eligible-only file through the real metadata final-check branch', async () => {
+    const repositoryRoot = resolve(import.meta.dirname, '../..');
+    const committed = SnapshotRevalidationCleanBranchEvidenceV1Schema.parse(
+      JSON.parse(readFileSync(cleanBranchBaselinePath, 'utf8')),
+    );
+    const observed =
+      await runSelectedSnapshotCleanBranchProbeV1(repositoryRoot);
+    const rendered = await renderSnapshotCleanBranchEvidenceV1(observed);
+
+    expect(observed).toEqual(committed);
+    expect(observed).toMatchObject({
+      policy: 'conditional-digest',
+      gitState: 'clean',
+      branch: 'eligible-only-metadata',
+      metadataChecks: 1,
+      digestChecks: 0,
+      filesChecked: 1,
+      changedCanonicalKeyCount: 0,
+      retainedEligibleCount: 1,
+      trustedEligibleCount: 1,
+      consistency: 'stable',
+      stableEligibleRetained: true,
+    });
+    expect(observed.sourceSha256).toBe(
+      snapshotCleanBranchSourceSha256V1(repositoryRoot),
+    );
+    expect(rendered.json).toBe(readFileSync(cleanBranchBaselinePath, 'utf8'));
+    expect(rendered.markdown).toBe(
+      readFileSync(cleanBranchEvidencePath, 'utf8'),
+    );
+  });
+
+  it('strictly binds the authoritative run, artifact, provenance, report, and catalog', () => {
+    const baseline = SnapshotRevalidationSelectionBaselineV1Schema.parse(
+      JSON.parse(readFileSync(baselinePath, 'utf8')),
+    );
+    const reportBytes = Buffer.from(
+      `${JSON.stringify(baseline.report, null, 2)}\n`,
+      'utf8',
+    );
+    const run = {
+      id: baseline.source.runId,
+      name: baseline.source.workflow,
+      head_branch: 'main',
+      head_sha: baseline.source.headSha,
+      path: baseline.source.workflowPath,
+      event: 'push',
+      status: 'completed',
+      conclusion: 'success',
+      run_attempt: baseline.source.runAttempt,
+      repository: { full_name: baseline.source.repository },
+    };
+    const artifact = {
+      id: baseline.source.artifactId,
+      name: baseline.source.artifactName,
+      expired: false,
+      digest: baseline.source.artifactDigest,
+      created_at: baseline.source.artifactCreatedAt,
+      expires_at: baseline.source.artifactExpiresAt,
+      workflow_run: {
+        id: baseline.source.runId,
+        head_branch: 'main',
+        head_sha: baseline.source.headSha,
+      },
+    };
+    const provenance = {
+      schemaVersion: 1,
+      repository: baseline.source.repository,
+      workflow: baseline.source.workflow,
+      job: baseline.source.job,
+      artifactName: baseline.source.artifactName,
+      headSha: baseline.source.headSha,
+      runId: baseline.source.runId,
+      runAttempt: baseline.source.runAttempt,
+      catalogSha256: baseline.source.catalogSha256,
+      reportSha256: baseline.source.reportSha256,
+    };
+    const repositoryRoot = resolve(import.meta.dirname, '../..');
+
+    expect(
+      importSnapshotRevalidationCandidateV1({
+        repositoryRoot,
+        run,
+        artifact,
+        reportBytes,
+        provenance,
+      }),
+    ).toEqual(baseline);
+    expect(() =>
+      importSnapshotRevalidationCandidateV1({
+        repositoryRoot,
+        run: { ...run, conclusion: 'failure' },
+        artifact,
+        reportBytes,
+        provenance,
+      }),
+    ).toThrow();
+    expect(() =>
+      importSnapshotRevalidationCandidateV1({
+        repositoryRoot,
+        run,
+        artifact: {
+          ...artifact,
+          workflow_run: { ...artifact.workflow_run, id: run.id + 1 },
+        },
+        reportBytes,
+        provenance,
+      }),
+    ).toThrow('binding mismatch');
+  });
+
+  it('rebuilds committed selection artifacts byte-for-byte', async () => {
+    const baseline = SnapshotRevalidationSelectionBaselineV1Schema.parse(
+      JSON.parse(readFileSync(baselinePath, 'utf8')),
+    );
+    const rendered =
+      await renderSnapshotRevalidationSelectionArtifactsV1(baseline);
+
+    expect(baseline.selected).toBe('conditional-digest');
+    expect(baseline.source.reportSha256).toBe(
+      'ba5806b2262f1ff0cd50ad13e2dab941cf1d9e22f6a12baeb7b26b38d0fd90ab',
+    );
+    expect(rendered.baselineJson).toBe(readFileSync(baselinePath, 'utf8'));
+    expect(rendered.selectedPolicySource).toBe(
+      readFileSync(selectedPolicySourcePath, 'utf8'),
+    );
+    expect(rendered.evidenceMarkdown).toBe(readFileSync(evidencePath, 'utf8'));
+    expect(selectSnapshotRevalidationPolicyV1(baseline.report)).toEqual({
+      selected: 'conditional-digest',
+      correctnessSafePolicies: ['all-loaded-baseline', 'conditional-digest'],
+      improvementBasisPoints: 2908,
+    });
+  });
+
+  it('falls back to the all-loaded baseline without a material p95 improvement', () => {
+    const report = validReportFixture();
+
+    expect(
+      selectSnapshotRevalidationPolicyV1(
+        SnapshotRevalidationBenchmarkV1Schema.parse(report),
+      ),
+    ).toEqual({
+      selected: 'all-loaded-baseline',
+      correctnessSafePolicies: ['all-loaded-baseline', 'conditional-digest'],
+      improvementBasisPoints: 0,
     });
   });
 

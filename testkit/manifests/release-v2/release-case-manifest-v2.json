@@ -17,9 +17,11 @@
         "testkit/manifests/coverage/fixture-ownership.yaml"
       ],
       "contractOwners": [
+        "src/contracts/v2/locate-execution-facts-v2.ts",
+        "src/evidence/locate-execution/canonical-locate-executor-v2.ts",
+        "src/evidence/locate-execution/finalize-locate-result-v2.ts",
         "src/evidence/locate-execution/public-locate-execution-application-v2.ts",
         "src/evidence/locate-execution/v2-locate-result-projector.ts",
-        "src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.ts",
         "src/evidence/evidence.module.ts"
       ]
     },
@@ -37,8 +39,10 @@
         "testkit/manifests/coverage/fixture-ownership.yaml"
       ],
       "contractOwners": [
+        "src/contracts/v2/canonical-locate-execution-v2.ts",
+        "src/evidence/locate-execution/finalize-locate-result-v2.ts",
         "src/evidence/locate-execution/public-locate-execution-application-v2.ts",
-        "src/evidence/locate-execution/public-locate-transport-registry-v2.ts"
+        "src/evidence/locate-execution/v2-locate-result-projector.ts"
       ]
     },
     {
@@ -70,11 +74,11 @@
         "testkit/manifests/coverage/fixture-ownership.yaml"
       ],
       "contractOwners": [
+        "src/contracts/v2/canonical-locate-execution-v2.ts",
+        "src/evidence/locate-execution/finalize-locate-result-v2.ts",
+        "src/evidence/locate-execution/locate-projection-execution-capability-v2.ts",
         "src/evidence/locate-execution/public-locate-execution-application-v2.ts",
-        "src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.ts",
-        "src/evidence/canonical/trusted-serialized-locate-result-v2.ts",
-        "src/evidence/locate-execution/v2-locate-result-projector.ts",
-        "testkit/testing/complete-real-locate-shadow-stage-probe-v2.ts"
+        "src/evidence/locate-execution/v2-locate-result-projector.ts"
       ]
     },
     {
@@ -217,6 +221,7 @@
       ],
       "contractOwners": [
         "tools/release/pack-candidate.mjs",
+        "tools/release/release-candidate.mjs",
         "testkit/contracts/platform-contract.ts",
         "testkit/contracts/platform-evidence-report.ts",
         "tools/ci/assert-public-beta-package-evidence.mjs"
@@ -253,7 +258,11 @@
         "testkit/runners/runner-registry.ts",
         "testkit/manifests/coverage/fixture-ownership.yaml"
       ],
-      "contractOwners": ["tools/release/verify-installed-closure.mjs"]
+      "contractOwners": [
+        "tools/release/release-candidate.mjs",
+        "tools/release/sbom-from-shrinkwrap.mjs",
+        "tools/release/verify-installed-closure.mjs"
+      ]
     },
     {
       "id": "F9-AUDIT-001",
@@ -267,7 +276,10 @@
         "testkit/runners/runner-registry.ts",
         "testkit/manifests/coverage/fixture-ownership.yaml"
       ],
-      "contractOwners": ["tools/release/audit-installed-closure.mjs"]
+      "contractOwners": [
+        "tools/release/audit-installed-closure.mjs",
+        "tools/release/release-candidate.mjs"
+      ]
     },
     {
       "id": "F9-SBOM-001",
@@ -283,6 +295,8 @@
       ],
       "contractOwners": [
         "tools/release/generate-installed-sbom.mjs",
+        "tools/release/release-candidate.mjs",
+        "tools/release/sbom-from-shrinkwrap.mjs",
         "tools/release/verify-installed-sbom.mjs"
       ]
     },
@@ -384,9 +398,11 @@
         "testkit/manifests/coverage/fixture-ownership.yaml"
       ],
       "contractOwners": [
-        "tools/release/design-revision.mjs",
+        "tools/release/check-owner-actions.mjs",
         "tools/release/create-release-readiness.mjs",
+        "tools/release/design-revision.mjs",
         "tools/release/owner-action-schema.mjs",
+        "tools/release/release-candidate.mjs",
         "testkit/manifests/release-v2/release-candidate-source-paths-v1.json"
       ]
     }

@@ -13,39 +13,17 @@ import type {
   TrustedStableEligibleDiscoveryPoolV2,
 } from '../request-snapshot/final-snapshot-check-v2.js';
 import type { ScopeFoldedSafePoolProofV2 } from '../request-snapshot/scope-folded-discovery-selector-v2.js';
-import type {
-  EligibleDiscoveryRefV2,
-  StableRecordRefV2,
-} from '../request-snapshot/pre-ranking-evidence-pool-v2.js';
+import type { EligibleDiscoveryRefV2 } from '../request-snapshot/pre-ranking-evidence-pool-v2.js';
 import { createOpaqueTokenV2 } from '../request-snapshot/opaque-token-v2.js';
 import type { TrustedStableEligibleCapabilityViewV2 } from '../request-snapshot/capability-classification-views-v2.js';
 import type { TrustedStableEligibleScopeViewV2 } from '../request-snapshot/scope-classification-views-v2.js';
 import type { ScopeCoverageProofV1 } from '../scope/scope-coverage-v1.js';
 import { requireStableScopeDecisionV1 } from '../scope/scope-decision-accessors-v1.js';
-import {
-  SEMANTIC_CLASSIFICATION_ORDER_V2,
-  type LanguageAdapterKindV2,
-  type LanguageProducerKindV2,
-} from './language-adapter-kinds-v2.js';
-import {
-  SUPPORTED_LANGUAGE_ADAPTER_REQUIRED,
-  UNSUPPORTED_LANGUAGE_LITERAL_REASON,
-} from './fallback-language-policy-v2.js';
+import { SEMANTIC_CLASSIFICATION_ORDER_V2 } from './language-adapter-kinds-v2.js';
 import {
   readLanguageAdapterDecisionV2,
   type TrustedLanguageCapabilityObservationV2,
 } from './language-capability-observation-v2.js';
-
-/** Pre-final adapter/arbitration/materialized ledger entry keyed by retained StableRecordRef. */
-export interface CapabilityRetainedDecisionLedgerEntryV2 {
-  readonly recordRef: StableRecordRefV2;
-  readonly eligibleRef: EligibleDiscoveryRefV2;
-  readonly adapter: LanguageAdapterKindV2;
-  readonly producerKind: LanguageProducerKindV2;
-  readonly evidenceClass: 'confirmed' | 'candidate';
-  readonly reasonCodes: readonly string[];
-  readonly promotionRequirements: readonly string[];
-}
 
 type CapabilityCoverage = CoverageReportV2['capabilities'];
 
@@ -120,96 +98,13 @@ interface PreBudgetPrivateV2 {
 
 interface SealPrivateV2 {
   readonly preBudgetCount: CapabilityPreBudgetCountV2;
+  readonly rankingOutcome: EvidenceRankingOutcomeV2 | undefined;
   readonly observation: TrustedLanguageCapabilityObservationV2;
   readonly eligiblePool: TrustedStableEligibleDiscoveryPoolV2;
   readonly snapshotProof: SnapshotTrustProofV2;
   readonly foldProof: ScopeFoldedSafePoolProofV2;
   readonly scopeProof: ScopeCoverageProofV1;
   readonly execution: LocateExecutionTokenV2;
-  readonly confirmedRefs: readonly StableRecordRefV2[];
-  readonly candidateRefs: readonly StableRecordRefV2[];
-  readonly retainedLedger: readonly CapabilityRetainedDecisionLedgerEntryV2[];
-}
-
-const retainedDecisionLedgerByExecution = new WeakMap<
-  LocateExecutionTokenV2,
-  ReadonlyMap<StableRecordRefV2, CapabilityRetainedDecisionLedgerEntryV2>
->();
-
-/**
- * 登记 retained-decision ledger（observation/arbitration/materialized），供 seal 逐项核对。
- */
-export function registerCapabilityRetainedDecisionLedgerV2(
-  execution: LocateExecutionTokenV2,
-  entries: readonly CapabilityRetainedDecisionLedgerEntryV2[],
-): void {
-  const map = new Map<
-    StableRecordRefV2,
-    CapabilityRetainedDecisionLedgerEntryV2
-  >();
-  for (const entry of entries) {
-    if (map.has(entry.recordRef)) {
-      throw new TypeError('duplicate retained decision ledger entry');
-    }
-    map.set(entry.recordRef, Object.freeze({ ...entry }));
-  }
-  retainedDecisionLedgerByExecution.set(execution, map);
-}
-
-function assertRetainedLedgerMappingV2(
-  entry: CapabilityRetainedDecisionLedgerEntryV2,
-  lane: 'confirmed' | 'candidate',
-): void {
-  if (entry.adapter === 'fallback') {
-    if (lane !== 'candidate' || entry.evidenceClass !== 'candidate') {
-      throw new TypeError('fallback retained evidence must be candidate');
-    }
-    if (
-      !entry.reasonCodes.includes(UNSUPPORTED_LANGUAGE_LITERAL_REASON) ||
-      !entry.promotionRequirements.includes(SUPPORTED_LANGUAGE_ADAPTER_REQUIRED)
-    ) {
-      throw new TypeError('fallback retained reason/promotion mismatch');
-    }
-    return;
-  }
-  if (
-    entry.reasonCodes.includes(UNSUPPORTED_LANGUAGE_LITERAL_REASON) ||
-    entry.promotionRequirements.includes(SUPPORTED_LANGUAGE_ADAPTER_REQUIRED)
-  ) {
-    throw new TypeError(
-      'supported retained evidence must not carry fallback reason',
-    );
-  }
-}
-
-function resolveRetainedLedgerEntriesV2(
-  execution: LocateExecutionTokenV2,
-  confirmedRefs: readonly StableRecordRefV2[],
-  candidateRefs: readonly StableRecordRefV2[],
-): readonly CapabilityRetainedDecisionLedgerEntryV2[] {
-  const ledger = retainedDecisionLedgerByExecution.get(execution);
-  const resolved: CapabilityRetainedDecisionLedgerEntryV2[] = [];
-  for (const ref of confirmedRefs) {
-    const entry = ledger?.get(ref);
-    if (entry === undefined) {
-      throw new TypeError(
-        'retained confirmed ref missing from decision ledger',
-      );
-    }
-    assertRetainedLedgerMappingV2(entry, 'confirmed');
-    resolved.push(entry);
-  }
-  for (const ref of candidateRefs) {
-    const entry = ledger?.get(ref);
-    if (entry === undefined) {
-      throw new TypeError(
-        'retained candidate ref missing from decision ledger',
-      );
-    }
-    assertRetainedLedgerMappingV2(entry, 'candidate');
-    resolved.push(entry);
-  }
-  return Object.freeze(resolved);
 }
 
 interface FactsPrivateV2 {
@@ -235,13 +130,6 @@ const sealPrivate = new WeakMap<
   SealPrivateV2
 >();
 const factsPrivate = new WeakMap<CapabilityCoverageFactsV2, FactsPrivateV2>();
-const contributionPrivate = new WeakMap<
-  CapabilityOutcomeContributionV2,
-  {
-    readonly facts: CapabilityCoverageFactsV2;
-    readonly execution: LocateExecutionTokenV2;
-  }
->();
 
 export function createCapabilityPreBudgetCountV2(
   observation: TrustedLanguageCapabilityObservationV2,
@@ -331,7 +219,7 @@ export function requireCapabilityPreBudgetCountV2(
 
 export function sealCapabilityRetainedDecisionsV2(
   preBudgetCount: CapabilityPreBudgetCountV2,
-  rankingOutcome: EvidenceRankingOutcomeV2,
+  rankingOutcome: EvidenceRankingOutcomeV2 | undefined,
   observation: TrustedLanguageCapabilityObservationV2,
   eligiblePool: TrustedStableEligibleDiscoveryPoolV2,
   snapshotProof: SnapshotTrustProofV2,
@@ -348,34 +236,29 @@ export function sealCapabilityRetainedDecisionsV2(
   ) {
     throw new TypeError('pre-budget count mismatch for retained seal');
   }
-  const retained = requireEvidenceRankingRetainedDecisionViewV2(
-    rankingOutcome,
-    snapshotProof,
-    execution,
-  );
-  // KD15：逐项核对 pre-final adapter/arbitration/materialized decision ledger
-  const retainedLedger = resolveRetainedLedgerEntriesV2(
-    execution,
-    retained.confirmedRecordRefs,
-    retained.candidateRecordRefs,
-  );
-  for (const entry of retainedLedger) {
-    readLanguageAdapterDecisionV2(observation, entry.eligibleRef, execution);
+  if (rankingOutcome === undefined) {
+    if (countPrivate.stableCapabilityView.records().length !== 0) {
+      throw new TypeError('nonempty capability decisions require ranking');
+    }
+  } else {
+    requireEvidenceRankingRetainedDecisionViewV2(
+      rankingOutcome,
+      snapshotProof,
+      execution,
+    );
   }
   const seal = createOpaqueTokenV2<CapabilityRetainedDecisionSealV2>();
   sealPrivate.set(
     seal,
     Object.freeze({
       preBudgetCount,
+      rankingOutcome,
       observation,
       eligiblePool,
       snapshotProof,
       foldProof,
       scopeProof,
       execution,
-      confirmedRefs: retained.confirmedRecordRefs,
-      candidateRefs: retained.candidateRecordRefs,
-      retainedLedger,
     }),
   );
   return seal;
@@ -430,7 +313,6 @@ export function buildCapabilityCoverageV2(
       proof,
     }),
   );
-  contributionPrivate.set(contribution, Object.freeze({ facts, execution }));
   return facts;
 }
 
@@ -463,19 +345,6 @@ export function requireCapabilityCoverageFactsV2(
   if (seal === undefined || seal.execution !== expectedExecution) {
     throw new TypeError('invalid-facts');
   }
-  // KD15 require 侧重验 retained mapping（fallback reason/promotion、supported 禁 fallback）
-  for (const entry of seal.retainedLedger) {
-    try {
-      assertRetainedLedgerMappingV2(
-        entry,
-        seal.confirmedRefs.includes(entry.recordRef)
-          ? 'confirmed'
-          : 'candidate',
-      );
-    } catch {
-      throw new TypeError('invalid-facts');
-    }
-  }
   if (
     record.fragment.semanticClassification[0] !== 'typescript' ||
     record.fragment.semanticClassification[1] !== 'javascript' ||
@@ -496,20 +365,15 @@ export function requireCapabilityCoverageFactsV2(
 }
 
 export function requireCapabilityOutcomeContributionV2(
-  contribution: CapabilityOutcomeContributionV2,
-  expectedFacts: CapabilityCoverageFactsV2,
+  facts: CapabilityCoverageFactsV2,
   expectedExecution: LocateExecutionTokenV2,
 ): CapabilityOutcomeContributionV2 {
-  const record = contributionPrivate.get(contribution);
-  if (
-    record === undefined ||
-    record.facts !== expectedFacts ||
-    record.execution !== expectedExecution
-  ) {
+  const record = factsPrivate.get(facts);
+  if (record === undefined || record.execution !== expectedExecution) {
     throw new TypeError('capability contribution untrusted');
   }
-  CapabilityOutcomeContributionV2Schema.parse(contribution);
-  return contribution;
+  CapabilityOutcomeContributionV2Schema.parse(record.contribution);
+  return record.contribution;
 }
 
 /**
@@ -548,6 +412,5 @@ export function createZeroCapabilityContributionForHarnessV2(
       proof,
     }),
   );
-  contributionPrivate.set(contribution, Object.freeze({ facts, execution }));
   return Object.freeze({ contribution, facts });
 }

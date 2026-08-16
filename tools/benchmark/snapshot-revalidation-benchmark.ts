@@ -15,6 +15,10 @@ import {
   type CanonicalFileKeyV2,
   type VerifiedFileSnapshotV2,
 } from '../../src/repository/verified-file-snapshot-v2.js';
+import {
+  issueLocateProjectionExecutionCapabilityV2,
+  requireLocateProjectionExecutionTokenV2,
+} from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
 import { runFinalSnapshotCheckV2 } from '../../src/evidence/request-snapshot/final-snapshot-check-v2.js';
 import { buildPreRankingStablePoolsV2 } from '../../src/evidence/request-snapshot/pre-ranking-evidence-pool-v2.js';
 import {
@@ -22,6 +26,12 @@ import {
   type SnapshotBenchmarkPolicyV2,
   type SnapshotRevalidationPlanInputV2,
 } from '../../src/evidence/request-snapshot/snapshot-revalidation-policy-v2.js';
+
+function executionToken() {
+  return requireLocateProjectionExecutionTokenV2(
+    issueLocateProjectionExecutionCapabilityV2(),
+  );
+}
 
 const moduleDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(moduleDirectory, '..', '..');
@@ -507,6 +517,7 @@ async function mutationDetectedV2(input: {
     eligiblePool: pools.eligible,
     gitState: 'unknown',
     signal: input.signal ?? new AbortController().signal,
+    execution: executionToken(),
     readVerifiedFile: async () => {
       if (input.unreadable === true) {
         throw new Error('synthetic unreadable file');

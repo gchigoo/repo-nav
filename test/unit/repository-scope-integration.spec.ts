@@ -143,6 +143,7 @@ describe.runIf(
       eligiblePool: { records: [] },
       gitState: 'unknown',
       signal: new AbortController().signal,
+      execution,
     });
     const preCap = projectExpandedSafePreCapPoolV2([], true, execution);
     const folded = scopeFoldSafeCandidatePoolV2(preCap, [], execution);

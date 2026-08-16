@@ -6,12 +6,11 @@ export interface LegacyV1ApiReplacementV2 {
 
 export type LegacyV1SourceStateV2 = 'present' | 'removed';
 
-/** Fixture-owned phase state; C5 flips this when the legacy source is removed. */
-export const LEGACY_V1_SOURCE_STATE_V2: LegacyV1SourceStateV2 = 'present';
+/** Final source state after the atomic package cutover. */
+export const LEGACY_V1_SOURCE_STATE_V2: LegacyV1SourceStateV2 = 'removed';
 
-/** Public compatibility rows that are not transitive exports of legacy-v1.ts. */
+/** Retained public compatibility rows independent of the removed subpath. */
 export const LEGACY_V1_NON_SUBPATH_API_KEYS_V2 = Object.freeze([
-  'repo-nav/legacy-v1',
   'repo-nav/advanced',
   'repo-nav/backends',
   'repo-nav/node',

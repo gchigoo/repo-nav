@@ -1,27 +1,27 @@
 # RepoNav 后续开发重规划（2026-08-12）
 
-> **执行状态（2026-08-15）：** `1.1.0` hardening checkpoint 已通过 [PR #2](https://github.com/gchigoo/repo-nav/pull/2) 合入 `main`，merge commit 为 `3da72f8c38c11eeab9b5480d5d6435efa72a3f53`。原集成分支、其他无用分支和集成 worktree 已清理。当前剩余主线只有 `S2`、`C2`、`C3`、`C4` 与原子 `V2` cutover。项目现状摘要见 [`../../project-status.md`](../../project-status.md)。
+> **执行状态（2026-08-16）：** `1.1.0` hardening checkpoint 已通过 [PR #2](https://github.com/gchigoo/repo-nav/pull/2) 合入 `main`，merge commit 为 `3da72f8c38c11eeab9b5480d5d6435efa72a3f53`。后续 `S2`、`C2`、`C3`、`C4` 与原子 `V2` source cutover 已实现；selected-verification authority、conditional-digest clean-branch correctness evidence、single-process build capability 与 exact-candidate release binding 也已实现。当前 final diff 的本地门禁和独立 implementation/security 复核已通过；push、远端六格/CodeGraph、owner actions、foreign-repository real-consumer、tag 与 publish 仍需各自授权和真实外部证据。项目现状摘要见 [`../../project-status.md`](../../project-status.md)。
 
 ## 目标
 
-以 `1.1.0` 为 1.x 基线形成可审查、可回滚、通过完整门禁的 hardening checkpoint，再完成 canonical v2 authority 与 snapshot policy，最后在一个原子变更中切换到 `2.0.0` 并仅移除 `repo-nav/legacy-v1`。第一个 checkpoint 已完成并合入；当前计划从 `S2` 与 `C2` 继续。
+以 `1.1.0` 为 1.x 基线形成可审查、可回滚、通过完整门禁的 hardening checkpoint，再完成 canonical v2 authority 与 snapshot policy，最后在一个原子变更中切换到 `2.0.0` 并仅移除 `repo-nav/legacy-v1`。这些 source 阶段以及当前 final diff 的本地验证和独立复核现已完成；剩余工作仅包括另行授权的远端、owner 和 foreign-repository release evidence。
 
 本计划本身不授权 publish、tag、release 或其他远端写入。此前 integration push、PR 与 merge 均在单独授权后完成；后续远端或发布动作仍需单独明确授权。
 
 ## 当前执行边界
 
-| 阶段    | 状态   | 当前事实                                                                                                  |
-| ------- | ------ | --------------------------------------------------------------------------------------------------------- |
-| `R0–R1` | 完成   | 已吸收 `1.1.0` 上游基线并冻结 root/subpath/version authority。                                            |
-| `H1–H6` | 完成   | Real-consumer、backend trace、spawn classification、verified snapshot、hermetic CI、SDK/audit 已合入。    |
-| `T1–T2` | 完成   | Exact identity registry 与 batched platform execution 已合入。                                            |
-| `F1–F2` | 完成   | CLI lazy application adapter、并发有序 probe 与 cold-start benchmark 已合入。                             |
-| `S1`    | 完成   | Candidate benchmark、authoritative CI job 与 provenance artifact 生成已合入。                             |
-| `S2`    | 阻塞   | 尚未导入并验证 authoritative artifact，也没有 committed selected policy constant。                        |
-| `C1`    | 完成   | Characterization matrix 与 authority inventory 已合入；production authority 尚未切换。                    |
-| `C2–C4` | 未开始 | Immutable facts/finalizer、production cutover、legacy decision removal 与 transport flattening 仍待实现。 |
-| `Q1–Q4` | 完成   | Formatting、typed lint、`no-floating-promises` 与 `no-misused-promises` 已覆盖 source/test/testkit。      |
-| `V2`    | 未开始 | 当前仍为 `1.1.0` 且 `repo-nav/legacy-v1` 仍公开；`2.0.0` 必须保持原子变更。                               |
+| 阶段    | 状态 | 当前事实                                                                                                                |
+| ------- | ---- | ----------------------------------------------------------------------------------------------------------------------- |
+| `R0–R1` | 完成 | 已吸收 `1.1.0` 上游基线并冻结 root/subpath/version authority。                                                          |
+| `H1–H6` | 完成 | Real-consumer、backend trace、spawn classification、verified snapshot、hermetic CI、SDK/audit 已合入。                  |
+| `T1–T2` | 完成 | Exact identity registry 与 batched platform execution 已合入。                                                          |
+| `F1–F2` | 完成 | CLI lazy application adapter、并发有序 probe 与 cold-start benchmark 已合入。                                           |
+| `S1`    | 完成 | Candidate benchmark、authoritative CI job 与 provenance artifact 生成已合入。                                           |
+| `S2`    | 完成 | 已导入并验证 authoritative artifact，production selected policy 为 `conditional-digest`。                               |
+| `C1`    | 完成 | Characterization matrix 与 authority inventory 已合入并用于 final cutover 回归。                                        |
+| `C2–C4` | 完成 | Immutable facts/finalizer、production cutover、legacy decision removal 与 flat transport 已实现。                       |
+| `Q1–Q4` | 完成 | Formatting、typed lint、`no-floating-promises` 与 `no-misused-promises` 已覆盖 source/test/testkit。                    |
+| `V2`    | 完成 | package/version authority 已原子切到 `2.0.0`，且只删除 `repo-nav/legacy-v1`；批准保留的 root/subpath exports 继续存在。 |
 
 ## 规划时事实基线（历史）
 
@@ -470,6 +470,8 @@ CodeGraph integration需显式安装 pinned `@colbymchenry/codegraph@1.1.6` 后�
 
 - 引入唯一 `LocateExecutionFactsV2`
 - builder 只汇总 immutable facts，不 materialize public output
+- duplicate、unique-unverified 与 selected read-limit facts 只能从绑定 exact scope-folded selection、execution 和 final snapshot proof 的 verification outcome 导入
+- optional expansion 失败不得伪装成公开 read limit；同 locator 的 raw unverified hits 按 unique locator ref 计数
 - pure finalizer 负责 status、fallback、strategy completeness、next actions 和 schema assembly
 - shadow parity 必须覆盖 C1 全矩阵
 
@@ -534,6 +536,9 @@ CodeGraph integration需显式安装 pinned `@colbymchenry/codegraph@1.1.6` 后�
 - README、getting-started、migration、security、package fixtures 和 release manifest 同步切换
 - runtime/type negative tests证明 `repo-nav/legacy-v1` 不可导入
 - repository inventory 和 version authority inventory 更新到 final expected state
+- package smoke 保留 exact candidate tarball 与 manifest；installed closure、SBOM、audit、owner checks 和 readiness 必须验证同一 tarball SHA
+- 并发本地 release checks 通过跨进程锁串行化 stale candidate regeneration，避免一个 worker 删除另一个 worker 正在验证的 candidate
+- owner actions 使用排除自身 `decisionSha256` 的 canonical compact JSON hash；缺 owner 或 real-consumer evidence 时 readiness 保持 exit 2 与 `publishPerformed: false`
 
 建议提交：`feat!: remove legacy-v1 and cut over to 2.0.0`
 
@@ -543,7 +548,7 @@ CodeGraph integration需显式安装 pinned `@colbymchenry/codegraph@1.1.6` 后�
 
 ```bash
 node tools/release/check-legacy-subpath-absence.mjs --workspace .
-node tools/release/run-public-beta-release-contracts.mjs
+node tools/release/run-public-beta-release-contracts.mjs --all
 node tools/benchmark/real-repo-benchmark-gate.mjs
 npm run benchmark:cli-cold-start
 npm test -- --identity public-beta-release/repository-hardening-inventory
@@ -551,6 +556,29 @@ npm run release:owner-actions:check
 ```
 
 在 owner files 尚未绑定 final tarball 前，最后一项应 exit 2。只有 exact `2.0.0` tarball SHA 固定后，才允许 owner 生成 candidate-bound actions 和 real-consumer confirmation。
+
+### 2026-08-15/16 final diff 本地证据
+
+当前 single-process clean build 生成并复核了以下绑定：
+
+- source SHA-256：`344ec3df92116e61312fe0a0fdf9dec2ad284c4c25723321423e858c7afef92f`
+- build output SHA-256：`016d3c1e7614fd333eb491b66a2cfe797c449f2ddd8bae5d0132eac953e585c6`
+- build receipt SHA-256：`e82626733784c0ca511fdfa64dcc49ba81e894d63a440e692c6899b0a502e015`
+- tarball SHA-256：`3a56cb49afb667ce24ab182671fd246e29dea62530f36191929fc6a05367a33f`
+- design revision SHA-256：`5fca9350362bf7dcb2b0525e979641fa777541cdf2637579db8f0555139173f6`
+
+Fresh local evidence包括：
+
+- clean plain unit：102 files passed、2 skipped；662 tests passed、9 skipped；无 root `dist` 依赖或 candidate generation；
+- Golden：19 files passed，85 passed、1 skipped；MCP：11 files、42 passed；docs smoke、platform self-test 与 20 个 platform contracts通过；
+- 2026-08-16 在仓库外临时 prefix 安装 pinned CodeGraph `1.1.6`，live init、probe、query、cleanup integration 1/1通过，临时目录随后删除且未修改项目依赖；
+- typecheck、lint、full format check 与 `git diff --check` 通过；
+- package metadata、lock、172-source declaration emit、dry-run、smoke、112-node/183-edge installed closure、isolated installed-production audit（所有 severity 均为 0）、111-component/183-edge SBOM 与 legacy-subpath absence通过；
+- 21 个 public-beta release contract IDs全部 exit 0；12 个 benchmark fixtures、snapshot revalidation、clean-branch correctness probe 与 CLI cold-start通过；
+- 确定性 mutation tests证明 post-compiler/pre-receipt output drift 与 loader `npm pack --dry-run` 期间的 tarball drift均 fail closed；
+- independent implementation reviewer 与 security/release reviewer均 PASS，security review无 Critical、High 或 Medium finding。
+
+`release:owner-actions:check` 与 readiness继续按设计 exit 2，并保持 `publishPerformed: false`。本地 pinned CodeGraph `1.1.6` live integration 已通过；授权 push 后仍必须由远端专用 CodeGraph job 重新验证同一 final revision。
 
 ### 外部门禁和最终证据
 
@@ -593,13 +621,15 @@ publish、tag、push 或 GitHub Release 始终需要另行明确授权。
 - [x] 当前实现已按计划边界重放到包含上游 `1.1.0` 的 integration history，并通过普通 PR merge 合入 `main`。
 - [x] `repo-nav/backends`、`repo-nav/node`、`repo-nav/advanced`、nightly/release-tag workflow 与 authoritative-selection 行为无回退。
 - [x] `H`、`T`、`F`、`S1`、`C1`、`Q` 验收已通过；main-branch cross-platform 与 package/release workflow 在 merge commit 上通过。
-- [x] 当前 package/version authority 仍为 `1.1.0`，`repo-nav/legacy-v1` 仍公开。
+- [x] 该 checkpoint 当时的 package/version authority 为 `1.1.0`，`repo-nav/legacy-v1` 仍公开。
 
 ### 最终 `2.0.0` 完成条件
 
-- [ ] `S2` 导入 authoritative snapshot artifact 并提交可重建的 selected policy。
-- [ ] `C2–C4` 完成 immutable facts/finalizer、production authority cutover、schema-1 decision removal 与 materialization/transport flattening。
-- [ ] `V2` 原子提交只移除 `repo-nav/legacy-v1`，并把全部版本权威一致切换到 `2.0.0`。
-- [ ] build、typecheck、lint、format、unit、Golden、MCP、docs、platform、CodeGraph、package、audit、SBOM、benchmarks、六格和 real-consumer 证据均绑定 final candidate SHA。
-- [ ] owner/reviewer evidence 完整，readiness 明确 `publishPerformed: false`。
-- [ ] 未经单独授权不 push、不 tag、不 publish，也不执行其他远端或 owner-only 动作。
+- [x] `S2` 已导入 authoritative snapshot artifact，提交可重建的 selected policy，并补充真实 clean-branch correctness evidence。
+- [x] `C2–C4` 已完成 immutable facts/finalizer、production authority cutover、schema-1 decision removal、selected-verification authority 与 materialization/transport flattening。
+- [x] `V2` source cutover 只移除 `repo-nav/legacy-v1`，并把本地可实现的版本权威一致切换到 `2.0.0`。
+- [x] build、typecheck、lint、format、unit、Golden、MCP、docs、platform、package、audit、SBOM 与本地 benchmarks 已在 final diff 和 exact candidate SHA 上 fresh 通过。
+- [ ] pinned CodeGraph live integration、六格 CI、macOS ARM 与 safe report aggregation 在授权 push 后绑定同一 final candidate/source SHA 通过。
+- [ ] owner actions、foreign-repository real-consumer confirmation 与 readiness evidence 完整，且 readiness 明确 `publishPerformed: false`。
+- [x] independent implementation reviewer 与 security/release reviewer 已对 final diff 和现有证据给出 PASS；外部证据缺口保持显式 blocker。
+- [x] 未经单独授权不 push、不 tag、不 publish，也不执行其他远端或 owner-only 动作。

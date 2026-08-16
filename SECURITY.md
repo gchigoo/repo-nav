@@ -2,13 +2,13 @@
 
 ## Supported Versions
 
-The current repository package version is `1.1.0`. Security support follows the
-maintained 1.x line; the planned `2.0.0` cutover has not been released.
+The current repository package version is `2.0.0`. Security support follows the
+maintained 2.x line.
 
 | Version | Supported   |
 | ------- | ----------- |
-| 1.x     | supported   |
-| <1.0    | unsupported |
+| 2.x     | supported   |
+| <2.0    | unsupported |
 
 ## Reporting a Vulnerability
 

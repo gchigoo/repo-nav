@@ -1,5 +1,5 @@
 /**
- * Unique internal locate request seam: capability → validate → execute/project → transport view.
+ * Unique internal locate request seam: capability → validate → execute/project → transport value.
  */
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -8,20 +8,15 @@ import type { LocateExecutionContext } from '../../contracts/index.js';
 import { safeParseLocateRequestV2 } from '../../contracts/locate-request-parse-v2.js';
 import type {
   CanonicalLocateExecutorV2,
-  LocateResultProjector,
-} from '../../contracts/v2/locate-fact-envelope-v2.js';
-import { createTrustedSerializedPublicToolErrorV2 } from '../canonical/trusted-serialized-locate-result-v2.js';
+  LocateResultProjectorV2,
+  SerializedLocateResultV2,
+} from '../../contracts/v2/canonical-locate-execution-v2.js';
 import {
   CANONICAL_LOCATE_EXECUTOR_V2,
   LOCATE_RESULT_PROJECTOR,
 } from './locate-execution.tokens.js';
+import { finalizeLocateResultV2 } from './finalize-locate-result-v2.js';
 import { issueLocateProjectionExecutionCapabilityV2 } from './locate-projection-execution-capability-v2.js';
-import {
-  promoteTrustedSerializedPublicToolErrorV2,
-  requirePublicLocateTransportValueV2,
-  type PublicLocateTransportViewV2,
-  type TrustedPublicLocateTransportBundleV2,
-} from './public-locate-transport-registry-v2.js';
 
 export const PUBLIC_LOCATE_EXECUTION_APPLICATION_V2 = Symbol(
   'PUBLIC_LOCATE_EXECUTION_APPLICATION_V2',
@@ -31,7 +26,7 @@ export interface PublicLocateExecutionApplicationV2 {
   execute(
     rawRequest: unknown,
     context: LocateExecutionContext,
-  ): Promise<PublicLocateTransportViewV2>;
+  ): Promise<SerializedLocateResultV2>;
 }
 
 function suggestsAddTerm(rawRequest: unknown): boolean {
@@ -48,41 +43,28 @@ export class PublicLocateExecutionApplicationServiceV2 implements PublicLocateEx
     @Inject(CANONICAL_LOCATE_EXECUTOR_V2)
     private readonly executor: CanonicalLocateExecutorV2,
     @Inject(LOCATE_RESULT_PROJECTOR)
-    private readonly projector: LocateResultProjector<TrustedPublicLocateTransportBundleV2>,
+    private readonly projector: LocateResultProjectorV2,
   ) {}
 
-  /**
-   * Issue capability before validation; project via unique v2 projector; expose transport view.
-   */
   public async execute(
     rawRequest: unknown,
     context: LocateExecutionContext,
-  ): Promise<PublicLocateTransportViewV2> {
+  ): Promise<SerializedLocateResultV2> {
     const capability = issueLocateProjectionExecutionCapabilityV2();
     const parsed = safeParseLocateRequestV2(rawRequest);
     if (!parsed.success) {
-      const serialized = createTrustedSerializedPublicToolErrorV2(
-        'INVALID_INPUT',
-        suggestsAddTerm(rawRequest) ? 'ADD_TERM' : undefined,
-        capability,
-      );
-      const bundle = promoteTrustedSerializedPublicToolErrorV2(
-        serialized,
-        capability,
-      );
-      return requirePublicLocateTransportValueV2(
-        bundle.value,
-        bundle.receipt,
-        capability,
-      );
+      return finalizeLocateResultV2({
+        ok: false,
+        error: {
+          code: 'INVALID_INPUT',
+          ...(suggestsAddTerm(rawRequest)
+            ? { suggestedAction: 'ADD_TERM' as const }
+            : {}),
+        },
+      });
     }
 
     const input = await this.executor.execute(parsed.data, context, capability);
-    const bundle = this.projector.project(input, capability);
-    return requirePublicLocateTransportValueV2(
-      bundle.value,
-      bundle.receipt,
-      capability,
-    );
+    return this.projector.project(input, capability);
   }
 }

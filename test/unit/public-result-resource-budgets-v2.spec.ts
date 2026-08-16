@@ -8,8 +8,12 @@ import {
   LOCATE_RESULT_RESOURCE_BUDGETS_V2,
   utf8ByteLengthV2,
 } from '../../src/contracts/v2/locate-result-resource-budget-contract-v2.js';
-import { LocateResultV2Schema } from '../../src/contracts/v2/locate-result-v2.js';
-import { assemblePublicLocateResultV2 } from '../../src/evidence/public-output/public-result-assembler-v2.js';
+import {
+  LocateResultV2Schema,
+  type FinalizedUnsafeLocateResultV2,
+} from '../../src/contracts/v2/locate-result-v2.js';
+import { finalizeLocateResultV2 } from '../../src/evidence/locate-execution/finalize-locate-result-v2.js';
+import { locateExecutionFinalizerInputFromUnsafePublicSourceV2 } from '../../testkit/fixtures/locate-execution-v2/finalizer-facts-v2.js';
 import {
   applyPublicFieldBudgetV2,
   guardCompactJsonDataV2,
@@ -69,6 +73,21 @@ import { createUnsafeLocateSuccessV2 } from '../../testkit/fixtures/public-outpu
 import { isSelected } from '../../testkit/testing/selection.js';
 
 const B = LOCATE_RESULT_RESOURCE_BUDGETS_V2;
+
+function assemblePublicLocateResultV2(input: unknown) {
+  try {
+    return finalizeLocateResultV2(
+      locateExecutionFinalizerInputFromUnsafePublicSourceV2(
+        input as FinalizedUnsafeLocateResultV2,
+      ),
+    ).value;
+  } catch {
+    return finalizeLocateResultV2({
+      ok: false,
+      error: { code: 'INTERNAL_ERROR' },
+    }).value;
+  }
+}
 
 const primitivesSelected = isSelected({
   group: 'public-output-v2',
@@ -474,9 +493,9 @@ describe.runIf(orderingSelected)('F1B resource-budget-ordering', () => {
     ).toEqual(FIXED_INTERNAL_ERROR_V2);
 
     const accessor = sourceWithAccessorFileField();
-    expect(assemblePublicLocateResultV2(accessor)).toEqual(
-      FIXED_INTERNAL_ERROR_V2,
-    );
+    expect(
+      preflightUnsafePublicMaterializationSourceBudgetV2(accessor),
+    ).toEqual({ ok: false, stage: 'raw-field' });
     expect((accessor as { __getterCalls: () => number }).__getterCalls()).toBe(
       0,
     );

@@ -1,6 +1,6 @@
 {
   "name": "repo-nav",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "private": false,
   "type": "module",
   "description": "Deterministic repository evidence service for local MCP clients.",
@@ -12,10 +12,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./legacy-v1": {
-      "types": "./dist/legacy-v1.d.ts",
-      "import": "./dist/legacy-v1.js"
     },
     "./backends": {
       "types": "./dist/backends.d.ts",
@@ -65,7 +61,7 @@
   ],
   "scripts": {
     "clean": "node tools/release/clean-build-output.mjs",
-    "build": "npm run clean && tsc -p tsconfig.build.json",
+    "build": "node tools/release/build-package-candidate.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint --max-warnings=0 .",
     "format:check": "prettier --check \"src/**/*.{ts,json,md,mjs}\" \"tools/**/*.{ts,mts,json,md,mjs,yaml,yml}\" \"scripts/**/*.{ts,mts,json,md,mjs,yaml,yml}\" \"test/**/*.{ts,json,md,mjs}\" \"testkit/**/*.{ts,json,md,mjs,yaml,yml}\" \".github/workflows/*.{yaml,yml}\" \"docs/**/*.md\" \"README.md\" \"SECURITY.md\" \"vitest*.config.ts\" \"*.{json,yaml,yml,mjs,ts}\" \".prettierrc.json\" --ignore-path .prettierignore",
@@ -89,6 +85,8 @@
     "benchmark:fixture-scenarios": "tsx tools/benchmark/real-repo-benchmark-runner.ts",
     "benchmark:real-repos": "npm run benchmark:fixture-scenarios",
     "benchmark:snapshot-revalidation": "tsx tools/benchmark/snapshot-revalidation-benchmark.ts",
+    "benchmark:snapshot-revalidation:clean-branch": "tsx tools/benchmark/snapshot-revalidation-clean-branch-probe.ts",
+    "benchmark:snapshot-revalidation:import": "tsx tools/benchmark/import-snapshot-revalidation-candidate.ts",
     "benchmark:cli-cold-start": "node tools/benchmark/cli-cold-start.mjs",
     "repo-nav": "node dist/cli/main.js"
   },

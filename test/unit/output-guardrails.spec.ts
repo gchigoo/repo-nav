@@ -4,7 +4,6 @@ import {
   createEvidenceId,
   createPublicErrorResult,
   NEXT_ACTION_CODES,
-  resolveLocateLimits,
   type CandidateEvidence,
   type ConfirmedEvidence,
   type LocateResult,
@@ -15,7 +14,9 @@ import {
   redactLocateResult,
   redactPublicText,
 } from '../../src/evidence/evidence-redactor.js';
-import { createNextActions } from '../../src/evidence/next-action-policy.js';
+import { finalizeLocateResultV2 } from '../../src/evidence/locate-execution/finalize-locate-result-v2.js';
+import { locateExecutionFinalizerInputFromUnsafePublicSourceV2 } from '../../testkit/fixtures/locate-execution-v2/finalizer-facts-v2.js';
+import { createUnsafeLocateSuccessV2 } from '../../testkit/fixtures/public-output-v2/synthetic-locate-v2.js';
 import { scrubDiagnostic } from '../../src/mcp/diagnostic-scrubber.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
@@ -222,28 +223,32 @@ describe.runIf(selected)('safe public errors and diagnostics', () => {
       maxCandidates: 20,
       timeoutMs: 30_000,
     } as const;
-    expect(
-      createNextActions({
-        status: 'partial',
-        hasCandidates: false,
-        limitsReached: [
-          'MAX_FILES_REACHED',
-          'MAX_CONFIRMED_REACHED',
-          'MAX_CANDIDATES_REACHED',
-        ],
-        abortSource: 'none',
-        limits: atMaximum,
-      }),
-    ).toEqual([]);
-    expect(
-      createNextActions({
-        status: 'partial',
-        hasCandidates: false,
-        limitsReached: ['MAX_FILE_BYTES_REACHED', 'MAX_EXCERPT_BYTES_REACHED'],
-        abortSource: 'none',
-        limits: resolveLocateLimits(),
-      }),
-    ).toEqual([]);
+    const maximumRaw = structuredClone(createUnsafeLocateSuccessV2());
+    if (!maximumRaw.ok) throw new Error('Expected success fixture.');
+    Object.assign(maximumRaw.evidence.coverage, {
+      limitsReached: [
+        'MAX_FILES_REACHED',
+        'MAX_CONFIRMED_REACHED',
+        'MAX_CANDIDATES_REACHED',
+      ],
+    });
+    const maximum = finalizeLocateResultV2(
+      locateExecutionFinalizerInputFromUnsafePublicSourceV2(
+        maximumRaw,
+        atMaximum,
+      ),
+    ).value;
+    expect(maximum.ok && maximum.evidence.nextActions).toEqual([]);
+
+    const fixedRaw = structuredClone(createUnsafeLocateSuccessV2());
+    if (!fixedRaw.ok) throw new Error('Expected success fixture.');
+    Object.assign(fixedRaw.evidence.coverage, {
+      limitsReached: ['MAX_FILE_BYTES_REACHED', 'MAX_EXCERPT_BYTES_REACHED'],
+    });
+    const fixed = finalizeLocateResultV2(
+      locateExecutionFinalizerInputFromUnsafePublicSourceV2(fixedRaw),
+    ).value;
+    expect(fixed.ok && fixed.evidence.nextActions).toEqual([]);
   });
 
   it('scrubs stack, absolute paths, and sensitive tokens from diagnostics', () => {

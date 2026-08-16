@@ -2,6 +2,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   realpathSync,
@@ -22,6 +23,11 @@ import {
   validateRealConsumerConfirmation,
 } from './real-consumer-contracts.mjs';
 import {
+  installReleaseCandidateV1,
+  loadReleaseCandidateV1,
+} from './release-candidate.mjs';
+import { releaseEvidenceCandidateV1 } from './release-evidence-schema.mjs';
+import {
   assertRealConsumerObservation,
   reloadLocateResultSchema,
   scanForbiddenOutput,
@@ -40,6 +46,10 @@ const npmCli = join(root, 'node_modules/npm/bin/npm-cli.js');
 const REPO_NAV_LOCATE_TOOL_NAME = 'repo_nav_locate';
 const defaultConfirmation =
   'docs/superpowers/evidence/release-runtime/public-beta-real-consumer-confirmation.json';
+const evidencePath = join(
+  root,
+  'test-artifacts/release-evidence/real-consumer-e2e-v1.json',
+);
 
 function fail(code, residual, message, extra = {}) {
   process.stderr.write(
@@ -150,20 +160,6 @@ function candidateEnv() {
   );
 }
 
-function runNode(command, args, options = {}) {
-  return spawnSync(command, args, {
-    cwd: options.cwd ?? root,
-    encoding: 'utf8',
-    env: options.env ?? candidateEnv(),
-    shell: false,
-    stdio: options.stdio ?? ['ignore', 'pipe', 'pipe'],
-  });
-}
-
-function sha256File(path) {
-  return createHash('sha256').update(readFileSync(path)).digest('hex');
-}
-
 function hashTree(rootPath) {
   const result = spawnSync(
     process.execPath,
@@ -210,53 +206,8 @@ function hashTree(rootPath) {
   return result.stdout;
 }
 
-function packageCandidate(consumer) {
-  const build = runNode(process.execPath, [npmCli, 'run', 'build']);
-  if (build.status !== 0) {
-    throw new Error('fresh candidate build failed');
-  }
-  const packed = runNode(process.execPath, [npmCli, 'pack', root, '--json'], {
-    cwd: consumer,
-  });
-  if (packed.status !== 0) {
-    throw new Error('candidate pack failed');
-  }
-  const report = JSON.parse(packed.stdout);
-  const filename = Array.isArray(report)
-    ? report[0]?.filename
-    : report?.filename;
-  if (
-    typeof filename !== 'string' ||
-    filename.length === 0 ||
-    filename.includes('/') ||
-    filename.includes('\\')
-  ) {
-    throw new Error('candidate pack did not report a safe tarball');
-  }
-  const tarballPath = join(consumer, filename);
-  return { tarballPath, tarballSha256: sha256File(tarballPath) };
-}
-
-function installCandidate(consumer, tarballPath) {
-  writeFileSync(
-    join(consumer, 'package.json'),
-    JSON.stringify({ name: 'repo-nav-real-consumer', private: true }),
-  );
-  const install = runNode(
-    process.execPath,
-    [
-      npmCli,
-      'install',
-      '--ignore-scripts',
-      '--no-audit',
-      '--no-fund',
-      tarballPath,
-    ],
-    { cwd: consumer },
-  );
-  if (install.status !== 0) {
-    throw new Error('candidate install failed');
-  }
+function packageCandidate() {
+  return loadReleaseCandidateV1(root, npmCli);
 }
 
 function parseMcpFrames(stdout) {
@@ -530,8 +481,13 @@ async function main(confirmationPath) {
     ? confirmationPath
     : resolve(root, confirmationPath);
   let confirmation;
+  let confirmationSourceSha256;
   try {
-    confirmation = JSON.parse(readFileSync(absoluteConfirmation, 'utf8'));
+    const confirmationBytes = readFileSync(absoluteConfirmation);
+    confirmation = JSON.parse(confirmationBytes.toString('utf8'));
+    confirmationSourceSha256 = createHash('sha256')
+      .update(confirmationBytes)
+      .digest('hex');
   } catch {
     throw new Error('owner confirmation is unreadable');
   }
@@ -563,7 +519,7 @@ async function main(confirmationPath) {
   let result;
   let primaryError;
   try {
-    const candidate = packageCandidate(consumer);
+    const candidate = packageCandidate();
     if (!(await reloadLocateResultSchema())) {
       throw new Error('fresh locate schema is unavailable');
     }
@@ -582,8 +538,14 @@ async function main(confirmationPath) {
         'owner confirmation candidate does not match fresh tarball',
       );
     }
-    installCandidate(consumer, candidate.tarballPath);
-    const installedPackageRoot = join(consumer, 'node_modules', 'repo-nav');
+    const installed = installReleaseCandidateV1({
+      root,
+      npmCli,
+      candidate,
+      consumerRoot: consumer,
+      consumerName: 'repo-nav-real-consumer',
+    });
+    const installedPackageRoot = installed.installedPackageRoot;
     const installedCli = join(installedPackageRoot, 'dist/cli/main.js');
     const installedMcp = join(installedPackageRoot, 'dist/main.js');
     const installedClosureSha256 = hashTree(join(consumer, 'node_modules'));
@@ -678,8 +640,11 @@ async function main(confirmationPath) {
     result = {
       ok: true,
       schemaVersion: 1,
+      generatedAt: new Date().toISOString(),
       confirmationDecisionSha256: validated.confirmationDecisionSha256,
-      candidate: validated.candidate,
+      confirmationVerifiedAt: validated.verifiedAt,
+      confirmationSourceSha256,
+      candidate: releaseEvidenceCandidateV1(installed.candidate),
       measured: report.measured,
       repository: {
         headSha: before.headSha,
@@ -729,6 +694,8 @@ if (!existsSync(absoluteConfirmation)) {
 
 try {
   const report = await main(confirmationPath);
+  mkdirSync(dirname(evidencePath), { recursive: true });
+  writeFileSync(evidencePath, `${JSON.stringify(report, null, 2)}\n`);
   process.stdout.write(`${JSON.stringify(report)}\n`);
 } catch (error) {
   const report = failureReport(error);

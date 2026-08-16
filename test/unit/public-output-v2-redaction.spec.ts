@@ -7,11 +7,11 @@ import {
   TOKEN_PLACEHOLDER_V2,
   SpanContractViolationError,
   assertAmplificationBoundV2,
-  assertCorpusProvenanceV2,
   classifyPhoneTokenV2,
   collectSensitiveCorpusV2,
   createSensitiveCorpusV2,
   createSensitiveSpanV2,
+  isAuthenticSensitiveCorpusV2,
   isValidRawLocatorV2,
   materializeSensitiveSpansV2,
   mergeSensitiveSpansV2,
@@ -19,7 +19,8 @@ import {
   redactPublicFieldV2,
   utf8Bytes,
 } from '../../src/evidence/public-output/sensitive-value-policy-v2.js';
-import { assemblePublicLocateResultV2 } from '../../src/evidence/public-output/public-result-assembler-v2.js';
+import { finalizeLocateResultV2 } from '../../src/evidence/locate-execution/finalize-locate-result-v2.js';
+import { locateExecutionFinalizerInputFromUnsafePublicSourceV2 } from '../../testkit/fixtures/locate-execution-v2/finalizer-facts-v2.js';
 import {
   ELIGIBLE_LONG_SECRET_V2,
   LOCAL_ONLY_ASSIGNMENTS_V2,
@@ -591,7 +592,7 @@ describe.runIf(amplificationSelected)('F1A redaction amplification', () => {
     expect(withLiteral.reasonCodes).toEqual(['SECRET_LIKE_VALUE']);
   });
 
-  it('rejects foreign or cloned corpus at assembler provenance boundary', () => {
+  it('accepts sealed corpora and rejects cloned corpus data', () => {
     const raw = createUnsafeLocateSuccessV2();
     if (!raw.ok) {
       throw new Error('Fixture must be a success.');
@@ -601,14 +602,18 @@ describe.runIf(amplificationSelected)('F1A redaction amplification', () => {
       entries: corpus.entries,
       totalUtf8Bytes: corpus.totalUtf8Bytes,
     };
-    expect(() => assertCorpusProvenanceV2(raw, clone)).toThrow(
-      /FOREIGN_OR_CLONE_SENSITIVE_CORPUS_V2/u,
+    expect(isAuthenticSensitiveCorpusV2(corpus)).toBe(true);
+    expect(isAuthenticSensitiveCorpusV2(clone)).toBe(false);
+    expect(() => redactPublicFieldV2('safe', 'excerpt', clone)).toThrow(
+      SpanContractViolationError,
     );
     const other = collectSensitiveCorpusV2({ other: 'password=LongSecret-99' });
-    expect(() => assertCorpusProvenanceV2(raw, other)).toThrow(
-      /FOREIGN_OR_CLONE_SENSITIVE_CORPUS_V2/u,
-    );
-    expect(assemblePublicLocateResultV2(raw).ok).toBe(true);
+    expect(isAuthenticSensitiveCorpusV2(other)).toBe(true);
+    expect(
+      finalizeLocateResultV2(
+        locateExecutionFinalizerInputFromUnsafePublicSourceV2(raw),
+      ).value.ok,
+    ).toBe(true);
   });
 });
 

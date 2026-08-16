@@ -5,6 +5,10 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  RELEASE_COPYRIGHT_HOLDER_V1,
+  RELEASE_OWNER_V1,
+} from './release-owner.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const paths = [
@@ -51,7 +55,7 @@ const designRevisionSha256 = sha256Raw(
   Buffer.from(strictCompact(revisionBody), 'utf8'),
 );
 
-const owner = 'Gchigoo';
+const owner = RELEASE_OWNER_V1;
 const approved_at = '2026-07-29T00:00:00.000Z';
 const verified_at = '2026-07-29T00:00:00.000Z';
 
@@ -59,7 +63,7 @@ const licenseBase = {
   action: 'license-preflight',
   approved_at,
   choice: 'MIT',
-  copyrightHolder: 'Gchigoo',
+  copyrightHolder: RELEASE_COPYRIGHT_HOLDER_V1,
   copyrightYear: '2026',
   designRevisionSha256,
   owner,

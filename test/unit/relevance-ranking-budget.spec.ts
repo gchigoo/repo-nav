@@ -20,7 +20,6 @@ import {
   ordinaryRoundRobinSelectV2,
   assertRankingTrustFinalizerV2,
   requireEvidenceRankingOutcomeV2,
-  requireEvidenceRankingRetainedDecisionViewV2,
   buildUnsatisfiedAnchorsV2,
   satisfactionForAnchorV2,
 } from '../../src/evidence/ranking/index.js';
@@ -30,33 +29,28 @@ import {
   requireBoundDiscoverySelectionV2,
   type TrustedStableRecordViewV2,
 } from '../../src/evidence/request-snapshot/index.js';
-import {
-  createF2LocateProjectionStagesV2,
-  countF2CoreAccessorProductionImportersV2,
-  countF2RetainedDecisionProductionImportersV2,
-  registerF2RankingOutcomeForExecutionV2,
-  preflightF2MaterializationSourceBudgetV2,
-} from '../../src/evidence/public-output/f2-locate-projection-stages-v2.js';
-import {
-  createLocateFactEnvelopeBuilderV2,
-  inspectLocateProjectionPrerequisiteOwnersV2,
-} from '../../src/contracts/v2/locate-fact-envelope-v2.js';
+import { finalizeLocateResultV2 } from '../../src/evidence/locate-execution/finalize-locate-result-v2.js';
 import { ANCHOR_INTENT_INSENSITIVE_DUP_V2 } from '../../testkit/fixtures/ranking-v2/anchor-intents-v2.js';
-import { createFourPrerequisiteCanonicalInputV2 } from '../../testkit/fixtures/canonical-locate-bridge-v2/four-prerequisite-base-v2.js';
+import { locateExecutionFinalizerInputFromUnsafePublicSourceV2 } from '../../testkit/fixtures/locate-execution-v2/finalizer-facts-v2.js';
+import { createUnsafeLocateSuccessV2 } from '../../testkit/fixtures/public-output-v2/synthetic-locate-v2.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 import {
   issueLocateProjectionExecutionCapabilityV2,
   requireLocateProjectionExecutionTokenV2,
 } from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import type { CanonicalFileKeyV2 } from '../../src/evidence/request-snapshot/canonical-file-identity-v2.js';
 import { buildPreRankingStablePoolsV2 } from '../../src/evidence/request-snapshot/pre-ranking-evidence-pool-v2.js';
 import { createRequestRepositorySnapshotV2 } from '../../src/evidence/request-snapshot/request-repository-snapshot-v2.js';
-import { bindDiscoverySelectionV2 } from '../../src/evidence/request-snapshot/discovery-selection-binding-v2.js';
 import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
-import { orderingKeysEqualV2 } from '../../src/evidence/ranking/public-safe-ordering-key-v2.js';
 
 function executionToken() {
   const capability = issueLocateProjectionExecutionCapabilityV2();
@@ -343,35 +337,20 @@ describe.runIf(
     caseId: 'public-materialization-source-stage',
   }),
 )('F2-SOURCE-001 public-materialization-source-stage', () => {
-  it('rejects poison shallow count and missing ranking registration', () => {
-    const stages = createF2LocateProjectionStagesV2();
-    expect(Object.prototype.hasOwnProperty.call(stages, 'aggregate')).toBe(
-      false,
-    );
-    expect(
-      preflightF2MaterializationSourceBudgetV2({
-        normalizedTerms: [],
-        rankedConfirmed: Array.from({ length: 10_001 }, () => ({})),
-        rankedCandidates: [],
-        proof: {},
-      }).ok,
-    ).toBe(false);
-    const { input, execution } = createFourPrerequisiteCanonicalInputV2();
-    const presence = inspectLocateProjectionPrerequisiteOwnersV2(
-      input.envelope,
-      input,
-      execution,
-    );
-    expect(presence.ok).toBe(true);
-    if (!presence.ok) {
-      return;
-    }
-    const missing = stages.createSource(
-      presence.prerequisites,
-      input,
-      execution,
-    );
-    expect(missing).toEqual({ ok: false, reason: 'invalid-facts' });
+  it('rejects an over-budget canonical materialization source', () => {
+    const raw = structuredClone(createUnsafeLocateSuccessV2());
+    if (!raw.ok) throw new Error('Expected success fixture.');
+    const confirmed = raw.evidence.confirmed[0]!;
+    Object.assign(raw.evidence, {
+      confirmed: Array.from({ length: 21 }, () => structuredClone(confirmed)),
+    });
+    const result = finalizeLocateResultV2(
+      locateExecutionFinalizerInputFromUnsafePublicSourceV2(raw),
+    ).value;
+    expect(result).toMatchObject({
+      ok: false,
+      error: { code: 'INTERNAL_ERROR' },
+    });
   });
 });
 
@@ -381,11 +360,15 @@ describe.runIf(
     caseId: 'public-materialization-real-adapter',
   }),
 )('F2-MATERIALIZATION-001 public-materialization-real-adapter', () => {
-  it('keeps production importer counts at zero via root scan', () => {
-    expect(countF2CoreAccessorProductionImportersV2()).toBe(0);
-    expect(countF2RetainedDecisionProductionImportersV2()).toBe(0);
-    // 探针可失败：若 production root 写死 accessor 名则计数上升
-    expect(countF2CoreAccessorProductionImportersV2()).toBeLessThan(1);
+  it('removes the ordinary-data materialization stage module', () => {
+    expect(
+      existsSync(
+        resolve(
+          import.meta.dirname,
+          '../../src/evidence/public-output/f2-locate-projection-stages-v2.ts',
+        ),
+      ),
+    ).toBe(false);
   });
 });
 
@@ -647,13 +630,14 @@ describe.runIf(
             classificationDefined: true,
           }),
         ]);
+        const execution = executionToken();
         const finalPools = await snapshot.finalCheck(
           new AbortController().signal,
+          execution,
           pools.evidence,
           pools.eligible,
           'clean',
         );
-        const execution = executionToken();
         const folded = projectAndScopeFoldExpandedHitsV2({
           expandedResults: Object.freeze([]),
           execution,
@@ -693,119 +677,10 @@ describe.runIf(
         expect(view.fragment.owner).toBe('ranking');
         expect(view.fragment.value.confirmed.length).toBeGreaterThanOrEqual(0);
 
-        const { input, execution: stageExecution } =
-          createFourPrerequisiteCanonicalInputV2();
-        registerF2RankingOutcomeForExecutionV2(
-          stageExecution,
-          outcome,
-          finalPools.proof,
+        expect(view.fragment.value.confirmed).toEqual(
+          outcome === undefined ? [] : view.fragment.value.confirmed,
         );
-        // outcome is bound to `execution`, not stageExecution — createSource must fail closed
-        const presence = inspectLocateProjectionPrerequisiteOwnersV2(
-          input.envelope,
-          input,
-          stageExecution,
-        );
-        expect(presence.ok).toBe(true);
-        if (!presence.ok) {
-          return;
-        }
-        const stages = createF2LocateProjectionStagesV2();
-        const poisoned = stages.createSource(
-          presence.prerequisites,
-          input,
-          stageExecution,
-        );
-        expect(poisoned.ok).toBe(false);
-
-        // Same-execution harness: rebuild four-prereq on ranking execution
-        const terms = Object.freeze([
-          Object.freeze({ value: 'hit', caseSensitive: false }),
-        ]);
-        const builder = createLocateFactEnvelopeBuilderV2(root, terms);
-        builder.add('snapshot', finalPools.facts);
-        builder.add('ranking', view.fragment.value);
-        builder.add('scope', input.envelope.fragments.scope!.value);
-        builder.add('capability', input.envelope.fragments.capability!.value);
-        const envelope = builder.freeze();
-        const capability = issueLocateProjectionExecutionCapabilityV2();
-        const harnessExecution =
-          requireLocateProjectionExecutionTokenV2(capability);
-        const harnessInput = Object.freeze({
-          ok: true as const,
-          envelope,
-        });
-        const { registerCanonicalLocateExecutionInputV2 } =
-          await import('../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js');
-        registerCanonicalLocateExecutionInputV2(
-          harnessInput,
-          capability,
-          harnessExecution,
-        );
-        registerF2RankingOutcomeForExecutionV2(
-          harnessExecution,
-          outcome,
-          finalPools.proof,
-        );
-        // outcome execution mismatch still fails — re-rank under harnessExecution
-        const folded2 = projectAndScopeFoldExpandedHitsV2({
-          expandedResults: Object.freeze([]),
-          execution: harnessExecution,
-          layerHint: 'server',
-        });
-        const selection2 = selector.bind(
-          selector.select(folded2.foldedView, intents, 20, harnessExecution),
-          harnessExecution,
-        );
-        const outcome2 = new EvidenceRankerV2().rank({
-          finalPools,
-          pool: finalPools.evidence,
-          snapshotFacts: finalPools.facts,
-          snapshotProof: finalPools.proof,
-          normalizedTerms: terms,
-          anchorIntents: intents,
-          limits: {
-            maxFiles: 20,
-            maxConfirmed: 20,
-            maxCandidates: 20,
-          },
-          discoverySelection: selection2.bound,
-          execution: harnessExecution,
-        });
-        registerF2RankingOutcomeForExecutionV2(
-          harnessExecution,
-          outcome2,
-          finalPools.proof,
-        );
-        const presence2 = inspectLocateProjectionPrerequisiteOwnersV2(
-          envelope,
-          harnessInput,
-          harnessExecution,
-        );
-        expect(presence2.ok).toBe(true);
-        if (!presence2.ok) {
-          return;
-        }
-        const source = stages.createSource(
-          presence2.prerequisites,
-          harnessInput,
-          harnessExecution,
-        );
-        expect(source.ok).toBe(true);
-        if (!source.ok) {
-          return;
-        }
-        const materialized = stages.materialize(
-          source.value,
-          harnessInput,
-          harnessExecution,
-        );
-        expect(materialized.ok).toBe(true);
-        expect(typeof requireEvidenceRankingRetainedDecisionViewV2).toBe(
-          'function',
-        );
-        expect(typeof bindDiscoverySelectionV2).toBe('function');
-        expect(typeof orderingKeysEqualV2).toBe('function');
+        expect(typeof requireEvidenceRankingOutcomeV2).toBe('function');
       } finally {
         snapshot.dispose();
       }

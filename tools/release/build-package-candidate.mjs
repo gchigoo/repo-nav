@@ -1,38 +1,55 @@
 /**
- * Fresh source→emit package candidate builder (delegates clean + pack-candidate).
+ * One-process clean TypeScript build and exact package candidate materializer.
  */
-import { spawnSync } from 'node:child_process';
-import { dirname, join } from 'node:path';
+import { realpathSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
+import { executeReleaseBuildV1 } from './build-receipt.mjs';
+import { materializeReleaseCandidateV1 } from './pack-candidate.mjs';
+
+const modulePath = fileURLToPath(import.meta.url);
+const root = resolve(dirname(modulePath), '../..');
 const npmCli = join(root, 'node_modules/npm/bin/npm-cli.js');
 
-function run(args) {
-  const r = spawnSync(process.execPath, [npmCli, ...args], {
-    cwd: root,
-    encoding: 'utf8',
-    shell: false,
-  });
-  if (r.status !== 0) {
-    process.stderr.write(
-      r.stderr || r.stdout || 'build-package-candidate failed\n',
-    );
-    process.exit(r.status ?? 1);
-  }
-  return r.stdout;
+function runBuildPackageCandidateV1() {
+  const execution = executeReleaseBuildV1(root, (buildCapability) =>
+    materializeReleaseCandidateV1({
+      root,
+      npmCli,
+      buildCapability,
+    }),
+  );
+  const candidate = execution.result;
+  process.stdout.write(
+    `${JSON.stringify(
+      {
+        ok: true,
+        builder: 'build-package-candidate',
+        typescriptVersion: execution.receipt.typescriptVersion,
+        sourceSha256: execution.receipt.sourceSha256,
+        buildOutputSha256: execution.receipt.outputSha256,
+        buildReceiptSha256: execution.receipt.receiptSha256,
+        tarballPath: candidate.tarballPath,
+        tarballSha256: candidate.tarballSha256,
+      },
+      null,
+      2,
+    )}\n`,
+  );
 }
 
-run(['run', 'build']);
-const smoke = spawnSync(
-  process.execPath,
-  [join(root, 'tools/release/pack-candidate.mjs'), '--smoke'],
-  { cwd: root, encoding: 'utf8', shell: false },
-);
-if (smoke.status !== 0) {
-  process.stderr.write(smoke.stderr || smoke.stdout || 'pack smoke failed\n');
-  process.exit(smoke.status ?? 1);
+const entryPath = process.argv[1];
+if (
+  entryPath !== undefined &&
+  realpathSync.native(resolve(entryPath)) === realpathSync.native(modulePath)
+) {
+  try {
+    runBuildPackageCandidateV1();
+  } catch (error) {
+    process.stderr.write(
+      `${error instanceof Error ? error.message : String(error)}\n`,
+    );
+    process.exitCode = 1;
+  }
 }
-process.stdout.write(
-  `${JSON.stringify({ ok: true, builder: 'build-package-candidate', smokeExit: 0 }, null, 2)}\n`,
-);

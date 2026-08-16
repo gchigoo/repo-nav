@@ -12,7 +12,9 @@ import { LocateResultV2Schema } from '../../src/contracts/v2/locate-result-v2.js
 import { classifyDiscoveryRecords } from '../../src/evidence/direct-mapping-classifier.js';
 import type { DiscoveryRecord } from '../../src/evidence/discovery-record.js';
 import { redactPublicText } from '../../src/evidence/evidence-redactor.js';
-import { deriveLocateStatusFromFactsV2 } from '../../src/evidence/request-outcome/locate-status-v2.js';
+import { finalizeLocateResultV2 } from '../../src/evidence/locate-execution/finalize-locate-result-v2.js';
+import { locateExecutionFinalizerInputFromUnsafePublicSourceV2 } from '../../testkit/fixtures/locate-execution-v2/finalizer-facts-v2.js';
+import { createUnsafeLocateSuccessV2 } from '../../testkit/fixtures/public-output-v2/synthetic-locate-v2.js';
 import { buildFixtureCompletenessReport } from '../../testkit/contracts/index.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
@@ -164,55 +166,59 @@ describe.runIf(
   isSelected({ group: 'final-status', caseId: 'final-status-family-contract' }),
 )('final status family contract', () => {
   it('covers every recoverable final status and emits the family inventory', () => {
+    const status = (
+      mutation: Readonly<{
+        empty?: boolean;
+        incomplete?: boolean;
+        unavailable?: boolean;
+        abortSource?: 'caller' | 'deadline';
+      }> = {},
+    ) => {
+      const raw = structuredClone(createUnsafeLocateSuccessV2());
+      if (!raw.ok) throw new Error('Expected success fixture.');
+      if (mutation.empty === true) {
+        Object.assign(raw.evidence, { confirmed: [], candidates: [] });
+      }
+      if (mutation.incomplete === true || mutation.unavailable === true) {
+        Object.assign(raw.evidence.coverage, {
+          backends: [
+            mutation.unavailable === true
+              ? {
+                  backend: 'ripgrep',
+                  status: 'unavailable',
+                  completion: 'incomplete',
+                  termination: 'process-error',
+                  reasonCode: 'RIPGREP_UNAVAILABLE',
+                  hitCount: 0,
+                }
+              : {
+                  backend: 'ripgrep',
+                  status: 'used',
+                  completion: 'incomplete',
+                  termination: 'output-limit',
+                  hitCount: 1,
+                },
+          ],
+        });
+      }
+      if (mutation.abortSource !== undefined) {
+        Object.assign(raw.evidence.coverage, {
+          abortSource: mutation.abortSource,
+        });
+      }
+      const result = finalizeLocateResultV2(
+        locateExecutionFinalizerInputFromUnsafePublicSourceV2(raw),
+      ).value;
+      if (!result.ok) throw new Error('Expected finalized success.');
+      return result.evidence.status;
+    };
     const evaluations = [
-      deriveLocateStatusFromFactsV2({
-        abortSource: 'none',
-        strategyComplete: true,
-        degradations: [],
-        unsatisfiedAnchors: [],
-        backends: [{ status: 'used', completion: 'complete' }],
-        retainedEvidenceCount: 1,
-      }),
-      deriveLocateStatusFromFactsV2({
-        abortSource: 'none',
-        strategyComplete: false,
-        degradations: [],
-        unsatisfiedAnchors: [],
-        backends: [{ status: 'used', completion: 'complete' }],
-        retainedEvidenceCount: 1,
-      }),
-      deriveLocateStatusFromFactsV2({
-        abortSource: 'none',
-        strategyComplete: true,
-        degradations: [],
-        unsatisfiedAnchors: [],
-        backends: [{ status: 'used', completion: 'complete' }],
-        retainedEvidenceCount: 0,
-      }),
-      deriveLocateStatusFromFactsV2({
-        abortSource: 'none',
-        strategyComplete: false,
-        degradations: [],
-        unsatisfiedAnchors: [],
-        backends: [{ status: 'unavailable', completion: 'incomplete' }],
-        retainedEvidenceCount: 0,
-      }),
-      deriveLocateStatusFromFactsV2({
-        abortSource: 'caller',
-        strategyComplete: true,
-        degradations: [],
-        unsatisfiedAnchors: [],
-        backends: [{ status: 'used', completion: 'complete' }],
-        retainedEvidenceCount: 1,
-      }),
-      deriveLocateStatusFromFactsV2({
-        abortSource: 'deadline',
-        strategyComplete: true,
-        degradations: [],
-        unsatisfiedAnchors: [],
-        backends: [{ status: 'used', completion: 'complete' }],
-        retainedEvidenceCount: 1,
-      }),
+      status(),
+      status({ incomplete: true }),
+      status({ empty: true }),
+      status({ empty: true, unavailable: true }),
+      status({ abortSource: 'caller' }),
+      status({ abortSource: 'deadline' }),
     ];
     expect(evaluations).toEqual([
       'ok',

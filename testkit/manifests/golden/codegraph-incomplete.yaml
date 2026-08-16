@@ -20,4 +20,4 @@ expected:
   candidates: []
   forbiddenEvidenceIds: []
   requiredCoverageCodes: [MAX_CANDIDATES_REACHED]
-  minimumExclusionCounts: {}
+  minimumExclusionCounts: { DUPLICATE_LOCATION: 1 }

@@ -82,7 +82,9 @@ function assertAdditionalJobs(
     ]),
   );
   expect(armRuns).toHaveLength(5);
+  expect(armRuns.filter((run) => run === 'npm run clean')).toHaveLength(1);
   const armRunsJoined = armRuns.join('\n');
+  expect(armRunsJoined).not.toContain('npm run build');
   expect(armRunsJoined).not.toContain('codegraph');
   const ripgrepInstall = armRuns.find((run) =>
     run.includes('@vscode/ripgrep@1.15.9'),

@@ -16,13 +16,12 @@ export interface PublicPackageSubpathExportsV2 {
   readonly types: readonly string[];
 }
 
-/** Exact package export disposition at the 1.1.0 hardening checkpoint. */
+/** Exact package export disposition after the 2.0.0 cutover. */
 export const PUBLIC_PACKAGE_EXPORT_DISPOSITIONS_V2: readonly PublicPackageExportDispositionV2[] =
   Object.freeze([
     Object.freeze({ specifier: '.', action: 'retain-c5' }),
     Object.freeze({ specifier: './advanced', action: 'retain-c5' }),
     Object.freeze({ specifier: './backends', action: 'retain-c5' }),
-    Object.freeze({ specifier: './legacy-v1', action: 'remove-c5' }),
     Object.freeze({ specifier: './node', action: 'retain-c5' }),
     Object.freeze({ specifier: './package.json', action: 'retain-c5' }),
   ]);
@@ -31,7 +30,7 @@ export const PUBLIC_PACKAGE_EXPORT_KEYS_V2 = Object.freeze(
   PUBLIC_PACKAGE_EXPORT_DISPOSITIONS_V2.map((entry) => entry.specifier),
 );
 
-/** Exact runtime/type inventories for the public 1.1.0 adapter subpaths. */
+/** Exact runtime/type inventories for the retained public adapter subpaths. */
 export const PUBLIC_PACKAGE_SUBPATH_EXPORTS_V2: readonly PublicPackageSubpathExportsV2[] =
   Object.freeze([
     Object.freeze({

@@ -50,6 +50,7 @@ interface ObservedPackageSubpathExportsV2 extends ExportInventoryV2 {
 interface WeakRegistrySiteV2 {
   readonly module: string;
   readonly binding: string;
+  readonly keyType: string | null;
 }
 
 interface LegacySourceInventoryV2 {
@@ -314,7 +315,13 @@ function enumerateWeakRegistrySitesV2(
         (node.expression.text === 'WeakMap' ||
           node.expression.text === 'WeakSet')
       ) {
-        sites.push(Object.freeze({ module, binding: weakBindingV2(node) }));
+        sites.push(
+          Object.freeze({
+            module,
+            binding: weakBindingV2(node),
+            keyType: node.typeArguments?.[0]?.getText(sourceFile) ?? null,
+          }),
+        );
       }
       ts.forEachChild(node, visit);
     };
@@ -904,13 +911,118 @@ function sourceHasInstalledPackageVersionBindingV2(
       const pathEvidence = [...facts.strings].join('/');
       if (
         pathEvidence.includes('node_modules') &&
-        pathEvidence.includes('repo-nav') &&
         pathEvidence.includes('package.json') &&
-        facts.calls.has('JSON.parse') &&
+        (facts.calls.has('JSON.parse') || facts.calls.has('parseJson')) &&
         facts.calls.has('readFileSync')
       ) {
         found = true;
         return;
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return found;
+}
+
+function expressionReferencesPropertyV2(
+  node: ts.Node,
+  propertyName: string,
+  declarations: ReadonlyMap<string, ts.Expression>,
+  seenBindings: Set<string>,
+): boolean {
+  if (ts.isPropertyAccessExpression(node) && node.name.text === propertyName) {
+    return true;
+  }
+  if (
+    ts.isElementAccessExpression(node) &&
+    node.argumentExpression !== undefined &&
+    ts.isStringLiteralLike(node.argumentExpression) &&
+    node.argumentExpression.text === propertyName
+  ) {
+    return true;
+  }
+  if (ts.isIdentifier(node)) {
+    const initializer = declarations.get(node.text);
+    if (initializer !== undefined && !seenBindings.has(node.text)) {
+      const nextBindings = new Set(seenBindings);
+      nextBindings.add(node.text);
+      if (
+        expressionReferencesPropertyV2(
+          initializer,
+          propertyName,
+          declarations,
+          nextBindings,
+        )
+      ) {
+        return true;
+      }
+    }
+  }
+  return node
+    .getChildren()
+    .some((child) =>
+      expressionReferencesPropertyV2(
+        child,
+        propertyName,
+        declarations,
+        new Set(seenBindings),
+      ),
+    );
+}
+
+function expressionUsesNpmPackFilenameV2(
+  expression: ts.Expression,
+  declarations: ReadonlyMap<string, ts.Expression>,
+): boolean {
+  const facts: ExpressionFactsV2 = {
+    strings: new Set<string>(),
+    calls: new Set<string>(),
+  };
+  collectExpressionFactsV2(expression, declarations, new Set<string>(), facts);
+  return (
+    facts.strings.has('pack') &&
+    facts.strings.has('--json') &&
+    facts.strings.has('--pack-destination') &&
+    facts.calls.has('run') &&
+    facts.calls.has('JSON.parse') &&
+    expressionReferencesPropertyV2(
+      expression,
+      'filename',
+      declarations,
+      new Set<string>(),
+    )
+  );
+}
+
+function sourceHasNpmPackFilenameBindingV2(sourceFile: ts.SourceFile): boolean {
+  const declarations = variableInitializersV2(sourceFile);
+  let found = false;
+  const visit = (node: ts.Node): void => {
+    if (found) {
+      return;
+    }
+    if (
+      ts.isCallExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      node.expression.text === 'writeReleaseCandidateManifestV1'
+    ) {
+      const input = node.arguments[0];
+      if (input !== undefined && ts.isObjectLiteralExpression(input)) {
+        const tarballPath = objectLiteralPropertyV2(input, 'tarballPath');
+        const publishedTarballPath = objectLiteralPropertyV2(
+          input,
+          'publishedTarballPath',
+        );
+        if (
+          tarballPath !== null &&
+          publishedTarballPath !== null &&
+          expressionUsesNpmPackFilenameV2(tarballPath, declarations) &&
+          expressionUsesNpmPackFilenameV2(publishedTarballPath, declarations)
+        ) {
+          found = true;
+          return;
+        }
       }
     }
     ts.forEachChild(node, visit);
@@ -992,19 +1104,24 @@ async function enumerateVersionAuthorityObservationsV2(): Promise<
   const packSource = parseJavascriptSourceV2(
     'tools/release/pack-candidate.mjs',
   );
-  const packText = packSource.getFullText();
-  const tarballWired =
-    packText.includes("run(['pack', '--json'])") &&
-    packText.includes('.filename');
-  const installedPackageWired =
-    sourceHasInstalledPackageVersionBindingV2(packSource);
+  const tarballWired = sourceHasNpmPackFilenameBindingV2(packSource);
+  const releaseCandidateSource = parseJavascriptSourceV2(
+    'tools/release/release-candidate.mjs',
+  );
+  const installedPackageWired = sourceHasInstalledPackageVersionBindingV2(
+    releaseCandidateSource,
+  );
 
   const sbomSource = parseJavascriptSourceV2(
     'tools/release/sbom-from-shrinkwrap.mjs',
   ).getFullText();
   const sbomWired =
-    sbomSource.includes("'bom-ref': `pkg:npm/${pkg.name}@${pkg.version}`") &&
-    sbomSource.includes('version: pkg.version');
+    sbomSource.includes(
+      'const rootRef = `pkg:npm/${packageName}@${packageVersion}`',
+    ) &&
+    sbomSource.includes("'bom-ref': rootRef") &&
+    sbomSource.includes('version: packageVersion') &&
+    sbomSource.includes('purl: rootRef');
 
   const confirmationSource = parseJavascriptSourceV2(
     'tools/release/real-consumer-contracts.mjs',
@@ -1059,8 +1176,8 @@ async function enumerateVersionAuthorityObservationsV2(): Promise<
     ),
     observationV2(
       'installed-package-json',
-      'tools/release/pack-candidate.mjs',
-      'installed node_modules/repo-nav/package.json.version',
+      'tools/release/release-candidate.mjs',
+      'fresh consumer node_modules/repo-nav/package.json.version',
       installedPackageWired ? packageVersion : null,
     ),
     observationV2(
@@ -1418,6 +1535,23 @@ function evaluateRepositoryHardeningInventoryV2(
   ) {
     issues.push('weak registry dispositions are not deep-exact with source');
   }
+  const weakDispositionByKey = new Map(
+    fixture.weak.map((entry) => [weakKeyV2(entry), entry] as const),
+  );
+  for (const site of source.weakSites) {
+    const keyType = site.keyType ?? '';
+    const disposition = weakDispositionByKey.get(weakKeyV2(site));
+    if (
+      (keyType === 'object' && disposition?.carries !== 'identity-cache') ||
+      /(?:OutcomeContributionV2|CanonicalLocateExecutionV2|FinalizeLocateResultInputV2)/u.test(
+        keyType,
+      )
+    ) {
+      issues.push(
+        `ordinary business data cannot be a weak-registry key: ${weakKeyV2(site)}`,
+      );
+    }
+  }
 
   const versionIds = fixture.versions.map((entry) => entry.id);
   const duplicateVersions = duplicateValuesV2(versionIds);
@@ -1486,23 +1620,38 @@ describe.runIf(selected)('P0 repository-hardening inventory', () => {
     const source = await currentSourceInventoryV2();
     expect(source.weakSites).toHaveLength(WEAK_REGISTRY_DISPOSITIONS_V2.length);
     expect(
+      WEAK_REGISTRY_DISPOSITIONS_V2.every(
+        (entry) =>
+          entry.action === 'retain' && entry.carries !== 'ordinary-data',
+      ),
+    ).toBe(true);
+    expect(
       evaluateRepositoryHardeningInventoryV2(fixtureInventoryV2(), source),
     ).toEqual([]);
   });
 
-  it('marks absent installed-package and confirmation bindings as planned-unwired', async () => {
+  it('records installed-package authority as wired and confirmation as planned-unwired', async () => {
     const source = await currentSourceInventoryV2();
-    for (const id of [
-      'installed-package-json',
-      'real-consumer-confirmation',
-    ] as const) {
-      expect(
-        VERSION_AUTHORITIES_V2.find((entry) => entry.id === id)?.wiring,
-      ).toBe('planned-unwired');
-      expect(
-        source.versionAuthorities.find((entry) => entry.id === id),
-      ).toMatchObject({ wiring: 'unwired', actual: null });
-    }
+    expect(
+      VERSION_AUTHORITIES_V2.find(
+        (entry) => entry.id === 'installed-package-json',
+      )?.wiring,
+    ).toBe('wired');
+    expect(
+      source.versionAuthorities.find(
+        (entry) => entry.id === 'installed-package-json',
+      ),
+    ).toMatchObject({ wiring: 'wired', actual: '2.0.0' });
+    expect(
+      VERSION_AUTHORITIES_V2.find(
+        (entry) => entry.id === 'real-consumer-confirmation',
+      )?.wiring,
+    ).toBe('planned-unwired');
+    expect(
+      source.versionAuthorities.find(
+        (entry) => entry.id === 'real-consumer-confirmation',
+      ),
+    ).toMatchObject({ wiring: 'unwired', actual: null });
   });
 
   it('detects semantic confirmation version bindings without source-style false positives', () => {
@@ -1608,52 +1757,36 @@ describe.runIf(selected)('P0 repository-hardening inventory', () => {
     ).toBe(packageVersion);
   });
 
-  it('accepts a fixture-owned synthetic C5 phase transition without evaluator changes', async () => {
+  it('keeps the final package cutover atomic while allowing later version bumps', async () => {
     const currentSource = await currentSourceInventoryV2();
     const baseline = fixtureInventoryV2();
-    const cutoverRootTypes = baseline.rootTypes
-      .filter((entry) => entry !== 'PackageMetadataV1')
-      .sort();
+    expect(baseline.legacyState).toBe('removed');
+    expect(baseline.packageExportKeys).not.toContain('./legacy-v1');
+    expect(baseline.rootTypes).toContain('PackageMetadataV1');
+
     const currentPackageVersion = baseline.versions.find(
       (entry) => entry.id === 'package-json-root',
     )?.expected;
     if (currentPackageVersion === undefined) {
       throw new Error('Package version authority must be present.');
     }
-    const syntheticCutoverVersion = `${currentPackageVersion}-synthetic-cutover`;
-    const cutoverVersions: readonly VersionAuthorityV2[] =
+    const syntheticVersion = `${currentPackageVersion}-synthetic-next`;
+    const syntheticVersions: readonly VersionAuthorityV2[] =
       baseline.versions.map((entry) => ({
         ...entry,
         wiring: 'wired' as const,
         expected: entry.expected.replaceAll(
           currentPackageVersion,
-          syntheticCutoverVersion,
+          syntheticVersion,
         ),
       }));
-    const cutoverPackageExportKeys = baseline.packageExportKeys.filter(
-      (entry) => entry !== './legacy-v1',
-    );
-    const cutoverPackageExportDispositions =
-      baseline.packageExportDispositions.filter(
-        (entry) => entry.specifier !== './legacy-v1',
-      );
-    const cutoverFixture: InventoryFixtureV2 = {
+    const syntheticFixture: InventoryFixtureV2 = {
       ...baseline,
-      rootTypes: cutoverRootTypes,
-      packageExportKeys: cutoverPackageExportKeys,
-      packageExportDispositions: cutoverPackageExportDispositions,
-      legacyState: 'removed',
-      versions: cutoverVersions,
+      versions: syntheticVersions,
     };
-    const cutoverSource: SourceInventoryV2 = {
+    const syntheticSource: SourceInventoryV2 = {
       ...currentSource,
-      root: {
-        runtime: cutoverFixture.rootRuntime,
-        types: cutoverRootTypes,
-      },
-      packageExportKeys: cutoverPackageExportKeys,
-      legacy: { state: 'removed', exports: [] },
-      versionAuthorities: cutoverVersions.map((entry) => ({
+      versionAuthorities: syntheticVersions.map((entry) => ({
         id: entry.id,
         module: entry.module,
         binding: entry.binding,
@@ -1663,22 +1796,23 @@ describe.runIf(selected)('P0 repository-hardening inventory', () => {
     };
 
     expect(
-      evaluateRepositoryHardeningInventoryV2(cutoverFixture, cutoverSource),
+      evaluateRepositoryHardeningInventoryV2(syntheticFixture, syntheticSource),
     ).toEqual([]);
   });
 
   it('rejects each required characterization mutation', async () => {
     const source = await currentSourceInventoryV2();
     const baseline = fixtureInventoryV2();
-    const ordinaryIndex = baseline.weak.findIndex(
-      (entry) => entry.carries === 'ordinary-data',
-    );
-    if (ordinaryIndex < 0) {
-      throw new Error('Expected at least one ordinary-data weak registry.');
-    }
-    const ordinaryRetained = baseline.weak.map((entry, index) =>
-      index === ordinaryIndex ? { ...entry, action: 'retain' as const } : entry,
-    );
+    const ordinaryRetained = [
+      ...baseline.weak,
+      {
+        module: 'src/synthetic-ordinary-data.ts',
+        binding: 'ordinaryDataRegistry',
+        carries: 'ordinary-data' as const,
+        action: 'retain' as const,
+        rationale: 'Synthetic ordinary-data registry must be rejected.',
+      },
+    ];
 
     const mutations: readonly Readonly<{
       name: string;
@@ -1719,13 +1853,13 @@ describe.runIf(selected)('P0 repository-hardening inventory', () => {
         },
       },
       {
-        name: 'wrong-legacy-package-export-disposition',
+        name: 'wrong-retained-package-export-disposition',
         fixture: {
           ...baseline,
           packageExportDispositions: baseline.packageExportDispositions.map(
             (entry) =>
-              entry.specifier === './legacy-v1'
-                ? { ...entry, action: 'retain-c5' as const }
+              entry.specifier === './advanced'
+                ? { ...entry, action: 'remove-c5' as const }
                 : entry,
           ),
         },

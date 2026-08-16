@@ -19,4 +19,4 @@ expected:
       reasonCodes: [SECONDARY_BACKEND_HIT]
   forbiddenEvidenceIds: []
   requiredCoverageCodes: []
-  minimumExclusionCounts: {}
+  minimumExclusionCounts: { DUPLICATE_LOCATION: 1 }

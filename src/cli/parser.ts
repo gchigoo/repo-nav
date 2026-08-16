@@ -25,7 +25,15 @@ const LOCATE_HELP = `repo-nav debug locate --repo <path> --term <term> [options]
   --max-files <n> --max-confirmed <n> --max-candidates <n> --timeout-ms <n>`;
 const PROBE_HELP = 'repo-nav debug probe --repo <path>';
 
-export class CliUsageError extends Error {}
+export const CLI_USAGE_ERROR_MESSAGE =
+  'The debug command arguments are invalid.' as const;
+
+export class CliUsageError extends Error {
+  public constructor() {
+    super(CLI_USAGE_ERROR_MESSAGE);
+    this.name = 'CliUsageError';
+  }
+}
 
 export type ParsedCliCommand =
   | { readonly kind: 'help'; readonly text: string }
@@ -46,13 +54,13 @@ function parseFlags(
     const flag = args[index];
     const value = args[index + 1];
     if (flag === undefined || !flag.startsWith('--')) {
-      throw new CliUsageError(`Unexpected argument: ${flag ?? '<missing>'}.`);
+      throw new CliUsageError();
     }
     if (value === undefined || value.startsWith('--')) {
-      throw new CliUsageError(`Missing value for ${flag}.`);
+      throw new CliUsageError();
     }
     if (values.has(flag) && !repeatable.has(flag)) {
-      throw new CliUsageError(`${flag} may only be specified once.`);
+      throw new CliUsageError();
     }
     const existing = values.get(flag) ?? [];
     values.set(flag, [...existing, value]);
@@ -68,7 +76,7 @@ function one(flags: ParsedFlags, name: string): string | undefined {
 function required(flags: ParsedFlags, name: string): string {
   const value = one(flags, name);
   if (value === undefined) {
-    throw new CliUsageError(`Missing required option ${name}.`);
+    throw new CliUsageError();
   }
   return value;
 }
@@ -77,7 +85,7 @@ function integer(flags: ParsedFlags, name: string): number | undefined {
   const raw = one(flags, name);
   if (raw === undefined) return undefined;
   if (!/^\d+$/u.test(raw)) {
-    throw new CliUsageError(`${name} must be an integer.`);
+    throw new CliUsageError();
   }
   return Number(raw);
 }
@@ -85,7 +93,7 @@ function integer(flags: ParsedFlags, name: string): number | undefined {
 function parseAnchor(value: string): LocateAnchor {
   const separator = value.indexOf(':');
   if (separator <= 0 || separator === value.length - 1) {
-    throw new CliUsageError('--anchor must use kind:value syntax.');
+    throw new CliUsageError();
   }
   return {
     kind: value.slice(0, separator) as LocateAnchor['kind'],
@@ -115,21 +123,19 @@ function parseLocate(args: readonly string[]): ParsedCliCommand {
   );
   for (const flag of flags.values.keys()) {
     if (!allowed.has(flag)) {
-      throw new CliUsageError(`Unknown locate option: ${flag}.`);
+      throw new CliUsageError();
     }
   }
   let raw: unknown;
   const requestJson = one(flags, '--request');
   if (requestJson !== undefined) {
     if (flags.values.size !== 1) {
-      throw new CliUsageError(
-        '--request cannot be combined with other options.',
-      );
+      throw new CliUsageError();
     }
     try {
       raw = JSON.parse(requestJson) as unknown;
     } catch {
-      throw new CliUsageError('--request must contain valid JSON.');
+      throw new CliUsageError();
     }
   } else {
     const limits = {
@@ -179,7 +185,7 @@ export function parseCliArguments(args: readonly string[]): ParsedCliCommand {
     return { kind: 'version' };
   }
   if (args[0] !== 'debug') {
-    throw new CliUsageError('Expected the debug command.');
+    throw new CliUsageError();
   }
   const command = args[1];
   const tail = args.slice(2);
@@ -192,15 +198,13 @@ export function parseCliArguments(args: readonly string[]): ParsedCliCommand {
     const flags = parseFlags(tail, new Set());
     for (const flag of flags.values.keys()) {
       if (flag !== '--repo') {
-        throw new CliUsageError(`Unknown probe option: ${flag}.`);
+        throw new CliUsageError();
       }
     }
     return { kind: 'probe', repoPath: required(flags, '--repo') };
   }
   if (command === 'golden') {
-    throw new CliUsageError(
-      'debug golden was removed from the installed CLI; use npm run test:golden in a source checkout.',
-    );
+    throw new CliUsageError();
   }
-  throw new CliUsageError(`Unknown debug command: ${command}.`);
+  throw new CliUsageError();
 }

@@ -4,6 +4,10 @@ import { dirname, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import {
+  issueLocateProjectionExecutionCapabilityV2,
+  requireLocateProjectionExecutionTokenV2,
+} from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
 import type { CanonicalFileKeyV2 } from '../../src/evidence/request-snapshot/canonical-file-identity-v2.js';
 import {
   runFinalSnapshotCheckV2,
@@ -14,6 +18,12 @@ import { buildPreRankingStablePoolsV2 } from '../../src/evidence/request-snapsho
 import { createRequestRepositorySnapshotV2 } from '../../src/evidence/request-snapshot/request-repository-snapshot-v2.js';
 import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
 import { isSelected } from '../../testkit/testing/selection.js';
+
+function executionToken() {
+  return requireLocateProjectionExecutionTokenV2(
+    issueLocateProjectionExecutionCapabilityV2(),
+  );
+}
 
 const coverageSelected = isSelected({
   group: 'request-snapshot-cache',
@@ -43,6 +53,7 @@ describe.runIf(coverageSelected)(
         eligiblePool: { records: [] },
         gitState: 'unknown',
         signal: new AbortController().signal,
+        execution: executionToken(),
       });
       expect(empty.facts.coverage.consistency).toBe('unknown');
       expect(empty.facts.coverage.filesChecked).toBe(0);
@@ -69,6 +80,7 @@ describe.runIf(coverageSelected)(
         eligiblePool: missingLoadedPools.eligible,
         gitState: 'unknown',
         signal: new AbortController().signal,
+        execution: executionToken(),
       });
       expect(missingLoaded.facts.coverage.consistency).toBe('changed');
       expect(missingLoaded.changedCanonicalKeys.has('server/missing.ts')).toBe(
@@ -116,6 +128,7 @@ describe.runIf(coverageSelected)(
           ]);
           const result = await snapshot.finalCheck(
             new AbortController().signal,
+            executionToken(),
             pools.evidence,
             pools.eligible,
             'clean',
@@ -200,6 +213,7 @@ describe.runIf(mutationSelected)(
           ]);
           const result = await snapshot.finalCheck(
             new AbortController().signal,
+            executionToken(),
             pools.evidence,
             pools.eligible,
             'dirty',
@@ -264,6 +278,7 @@ describe.runIf(abortSelected)(
           controller.abort();
           const result = await snapshot.finalCheck(
             controller.signal,
+            executionToken(),
             pools.evidence,
             pools.eligible,
             'unknown',
@@ -323,6 +338,7 @@ describe.runIf(abortSelected)(
         await expect(
           snapshot.finalCheck(
             new AbortController().signal,
+            executionToken(),
             pools.evidence,
             pools.eligible,
             'unknown',
@@ -364,6 +380,7 @@ describe.runIf(abortSelected)(
           await expect(
             snapshot.finalCheck(
               new AbortController().signal,
+              executionToken(),
               {
                 records: [],
                 preRankingPoolTruncated: false,
@@ -450,6 +467,7 @@ describe.runIf(abortSelected)(
           try {
             const result = await snapshot.finalCheck(
               controller.signal,
+              executionToken(),
               pools.evidence,
               pools.eligible,
               'unknown',

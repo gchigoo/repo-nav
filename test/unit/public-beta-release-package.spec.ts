@@ -67,8 +67,10 @@ describe.runIf(
       ),
     ) as { paths: string[] };
     expect(sourcePaths.paths).toContain('package.json');
-    expect(sourcePaths.paths).toContain(
-      'testkit/manifests/release-v2/release-candidate-source-paths-v1.json',
-    );
+    expect(sourcePaths.paths).toContain('tsconfig.json');
+    expect(sourcePaths.paths).toContain('tsconfig.build.json');
+    expect(sourcePaths.paths).toContain('testkit');
+    expect(sourcePaths.paths).toContain('tools/ci');
+    expect(sourcePaths.paths).toContain('.github/workflows');
   });
 });

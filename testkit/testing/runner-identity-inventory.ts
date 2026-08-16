@@ -688,11 +688,17 @@ function collectLocalFunctions(
   return functions;
 }
 
+const RUNNER_SELECTOR_EXPORTS = new Set(['isSelected', 'isExplicitlySelected']);
+
 function isSelectionModuleSpecifier(moduleSpecifier: ts.Expression): boolean {
   if (!ts.isStringLiteral(moduleSpecifier)) {
     return false;
   }
   return /(?:^|\/)testkit\/testing\/selection\.js$/u.test(moduleSpecifier.text);
+}
+
+function isRunnerSelectorExport(name: string): boolean {
+  return RUNNER_SELECTOR_EXPORTS.has(name);
 }
 
 function isSelectorReference(
@@ -705,7 +711,7 @@ function isSelectorReference(
   }
   if (
     !ts.isPropertyAccessExpression(current) ||
-    current.name.text !== 'isSelected'
+    !isRunnerSelectorExport(current.name.text)
   ) {
     return false;
   }
@@ -734,7 +740,7 @@ function bindImportDeclaration(
   }
   for (const element of bindings.elements) {
     const importedName = element.propertyName?.text ?? element.name.text;
-    if (importedName === 'isSelected') {
+    if (isRunnerSelectorExport(importedName)) {
       environment.selectorNamespaces.delete(element.name.text);
       environment.selectorIdentifiers.add(element.name.text);
     }
@@ -846,7 +852,7 @@ function bindSelectorVariableDeclaration(
   for (const element of declaration.name.elements) {
     if (
       ts.isIdentifier(element.name) &&
-      objectBindingPropertyName(element) === 'isSelected'
+      isRunnerSelectorExport(objectBindingPropertyName(element) ?? '')
     ) {
       environment.selectorIdentifiers.add(element.name.text);
     }

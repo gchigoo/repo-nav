@@ -31,8 +31,7 @@ import {
   findPhoneCandidatesV2,
 } from './sensitive-phone-v2.js';
 
-const authenticCorpora = new WeakSet<object>();
-const corpusBySource = new WeakMap<object, SensitiveCorpusV2>();
+const authenticCorpora = new WeakSet<SensitiveCorpusV2>();
 
 const PROPAGATION_MODES = Object.freeze([
   'exact-text',
@@ -228,29 +227,6 @@ export function isAuthenticSensitiveCorpusV2(
   return corpus === EMPTY_SENSITIVE_CORPUS_V2 || authenticCorpora.has(corpus);
 }
 
-export function bindSensitiveCorpusSourceV2(
-  source: object,
-  corpus: SensitiveCorpusV2,
-): void {
-  corpusBySource.set(source, corpus);
-}
-
-export function getBoundSensitiveCorpusV2(
-  source: object,
-): SensitiveCorpusV2 | undefined {
-  return corpusBySource.get(source);
-}
-
-export function assertCorpusProvenanceV2(
-  source: object,
-  corpus: SensitiveCorpusV2,
-): void {
-  const bound = corpusBySource.get(source);
-  if (bound !== corpus || !isAuthenticSensitiveCorpusV2(corpus)) {
-    throw new Error('FOREIGN_OR_CLONE_SENSITIVE_CORPUS_V2');
-  }
-}
-
 authenticCorpora.add(EMPTY_SENSITIVE_CORPUS_V2);
 
 export function collectSensitiveCorpusV2(input: unknown): SensitiveCorpusV2 {
@@ -339,11 +315,7 @@ export function collectSensitiveCorpusV2(input: unknown): SensitiveCorpusV2 {
     }
   }
   expanded.sort(compareCorpusEntries);
-  const corpus = sealCorpus(expanded);
-  if (typeof input === 'object' && input !== null) {
-    bindSensitiveCorpusSourceV2(input, corpus);
-  }
-  return corpus;
+  return sealCorpus(expanded);
 }
 
 export function matchExactTextCorpusSpansV2(

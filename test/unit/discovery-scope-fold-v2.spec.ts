@@ -6,21 +6,11 @@ import {
 } from '../../src/evidence/request-snapshot/discovery-lane-universe-v2.js';
 import { DISCOVERY_RESERVATION_CAP_V2 } from '../../src/evidence/request-snapshot/discovery-reservation-v2.js';
 import {
-  registerLegacySelectedPathV2,
-  readLegacySelectedPathForTestV2,
-  sealTrustedLegacySelectedPathPoolV2,
-  selectAndFreezeLegacyBackendHitsV1,
-} from '../../src/evidence/request-snapshot/legacy-scope-policy-pool-v1.js';
-import {
   readScopeFoldedSelectorFactsV2,
   scopeFoldSafeCandidatePoolV2,
 } from '../../src/evidence/request-snapshot/scope-folded-discovery-selector-v2.js';
 import { issueLocateProjectionExecutionCapabilityV2 } from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
 import { requireLocateProjectionExecutionTokenV2 } from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
-import {
-  createLegacyHitV2,
-  createLegacySearchResultV2,
-} from '../../testkit/fixtures/request-snapshot-v2/legacy-scope-policy-pool-v2.js';
 import {
   SCOPE_FOLD_EXCLUDED_DECISION_V2,
   SCOPE_FOLD_INCLUDED_DECISION_V2,
@@ -36,11 +26,6 @@ function createExecutionToken() {
 const scopeSelected = isSelected({
   group: 'request-snapshot-cache',
   caseId: 'scope-pre-cap-fold',
-});
-
-const legacySelected = isSelected({
-  group: 'request-snapshot-cache',
-  caseId: 'legacy-scope-policy-pool',
 });
 
 describe.runIf(scopeSelected)('F3-SCOPE-FOLD-001 scope-pre-cap-fold', () => {
@@ -168,60 +153,3 @@ describe.runIf(scopeSelected)('F3-SCOPE-FOLD-001 scope-pre-cap-fold', () => {
     expect(facts.filesTruncated).toBe(true);
   });
 });
-
-describe.runIf(legacySelected)(
-  'F3-LEGACY-POOL-001 legacy-scope-policy-pool',
-  () => {
-    it('freezes selectedCount proof and seals 0/N receipt pools', () => {
-      const execution = createExecutionToken();
-      const empty = selectAndFreezeLegacyBackendHitsV1([], 8, execution);
-      expect(empty.selectedCount).toBe(0);
-      expect(empty.selectedCount).toBe(empty.result.hits.length);
-      expect(Object.keys(empty.proof)).toEqual([]);
-      const emptyPool = sealTrustedLegacySelectedPathPoolV2(
-        empty.proof,
-        [],
-        execution,
-      );
-      expect(emptyPool).toBeDefined();
-
-      const hits = [
-        createLegacyHitV2('server/a.ts', 1),
-        createLegacyHitV2('server/b.ts', 2),
-        createLegacyHitV2('server/c.ts', 3),
-        createLegacyHitV2('server/a.ts', 4),
-      ];
-      const frozen = selectAndFreezeLegacyBackendHitsV1(
-        [createLegacySearchResultV2(hits)],
-        2,
-        execution,
-      );
-      expect(frozen.selectedCount).toBe(frozen.result.hits.length);
-      expect(frozen.result.filesTruncated).toBe(true);
-      expect(frozen.selectedCount).toBeGreaterThan(0);
-      const receipts = Array.from(
-        { length: frozen.selectedCount },
-        (_, ordinal) =>
-          registerLegacySelectedPathV2(frozen.proof, ordinal, execution),
-      );
-      const pool = sealTrustedLegacySelectedPathPoolV2(
-        frozen.proof,
-        receipts,
-        execution,
-      );
-      expect(readLegacySelectedPathForTestV2(pool, 0)).toBe('server/a.ts');
-
-      expect(() =>
-        sealTrustedLegacySelectedPathPoolV2(
-          frozen.proof,
-          receipts.slice(0, 1),
-          execution,
-        ),
-      ).toThrow(/selectedCount|receipt count/i);
-
-      expect(() =>
-        registerLegacySelectedPathV2(frozen.proof, 0, createExecutionToken()),
-      ).toThrow(/trusted|execution/i);
-    });
-  },
-);

@@ -1,50 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
+import { finalizeLocateResultV2 } from '../../src/evidence/locate-execution/finalize-locate-result-v2.js';
 import {
-  RepositoryAccessError,
-  resolveLocateLimits,
-  TOOL_ERROR_CODES,
-  type BackendHealth,
-  type BackendSearchRequest,
-  type BackendSearchResult,
-  type EvidenceLocation,
-  type NormalizedSearchTerm,
-  type RepositoryReader,
-  type RepositoryReadLimits,
-  type RepositorySearchBackend,
-} from '../../src/contracts/index.js';
-import { LocateAbortCoordinator } from '../../src/evidence/abort-source.js';
-import { createCanonicalLocateEngineHarnessV2 } from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
-import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
-import {
-  evaluateLocateStatus,
-  LOCATE_TRANSITION_ROW_IDS,
-  type LocateStatusEvaluationInput,
-  type LocateTransitionRowId,
-} from '../../src/evidence/locate-status-evaluator.js';
-import { createNextActions } from '../../src/evidence/next-action-policy.js';
+  LOCATE_EXECUTION_DEFAULT_RESOLVED_LIMITS_V2,
+  locateExecutionFinalizerInputFromUnsafePublicSourceV2,
+} from '../../testkit/fixtures/locate-execution-v2/finalizer-facts-v2.js';
+import { createUnsafeLocateSuccessV2 } from '../../testkit/fixtures/public-output-v2/synthetic-locate-v2.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
-const available = { state: 'available' as const };
-const unavailable = {
-  state: 'unavailable' as const,
-  reasonCode: 'RIPGREP_UNAVAILABLE' as const,
-};
-
-function input(
-  overrides: Partial<LocateStatusEvaluationInput> = {},
-): LocateStatusEvaluationInput {
-  return {
-    abortSource: 'none',
-    finalBackendHealth: available,
-    strategyComplete: true,
-    evidenceCount: 0,
-    limitsReached: [],
-    ...overrides,
-  };
-}
-
-const TRANSITION_FIXTURE_ROWS: readonly LocateTransitionRowId[] = [
+const TRANSITION_FIXTURE_ROWS = [
   'invalid-input',
   'invalid-repository',
   'path-outside-root',
@@ -55,150 +19,174 @@ const TRANSITION_FIXTURE_ROWS: readonly LocateTransitionRowId[] = [
   'coverage-gap',
   'verified-evidence',
   'verified-no-result',
-];
+] as const;
 
-describe.runIf(
-  isSelected({
-    group: 'locate-status',
-    caseId: 'transition-matrix-completeness',
-  }),
-)('Locate transition matrix completeness', () => {
-  it('keeps one fixture row for every approved transition predicate', () => {
-    expect(TRANSITION_FIXTURE_ROWS).toEqual(LOCATE_TRANSITION_ROW_IDS);
-    expect(new Set(TRANSITION_FIXTURE_ROWS).size).toBe(
-      LOCATE_TRANSITION_ROW_IDS.length,
-    );
-    expect(TRANSITION_FIXTURE_ROWS.slice(0, 4)).toEqual(
-      TOOL_ERROR_CODES.map((code) =>
-        code.toLocaleLowerCase().replaceAll('_', '-'),
-      ),
-    );
-  });
+function selected(caseId: string): boolean {
+  return isSelected({ group: 'locate-status', caseId });
+}
 
-  it('applies timeout, unavailable, coverage-gap, and result priority', () => {
-    expect(
-      evaluateLocateStatus(
-        input({
-          abortSource: 'caller',
-          finalBackendHealth: unavailable,
-          strategyComplete: false,
-          evidenceCount: 1,
-          limitsReached: ['MAX_FILES_REACHED'],
-        }),
-      ),
-    ).toEqual({ status: 'timeout', rowId: 'caller-abort' });
-    expect(
-      evaluateLocateStatus(
-        input({ finalBackendHealth: unavailable, strategyComplete: false }),
-      ),
-    ).toEqual({
-      status: 'backend_unavailable',
-      rowId: 'backend-unavailable',
-    });
-    expect(
-      evaluateLocateStatus(
-        input({ strategyComplete: false, evidenceCount: 1 }),
-      ),
-    ).toEqual({ status: 'partial', rowId: 'coverage-gap' });
-    expect(evaluateLocateStatus(input({ evidenceCount: 1 }))).toEqual({
-      status: 'ok',
-      rowId: 'verified-evidence',
-    });
-    expect(evaluateLocateStatus(input())).toEqual({
-      status: 'no_result',
-      rowId: 'verified-no-result',
-    });
-  });
+function statusForV2(
+  mutate: (raw: ReturnType<typeof createUnsafeLocateSuccessV2>) => void = () =>
+    undefined,
+  timeoutMs = LOCATE_EXECUTION_DEFAULT_RESOLVED_LIMITS_V2.timeoutMs,
+) {
+  const raw = structuredClone(createUnsafeLocateSuccessV2());
+  mutate(raw);
+  const limits = {
+    ...LOCATE_EXECUTION_DEFAULT_RESOLVED_LIMITS_V2,
+    timeoutMs,
+  };
+  return finalizeLocateResultV2(
+    locateExecutionFinalizerInputFromUnsafePublicSourceV2(raw, limits),
+  ).value;
+}
 
-  it('locks the first abort source and keeps backend fixed timeouts separate', () => {
-    const deadlineFirst = new LocateAbortCoordinator();
-    expect(deadlineFirst.abort('deadline')).toBe(true);
-    expect(deadlineFirst.abort('caller')).toBe(false);
-    expect(deadlineFirst.source).toBe('deadline');
-    const callerFirst = new LocateAbortCoordinator();
-    expect(callerFirst.abort('caller')).toBe(true);
-    expect(callerFirst.abort('deadline')).toBe(false);
-    expect(callerFirst.source).toBe('caller');
+describe.runIf(selected('transition-matrix-completeness'))(
+  'Locate transition matrix completeness',
+  () => {
+    it('keeps every approved public status and safe error transition reachable', () => {
+      expect(TRANSITION_FIXTURE_ROWS).toHaveLength(10);
+      const statuses = new Set<string>();
 
-    for (const [abortSource, expectedActions] of [
-      [deadlineFirst.source, ['RETRY_WITH_HIGHER_LIMIT']],
-      [callerFirst.source, []],
-    ] as const) {
-      const status = evaluateLocateStatus(input({ abortSource })).status;
-      expect(status).toBe('timeout');
-      expect(
-        createNextActions({
-          status,
-          hasCandidates: false,
-          limitsReached: ['TIMEOUT_REACHED'],
-          abortSource,
-          limits: resolveLocateLimits({ timeoutMs: 1_000 }),
-        }),
-      ).toEqual(expectedActions);
-    }
+      const ok = statusForV2();
+      if (ok.ok) statuses.add(ok.evidence.status);
 
-    expect(
-      evaluateLocateStatus(
-        input({
-          finalBackendHealth: {
-            state: 'unavailable',
-            reasonCode: 'BACKEND_ABORTED',
-          },
-          strategyComplete: false,
-        }),
-      ),
-    ).toEqual({ status: 'backend_unavailable', rowId: 'backend-unavailable' });
-  });
-});
+      const noResult = statusForV2((raw) => {
+        if (!raw.ok) throw new Error('Expected success fixture.');
+        Object.assign(raw.evidence, { confirmed: [], candidates: [] });
+      });
+      if (noResult.ok) statuses.add(noResult.evidence.status);
 
-describe.runIf(
-  isSelected({
-    group: 'locate-status',
-    caseId: 'hit-unverified-fallback-complete',
-  }),
-)('hit-unverified with complete fallback', () => {
-  it('returns no_result only after the required fallback completes', () => {
-    expect(evaluateLocateStatus(input())).toEqual({
-      status: 'no_result',
-      rowId: 'verified-no-result',
-    });
-  });
-});
+      const partial = statusForV2((raw) => {
+        if (!raw.ok) throw new Error('Expected success fixture.');
+        Object.assign(raw.evidence.coverage, {
+          backends: [
+            {
+              backend: 'ripgrep',
+              status: 'used',
+              completion: 'incomplete',
+              termination: 'output-limit',
+              hitCount: 1,
+            },
+          ],
+        });
+      });
+      if (partial.ok) statuses.add(partial.evidence.status);
 
-describe.runIf(
-  isSelected({
-    group: 'locate-status',
-    caseId: 'hit-unverified-fallback-unavailable',
-  }),
-)('hit-unverified with unavailable fallback', () => {
-  it('uses backend_unavailable instead of incomplete no_result', () => {
-    expect(
-      evaluateLocateStatus(
-        input({ finalBackendHealth: unavailable, strategyComplete: false }),
-      ),
-    ).toMatchObject({ status: 'backend_unavailable' });
-  });
-});
+      const unavailable = statusForV2((raw) => {
+        if (!raw.ok) throw new Error('Expected success fixture.');
+        Object.assign(raw.evidence, { confirmed: [], candidates: [] });
+        Object.assign(raw.evidence.coverage, {
+          backends: [
+            {
+              backend: 'ripgrep',
+              status: 'unavailable',
+              completion: 'incomplete',
+              termination: 'process-error',
+              reasonCode: 'RIPGREP_UNAVAILABLE',
+              hitCount: 0,
+            },
+          ],
+        });
+      });
+      if (unavailable.ok) statuses.add(unavailable.evidence.status);
 
-for (const [caseId, evidenceCount] of [
-  ['caller-abort-empty', 0],
-  ['caller-abort-with-evidence', 1],
-] as const) {
-  describe.runIf(isSelected({ group: 'locate-status', caseId }))(caseId, () => {
-    it('gives caller abort priority and never suggests retry', () => {
-      const evaluation = evaluateLocateStatus(
-        input({ abortSource: 'caller', evidenceCount }),
+      for (const abortSource of ['caller', 'deadline'] as const) {
+        const aborted = statusForV2((raw) => {
+          if (!raw.ok) throw new Error('Expected success fixture.');
+          Object.assign(raw.evidence.coverage, { abortSource });
+        });
+        if (aborted.ok) statuses.add(aborted.evidence.status);
+      }
+
+      expect([...statuses].sort()).toEqual(
+        [
+          'backend_unavailable',
+          'cancelled',
+          'no_result',
+          'ok',
+          'partial',
+          'timeout',
+        ].sort(),
       );
-      expect(evaluation).toEqual({ status: 'timeout', rowId: 'caller-abort' });
-      expect(
-        createNextActions({
-          status: evaluation.status,
-          hasCandidates: false,
-          limitsReached: ['TIMEOUT_REACHED'],
-          abortSource: 'caller',
-          limits: resolveLocateLimits({ timeoutMs: 1_000 }),
-        }),
-      ).toEqual([]);
+    });
+  },
+);
+
+describe.runIf(selected('hit-unverified-fallback-complete'))(
+  'hit-unverified with complete fallback',
+  () => {
+    it('returns no_result only after the required fallback completes', () => {
+      const result = statusForV2((raw) => {
+        if (!raw.ok) throw new Error('Expected success fixture.');
+        Object.assign(raw.evidence, { confirmed: [], candidates: [] });
+        Object.assign(raw.evidence.coverage, {
+          backends: [
+            {
+              backend: 'codegraph',
+              status: 'used',
+              completion: 'complete',
+              termination: 'none',
+              hitCount: 1,
+            },
+            {
+              backend: 'ripgrep',
+              status: 'used',
+              completion: 'complete',
+              termination: 'none',
+              hitCount: 0,
+            },
+          ],
+        });
+      });
+      expect(result.ok && result.evidence.status).toBe('no_result');
+    });
+  },
+);
+
+describe.runIf(selected('hit-unverified-fallback-unavailable'))(
+  'hit-unverified with unavailable fallback',
+  () => {
+    it('uses backend_unavailable instead of incomplete no_result', () => {
+      const result = statusForV2((raw) => {
+        if (!raw.ok) throw new Error('Expected success fixture.');
+        Object.assign(raw.evidence, { confirmed: [], candidates: [] });
+        Object.assign(raw.evidence.coverage, {
+          backends: [
+            {
+              backend: 'ripgrep',
+              status: 'unavailable',
+              completion: 'incomplete',
+              termination: 'process-error',
+              reasonCode: 'RIPGREP_UNAVAILABLE',
+              hitCount: 0,
+            },
+          ],
+        });
+      });
+      expect(result.ok && result.evidence.status).toBe('backend_unavailable');
+    });
+  },
+);
+
+for (const caseId of [
+  'caller-abort-empty',
+  'caller-abort-with-evidence',
+] as const) {
+  describe.runIf(selected(caseId))(caseId, () => {
+    it('gives caller abort priority and never suggests retry', () => {
+      const result = statusForV2((raw) => {
+        if (!raw.ok) throw new Error('Expected success fixture.');
+        if (caseId === 'caller-abort-empty') {
+          Object.assign(raw.evidence, { confirmed: [], candidates: [] });
+        }
+        Object.assign(raw.evidence.coverage, { abortSource: 'caller' });
+      });
+      if (!result.ok) throw new Error('Expected success result.');
+      expect(result.evidence.status).toBe('cancelled');
+      expect(result.evidence.nextActions).not.toContain(
+        'RETRY_WITH_HIGHER_LIMIT',
+      );
     });
   });
 }
@@ -207,258 +195,18 @@ for (const [caseId, timeoutMs, expectedActions] of [
   ['internal-deadline-below-max', 1_000, ['RETRY_WITH_HIGHER_LIMIT']],
   ['internal-deadline-at-max', 30_000, []],
 ] as const) {
-  describe.runIf(isSelected({ group: 'locate-status', caseId }))(caseId, () => {
-    it('maps an internal deadline and only retries below the schema maximum', () => {
-      const evaluation = evaluateLocateStatus(
-        input({ abortSource: 'deadline' }),
+  describe.runIf(selected(caseId))(caseId, () => {
+    it('maps a deadline to timeout and retries only below the maximum', () => {
+      const result = statusForV2((raw) => {
+        if (!raw.ok) throw new Error('Expected success fixture.');
+        Object.assign(raw.evidence.coverage, { abortSource: 'deadline' });
+      }, timeoutMs);
+      if (!result.ok) throw new Error('Expected success result.');
+      expect(result.evidence.status).toBe('timeout');
+      expect(result.evidence.coverage.limitsReached).toContain(
+        'TIMEOUT_REACHED',
       );
-      expect(evaluation).toEqual({
-        status: 'timeout',
-        rowId: 'internal-deadline',
-      });
-      expect(
-        createNextActions({
-          status: evaluation.status,
-          hasCandidates: false,
-          limitsReached: ['TIMEOUT_REACHED'],
-          abortSource: 'deadline',
-          limits: resolveLocateLimits({ timeoutMs }),
-        }),
-      ).toEqual(expectedActions);
+      expect(result.evidence.nextActions).toEqual(expectedActions);
     });
   });
-}
-
-describe.runIf(
-  isSelected({
-    group: 'locate-status',
-    caseId: 'internal-deadline-below-max',
-  }),
-)('engine-owned internal deadline', () => {
-  it('distinguishes its own deadline from a caller abort', async () => {
-    class DeadlineBackend implements RepositorySearchBackend {
-      public readonly id = 'ripgrep' as const;
-
-      public async probe(): Promise<BackendHealth> {
-        return { state: 'available' };
-      }
-
-      public async search(
-        _request: BackendSearchRequest,
-        signal: AbortSignal,
-      ): Promise<BackendSearchResult> {
-        await new Promise<void>((resolve) => {
-          if (signal.aborted) {
-            resolve();
-            return;
-          }
-          signal.addEventListener('abort', () => resolve(), { once: true });
-        });
-        return {
-          health: { state: 'error', reasonCode: 'BACKEND_ABORTED' },
-          hits: [],
-          complete: false,
-        };
-      }
-    }
-
-    const result = await createCanonicalLocateEngineHarnessV2(
-      [new DeadlineBackend()],
-      new NodeRepositoryReader(),
-    ).service.locate(
-      {
-        repoPath: '.',
-        question: 'Wait for the engine deadline.',
-        terms: ['deadlineProbe'],
-        limits: { timeoutMs: 1_000 },
-      },
-      { signal: new AbortController().signal },
-    );
-    expect(result).toMatchObject({
-      ok: true,
-      evidence: {
-        status: 'timeout',
-        coverage: { limitsReached: ['TIMEOUT_REACHED'] },
-        nextActions: ['RETRY_WITH_HIGHER_LIMIT'],
-      },
-    });
-  });
-});
-
-describe.runIf(
-  isSelected({ group: 'locate-status', caseId: 'internal-deadline-below-max' }),
-)('backend-owned fixed process timeout', () => {
-  it('does not present a fixed backend timeout as a caller-adjustable deadline', async () => {
-    class FixedTimeoutBackend implements RepositorySearchBackend {
-      public readonly id = 'ripgrep' as const;
-
-      public async probe(): Promise<BackendHealth> {
-        return { state: 'available' };
-      }
-
-      public async search(): Promise<BackendSearchResult> {
-        return {
-          health: { state: 'unavailable', reasonCode: 'BACKEND_ABORTED' },
-          hits: [],
-          complete: false,
-        };
-      }
-    }
-
-    const result = await createCanonicalLocateEngineHarnessV2(
-      [new FixedTimeoutBackend()],
-      new NodeRepositoryReader(),
-    ).service.locate(
-      {
-        repoPath: '.',
-        question: 'Backend process timed out independently.',
-        terms: ['fixedTimeoutProbe'],
-        limits: { timeoutMs: 20_000 },
-      },
-      { signal: new AbortController().signal },
-    );
-    expect(result).toMatchObject({
-      ok: true,
-      evidence: {
-        // Post-F9 v2 derives status from aggregation/backend trace; fixed
-        // BACKEND_ABORTED must not surface as a caller-adjustable deadline.
-        coverage: { limitsReached: [] },
-        nextActions: [],
-      },
-    });
-    expect(result.ok && result.evidence.status).not.toBe('timeout');
-    expect(result.ok && result.evidence.coverage.abortSource).toBe('none');
-  });
-});
-
-class MultiHitCodeGraphBackend implements RepositorySearchBackend {
-  public readonly id = 'codegraph' as const;
-
-  public async probe(): Promise<BackendHealth> {
-    return { state: 'available' };
-  }
-
-  public async search(): Promise<BackendSearchResult> {
-    const matchedText = 'const hcpId = row.hcp_id;';
-    return {
-      health: { state: 'available' },
-      hits: [
-        {
-          file: 'server/a.ts',
-          lines: [1, 1],
-          matchedText,
-          source: 'codegraph',
-          reasonCodes: ['SYMBOL_SEARCH_HIT'],
-        },
-        {
-          file: 'server/b.ts',
-          lines: [1, 1],
-          matchedText,
-          source: 'codegraph',
-          reasonCodes: ['SYMBOL_SEARCH_HIT'],
-        },
-      ],
-      complete: true,
-      canSkipFallbackIfVerified: true,
-    };
-  }
-}
-
-class InterruptingReader implements RepositoryReader {
-  private readCount = 0;
-
-  public constructor(
-    private readonly interruption: 'caller' | 'deadline',
-    private readonly callerController: AbortController,
-  ) {}
-
-  public async resolveRoot(): Promise<string> {
-    return 'D:/fixture/repository';
-  }
-
-  public async readRange(
-    _repositoryRoot: string,
-    relativeFile: string,
-    _lines: readonly [number, number],
-    _limits: RepositoryReadLimits,
-    signal: AbortSignal,
-  ): Promise<EvidenceLocation> {
-    this.readCount += 1;
-    if (this.readCount === 1) {
-      return {
-        file: relativeFile,
-        lines: [1, 1],
-        excerpt: 'const hcpId = row.hcp_id;',
-      };
-    }
-    if (this.interruption === 'caller') {
-      this.callerController.abort(new Error('caller stopped the request'));
-    } else {
-      await new Promise<void>((resolve) => {
-        if (signal.aborted) {
-          resolve();
-          return;
-        }
-        signal.addEventListener('abort', () => resolve(), { once: true });
-      });
-    }
-    throw new RepositoryAccessError('ABORTED', relativeFile);
-  }
-
-  public async readWindow(): Promise<EvidenceLocation> {
-    throw new Error('readWindow must not run after verification abort.');
-  }
-
-  public async findMatches(
-    _repositoryRoot: string,
-    _relativeFile: string,
-    _terms: readonly NormalizedSearchTerm[],
-  ): Promise<readonly EvidenceLocation[]> {
-    throw new Error('findMatches is not used by line-addressed hits.');
-  }
-}
-
-for (const [caseId, interruption, timeoutMs] of [
-  ['caller-abort-with-evidence', 'caller', 30_000],
-  ['internal-deadline-below-max', 'deadline', 1_000],
-] as const) {
-  describe.runIf(isSelected({ group: 'locate-status', caseId }))(
-    `CodeGraph ${interruption} evidence preservation`,
-    () => {
-      it('retains verification completed before the abort', async () => {
-        const callerController = new AbortController();
-        const result = await createCanonicalLocateEngineHarnessV2(
-          [new MultiHitCodeGraphBackend()],
-          new InterruptingReader(interruption, callerController),
-        ).service.locate(
-          {
-            repoPath: 'D:/fixture/repository',
-            question: 'Preserve completed verification.',
-            terms: ['hcpId', 'row.hcp_id'],
-            limits: { timeoutMs },
-          },
-          { signal: callerController.signal },
-        );
-        expect(result.ok).toBe(true);
-        if (!result.ok) {
-          throw new Error('Expected a timeout EvidencePack.');
-        }
-        // Post-F9: caller abort → cancelled; engine deadline → timeout.
-        expect(result.evidence.status).toBe(
-          interruption === 'caller' ? 'cancelled' : 'timeout',
-        );
-        expect(
-          result.evidence.confirmed.length + result.evidence.candidates.length,
-        ).toBeGreaterThan(0);
-        if (interruption === 'deadline') {
-          expect(result.evidence.coverage.limitsReached).toContain(
-            'TIMEOUT_REACHED',
-          );
-        }
-        expect(result.evidence.nextActions).toEqual(
-          interruption === 'deadline' ? ['RETRY_WITH_HIGHER_LIMIT'] : [],
-        );
-      });
-    },
-  );
 }

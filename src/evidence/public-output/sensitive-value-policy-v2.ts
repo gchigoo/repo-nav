@@ -32,13 +32,10 @@ export {
   validateSensitiveSpansV2,
 } from './sensitive-span-merge-v2.js';
 export {
-  assertCorpusProvenanceV2,
-  bindSensitiveCorpusSourceV2,
   collectSensitiveCorpusV2,
   comparisonKeyV2,
   createSensitiveCorpusV2,
   findExactTextCorpusSpansV2,
-  getBoundSensitiveCorpusV2,
   isAuthenticSensitiveCorpusV2,
   isCorpusByteEligibleV2,
   isGenericAssignmentEligibleV2,
@@ -52,7 +49,6 @@ export {
 } from './sensitive-phone-v2.js';
 export {
   isValidRawLocatorV2,
-  redactPublicFieldForSourceV2,
   redactPublicFieldV2,
 } from './sensitive-field-materializer-v2.js';
 export { projectPublicSafeRankingKeyV2 } from './sensitive-ranking-key-v2.js';

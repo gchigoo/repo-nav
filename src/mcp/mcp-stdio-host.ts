@@ -8,12 +8,7 @@ import {
   PUBLIC_LOCATE_EXECUTION_APPLICATION_V2,
   type PublicLocateExecutionApplicationV2,
 } from '../evidence/locate-execution/public-locate-execution-application-v2.js';
-import { createTrustedSerializedPublicToolErrorV2 } from '../evidence/canonical/trusted-serialized-locate-result-v2.js';
-import { issueLocateProjectionExecutionCapabilityV2 } from '../evidence/locate-execution/locate-projection-execution-capability-v2.js';
-import {
-  promoteTrustedSerializedPublicToolErrorV2,
-  requirePublicLocateTransportValueV2,
-} from '../evidence/locate-execution/public-locate-transport-registry-v2.js';
+import { finalizeLocateResultV2 } from '../evidence/locate-execution/finalize-locate-result-v2.js';
 import { serializeLocateTransportView } from './locate-tool-output.js';
 import { createRepoNavMcpServer } from './repo-nav-mcp-server.js';
 
@@ -47,21 +42,10 @@ function createTrackedCall(): TrackedLocateCall {
 }
 
 function internalErrorTransportView() {
-  const capability = issueLocateProjectionExecutionCapabilityV2();
-  const serialized = createTrustedSerializedPublicToolErrorV2(
-    'INTERNAL_ERROR',
-    undefined,
-    capability,
-  );
-  const bundle = promoteTrustedSerializedPublicToolErrorV2(
-    serialized,
-    capability,
-  );
-  return requirePublicLocateTransportValueV2(
-    bundle.value,
-    bundle.receipt,
-    capability,
-  );
+  return finalizeLocateResultV2({
+    ok: false,
+    error: { code: 'INTERNAL_ERROR' },
+  });
 }
 
 @Injectable()

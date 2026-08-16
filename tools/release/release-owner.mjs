@@ -1,0 +1,2 @@
+export const RELEASE_OWNER_V1 = 'Gchigoo';
+export const RELEASE_COPYRIGHT_HOLDER_V1 = RELEASE_OWNER_V1;

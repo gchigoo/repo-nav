@@ -6,8 +6,11 @@ import {
   type RepositoryReader,
   type RepositoryReadLimits,
 } from '../../contracts/index.js';
+import type { LocateExecutionTokenV2 } from '../../contracts/v2/locate-fact-envelope-v2.js';
 import { VerifiedTextFileSourceV2 } from '../../repository/verified-text-file-source-v2.js';
 import type { CanonicalFileKeyV2 } from './canonical-file-identity-v2.js';
+import type { BoundSafeDiscoverySelectionV2 } from './discovery-selection-binding-v2.js';
+import type { SelectedVerificationOutcomeV2 } from './selected-verification-outcome-v2.js';
 import { RequestFileCacheV2 } from './request-file-cache-v2.js';
 import {
   runFinalSnapshotCheckV2,
@@ -33,10 +36,15 @@ export interface RequestRepositorySnapshotV2 extends RepositoryReader {
   getDecodeInvocationCount(): number;
   finalCheck(
     signal: AbortSignal,
+    execution: LocateExecutionTokenV2,
     evidencePool: PreRankingEvidencePoolV2,
     eligibleDiscoveryPool: PreFinalEligibleDiscoveryPoolV2,
     gitState: RepositoryGitStateV2,
     snapshotRef?: string,
+    selectedAuthorities?: Readonly<{
+      boundSelection: BoundSafeDiscoverySelectionV2;
+      selectedVerificationOutcome: SelectedVerificationOutcomeV2;
+    }>,
   ): Promise<TrustedFinalSnapshotPoolsV2>;
   dispose(): void;
 }
@@ -73,10 +81,15 @@ class RequestRepositorySnapshotImplV2 implements RequestRepositorySnapshotV2 {
 
   public async finalCheck(
     signal: AbortSignal,
+    execution: LocateExecutionTokenV2,
     evidencePool: PreRankingEvidencePoolV2,
     eligibleDiscoveryPool: PreFinalEligibleDiscoveryPoolV2,
     gitState: RepositoryGitStateV2,
     snapshotRef?: string,
+    selectedAuthorities?: Readonly<{
+      boundSelection: BoundSafeDiscoverySelectionV2;
+      selectedVerificationOutcome: SelectedVerificationOutcomeV2;
+    }>,
   ): Promise<TrustedFinalSnapshotPoolsV2> {
     if (this.cache.isDisposed()) {
       throw new RepositoryAccessError('FILE_UNREADABLE');
@@ -92,11 +105,25 @@ class RequestRepositorySnapshotImplV2 implements RequestRepositorySnapshotV2 {
       gitState,
       ...(snapshotRef === undefined ? {} : { snapshotRef }),
       signal,
+      execution,
+      ...(selectedAuthorities === undefined
+        ? {}
+        : {
+            boundSelection: selectedAuthorities.boundSelection,
+            selectedVerificationOutcome:
+              selectedAuthorities.selectedVerificationOutcome,
+          }),
       readVerifiedFile: (input) =>
         this.source.readVerifiedFile(
           input.repositoryRoot,
           input.locator,
           input.maxFileBytes,
+          input.signal,
+        ),
+      verifyVerifiedFileMetadata: (input) =>
+        this.source.verifyVerifiedFileMetadata(
+          input.repositoryRoot,
+          input.locator,
           input.signal,
         ),
     });

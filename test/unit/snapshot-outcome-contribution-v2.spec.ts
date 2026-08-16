@@ -34,6 +34,7 @@ describe.runIf(selected)('F3-OUTCOME-001 snapshot-outcome-contribution', () => {
       eligiblePool: { records: [] },
       gitState: 'unknown',
       signal: new AbortController().signal,
+      execution,
     });
     const proof = registered.proof;
 
@@ -44,7 +45,18 @@ describe.runIf(selected)('F3-OUTCOME-001 snapshot-outcome-contribution', () => {
         discardedEvidenceCount: 2,
         ledger: [],
       }),
-    ).toThrow(/registered final-check proof/i);
+    ).toThrow(/matching final-check proof/i);
+    const otherExecution = requireLocateProjectionExecutionTokenV2(
+      issueLocateProjectionExecutionCapabilityV2(),
+    );
+    expect(() =>
+      createSnapshotOutcomeContributionV2({
+        snapshotProof: proof,
+        execution: otherExecution,
+        discardedEvidenceCount: 0,
+        ledger: [],
+      }),
+    ).toThrow(/matching final-check proof/i);
 
     const token = createSnapshotOutcomeContributionV2({
       snapshotProof: proof,

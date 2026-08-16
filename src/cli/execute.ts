@@ -2,6 +2,7 @@ import { readPackageMetadata } from '../runtime/package-metadata.js';
 import { createCliError } from './contracts.js';
 import {
   CliUsageError,
+  CLI_USAGE_ERROR_MESSAGE,
   parseCliArguments,
   type ParsedCliCommand,
 } from './parser.js';
@@ -63,7 +64,7 @@ export async function executeCli(
     if (error instanceof CliUsageError) {
       return {
         exitCode: 2,
-        stdout: json(createCliError('CLI_USAGE', error.message)),
+        stdout: json(createCliError('CLI_USAGE', CLI_USAGE_ERROR_MESSAGE)),
       };
     }
     return internalFailure();

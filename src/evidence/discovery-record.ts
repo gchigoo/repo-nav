@@ -15,6 +15,16 @@ import {
   type RepositoryReader,
   type RepositoryReadLimits,
 } from '../contracts/index.js';
+import type { LocateExecutionTokenV2 } from '../contracts/v2/locate-fact-envelope-v2.js';
+import {
+  bindRawDiscoveryLocatorV2,
+  type DiscoveryLocatorRefV2,
+} from './request-snapshot/discovery-lane-universe-v2.js';
+import type { BoundSafeDiscoverySelectionV2 } from './request-snapshot/discovery-selection-binding-v2.js';
+import {
+  createSelectedVerificationOutcomeV2,
+  type SelectedVerificationOutcomeV2,
+} from './request-snapshot/selected-verification-outcome-v2.js';
 import type {
   VerifiedDiscoveryObservationCacheV2,
   VerifiedDiscoveryObservationV2,
@@ -43,6 +53,7 @@ export interface DiscoveryMergeResult {
   readonly unverifiedLocations: number;
   readonly failures: readonly DiscoveryVerificationFailure[];
   readonly aborted: boolean;
+  readonly selectedVerificationOutcome?: SelectedVerificationOutcomeV2;
 }
 
 export interface VerifyAndMergeBackendHitsInput {
@@ -55,6 +66,10 @@ export interface VerifyAndMergeBackendHitsInput {
   readonly signal: AbortSignal;
   /** 请求级 observation cache：preverify 与最终 merge 共享同一实例。 */
   readonly observationCache?: VerifiedDiscoveryObservationCacheV2 | undefined;
+  readonly selectedDiscoveryAuthority?: Readonly<{
+    readonly boundSelection: BoundSafeDiscoverySelectionV2;
+    readonly execution: LocateExecutionTokenV2;
+  }>;
 }
 
 const REASON_PRIORITY = new Map<DiscoveryReasonCode, number>(
@@ -370,6 +385,30 @@ export async function verifyAndMergeBackendHits(
   let duplicateLocations = 0;
   let unverifiedLocations = 0;
   let aborted = false;
+  const observedSelectedLocatorRefs = new Set<DiscoveryLocatorRefV2>();
+  const unverifiedSelectedLocatorRefs = new Set<DiscoveryLocatorRefV2>();
+  const selectedReadLimitFailureCodes = new Set<RepositoryAccessErrorCode>();
+
+  const selectedLocatorRefForHit = (
+    hit: BackendHit,
+  ): DiscoveryLocatorRefV2 | undefined => {
+    if (input.selectedDiscoveryAuthority === undefined) {
+      return undefined;
+    }
+    const locatorRef = bindRawDiscoveryLocatorV2(
+      {
+        source: 'backend',
+        backend: hit.source,
+        pathFlavor: 'native',
+        rawPath: hit.file,
+      },
+      input.selectedDiscoveryAuthority.execution,
+    );
+    if (locatorRef === undefined) {
+      throw new TypeError('selected verification hit locator is invalid');
+    }
+    return locatorRef;
+  };
 
   if (input.observationCache !== undefined) {
     input.observationCache.assertSameBinding({
@@ -404,6 +443,7 @@ export async function verifyAndMergeBackendHits(
   };
 
   for (const hit of input.hits) {
+    const selectedLocatorRef = selectedLocatorRefForHit(hit);
     const readKey = Object.freeze({
       file: hit.file,
       ...(hit.lines === undefined ? {} : { lines: hit.lines }),
@@ -425,6 +465,12 @@ export async function verifyAndMergeBackendHits(
     }
     if (observation.kind === 'unverified') {
       unverifiedLocations += 1;
+      if (
+        selectedLocatorRef !== undefined &&
+        !observedSelectedLocatorRefs.has(selectedLocatorRef)
+      ) {
+        unverifiedSelectedLocatorRefs.add(selectedLocatorRef);
+      }
       continue;
     }
 
@@ -433,12 +479,29 @@ export async function verifyAndMergeBackendHits(
       observation.failures.length > 0
     ) {
       unverifiedLocations += 1;
+      if (
+        selectedLocatorRef !== undefined &&
+        !observedSelectedLocatorRefs.has(selectedLocatorRef)
+      ) {
+        unverifiedSelectedLocatorRefs.add(selectedLocatorRef);
+      }
       for (const code of observation.failures) {
         failures.push(Object.freeze({ file: hit.file, code }));
+        if (
+          selectedLocatorRef !== undefined &&
+          (code === 'MAX_FILE_BYTES_REACHED' ||
+            code === 'MAX_EXCERPT_BYTES_REACHED')
+        ) {
+          selectedReadLimitFailureCodes.add(code);
+        }
       }
       continue;
     }
 
+    if (selectedLocatorRef !== undefined) {
+      observedSelectedLocatorRefs.add(selectedLocatorRef);
+      unverifiedSelectedLocatorRefs.delete(selectedLocatorRef);
+    }
     for (let index = 0; index < observation.focusLocations.length; index += 1) {
       const focusLocation = observation.focusLocations[index]!;
       const expandedLocation = observation.expandedLocations[index]!;
@@ -459,6 +522,25 @@ export async function verifyAndMergeBackendHits(
     }
   }
 
+  const sortedFailures = Object.freeze(
+    failures.sort(
+      (left, right) =>
+        compareCanonicalText(left.file, right.file) ||
+        compareCanonicalText(left.code, right.code),
+    ),
+  );
+  const selectedVerificationOutcome =
+    input.selectedDiscoveryAuthority === undefined || aborted
+      ? undefined
+      : createSelectedVerificationOutcomeV2({
+          boundSelection: input.selectedDiscoveryAuthority.boundSelection,
+          execution: input.selectedDiscoveryAuthority.execution,
+          hits: input.hits,
+          observedLocatorRefs: observedSelectedLocatorRefs,
+          unverifiedLocatorRefs: unverifiedSelectedLocatorRefs,
+          duplicateLocations,
+          failureCodes: [...selectedReadLimitFailureCodes],
+        });
   return Object.freeze({
     records: Object.freeze(
       Array.from(records.values()).sort((left, right) =>
@@ -467,13 +549,10 @@ export async function verifyAndMergeBackendHits(
     ),
     duplicateLocations,
     unverifiedLocations,
-    failures: Object.freeze(
-      failures.sort(
-        (left, right) =>
-          compareCanonicalText(left.file, right.file) ||
-          compareCanonicalText(left.code, right.code),
-      ),
-    ),
+    failures: sortedFailures,
     aborted,
+    ...(selectedVerificationOutcome === undefined
+      ? {}
+      : { selectedVerificationOutcome }),
   });
 }

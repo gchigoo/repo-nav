@@ -34,18 +34,19 @@ export function strictCompact(value) {
  */
 export function computeReleaseDesignRevisionV1(options = {}) {
   const requireClean = options.requireClean === true;
+  const sourceRoot = options.root ?? root;
   const entries = RELEASE_DESIGN_REVISION_PATHS_V1.map((rel) => {
     if (requireClean) {
       const status = execFileSync(
         'git',
         ['status', '--porcelain=v1', '--', rel],
-        { cwd: root, encoding: 'utf8' },
+        { cwd: sourceRoot, encoding: 'utf8' },
       ).trim();
       if (status !== '') {
         throw new Error(`Design revision path dirty or untracked: ${rel}`);
       }
     }
-    const buf = readFileSync(join(root, rel));
+    const buf = readFileSync(join(sourceRoot, rel));
     return Object.freeze({
       path: rel,
       byteLength: buf.byteLength,

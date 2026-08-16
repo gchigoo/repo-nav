@@ -8,7 +8,6 @@ import type {
   RepositoryEvidenceService,
 } from '../../src/contracts/index.js';
 import type { TraceableRepositorySearchBackendV2 } from '../../src/contracts/v2/traceable-repository-search-backend-v2.js';
-import { createAcceptedCompleteRealLocateShadowOrchestratorV2 } from '../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js';
 import { CanonicalRepositoryLocateExecutorV2 } from '../../src/evidence/locate-execution/canonical-locate-executor-v2.js';
 import { PublicLocateExecutionApplicationServiceV2 } from '../../src/evidence/locate-execution/public-locate-execution-application-v2.js';
 import { V2LocateResultProjector } from '../../src/evidence/locate-execution/v2-locate-result-projector.js';
@@ -43,8 +42,7 @@ export function createCanonicalLocateEngineHarnessV2(
     asTraceableSearchBackendsV2(backends),
     reader,
   );
-  const orchestrator = createAcceptedCompleteRealLocateShadowOrchestratorV2();
-  const projector = new V2LocateResultProjector(orchestrator);
+  const projector = new V2LocateResultProjector();
   const application = new PublicLocateExecutionApplicationServiceV2(
     executor,
     projector,

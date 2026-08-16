@@ -1,104 +1,104 @@
 /**
- * Production dependency closure check from npm-shrinkwrap + npm ls topology.
+ * Production dependency closure check from one exact packed candidate installed
+ * into a fresh consumer.
  */
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { RELEASE_BOUNDARIES_V1 } from './release-boundaries-v1.mjs';
+import {
+  ensureReleaseCandidateV1,
+  installReleaseCandidateV1,
+} from './release-candidate.mjs';
+import { releaseEvidenceCandidateV1 } from './release-evidence-schema.mjs';
+import { loadInstalledPackageLockGraphV1 } from './sbom-from-shrinkwrap.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const npmCli = join(root, 'node_modules/npm/bin/npm-cli.js');
-
-function fail(msg) {
-  process.stderr.write(`${msg}\n`);
-  process.exit(1);
-}
-
-const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
-if (pkg.private !== false) fail('private must be false for public beta');
-if (!existsSync(join(root, 'npm-shrinkwrap.json'))) {
-  fail('npm-shrinkwrap.json required');
-}
-if (existsSync(join(root, 'package-lock.json'))) {
-  fail('package-lock.json must not coexist with shrinkwrap');
-}
-
-const wrap = JSON.parse(
-  readFileSync(join(root, 'npm-shrinkwrap.json'), 'utf8'),
+const tempParent = join(root, 'test-artifacts');
+const evidencePath = join(
+  root,
+  'test-artifacts/release-evidence/installed-closure-v1.json',
 );
-if (wrap.name !== pkg.name || wrap.version !== pkg.version) {
-  fail('shrinkwrap root identity must match package.json');
+
+function fail(message) {
+  throw new Error(message);
 }
 
-const packages = wrap.packages ?? {};
-const nodeIds = Object.keys(packages).filter((key) => {
-  if (key === '') return true;
-  const entry = packages[key];
-  return entry && entry.dev !== true && entry.optional !== true;
-});
-if (nodeIds.length === 0) fail('shrinkwrap production projection empty');
-if (nodeIds.length > RELEASE_BOUNDARIES_V1.productionGraphNodes) {
-  fail(
-    `production nodes ${nodeIds.length} exceed budget ${RELEASE_BOUNDARIES_V1.productionGraphNodes}`,
-  );
-}
-
-let edgeCount = 0;
-for (const key of nodeIds) {
-  const deps = packages[key]?.dependencies ?? {};
-  edgeCount += Object.keys(deps).length;
-  if (
-    key !== '' &&
-    packages[key]?.integrity == null &&
-    packages[key]?.link !== true
-  ) {
-    // Root may omit integrity; linked packages may omit; others need identity.
-    if (packages[key]?.version == null && packages[key]?.resolved == null) {
-      fail(`shrinkwrap node missing identity: ${key}`);
-    }
-  }
-}
-if (edgeCount > RELEASE_BOUNDARIES_V1.productionGraphEdges) {
-  fail(
-    `production edges ${edgeCount} exceed budget ${RELEASE_BOUNDARIES_V1.productionGraphEdges}`,
-  );
-}
-
-const ls = spawnSync(
-  process.execPath,
-  [npmCli, 'ls', '--omit=dev', '--all', '--json'],
-  { cwd: root, encoding: 'utf8', shell: false },
-);
-let lsReport;
+let workDir;
 try {
-  lsReport = JSON.parse(ls.stdout || '{}');
-} catch {
-  fail('npm ls json parse failed');
-}
-if (lsReport.name !== pkg.name || lsReport.version !== pkg.version) {
-  fail('npm ls root identity mismatch');
-}
-if (lsReport.problems && lsReport.problems.length > 0) {
-  const blocking = lsReport.problems.filter(
-    (p) => typeof p === 'string' && !p.includes('extraneous'),
+  const candidate = ensureReleaseCandidateV1(root, npmCli);
+  mkdirSync(tempParent, { recursive: true });
+  workDir = mkdtempSync(join(tempParent, 'installed-closure-'));
+  const installed = installReleaseCandidateV1({
+    root,
+    npmCli,
+    candidate,
+    consumerRoot: join(workDir, 'consumer'),
+    consumerName: 'repo-nav-closure-consumer',
+  });
+  const graph = loadInstalledPackageLockGraphV1(installed.consumerRoot, {
+    packageName: candidate.name,
+    packageVersion: candidate.version,
+    packIntegrity: candidate.packIntegrity,
+  });
+
+  const ls = spawnSync(
+    process.execPath,
+    [npmCli, 'ls', '--omit=dev', '--all', '--json'],
+    {
+      cwd: installed.consumerRoot,
+      encoding: 'utf8',
+      shell: false,
+    },
   );
-  if (blocking.length > 0) {
-    fail(`npm ls problems: ${blocking.slice(0, 3).join('; ')}`);
+  let lsReport;
+  try {
+    lsReport = JSON.parse(ls.stdout || '{}');
+  } catch {
+    fail('fresh consumer npm ls JSON parse failed');
+  }
+  const installedRoot = lsReport.dependencies?.[candidate.name];
+  if (installedRoot?.version !== candidate.version) {
+    fail('fresh consumer npm ls candidate identity mismatch');
+  }
+  const blockingProblems = (lsReport.problems ?? []).filter(
+    (problem) =>
+      typeof problem === 'string' &&
+      !problem.toLowerCase().includes('extraneous'),
+  );
+  if (ls.error !== undefined) fail('fresh consumer npm ls spawn failed');
+  if (ls.signal !== null) fail('fresh consumer npm ls terminated by signal');
+  if (ls.status !== 0) fail('fresh consumer npm ls failed');
+  if (blockingProblems.length > 0) {
+    fail(
+      `fresh consumer npm ls problems: ${blockingProblems.slice(0, 3).join('; ')}`,
+    );
+  }
+
+  const report = {
+    schemaVersion: 1,
+    ok: true,
+    generatedAt: new Date().toISOString(),
+    candidate: releaseEvidenceCandidateV1(installed.candidate),
+    nodeCount: graph.nodeCount,
+    edgeCount: graph.edgeCount,
+    npmLsExitStatus: ls.status,
+    problems: Object.freeze([]),
+    failures: Object.freeze([]),
+    authority:
+      'exact-packed-candidate+immutable-copy+fresh-consumer-package-lock+npm-ls',
+  };
+  mkdirSync(dirname(evidencePath), { recursive: true });
+  writeFileSync(evidencePath, `${JSON.stringify(report, null, 2)}\n`);
+  process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+} catch (error) {
+  process.stderr.write(
+    `${error instanceof Error ? error.message : String(error)}\n`,
+  );
+  process.exitCode = 1;
+} finally {
+  if (workDir !== undefined) {
+    rmSync(workDir, { recursive: true, force: true });
   }
 }
-
-process.stdout.write(
-  `${JSON.stringify(
-    {
-      ok: true,
-      name: pkg.name,
-      version: pkg.version,
-      nodeCount: nodeIds.length,
-      edgeCount,
-      authority: 'npm-shrinkwrap+npm-ls-topology',
-    },
-    null,
-    2,
-  )}\n`,
-);

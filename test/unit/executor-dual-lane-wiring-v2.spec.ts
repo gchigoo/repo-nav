@@ -141,14 +141,14 @@ describe.runIf(selected)('F3-DISCOVERY-001 executor-dual-lane-wiring', () => {
         { signal: new AbortController().signal },
         capability,
       );
-      expect(result.ok).toBe(true);
+      expect(result.input.ok).toBe(true);
       expect(backend.lastMaxHits).toBe(DISCOVERY_RESERVATION_CAP_V2);
       const receipt = readDualLaneExecutionReceiptV2(execution);
       expect(receipt).toBeDefined();
       expect(receipt?.sharedSearchMaxHits).toBe(DISCOVERY_RESERVATION_CAP_V2);
       expect(receipt?.expandedMaxHits).toBe(DISCOVERY_RESERVATION_CAP_V2);
       expect(receipt?.scopeFoldInvoked).toBe(true);
-      expect(receipt?.usedLegacyCandidateReservation).toBe(true);
+      expect(receipt?.usedCandidatePolicyReservation).toBe(true);
       expect(receipt?.scopeFoldCandidateCount).toBeGreaterThanOrEqual(0);
     } finally {
       rmSync(workspace, { recursive: true, force: true });

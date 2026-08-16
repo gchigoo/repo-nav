@@ -11,7 +11,6 @@ import type {
   LocateRequest,
   RepositorySearchBackend,
 } from '../../src/contracts/index.js';
-import { createV2ShadowLocateProjectorV2 } from '../../testkit/testing/v2-shadow-locate-projector-v2.js';
 import { asTraceableSearchBackendsV2 } from '../../testkit/testing/create-canonical-locate-engine-harness-v2.js';
 import { CanonicalRepositoryLocateExecutorV2 } from '../../src/evidence/locate-execution/canonical-locate-executor-v2.js';
 import {
@@ -19,7 +18,6 @@ import {
   requireLocateProjectionExecutionTokenV2,
 } from '../../src/evidence/locate-execution/locate-projection-execution-capability-v2.js';
 import { V2LocateResultProjector } from '../../src/evidence/locate-execution/v2-locate-result-projector.js';
-import { createAcceptedCompleteRealLocateShadowOrchestratorV2 } from '../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js';
 import { projectExpandedSafePreCapPoolV2 } from '../../src/evidence/request-snapshot/discovery-lane-universe-v2.js';
 import { runFinalSnapshotCheckV2 } from '../../src/evidence/request-snapshot/final-snapshot-check-v2.js';
 import { createOpaqueTokenV2 } from '../../src/evidence/request-snapshot/opaque-token-v2.js';
@@ -29,11 +27,7 @@ import {
   scopeFoldSafeCandidatePoolV2,
 } from '../../src/evidence/request-snapshot/scope-folded-discovery-selector-v2.js';
 import { projectAndScopeFoldExpandedHitsV2 } from '../../src/evidence/request-snapshot/expanded-lane-bridge-v2.js';
-import { LOCATE_FACT_OWNER_ORDER_V2 } from '../../src/contracts/v2/locate-fact-envelope-v2.js';
-import { inspectLocateProjectionPrerequisiteOwnersV2 } from '../../src/contracts/v2/locate-fact-envelope-v2.js';
-import { REQUEST_OUTCOME_CONTRIBUTION_OWNER_ORDER_V2 } from '../../src/evidence/request-outcome/request-outcome-contribution-registry-v2.js';
-import { buildAggregationHarnessV2 } from '../../testkit/fixtures/request-outcome-v2/build-aggregation-harness-v2.js';
-import { aggregateRequestOutcomeV2 } from '../../src/evidence/request-outcome/request-outcome-aggregator-v2.js';
+import { LOCATE_EXECUTION_FACT_FAMILIES_V2 } from '../../src/contracts/v2/locate-execution-facts-v2.js';
 import {
   buildScopeCoverageV1,
   legacyResolveRepositoryLayerV1,
@@ -45,8 +39,6 @@ import {
 } from '../../src/evidence/scope/index.js';
 import type { ScopeCoverageProofV1 } from '../../src/evidence/scope/scope-coverage-v1.js';
 import { NodeRepositoryReader } from '../../src/repository/node-repository-reader.js';
-import { createSyntheticLocateProjectionPreparationPortV2 } from '../../testkit/testing/create-synthetic-locate-projection-preparation-port-v2.js';
-import { CANONICAL_EXECUTION_SCOPE_V1 } from '../../testkit/fixtures/scope-v1/canonical-execution-v1.js';
 import { LARGE_SCOPE_PERMUTATION_V1 } from '../../testkit/fixtures/scope-v1/large-scope-permutation-v1.js';
 import { SCOPE_PROOF_MUTATIONS_V1 } from '../../testkit/fixtures/scope-v1/scope-proof-mutations-v1.js';
 import { V1_POLICY_DELTA_V1 } from '../../testkit/fixtures/scope-v1/v1-policy-delta-v1.js';
@@ -79,6 +71,7 @@ describe.runIf(
       eligiblePool: { records: [] },
       gitState: 'unknown',
       signal: new AbortController().signal,
+      execution,
     });
     const preCap = projectExpandedSafePreCapPoolV2([], true, execution);
     const folded = scopeFoldSafeCandidatePoolV2(preCap, [], execution);
@@ -121,10 +114,11 @@ describe.runIf(
       resolved,
       execution,
     );
+    expect(view.contribution.owner).toBe('scope');
     const forgedProof = createOpaqueTokenV2<ScopeCoverageProofV1>();
     expect(() =>
       requireScopeOutcomeContributionV2(
-        view.contribution,
+        facts,
         forgedProof,
         registered.eligibleDiscovery,
         registered.proof,
@@ -143,14 +137,9 @@ describe.runIf(
     caseId: 'real-owner-envelope',
   }),
 )('F7-ENVELOPE-001 real-owner-envelope', () => {
-  it('mounts scope on real executor and keeps missing-owner=capability only', async () => {
-    expect(REQUEST_OUTCOME_CONTRIBUTION_OWNER_ORDER_V2).toEqual([
-      ...CANONICAL_EXECUTION_SCOPE_V1.contributionOwnerOrder,
-    ]);
-    expect(LOCATE_FACT_OWNER_ORDER_V2).toContain('scope');
-    expect(LOCATE_FACT_OWNER_ORDER_V2.at(-1)).toBe(
-      CANONICAL_EXECUTION_SCOPE_V1.stillMissing,
-    );
+  it('mounts scope and capability in the six canonical fact families', async () => {
+    expect(LOCATE_EXECUTION_FACT_FAMILIES_V2).toContain('scope');
+    expect(LOCATE_EXECUTION_FACT_FAMILIES_V2).toContain('capability');
 
     const root = mkdtempSync(join(tmpdir(), 'f7-envelope-'));
     try {
@@ -199,52 +188,24 @@ describe.runIf(
         { signal: new AbortController().signal },
         capability,
       );
-      expect(executed.ok).toBe(true);
-      if (!executed.ok) {
+      expect(executed.input.ok).toBe(true);
+      if (!executed.input.ok) {
         throw new Error('expected success');
       }
-      expect(executed.envelope.fragments.scope?.owner).toBe('scope');
-      expect(executed.envelope.fragments.scope?.value.policyVersion).toBe(
-        'repo-scope-v1',
+      expect(executed.input.facts.scope.policy).toBe('repo-scope-v1');
+      expect(executed.input.facts.capability.semanticLanguages).toEqual([
+        'typescript',
+        'javascript',
+        'sql',
+      ]);
+      expect(Object.keys(executed.input.facts).sort()).toEqual(
+        [...LOCATE_EXECUTION_FACT_FAMILIES_V2].sort(),
       );
-      expect(
-        Object.prototype.hasOwnProperty.call(
-          executed.envelope.fragments,
-          'capability',
-        ),
-      ).toBe(true);
-      expect(executed.envelope.fragments.capability?.owner).toBe('capability');
-
-      // F8：四 prerequisite 齐全；shadow 可进入 preparation（仍可能因 F2 ranking 未登记失败）
-      if (executed.envelope.fragments.ranking !== undefined) {
-        const presence = inspectLocateProjectionPrerequisiteOwnersV2(
-          executed.envelope,
-          executed,
-          requireLocateProjectionExecutionTokenV2(capability),
-        );
-        expect(presence.ok).toBe(true);
-        const shadow = createV2ShadowLocateProjectorV2().project(
-          executed,
-          capability,
-          createSyntheticLocateProjectionPreparationPortV2(),
-        );
-        // four prerequisites present；synthetic shadow may still fail non-missing-owner
-        if (!shadow.ok) {
-          expect(shadow.reason).not.toBe('missing-owner');
-        }
-      }
-
-      const harness = await buildAggregationHarnessV2({});
-      expect(harness.input.contributions).toHaveLength(4);
-      expect(() =>
-        aggregateRequestOutcomeV2({
-          ...harness.input,
-          contributions: [
-            harness.input.contributions[0],
-            harness.input.contributions[1],
-          ] as unknown as typeof harness.input.contributions,
-        }),
-      ).toThrow(/arity mismatch/);
+      const projected = new V2LocateResultProjector().project(
+        executed,
+        capability,
+      );
+      expect(projected.value.ok).toBe(true);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -299,14 +260,15 @@ describe.runIf(
         { signal: new AbortController().signal },
         capability,
       );
-      const projector = new V2LocateResultProjector(
-        createAcceptedCompleteRealLocateShadowOrchestratorV2(),
-      );
+      const projector = new V2LocateResultProjector();
       const first = projector.project(executed, capability);
       const second = projector.project(executed, capability);
       expect(second.value).toEqual(first.value);
       expect(first.value).toBeDefined();
-      expect(first.receipt).toBeDefined();
+      expect(first.compactJson).toBe(JSON.stringify(first.value));
+      expect(first.utf8Bytes).toBe(
+        Buffer.byteLength(first.compactJson, 'utf8'),
+      );
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -383,6 +345,7 @@ describe.runIf(
         eligiblePool: { records: [] },
         gitState: 'unknown',
         signal: new AbortController().signal,
+        execution,
       });
       const foldProof = readScopeFoldedSafePoolProofV2(
         expanded.foldedView,

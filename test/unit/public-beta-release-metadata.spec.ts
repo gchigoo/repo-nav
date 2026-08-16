@@ -67,9 +67,9 @@ describe.runIf(
     expect(license).toContain('MIT License');
   });
 
-  it('aligns public install docs and package metadata with 1.1.0 corrective release', () => {
-    const requiredInstall = 'npm i -g repo-nav@1.1.0';
-    expect(pkg.version).toBe('1.1.0');
+  it('aligns public install docs and package metadata with the 2.0.0 cutover', () => {
+    const requiredInstall = 'npm i -g repo-nav@2.0.0';
+    expect(pkg.version).toBe('2.0.0');
     for (const relativePath of [
       'README.md',
       'docs/getting-started-mcp.md',

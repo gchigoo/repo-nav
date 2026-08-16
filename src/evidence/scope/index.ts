@@ -71,8 +71,6 @@ export {
 } from './scope-bound-classification-bridge-v2.js';
 export {
   requirePreFinalScopeDecisionV1,
-  requireLegacyScopeDecisionV1,
   requireStableScopeDecisionV1,
-  type TrustedLegacyScopeClassificationViewV2,
   type TrustedStableEligibleScopeViewV2,
 } from './scope-decision-accessors-v1.js';

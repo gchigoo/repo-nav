@@ -147,10 +147,10 @@ RepoNav business tests are not required unless runtime/package/source files are 
 
 ## 10. Risks and mitigations
 
-| Risk                                                                 | Mitigation                                                                                                                                         |
-| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Duplicating historical files increases repository size.              | This is intentional for a traceable complete migration. The old roots were deleted only after separate explicit approval and archive verification. |
-| RoleKit is private and not a RepoNav dependency.                     | Do not change `package.json`; use config/examples/docs and host mode.                                                                              |
-| Host bridge could overclaim sandbox guarantees.                      | Host profiles document advisory/host-attested behavior and do not claim OS sandbox proof.                                                          |
-| Repository Hardening v2 continues after its merged 1.1.0 checkpoint. | Keep current status in `docs/project-status.md` and execution details in the 2026-08-12 replan; preserve earlier plans as historical context.      |
-| Review simplification could miss high-risk issues.                   | Security/release reviewer remains mandatory for high-risk categories.                                                                              |
+| Risk                                                                                    | Mitigation                                                                                                                                         |
+| --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Duplicating historical files increases repository size.                                 | This is intentional for a traceable complete migration. The old roots were deleted only after separate explicit approval and archive verification. |
+| RoleKit is private and not a RepoNav dependency.                                        | Do not change `package.json`; use config/examples/docs and host mode.                                                                              |
+| Host bridge could overclaim sandbox guarantees.                                         | Host profiles document advisory/host-attested behavior and do not claim OS sandbox proof.                                                          |
+| Repository Hardening v2 completed its source cutover after the merged 1.1.0 checkpoint. | Keep current status in `docs/project-status.md` and execution details in the 2026-08-12 replan; preserve earlier plans as historical context.      |
+| Review simplification could miss high-risk issues.                                      | Security/release reviewer remains mandatory for high-risk categories.                                                                              |

@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import type { LocateExecutionTokenV2 } from '../../contracts/v2/locate-fact-envelope-v2.js';
 import {
-  isRegisteredSnapshotTrustProofV2,
+  isSnapshotTrustProofForExecutionV2,
   type SnapshotTrustProofV2,
 } from './final-snapshot-check-v2.js';
 import { createOpaqueTokenV2 } from './opaque-token-v2.js';
@@ -68,10 +68,6 @@ const contributionPrivate = new WeakMap<
   SnapshotOutcomeContributionTokenV2,
   ContributionPrivateV2
 >();
-const contributionByValue = new WeakMap<
-  SnapshotOutcomeContributionV2,
-  ContributionPrivateV2
->();
 
 export interface SnapshotObservationLedgerEntryInputV2 {
   readonly selected: boolean;
@@ -92,9 +88,11 @@ export function createSnapshotOutcomeContributionV2(input: {
   readonly discardedEvidenceCount: number;
   readonly ledger: readonly SnapshotObservationLedgerEntryInputV2[];
 }): SnapshotOutcomeContributionTokenV2 {
-  if (!isRegisteredSnapshotTrustProofV2(input.snapshotProof)) {
+  if (
+    !isSnapshotTrustProofForExecutionV2(input.snapshotProof, input.execution)
+  ) {
     throw new TypeError(
-      'snapshot outcome contribution requires registered final-check proof',
+      'snapshot outcome contribution requires matching final-check proof',
     );
   }
   let maxFileBytesReached = false;
@@ -146,27 +144,18 @@ export function createSnapshotOutcomeContributionV2(input: {
     execution: input.execution,
   });
   contributionPrivate.set(token, privateRecord);
-  contributionByValue.set(contribution, privateRecord);
   return token;
 }
 
 /**
- * F6 accessor：same proof/execution 才可读值。
- * 接受 token 或已签发 contribution 对象身份。
+ * F6 accessor：只接受 opaque token，且要求 same proof/execution。
  */
 export function requireSnapshotOutcomeContributionV2(
-  tokenOrContribution:
-    SnapshotOutcomeContributionTokenV2 | SnapshotOutcomeContributionV2,
+  token: SnapshotOutcomeContributionTokenV2,
   expectedProof: SnapshotTrustProofV2,
   expectedExecution: LocateExecutionTokenV2,
 ): SnapshotOutcomeContributionV2 {
-  const record =
-    contributionPrivate.get(
-      tokenOrContribution as SnapshotOutcomeContributionTokenV2,
-    ) ??
-    contributionByValue.get(
-      tokenOrContribution as SnapshotOutcomeContributionV2,
-    );
+  const record = contributionPrivate.get(token);
   if (
     record === undefined ||
     record.proof !== expectedProof ||

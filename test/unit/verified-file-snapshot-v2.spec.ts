@@ -18,6 +18,7 @@ import {
   readVerifiedFileV2,
   setAfterInitialTargetResolveForTestV2,
   verifiedFileSnapshotsEqualV2,
+  verifyVerifiedFileMetadataV2,
 } from '../../src/repository/verified-file-snapshot-v2.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
@@ -90,6 +91,41 @@ describe.runIf(selected)('H4 verified-file-snapshot', () => {
         'contentSha256',
       ]);
       expect(Object.values(aliasRead.snapshot)).not.toContain(root);
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  it('verifies canonical identity without reading or returning file content', async () => {
+    const workspace = mkdtempSync(resolve(tmpdir(), 'repo-nav-file-metadata-'));
+    try {
+      createFile(workspace, 'real/target.ts', 'export const metadata = 1;\n');
+      symlinkSync(
+        resolve(workspace, 'real'),
+        resolve(workspace, 'alias'),
+        process.platform === 'win32' ? 'junction' : 'dir',
+      );
+      const root = realpathSync(workspace);
+      const full = await readFile(root, 'real/target.ts', 4096);
+      const metadata = await verifyVerifiedFileMetadataV2({
+        repositoryRoot: root,
+        locator: 'alias/target.ts',
+        signal: new AbortController().signal,
+      });
+
+      expect(metadata).toEqual({
+        locator: 'alias/target.ts',
+        canonicalFileKey: full.snapshot.canonicalFileKey,
+        identity: full.snapshot.identity,
+      });
+      expect(Object.keys(metadata)).toEqual([
+        'locator',
+        'canonicalFileKey',
+        'identity',
+      ]);
+      expect(Object.hasOwn(metadata, 'bytes')).toBe(false);
+      expect(Object.hasOwn(metadata, 'contentSha256')).toBe(false);
+      expect(Object.values(metadata)).not.toContain(root);
     } finally {
       rmSync(workspace, { recursive: true, force: true });
     }

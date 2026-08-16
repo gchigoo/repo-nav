@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import type { BackendExecutionContextV2 } from '../../src/contracts/v2/backend-execution-outcome-v2.js';
 import type { LocateExecutionTokenV2 } from '../../src/contracts/v2/locate-fact-envelope-v2.js';
 import {
   createBackendExecutionContextV2,
@@ -18,6 +19,10 @@ import {
   sealExpandedBackendAttemptSetV2,
   signBackendExecutionOutcomeForFactsV2,
 } from '../../src/process/backend-execution-context-v2.js';
+import {
+  createLocateExecutionFactsFromDraftV2,
+  type LocateExecutionDraftV2,
+} from '../../src/evidence/locate-execution/locate-execution-draft-v2.js';
 import { createProcessOpaqueTokenV2 } from '../../src/process/opaque-token-v2.js';
 import type {
   AvailabilityProbeExecutionResultV2,
@@ -48,6 +53,76 @@ describe.runIf(
     const view = requireBackendExecutionTraceV2(trace, execution);
     expect(view.codegraphIndexObservation).toEqual({ kind: 'not-observed' });
     expect(view.outcomes).toEqual([]);
+  });
+
+  it('fails closed instead of using draft backend attempts for an invalid context', () => {
+    const execution = createProcessOpaqueTokenV2<LocateExecutionTokenV2>();
+    const invalidContext =
+      createProcessOpaqueTokenV2<BackendExecutionContextV2>();
+    const draft: LocateExecutionDraftV2 = Object.freeze({
+      repositoryRoot: '.',
+      normalizedTerms: Object.freeze([]),
+      confirmed: Object.freeze([]),
+      candidates: Object.freeze([]),
+      backend: Object.freeze({
+        fallbackAttempts: Object.freeze([]),
+        index: Object.freeze({ state: 'unknown', freshness: 'unknown' }),
+        codegraphInitializationSuggested: false,
+      }),
+      snapshotRead: Object.freeze({
+        maximumFilesReached: false,
+        maximumFileBytesReached: false,
+        maximumExcerptBytesReached: false,
+      }),
+      rankingBudget: Object.freeze({
+        maximumConfirmedReached: false,
+        maximumCandidatesReached: false,
+      }),
+      exclusions: Object.freeze({}),
+      abortSource: 'none',
+    });
+
+    expect(() =>
+      createLocateExecutionFactsFromDraftV2({
+        draft,
+        backendExecutionContext: invalidContext,
+        execution,
+        snapshotFacts: Object.freeze({
+          coverage: Object.freeze({
+            gitState: 'unknown',
+            consistency: 'unknown',
+            filesChecked: 0,
+            discardedEvidenceCount: 0,
+          }),
+          finalStableEvidence: Object.freeze([]),
+        }),
+        rankingFacts: Object.freeze({
+          confirmed: Object.freeze([]),
+          candidates: Object.freeze([]),
+          unsatisfiedAnchors: Object.freeze([]),
+        }),
+        rankingOutcome: undefined,
+        scopeMount: {
+          fragmentValue: {
+            requested: Object.freeze([]),
+            effective: Object.freeze([]),
+            unmatchedLayers: Object.freeze([]),
+            policyVersion: 'repo-scope-v1',
+          },
+          view: { contribution: { outsideLayerHintCount: 0 } },
+        } as never,
+        capabilityMount: {
+          fragmentValue: {
+            semanticClassification: Object.freeze([
+              'typescript',
+              'javascript',
+              'sql',
+            ]),
+            unsupportedLanguageHits: 0,
+          },
+        } as never,
+      }),
+    ).toThrow(/invalid-backend-execution-context/u);
   });
 });
 

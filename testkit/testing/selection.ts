@@ -61,7 +61,7 @@ function parseIdentitySelection(): ReadonlySet<string> | null {
   return new Set(parsed.map((value) => identityKey(value)));
 }
 
-export function isSelected(identity: TestIdentity): boolean {
+export function isExplicitlySelected(identity: TestIdentity): boolean {
   const identities = parseIdentitySelection();
   if (identities === null) {
     return false;
@@ -71,11 +71,19 @@ export function isSelected(identity: TestIdentity): boolean {
   }
 
   const groups = parseSelection('REPO_NAV_TEST_GROUPS');
-  if (groups.size > 0) {
-    return groups.has(identity.group);
+  return groups.size > 0 && groups.has(identity.group);
+}
+
+export function isSelected(identity: TestIdentity): boolean {
+  if (isExplicitlySelected(identity)) {
+    return true;
   }
 
-  return true;
+  const identities = parseIdentitySelection();
+  if (identities === null || identities.size > 0) {
+    return false;
+  }
+  return parseSelection('REPO_NAV_TEST_GROUPS').size === 0;
 }
 
 export function assertRunnerSurface(expected: string): void {

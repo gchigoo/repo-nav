@@ -8,9 +8,11 @@ candidates, coverage details, and next actions.
 RepoNav prefers CodeGraph when the target repository is indexed and falls back
 to text search when necessary. It does not modify the target repository.
 
-The repository is currently on the `1.1.0` release line. The hardening foundation
-has merged; the canonical-authority refactor and atomic `2.0.0` cutover remain
-future work. See [the current project status](docs/project-status.md).
+The repository now contains the `2.0.0` candidate implementation: canonical v2
+execution facts are the production authority, snapshot revalidation uses the
+selected conditional-digest policy, and the legacy package subpath is removed.
+Publishing and release tagging remain owner-controlled actions. See
+[the current project status](docs/project-status.md).
 
 ## Requirements
 
@@ -21,7 +23,7 @@ future work. See [the current project status](docs/project-status.md).
 ## Install
 
 ```powershell
-npm i -g repo-nav@1.1.0
+npm i -g repo-nav@2.0.0
 ```
 
 ## MCP host configuration
@@ -73,20 +75,18 @@ semantics.
 Root package exports (`repo-nav`) expose the v2 request/result contract and
 application helpers. The current public export map is:
 
-| Import                  | Purpose                                                |
-| ----------------------- | ------------------------------------------------------ |
-| `repo-nav`              | v2 request/result contracts and application helpers    |
-| `repo-nav/backends`     | `RipgrepBackend` and `CodeGraphBackend`                |
-| `repo-nav/node`         | `NodeRepositoryReader` and `NodeSafeProcessRunner`     |
-| `repo-nav/advanced`     | advanced DI tokens and CodeGraph planning helpers      |
-| `repo-nav/legacy-v1`    | historical v1 contracts retained for 1.x compatibility |
-| `repo-nav/package.json` | package metadata                                       |
+| Import                  | Purpose                                             |
+| ----------------------- | --------------------------------------------------- |
+| `repo-nav`              | v2 request/result contracts and application helpers |
+| `repo-nav/backends`     | `RipgrepBackend` and `CodeGraphBackend`             |
+| `repo-nav/node`         | `NodeRepositoryReader` and `NodeSafeProcessRunner`  |
+| `repo-nav/advanced`     | advanced DI tokens and CodeGraph planning helpers   |
+| `repo-nav/package.json` | package metadata                                    |
 
-The root still re-exports some adapter symbols for 1.x compatibility; new code
+The root still re-exports the approved deprecated adapter symbols; new code
 should import them from the dedicated subpaths. `repo-nav/advanced` is public but
-is not the preferred high-level API. The planned `2.0.0` cutover removes only
-`repo-nav/legacy-v1`; it has not happened yet. Deep imports outside the export
-map are unsupported.
+is not the preferred high-level API. `repo-nav/legacy-v1` is no longer exported
+in `2.0.0`. Deep imports outside the export map are unsupported.
 
 ## Development from source
 
@@ -118,6 +118,7 @@ npm run test:golden -- --all
 npm run test:mcp:built -- --all
 npm run test:docs:built
 npm run test:platform
+node tools/release/check-legacy-subpath-absence.mjs --workspace .
 ```
 
 `npm run test:integration:codegraph` is a separate live integration surface and

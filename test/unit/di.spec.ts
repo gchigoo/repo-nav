@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { createRepoNavApplicationContext } from '../../src/app/create-application-context.js';
@@ -33,6 +36,7 @@ import {
 import { createRepoNavTestingModule } from '../../testkit/create-testing-module.js';
 import { isSelected } from '../../testkit/testing/selection.js';
 
+const repositoryRoot = resolve(import.meta.dirname, '..', '..');
 const identity = { group: 'di', caseId: 'di-assembly' } as const;
 const diWiringIdentity = {
   group: 'canonical-locate-bridge',
@@ -201,103 +205,17 @@ describe.runIf(
     caseId: 'real-complete-shadow',
   }),
 )('F8-REAL-SHADOW-001 real-complete-shadow', () => {
-  it('registers non-exported orchestrator and runs real aggregation path', async () => {
-    const {
-      ACCEPTED_COMPLETE_REAL_LOCATE_SHADOW_ORCHESTRATOR_V2,
-      createAcceptedCompleteRealLocateShadowOrchestratorV2,
-      registerAcceptedCompleteRealAggregationBundleV2,
-    } =
-      await import('../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js');
-    const { createFourPrerequisiteCanonicalInputV2 } =
-      await import('../../testkit/fixtures/canonical-locate-bridge-v2/four-prerequisite-base-v2.js');
-    const { buildAggregationHarnessV2 } =
-      await import('../../testkit/fixtures/request-outcome-v2/build-aggregation-harness-v2.js');
-    const { issueEvidenceRankingOutcomeV2 } =
-      await import('../../src/evidence/ranking/evidence-ranking-outcome-v2.js');
-    const { registerF2RankingOutcomeForExecutionV2 } =
-      await import('../../src/evidence/public-output/f2-locate-projection-stages-v2.js');
-    const { readCompleteRealLocateShadowFailureObservationV2 } =
-      await import('../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js');
+  it('uses the zero-dependency projector after removing the shadow provider', async () => {
     const application = await createRepoNavApplicationContext();
     try {
       const projector = application.get(LOCATE_RESULT_PROJECTOR);
       expect(projector).toBeInstanceOf(V2LocateResultProjector);
-      const orchestrator = application.get(
-        ACCEPTED_COMPLETE_REAL_LOCATE_SHADOW_ORCHESTRATOR_V2,
+      expect(V2LocateResultProjector.length).toBe(0);
+      const moduleSource = readFileSync(
+        resolve(repositoryRoot, 'src/evidence/evidence.module.ts'),
+        'utf8',
       );
-      expect(orchestrator.projectAcceptedExecution).toBeTypeOf('function');
-
-      const { input, capability, execution } =
-        createFourPrerequisiteCanonicalInputV2();
-      const harness = await buildAggregationHarnessV2({});
-      const ranking = issueEvidenceRankingOutcomeV2({
-        fragment: Object.freeze({
-          confirmed: Object.freeze([]),
-          candidates: Object.freeze([]),
-          unsatisfiedAnchors: Object.freeze([]),
-        }),
-        budgetFacts: Object.freeze({
-          maxFilesReached: false,
-          maxConfirmedReached: false,
-          maxCandidatesReached: false,
-          preRankingPoolTruncated: false,
-          safeSelectorCollision: false,
-          safeOrderingCollision: false,
-        }),
-        confirmed: [],
-        candidates: [],
-        snapshotProof: harness.input.snapshotProof,
-        execution,
-        collisionAnchorKeys: new Set(),
-      });
-      registerF2RankingOutcomeForExecutionV2(
-        execution,
-        ranking,
-        harness.input.snapshotProof,
-      );
-      registerAcceptedCompleteRealAggregationBundleV2(
-        execution,
-        Object.freeze({
-          execution,
-          backendTrace: harness.input.backendTrace,
-          fallback: harness.input.fallback,
-          ranking,
-          snapshotProof: harness.input.snapshotProof,
-          resolvedLimits: harness.input.resolvedLimits,
-          abortDecision: harness.input.abortDecision,
-          abortCoordinator: harness.input.abortCoordinator,
-          contributions: Object.freeze([
-            harness.input.contributions[1],
-            harness.input.contributions[2],
-            harness.input.contributions[3],
-          ] as const),
-          scopeProof: harness.input.scopeProof,
-          expectedEligiblePool: harness.input.expectedEligiblePool,
-          expectedFoldProof: harness.input.expectedFoldProof,
-          expectedCoverageBasis: harness.input.expectedCoverageBasis,
-          expectedResolvedScope: harness.input.expectedResolvedScope,
-          expectedCapabilityFacts: harness.input.expectedCapabilityFacts,
-        }),
-      );
-      const attempt = orchestrator.projectAcceptedExecution(input, capability);
-      if (attempt.ok) {
-        expect(attempt.accepted).toBeDefined();
-      } else {
-        const failure = readCompleteRealLocateShadowFailureObservationV2(
-          attempt.failure,
-        );
-        // production path entered stages (not pre-stage zero counters from stub)
-        expect(failure.counters.source).toBe(1);
-        expect([
-          'SOURCE_INVALID',
-          'MATERIALIZATION_INVALID',
-          'AGGREGATION_INVALID',
-        ]).toContain(failure.code);
-      }
-      expect(
-        createAcceptedCompleteRealLocateShadowOrchestratorV2()
-          .projectAcceptedExecution,
-      ).toBeTypeOf('function');
+      expect(moduleSource).not.toMatch(/shadow|orchestrator/iu);
     } finally {
       await application.close();
     }

@@ -4,7 +4,6 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { createRepoNavApplicationContext } from '../../src/app/create-application-context.js';
-import { createAcceptedCompleteRealLocateShadowOrchestratorV2 } from '../../src/evidence/canonical/accepted-complete-real-locate-shadow-orchestrator-v2.js';
 import {
   CANONICAL_LOCATE_EXECUTOR_V2,
   LOCATE_RESULT_PROJECTOR,
@@ -18,7 +17,7 @@ import { issueLocateProjectionExecutionCapabilityV2 } from '../../src/evidence/l
 import {
   CUTOVER_DELETED_PRODUCTION_PATHS_V2,
   CUTOVER_FORBIDDEN_IMPORTS_V2,
-  CUTOVER_REQUIRED_TOKEN_V2,
+  CUTOVER_REQUIRED_SYMBOLS_V2,
 } from '../../testkit/fixtures/release-v2/cutover-truth-v2.js';
 import { FAIL_CLOSED_UNREGISTERED_SUCCESS_V2 } from '../../testkit/fixtures/release-v2/cutover-failure-order-v2.js';
 import { SINGLE_EXEC_INVALID_INGRESS_V2 } from '../../testkit/fixtures/release-v2/single-execution-v2.js';
@@ -43,7 +42,9 @@ describe.runIf(
         ),
         'utf8',
       );
-      expect(src).toContain(CUTOVER_REQUIRED_TOKEN_V2);
+      for (const required of CUTOVER_REQUIRED_SYMBOLS_V2) {
+        expect(src).toContain(required);
+      }
       for (const forbidden of CUTOVER_FORBIDDEN_IMPORTS_V2) {
         expect(src).not.toContain(forbidden);
       }
@@ -84,19 +85,21 @@ describe.runIf(
   isSelected({ group: 'public-beta-release', caseId: 'failure-order' }),
 )('F9-FAIL-CLOSED-001 failure-order', () => {
   it('maps F8 typed failure to INTERNAL_ERROR without v1 fallback', () => {
-    const projector = new V2LocateResultProjector(
-      createAcceptedCompleteRealLocateShadowOrchestratorV2(),
-    );
+    const projector = new V2LocateResultProjector();
     const capability = issueLocateProjectionExecutionCapabilityV2();
     const fakeInput = Object.freeze({
       ok: true as const,
-      envelope: Object.freeze({
-        repositoryRoot: '/tmp/x',
-        normalizedTerms: Object.freeze([]),
-        fragments: Object.freeze({}),
+      repositoryRoot: '/tmp/x',
+      normalizedTerms: Object.freeze([]),
+      resolvedLimits: Object.freeze({
+        maxFiles: 1,
+        maxConfirmed: 1,
+        maxCandidates: 1,
+        timeoutMs: 1_000,
       }),
+      facts: Object.freeze({}),
     });
-    const bundle = projector.project(fakeInput, capability);
+    const bundle = projector.project(fakeInput as never, capability);
     expect(bundle.value.ok).toBe(false);
     if (bundle.value.ok) throw new Error('expected INTERNAL_ERROR');
     expect(bundle.value.error.code).toBe(

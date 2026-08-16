@@ -57,13 +57,15 @@
       "indexFreshness": "unknown",
       "limitsReached": ["MAX_CANDIDATES_REACHED"],
       "degradations": [],
-      "exclusionSummary": {},
+      "exclusionSummary": {
+        "UNVERIFIED_FILE_CONTENT": 1
+      },
       "abortSource": "none",
       "unsatisfiedAnchors": [],
       "snapshot": {
         "gitState": "unknown",
         "consistency": "stable",
-        "filesChecked": 2,
+        "filesChecked": 1,
         "discardedEvidenceCount": 0
       },
       "scope": {

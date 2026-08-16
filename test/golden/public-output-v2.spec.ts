@@ -4,7 +4,8 @@ import {
   collectSensitiveCorpusV2,
   redactPublicFieldV2,
 } from '../../src/evidence/public-output/sensitive-value-policy-v2.js';
-import { assemblePublicLocateResultV2 } from '../../src/evidence/public-output/public-result-assembler-v2.js';
+import { finalizeLocateResultV2 } from '../../src/evidence/locate-execution/finalize-locate-result-v2.js';
+import { locateExecutionFinalizerInputFromUnsafePublicSourceV2 } from '../../testkit/fixtures/locate-execution-v2/finalizer-facts-v2.js';
 import { projectSyntheticLocateResultV2 } from '../../testkit/fixtures/public-output-v2/synthetic-locate-projection-helper-v2.js';
 import { createUnsafeLocateSuccessV2 } from '../../testkit/fixtures/public-output-v2/synthetic-locate-v2.js';
 import { isSelected } from '../../testkit/testing/selection.js';
@@ -17,6 +18,14 @@ const determinismSelected = isSelected({
   group: 'public-output-v2',
   caseId: 'public-output-v2-determinism',
 });
+
+function finalizeUnsafeSourceV2(
+  source: ReturnType<typeof createUnsafeLocateSuccessV2>,
+) {
+  return finalizeLocateResultV2(
+    locateExecutionFinalizerInputFromUnsafePublicSourceV2(source),
+  ).value;
+}
 
 describe.runIf(projectionSelected)(
   'public output v2 hostile field projection',
@@ -96,7 +105,7 @@ describe.runIf(projectionSelected)(
       evidence.location.symbol = `databasePassword-${forbidden}`;
       evidence.location.excerpt = `password=${forbidden}`;
 
-      const parsed = assemblePublicLocateResultV2(raw);
+      const parsed = finalizeUnsafeSourceV2(raw);
       const projection = projectSyntheticLocateResultV2(parsed);
       expect(projection.service).toEqual(parsed);
       expect(projection.structuredContent).toEqual(parsed);
@@ -134,7 +143,7 @@ describe.runIf(projectionSelected)(
       evidence.location.excerpt = `{"password":"${forbidden[3]}"}${forbidden[4]}`;
 
       const projection = projectSyntheticLocateResultV2(
-        assemblePublicLocateResultV2(raw),
+        finalizeUnsafeSourceV2(raw),
       );
       const serialized = JSON.stringify(projection);
       for (const value of forbidden) {
@@ -165,11 +174,13 @@ describe.runIf(projectionSelected)(
       evidence.location.symbol = phone;
       evidence.location.excerpt = `clientSecret=\`${malformedValue}\\`;
 
-      const parsed = assemblePublicLocateResultV2(raw);
+      const parsed = finalizeUnsafeSourceV2(raw);
       if (!parsed.ok) throw new Error('Expected a public success.');
-      expect(
-        parsed.evidence.normalizedTerms[0]?.redaction?.reasonCodes,
-      ).toEqual(['SECRET_LIKE_VALUE']);
+      expect(parsed.evidence.normalizedTerms[0]).toEqual({
+        value: '[REDACTED]',
+        caseSensitive: false,
+      });
+      expect(parsed.evidence.normalizedTerms[0]?.redaction).toBeUndefined();
       expect(parsed.evidence.confirmed[0]?.location.redaction?.fields).toEqual([
         {
           field: 'symbol',
@@ -225,11 +236,9 @@ describe.runIf(determinismSelected)(
           normalizedTerms: first.evidence.normalizedTerms,
         },
       } as const;
-      const firstBytes = JSON.stringify(assemblePublicLocateResultV2(first));
-      expect(JSON.stringify(assemblePublicLocateResultV2(first))).toBe(
-        firstBytes,
-      );
-      expect(JSON.stringify(assemblePublicLocateResultV2(reordered))).toBe(
+      const firstBytes = JSON.stringify(finalizeUnsafeSourceV2(first));
+      expect(JSON.stringify(finalizeUnsafeSourceV2(first))).toBe(firstBytes);
+      expect(JSON.stringify(finalizeUnsafeSourceV2(reordered))).toBe(
         firstBytes,
       );
     });
@@ -254,8 +263,8 @@ describe.runIf(determinismSelected)(
         OUTSIDE_LAYER_HINT: 2,
         NEGATIVE_TERM_MATCH: 1,
       };
-      expect(JSON.stringify(assemblePublicLocateResultV2(first))).toBe(
-        JSON.stringify(assemblePublicLocateResultV2(second)),
+      expect(JSON.stringify(finalizeUnsafeSourceV2(first))).toBe(
+        JSON.stringify(finalizeUnsafeSourceV2(second)),
       );
     });
   },

@@ -32,7 +32,7 @@ describe.runIf(
 describe.runIf(
   isSelected({ group: 'public-beta-release', caseId: 'migration-document' }),
 )('F9-MIGRATION-001 migration-document', () => {
-  it('documents v1→v2 contract, Node range, CLI golden removal, and 1.1.0 install text', () => {
+  it('documents the v1→v2 cutover, Node range, CLI golden removal, and 2.0.0 install text', () => {
     const text = readFileSync(
       resolve(root, 'docs/migration-v1-to-v2.md'),
       'utf8',
@@ -43,7 +43,7 @@ describe.runIf(
     for (const phrase of MIGRATION_FORBIDDEN_PHRASES_V2) {
       expect(text).not.toContain(phrase);
     }
-    const requiredInstall = 'npm i -g repo-nav@1.1.0';
+    const requiredInstall = 'npm i -g repo-nav@2.0.0';
     for (const relativePath of [
       'README.md',
       'docs/getting-started-mcp.md',

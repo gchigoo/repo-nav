@@ -60,7 +60,7 @@ function confirmation(repository: ReturnType<typeof createRepository>) {
     schemaVersion: 1,
     candidate: {
       name: 'repo-nav',
-      version: '1.1.0',
+      version: '2.0.0',
       tarballSha256: 'a'.repeat(64),
     },
     repository: {
@@ -92,7 +92,7 @@ describe.runIf(selected)('H1 real-consumer confirmation authority', () => {
         canonicalRepositoryPath: repository.path,
         candidate: {
           name: 'repo-nav',
-          version: '1.1.0',
+          version: '2.0.0',
           tarballSha256: 'a'.repeat(64),
         },
       });

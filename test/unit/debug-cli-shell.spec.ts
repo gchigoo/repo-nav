@@ -37,6 +37,7 @@ import {
   executeCli,
   type CliExecutionDependencies,
 } from '../../src/cli/execute.js';
+import { CLI_USAGE_ERROR_MESSAGE } from '../../src/cli/parser.js';
 import {
   assertRunnerSurface,
   isSelected,
@@ -188,16 +189,13 @@ describe.runIf(
       new AbortController().signal,
       fixture.dependencies,
     );
-    expect(result).toMatchObject({ exitCode: 0, stdout: '1.1.0' });
+    expect(result).toMatchObject({ exitCode: 0, stdout: '2.0.0' });
     expect(fixture.load).not.toHaveBeenCalled();
   });
 
-  it.each([
-    [['unknown'], 'Expected the debug command.'],
-    [['debug', 'probe', '--wrong', '.'], 'Unknown probe option'],
-  ] as const)(
-    'maps invalid arguments to exit 2 before bootstrap',
-    async (args, message) => {
+  it.each([['unknown'], ['debug', 'probe', '--wrong', '.']] as const)(
+    'maps invalid arguments to a fixed usage error before bootstrap',
+    async (...args) => {
       const fixture = dependencies(new Map());
       const result = await executeCli(
         args,
@@ -206,14 +204,41 @@ describe.runIf(
       );
       expect(result.exitCode).toBe(2);
       expect(
-        CliErrorOutputSchema.parse(JSON.parse(result.stdout) as unknown).error
-          .message,
-      ).toContain(message);
+        CliErrorOutputSchema.parse(JSON.parse(result.stdout) as unknown).error,
+      ).toEqual({ code: 'CLI_USAGE', message: CLI_USAGE_ERROR_MESSAGE });
       expect(fixture.load).not.toHaveBeenCalled();
     },
   );
 
-  it('rejects removed golden command with usage exit 2', async () => {
+  it.each([
+    ['POSIX path', '/Users/customer/private/repo', 'customer'],
+    ['Windows path', String.raw`C:\private-user\repo`, 'private-user'],
+    ['UNC path', String.raw`\\server\vault-share\repo`, 'vault-share'],
+    ['token-like value', '--token=ghp_sensitive-token', 'ghp_sensitive-token'],
+    ['control characters', 'line-one\nline-two', 'line-two'],
+  ] as const)(
+    'does not echo a %s from invalid argv',
+    async (_label, untrustedArgument, secretMarker) => {
+      const fixture = dependencies(new Map());
+      const result = await executeCli(
+        ['debug', untrustedArgument],
+        new AbortController().signal,
+        fixture.dependencies,
+      );
+      const output = `${result.stdout}${result.stderr ?? ''}`;
+
+      expect(result.exitCode).toBe(2);
+      expect(
+        CliErrorOutputSchema.parse(JSON.parse(result.stdout)),
+      ).toMatchObject({
+        error: { code: 'CLI_USAGE', message: CLI_USAGE_ERROR_MESSAGE },
+      });
+      expect(output).not.toContain(secretMarker);
+      expect(fixture.load).not.toHaveBeenCalled();
+    },
+  );
+
+  it('rejects removed golden command with fixed usage exit 2', async () => {
     const fixture = dependencies(new Map());
     const result = await executeCli(
       ['debug', 'golden', '--all'],
@@ -221,7 +246,11 @@ describe.runIf(
       fixture.dependencies,
     );
     expect(result.exitCode).toBe(2);
-    expect(result.stdout).toContain('debug golden was removed');
+    expect(CliErrorOutputSchema.parse(JSON.parse(result.stdout))).toMatchObject(
+      {
+        error: { code: 'CLI_USAGE', message: CLI_USAGE_ERROR_MESSAGE },
+      },
+    );
   });
 });
 

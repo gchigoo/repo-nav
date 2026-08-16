@@ -5,15 +5,10 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { aggregateRequestOutcomeV2 } from '../../src/evidence/request-outcome/request-outcome-aggregator-v2.js';
-import {
-  COMPLETE_RIPGREP_V2,
-  EARLY_STOP_RIPGREP_V2,
-  UNAVAILABLE_CODEGRAPH_V2,
-} from '../../testkit/fixtures/request-outcome-v2/backend-outcomes-v2.js';
-import { buildAggregationHarnessV2 } from '../../testkit/fixtures/request-outcome-v2/build-aggregation-harness-v2.js';
+import { finalizeLocateResultV2 } from '../../src/evidence/locate-execution/finalize-locate-result-v2.js';
+import { locateExecutionFinalizerInputFromUnsafePublicSourceV2 } from '../../testkit/fixtures/locate-execution-v2/finalizer-facts-v2.js';
 import { LARGE_REQUEST_OUTCOME_PERMUTATION_V2 } from '../../testkit/fixtures/request-outcome-v2/large-request-outcome-permutation-v2.js';
-import type { SnapshotObservationLedgerEntryInputV2 } from '../../src/evidence/request-snapshot/snapshot-outcome-contribution-v2.js';
+import { createUnsafeLocateSuccessV2 } from '../../testkit/fixtures/public-output-v2/synthetic-locate-v2.js';
 import {
   runLargeSyntheticPerformance,
   writeSyntheticPerformanceReport,
@@ -60,24 +55,13 @@ describe.runIf(
     caseId: 'large-request-outcome-permutation',
   }),
 )('F6-LARGE-001 large-request-outcome-permutation', () => {
-  it('keeps bounded aggregator hash stable across five ledger permutations', async () => {
+  it('keeps bounded finalizer hash stable across five fact permutations', () => {
     const { maxAnchors, maxExclusionLedgerRows, raceRepetitions } =
       LARGE_REQUEST_OUTCOME_PERMUTATION_V2;
-
-    const baseLedger: SnapshotObservationLedgerEntryInputV2[] = Array.from(
+    const baseLedger = Array.from(
       { length: maxExclusionLedgerRows },
-      (_, index) =>
-        Object.freeze({
-          selected: true,
-          scopeIncluded: true,
-          maxFileBytesReached: index % 8 === 0,
-          maxExcerptBytesReached: index % 8 === 1,
-          negativeExcluded: index % 3 === 0,
-          duplicateExtraCount: index % 5,
-          unverifiedOrdinary: index % 4 === 0,
-        }),
+      (_, index) => index,
     );
-
     const unsatisfiedAnchors = Array.from({ length: maxAnchors }, (_, index) =>
       Object.freeze({
         requestIndex: index,
@@ -85,7 +69,7 @@ describe.runIf(
           index % 5
         ]!,
         satisfaction: 'none' as const,
-        reason: 'NOT_FOUND' as const,
+        reason: 'BUDGET_EXCEEDED' as const,
       }),
     );
 
@@ -95,63 +79,65 @@ describe.runIf(
       const anchors = [...unsatisfiedAnchors].sort(() =>
         round % 2 === 0 ? -1 : 1,
       );
-      const harness = await buildAggregationHarnessV2({
-        outcomes: [UNAVAILABLE_CODEGRAPH_V2, EARLY_STOP_RIPGREP_V2],
-        fallback: {
-          checked: true,
-          required: true,
-          completeEquivalentFallback: false,
-        },
-        snapshotChangedCount: 7,
-        locationRedactedTerm: 'SECRET',
-        ledger,
+      const raw = structuredClone(createUnsafeLocateSuccessV2());
+      if (!raw.ok) throw new Error('Expected success fixture.');
+      Object.assign(raw.evidence.coverage, {
+        backends: [
+          {
+            backend: 'codegraph',
+            status: 'unavailable',
+            completion: 'incomplete',
+            termination: 'process-error',
+            reasonCode: 'CODEGRAPH_UNAVAILABLE',
+            hitCount: 0,
+          },
+          {
+            backend: 'ripgrep',
+            status: 'used',
+            completion: 'incomplete',
+            termination: 'early-stop',
+            hitCount: 1,
+          },
+        ],
         unsatisfiedAnchors: anchors,
-        budgetFacts: {
-          maxFilesReached: true,
-          maxConfirmedReached: true,
-          maxCandidatesReached: true,
-          preRankingPoolTruncated: true,
-          safeSelectorCollision: false,
-          safeOrderingCollision: false,
-        },
-        limits: {
-          maxFiles: 20,
-          maxConfirmed: 20,
-          maxCandidates: 20,
-          timeoutMs: 30_000,
+        exclusionSummary: {
+          NEGATIVE_TERM_MATCH: ledger.filter((index) => index % 3 === 0).length,
+          DUPLICATE_LOCATION: ledger.reduce(
+            (count, index) => count + (index % 5),
+            0,
+          ),
+          UNVERIFIED_FILE_CONTENT: ledger.filter((index) => index % 4 === 0)
+            .length,
+          SNAPSHOT_CHANGED: 7,
         },
       });
-      const aggregated = aggregateRequestOutcomeV2(harness.input);
-      expect(aggregated.backend.value.outcomes.length).toBeLessThanOrEqual(2);
-      expect(aggregated.backend.value.outcomes).toHaveLength(2);
+      Object.assign(raw.evidence.coverage.snapshot, {
+        consistency: 'changed',
+        discardedEvidenceCount: 7,
+      });
+      const transport = finalizeLocateResultV2(
+        locateExecutionFinalizerInputFromUnsafePublicSourceV2(raw),
+      );
+      expect(transport.value.ok).toBe(true);
+      if (!transport.value.ok) throw new Error('Expected success result.');
+      expect(transport.value.evidence.coverage.backends).toHaveLength(2);
       expect(
-        Object.keys(aggregated.requestOutcome.value.exclusionSummary).length,
+        Object.keys(transport.value.evidence.coverage.exclusionSummary).length,
       ).toBeGreaterThan(0);
-      const canonical = {
-        statusV2: aggregated.statusV2,
-        backend: aggregated.backend.value,
-        requestOutcome: aggregated.requestOutcome.value,
-      };
       hashes.push(
-        createHash('sha256').update(JSON.stringify(canonical)).digest('hex'),
+        createHash('sha256').update(transport.compactJson).digest('hex'),
       );
     }
 
     expect(hashes).toHaveLength(raceRepetitions);
     expect(new Set(hashes).size).toBe(1);
-    // prove the case is not a no-op against a trivial complete-only input
-    const trivial = await buildAggregationHarnessV2({
-      outcomes: [COMPLETE_RIPGREP_V2],
-    });
-    const trivialAggregated = aggregateRequestOutcomeV2(trivial.input);
+    const trivial = finalizeLocateResultV2(
+      locateExecutionFinalizerInputFromUnsafePublicSourceV2(
+        createUnsafeLocateSuccessV2(),
+      ),
+    );
     const trivialHash = createHash('sha256')
-      .update(
-        JSON.stringify({
-          statusV2: trivialAggregated.statusV2,
-          backend: trivialAggregated.backend.value,
-          requestOutcome: trivialAggregated.requestOutcome.value,
-        }),
-      )
+      .update(trivial.compactJson)
       .digest('hex');
     expect(hashes[0]).not.toBe(trivialHash);
   });

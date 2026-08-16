@@ -4,7 +4,6 @@
  * installed production closure, and evaluates valid npm audit JSON even when
  * npm exits nonzero because vulnerabilities were reported.
  */
-import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import {
   mkdirSync,
@@ -13,16 +12,25 @@ import {
   rmSync,
   writeFileSync,
 } from 'node:fs';
-import { dirname, join, resolve, sep } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { evaluateProductionAudit } from './production-audit-policy.mjs';
+import { releaseEvidenceCandidateV1 } from './release-evidence-schema.mjs';
+import {
+  ensureReleaseCandidateV1,
+  installReleaseCandidateV1,
+} from './release-candidate.mjs';
 
 const modulePath = fileURLToPath(import.meta.url);
 const root = join(dirname(modulePath), '../..');
 const npmCli = join(root, 'node_modules/npm/bin/npm-cli.js');
 const policyPath = join(root, 'tools/release/production-audit-policy.json');
 const tempParent = join(root, 'test-artifacts');
+const evidencePath = join(
+  root,
+  'test-artifacts/release-evidence/installed-audit-v1.json',
+);
 
 function errorMessage(error) {
   return error instanceof Error ? error.message : String(error);
@@ -33,28 +41,6 @@ function makeError(code, message, details = {}) {
   error.code = code;
   error.details = details;
   return error;
-}
-
-function runNpmChecked(args, options = {}) {
-  const result = spawnSync(process.execPath, [npmCli, ...args], {
-    cwd: options.cwd ?? root,
-    encoding: 'utf8',
-    shell: false,
-    env: { ...process.env, ...(options.env ?? {}) },
-  });
-  if (result.error) {
-    throw makeError('npm-spawn-failed', result.error.message, { args });
-  }
-  if (result.signal !== null || result.status !== 0) {
-    throw makeError('npm-command-failed', `npm ${args.join(' ')} failed`, {
-      args,
-      signal: result.signal,
-      status: result.status,
-      stderr: String(result.stderr ?? '').slice(0, 2000),
-      stdout: String(result.stdout ?? '').slice(0, 2000),
-    });
-  }
-  return result.stdout;
 }
 
 function parseJsonText(text, code, label) {
@@ -80,34 +66,11 @@ function parsePolicy() {
   );
 }
 
-function parsePackInfo(stdout) {
-  const parsed = parseJsonText(stdout, 'pack-json-invalid', 'npm pack');
-  const info = Array.isArray(parsed) ? parsed[0] : parsed;
-  if (
-    info === null ||
-    typeof info !== 'object' ||
-    typeof info.filename !== 'string' ||
-    info.filename.length === 0
-  ) {
-    throw makeError('pack-json-schema-invalid', 'npm pack JSON shape invalid');
-  }
-  return info;
-}
-
-function assertPathInside(parent, child) {
-  const resolvedParent = resolve(parent);
-  const resolvedChild = resolve(child);
-  if (
-    resolvedChild !== resolvedParent &&
-    !resolvedChild.startsWith(`${resolvedParent}${sep}`)
-  ) {
-    throw makeError('path-containment-failed', 'npm pack output escaped temp');
-  }
-}
-
 function createBaseResult(pkg) {
   return {
+    schemaVersion: 1,
     ok: false,
+    authority: 'exact-packed-candidate+immutable-copy+fresh-consumer-npm-audit',
     candidateVersion: pkg.version,
     tarballSha256: null,
     auditExitStatus: null,
@@ -234,6 +197,8 @@ export function orchestrateInstalledAuditSubprocess(input) {
   ];
 
   return {
+    schemaVersion: 1,
+    authority: 'exact-packed-candidate+immutable-copy+fresh-consumer-npm-audit',
     ok:
       parseFailures.length === 0 &&
       statusClassification.ok &&
@@ -258,48 +223,36 @@ export function orchestrateInstalledAuditSubprocess(input) {
 
 function runInstalledAudit(workDir, pkg) {
   const policy = parsePolicy();
-  const packDir = join(workDir, 'pack');
-  const consumerDir = join(workDir, 'consumer');
-  mkdirSync(packDir, { recursive: true });
-  mkdirSync(consumerDir, { recursive: true });
-
-  const packInfo = parsePackInfo(
-    runNpmChecked(['pack', '--json', '--pack-destination', packDir]),
-  );
-  if (packInfo.name !== pkg.name || packInfo.version !== pkg.version) {
-    throw makeError('pack-identity-mismatch', 'npm pack identity mismatch', {
-      packName: packInfo.name,
-      packVersion: packInfo.version,
-      packageName: pkg.name,
-      packageVersion: pkg.version,
-    });
+  const candidate = ensureReleaseCandidateV1(root, npmCli);
+  if (candidate.name !== pkg.name || candidate.version !== pkg.version) {
+    throw makeError(
+      'candidate-identity-mismatch',
+      'release candidate identity mismatch',
+    );
   }
-  const tarballPath = resolve(packDir, packInfo.filename);
-  assertPathInside(packDir, tarballPath);
-  const tarballSha256 = createHash('sha256')
-    .update(readFileSync(tarballPath))
-    .digest('hex');
-
-  writeFileSync(
-    join(consumerDir, 'package.json'),
-    `${JSON.stringify({ name: 'repo-nav-audit-consumer', private: true }, null, 2)}\n`,
-  );
-  runNpmChecked(
-    ['install', '--ignore-scripts', '--no-audit', '--no-fund', tarballPath],
-    { cwd: consumerDir },
-  );
+  const installed = installReleaseCandidateV1({
+    root,
+    npmCli,
+    candidate,
+    consumerRoot: join(workDir, 'consumer'),
+    consumerName: 'repo-nav-audit-consumer',
+  });
 
   const audit = spawnSync(
     process.execPath,
     [npmCli, 'audit', '--omit=dev', '--audit-level=moderate', '--json'],
-    { cwd: consumerDir, encoding: 'utf8', shell: false },
+    { cwd: installed.consumerRoot, encoding: 'utf8', shell: false },
   );
-  return orchestrateInstalledAuditSubprocess({
-    audit,
-    candidateVersion: pkg.version,
-    policy,
-    tarballSha256,
-  });
+  return {
+    ...orchestrateInstalledAuditSubprocess({
+      audit,
+      candidateVersion: candidate.version,
+      policy,
+      tarballSha256: candidate.tarballSha256,
+    }),
+    generatedAt: new Date().toISOString(),
+    candidate: releaseEvidenceCandidateV1(installed.candidate),
+  };
 }
 
 function main() {
@@ -343,6 +296,8 @@ function main() {
 
 if (process.argv[1] === modulePath) {
   const result = main();
+  mkdirSync(dirname(evidencePath), { recursive: true });
+  writeFileSync(evidencePath, `${JSON.stringify(result, null, 2)}\n`);
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   process.exit(result.ok ? 0 : 1);
 }

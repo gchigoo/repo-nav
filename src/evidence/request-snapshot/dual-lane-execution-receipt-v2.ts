@@ -9,7 +9,7 @@ export type VerificationSelectionModeV2 =
 
 /**
  * Executor 双 lane 接线收据：供 request-snapshot-cache 用例证明
- * expandedMaxHits / scopeFold / LegacyCandidateReservation 进入生产路径。
+ * expandedMaxHits / scopeFold / candidate policy enter the production path.
  */
 export interface DualLaneExecutionReceiptV2 {
   readonly sharedSearchMaxHits: number;
@@ -18,7 +18,7 @@ export interface DualLaneExecutionReceiptV2 {
   readonly scopeFoldInvoked: boolean;
   readonly scopeFoldCandidateCount: number;
   readonly scopeFoldFilesTruncated: boolean;
-  readonly usedLegacyCandidateReservation: boolean;
+  readonly usedCandidatePolicyReservation: boolean;
   readonly expandedProposalCount: number;
   readonly expandedEvaluatedDraftCount: number;
   /** verification 输入选择模式（authoritative 优先，legacy 仅 bridge）。 */

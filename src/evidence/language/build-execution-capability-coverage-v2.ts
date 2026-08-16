@@ -4,30 +4,34 @@
 
 import type { LocateExecutionTokenV2 } from '../../contracts/v2/locate-fact-envelope-v2.js';
 import type { EvidenceRankingOutcomeV2 } from '../ranking/evidence-ranking-outcome-v2.js';
-import { issueEvidenceRankingOutcomeV2 } from '../ranking/evidence-ranking-outcome-v2.js';
 import {
-  createTrustedPreFinalCapabilityViewForTestV2,
+  createEmptyTrustedPreFinalCapabilityViewV2,
+  requirePreFinalCapabilityViewV2,
   requireStableEligibleCapabilityViewV2,
-  type TrustedStableEligibleCapabilityRecordViewV2,
   type TrustedStableEligibleCapabilityViewV2,
 } from '../request-snapshot/capability-classification-views-v2.js';
 import type {
   SnapshotTrustProofV2,
   TrustedStableEligibleDiscoveryPoolV2,
 } from '../request-snapshot/final-snapshot-check-v2.js';
-import { runFinalSnapshotCheckV2 } from '../request-snapshot/final-snapshot-check-v2.js';
 import type {
   EligibleDiscoveryRefV2,
   PreFinalEligibleDiscoveryPoolV2,
   PreFinalEligibleDiscoveryRecordV2,
 } from '../request-snapshot/pre-ranking-evidence-pool-v2.js';
-import type { ScopeFoldedSafePoolProofV2 } from '../request-snapshot/scope-folded-discovery-selector-v2.js';
+import type { BoundSafeDiscoverySelectionV2 } from '../request-snapshot/discovery-selection-binding-v2.js';
+import type {
+  ScopeFoldedSafePoolProofV2,
+  TrustedScopeFoldedSelectorViewV2,
+} from '../request-snapshot/scope-folded-discovery-selector-v2.js';
 import {
-  createTrustedPreFinalScopeClassificationViewForTestV2,
+  createEmptyTrustedPreFinalScopeClassificationViewV2,
   readStableEligibleScopeRecordsV2,
+  requirePreFinalScopeClassificationViewV2,
   requireStableEligibleScopeViewV2,
   type TrustedStableEligibleScopeViewV2,
 } from '../request-snapshot/scope-classification-views-v2.js';
+import type { TrustedScopeEligibilityObservationV2 } from '../request-snapshot/trusted-scope-policy-adapter-v2.js';
 import {
   createVerifiedLanguageConsumerAdmissionV2,
   registerVerifiedLanguageConsumerV2,
@@ -72,30 +76,6 @@ export interface ExecutionCapabilityCoverageMountV2 {
 }
 
 /**
- * discoveryKey → posix file；格式 `discovery:v1\\0file\\0...`。
- */
-function posixFileFromDiscoveryKeyV2(discoveryKey: string): string | undefined {
-  const parts = discoveryKey.split('\u0000');
-  if (
-    parts[0] === 'discovery:v1' &&
-    parts[1] !== undefined &&
-    parts[1].length > 0
-  ) {
-    return parts[1].replaceAll('\\', '/');
-  }
-  return undefined;
-}
-
-function posixFromEligibleRecordV2(
-  record: PreFinalEligibleDiscoveryRecordV2,
-): string {
-  return (
-    posixFileFromDiscoveryKeyV2(record.discoveryKey) ??
-    String(record.canonicalFileKey).replaceAll('\\', '/')
-  );
-}
-
-/**
  * 为 canonical success envelope 构建并校验 capability owner facts。
  * 同 execution 用 retained eligible ∩ stable scope included 建 observation，
  * 并对每条 ref 走 classify→language port→three-port seal。
@@ -104,34 +84,23 @@ export async function buildExecutionCapabilityCoverageMountV2(input: {
   readonly execution: LocateExecutionTokenV2;
   readonly foldProof: ScopeFoldedSafePoolProofV2;
   readonly scopeProof: ScopeCoverageProofV1;
-  readonly eligiblePool?: TrustedStableEligibleDiscoveryPoolV2;
-  readonly snapshotProof?: SnapshotTrustProofV2;
+  readonly eligiblePool: TrustedStableEligibleDiscoveryPoolV2;
+  readonly snapshotProof: SnapshotTrustProofV2;
   readonly rankingOutcome?: EvidenceRankingOutcomeV2;
-  readonly retainedEligible?: readonly PreFinalEligibleDiscoveryRecordV2[];
+  readonly retainedEligible: readonly PreFinalEligibleDiscoveryRecordV2[];
+  readonly scopeAuthority?: Readonly<{
+    observation: TrustedScopeEligibilityObservationV2;
+    foldedView: TrustedScopeFoldedSelectorViewV2;
+    boundSelection: BoundSafeDiscoverySelectionV2;
+  }>;
   readonly matchedTermsByRef?: ReadonlyMap<
     EligibleDiscoveryRefV2,
     readonly string[]
   >;
   readonly sourceTextByRef?: ReadonlyMap<EligibleDiscoveryRefV2, string>;
 }): Promise<ExecutionCapabilityCoverageMountV2> {
-  let eligiblePool = input.eligiblePool;
-  let snapshotProof = input.snapshotProof;
-  if (eligiblePool === undefined || snapshotProof === undefined) {
-    const registered = await runFinalSnapshotCheckV2({
-      repositoryRoot: '/tmp/capability-execution-mount',
-      loadedFiles: [],
-      evidencePool: {
-        records: [],
-        preRankingPoolTruncated: false,
-        safeSelectionCollision: false,
-      },
-      eligiblePool: { records: [] },
-      gitState: 'unknown',
-      signal: new AbortController().signal,
-    });
-    eligiblePool = registered.eligibleDiscovery;
-    snapshotProof = registered.proof;
-  }
+  const eligiblePool = input.eligiblePool;
+  const snapshotProof = input.snapshotProof;
 
   const stableScopeView: TrustedStableEligibleScopeViewV2 =
     requireStableEligibleScopeViewV2(
@@ -154,10 +123,6 @@ export async function buildExecutionCapabilityCoverageMountV2(input: {
 
   // 仅 stable-included ∩ retained：observation 拒绝 excluded；count 需同 ref scope decision
   const includedRecords: PreFinalEligibleDiscoveryRecordV2[] = [];
-  const scopeDecisions = new Map<
-    EligibleDiscoveryRefV2,
-    (typeof stableScopeRecords)[number]['decision']
-  >();
   for (const scopeRecord of stableScopeRecords) {
     if (
       !scopeRecord.decision.included ||
@@ -170,29 +135,53 @@ export async function buildExecutionCapabilityCoverageMountV2(input: {
       continue;
     }
     includedRecords.push(retained);
-    scopeDecisions.set(scopeRecord.eligibleRef, scopeRecord.decision);
   }
 
   const preFinalPool: PreFinalEligibleDiscoveryPoolV2 = Object.freeze({
     records: Object.freeze([...includedRecords]),
   });
-  const capabilityEntries = includedRecords.map((record) =>
-    Object.freeze({
-      eligibleRef: record.eligibleRef,
-      fileBucketRef: record.fileBucketRef,
-      posixPath: posixFromEligibleRecordV2(record),
-      sourceText: input.sourceTextByRef?.get(record.eligibleRef) ?? '',
-    }),
-  );
-  const capabilityView = createTrustedPreFinalCapabilityViewForTestV2({
-    pool: preFinalPool,
-    execution: input.execution,
-    entries: capabilityEntries,
-  });
-  const scopeView = createTrustedPreFinalScopeClassificationViewForTestV2(
-    input.execution,
-    scopeDecisions,
-  );
+  const scopeAuthority = input.scopeAuthority;
+  const capabilityView =
+    includedRecords.length === 0
+      ? createEmptyTrustedPreFinalCapabilityViewV2(
+          preFinalPool,
+          input.execution,
+        )
+      : (() => {
+          if (scopeAuthority === undefined) {
+            throw new TypeError(
+              'nonempty capability coverage requires scope authority',
+            );
+          }
+          return requirePreFinalCapabilityViewV2(
+            preFinalPool,
+            scopeAuthority.observation,
+            scopeAuthority.foldedView,
+            scopeAuthority.boundSelection,
+            input.execution,
+            input.sourceTextByRef,
+          );
+        })();
+  const scopeView =
+    includedRecords.length === 0
+      ? createEmptyTrustedPreFinalScopeClassificationViewV2(
+          preFinalPool,
+          input.execution,
+        )
+      : (() => {
+          if (scopeAuthority === undefined) {
+            throw new TypeError(
+              'nonempty capability coverage requires scope authority',
+            );
+          }
+          return requirePreFinalScopeClassificationViewV2(
+            preFinalPool,
+            scopeAuthority.observation,
+            scopeAuthority.foldedView,
+            scopeAuthority.boundSelection,
+            input.execution,
+          );
+        })();
   const admission = createVerifiedLanguageConsumerAdmissionV2(
     'language-capability',
     input.execution,
@@ -274,22 +263,13 @@ export async function buildExecutionCapabilityCoverageMountV2(input: {
     );
   }
 
-  const stableCapabilityRecords: readonly TrustedStableEligibleCapabilityRecordViewV2[] =
-    Object.freeze(
-      includedRecords.map((record) =>
-        Object.freeze({
-          eligibleRef: record.eligibleRef,
-          fileBucketRef: record.fileBucketRef,
-        }),
-      ),
-    );
   const stableCapabilityView: TrustedStableEligibleCapabilityViewV2 =
     requireStableEligibleCapabilityViewV2(
       eligiblePool,
       snapshotProof,
       input.foldProof,
+      stableScopeView,
       input.execution,
-      stableCapabilityRecords,
     );
 
   const preBudgetCount = createCapabilityPreBudgetCountV2(
@@ -303,33 +283,9 @@ export async function buildExecutionCapabilityCoverageMountV2(input: {
     input.execution,
   );
 
-  // Retained seal 需要 ledger 与 ranking 对齐；language→ranking ledger 未灌入前
-  // 用同 proof 的 empty ranking 封存（unsupported count 仍来自 pre-budget）。
-  void input.rankingOutcome;
-  const rankingForSeal = issueEvidenceRankingOutcomeV2({
-    fragment: Object.freeze({
-      confirmed: Object.freeze([]),
-      candidates: Object.freeze([]),
-      unsatisfiedAnchors: Object.freeze([]),
-    }),
-    budgetFacts: Object.freeze({
-      maxFilesReached: false,
-      maxConfirmedReached: false,
-      maxCandidatesReached: false,
-      preRankingPoolTruncated: false,
-      safeSelectorCollision: false,
-      safeOrderingCollision: false,
-    }),
-    confirmed: [],
-    candidates: [],
-    snapshotProof,
-    execution: input.execution,
-    collisionAnchorKeys: new Set(),
-  });
-
   const retainedSeal = sealCapabilityRetainedDecisionsV2(
     preBudgetCount,
-    rankingForSeal,
+    input.rankingOutcome,
     observation,
     eligiblePool,
     snapshotProof,

@@ -3,10 +3,10 @@ import { createHash } from 'node:crypto';
 import { realpathSync } from 'node:fs';
 import { relative } from 'node:path';
 
+import { RELEASE_OWNER_V1 } from './release-owner.mjs';
 import { gitEnv } from './real-consumer-snapshot.mjs';
 
 const SENSITIVE_POLICY = 'memory-only-v2-strict-forbidden-scan-no-persist';
-const RELEASE_OWNER = 'Gchigoo';
 const CONFIRMATION_KEYS = new Set([
   'schemaVersion',
   'candidate',
@@ -40,10 +40,13 @@ function assertStrictKeys(value, allowed, label) {
   if (!isPlainObject(value)) {
     throw new Error(`${label} must be an object`);
   }
-  for (const key of Object.keys(value)) {
-    if (!allowed.has(key)) {
-      throw new Error(`${label} contains an undeclared key`);
-    }
+  const actual = Object.keys(value).sort();
+  const required = [...allowed].sort();
+  if (actual.some((key) => !allowed.has(key))) {
+    throw new Error(`${label} contains undeclared key`);
+  }
+  if (actual.join(',') !== required.join(',')) {
+    throw new Error(`${label} keys mismatch`);
   }
 }
 
@@ -104,7 +107,7 @@ export function validateRealConsumerCandidate(candidate) {
   };
 }
 
-export function validateRealConsumerConfirmation(confirmation) {
+export function validateRealConsumerConfirmation(confirmation, options = {}) {
   assertStrictKeys(confirmation, CONFIRMATION_KEYS, 'confirmation');
   if (confirmation.schemaVersion !== 1) {
     throw new Error('confirmation.schemaVersion must be 1');
@@ -136,7 +139,7 @@ export function validateRealConsumerConfirmation(confirmation) {
   if (confirmation.sensitiveOutputPolicy !== SENSITIVE_POLICY) {
     throw new Error('confirmation.sensitiveOutputPolicy mismatch');
   }
-  if (confirmation.owner !== RELEASE_OWNER) {
+  if (confirmation.owner !== RELEASE_OWNER_V1) {
     throw new Error('confirmation.owner does not match the release owner');
   }
   if (
@@ -148,7 +151,8 @@ export function validateRealConsumerConfirmation(confirmation) {
   ) {
     throw new Error('confirmation.verified_at must be canonical ISO timestamp');
   }
-  const ageMs = Date.now() - Date.parse(confirmation.verified_at);
+  const ageMs =
+    (options.now ?? Date.now()) - Date.parse(confirmation.verified_at);
   if (ageMs > 24 * 60 * 60 * 1000 || ageMs < -60_000) {
     throw new Error('confirmation.verified_at must be within 24h');
   }
@@ -203,6 +207,7 @@ export function validateRealConsumerConfirmation(confirmation) {
     confirmedBranch: repository.branch,
     confirmedHeadSha: repository.headSha,
     confirmationDecisionSha256: confirmation.decisionSha256,
+    verifiedAt: confirmation.verified_at,
     candidate,
   };
 }

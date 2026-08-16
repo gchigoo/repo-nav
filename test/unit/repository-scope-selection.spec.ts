@@ -8,7 +8,12 @@ import {
   readScopeFoldedSelectorFactsV2,
   scopeFoldSafeCandidatePoolV2,
   type ScopeFoldCandidateDecisionV2,
+  type TrustedScopeFoldedSelectorViewV2,
 } from '../../src/evidence/request-snapshot/scope-folded-discovery-selector-v2.js';
+import {
+  bindDiscoverySelectionV2,
+  type SafeDiscoverySelectionDraftV2,
+} from '../../src/evidence/request-snapshot/discovery-selection-binding-v2.js';
 import {
   createTrustedRepositoryScopePolicyAdapterV1,
   observeTrustedScopeEligibilityV2,
@@ -106,7 +111,8 @@ describe.runIf(
       true,
       'safe-server.ts',
     );
-    const draft = new DiscoveryHitSelectorV2().select(
+    const selector = new DiscoveryHitSelectorV2();
+    const draft = selector.select(
       folded,
       [
         Object.freeze({
@@ -122,6 +128,25 @@ describe.runIf(
       execution,
     );
     expect(draft.draft.selectedLocatorRefs).toContain(serverRef);
+    expect(Object.isFrozen(draft.draft.selectedLocatorRefs)).toBe(true);
+    expect(Object.isFrozen(draft.draft.reservations)).toBe(true);
+    expect(() => selector.bind(draft, executionToken())).toThrow(
+      /not trusted/i,
+    );
+    expect(() =>
+      selector.select(
+        Object.freeze({}) as TrustedScopeFoldedSelectorViewV2,
+        [],
+        1,
+        execution,
+      ),
+    ).toThrow(/not trusted/i);
+    expect(() =>
+      bindDiscoverySelectionV2(
+        Object.freeze({}) as SafeDiscoverySelectionDraftV2,
+        execution,
+      ),
+    ).toThrow(/not trusted/i);
   });
 });
 

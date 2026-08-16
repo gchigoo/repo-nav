@@ -12,7 +12,7 @@
 
 ## `debug locate`
 
-必需参数为 `--repo`、`--question` 和至少一个可重复 `--term`。还可使用可重复的 `--anchor kind:value`、`--layer`、`--negative-term`，以及 `--term-case`、`--max-files`、`--max-confirmed`、`--max-candidates`、`--timeout-ms`。也可用 `--request <json>` 提供完整请求。
+必需参数为 `--repo` 和至少一个可重复 `--term`。`--question` 是可选的展示字段，不进入检索计划。还可使用可重复的 `--anchor kind:value`、`--layer`、`--negative-term`，以及 `--term-case`、`--max-files`、`--max-confirmed`、`--max-candidates`、`--timeout-ms`。也可用 `--request <json>` 提供完整请求。
 
 ```json docs-smoke:cli-locate
 {

@@ -1,9 +1,11 @@
-import { isDeepStrictEqual } from 'node:util';
-
 import {
   LocateResultV2Schema,
   type LocateResultV2,
 } from '../../src/contracts/v2/locate-result-v2.js';
+import {
+  LocateAgentViewV2Schema,
+  agentViewMatchesResultV2,
+} from '../../src/mcp/locate-agent-view-v2.js';
 
 export interface ParsedLocateToolResult {
   readonly output: LocateResultV2;
@@ -13,10 +15,11 @@ export interface ParsedLocateToolResult {
 }
 
 /**
- * Parse MCP tool result and require structured/text deep-equal v2 parity.
+ * Parse MCP tool result: structuredContent is schema 2.0, text is the agent view.
  */
 export function parseLocateToolResultParity(
   result: unknown,
+  request?: unknown,
 ): ParsedLocateToolResult {
   if (typeof result !== 'object' || result === null) {
     throw new Error('MCP tool result was not an object.');
@@ -39,9 +42,15 @@ export function parseLocateToolResultParity(
   const structured = LocateResultV2Schema.parse(
     'structuredContent' in result ? result.structuredContent : undefined,
   );
-  const text = LocateResultV2Schema.parse(JSON.parse(first.text) as unknown);
-  if (!isDeepStrictEqual(text, structured)) {
-    throw new Error('MCP structured and text output were not equal.');
+  let parsedText: unknown;
+  try {
+    parsedText = JSON.parse(first.text) as unknown;
+  } catch {
+    throw new Error('MCP text content is not JSON.');
+  }
+  LocateAgentViewV2Schema.parse(parsedText);
+  if (!agentViewMatchesResultV2(parsedText, structured, request)) {
+    throw new Error('MCP text content was not the agent-view projection.');
   }
   if (!('isError' in result) || typeof result.isError !== 'boolean') {
     throw new Error('MCP tool result did not declare isError.');

@@ -184,7 +184,10 @@ async function verifyMcp(
         McpRequestSchema,
       );
       const raw = await withTimeout(client.callTool(request), id, 45_000);
-      parsedResults.push({ id, parsed: parseLocateToolResultParity(raw) });
+      parsedResults.push({
+        id,
+        parsed: parseLocateToolResultParity(raw, request.arguments),
+      });
     }
     const success = parsedResults[0]?.parsed;
     const recoverable = parsedResults[1]?.parsed;

@@ -4,6 +4,7 @@ import type {
   CandidateEvidenceV2,
   ConfirmedEvidenceV2,
 } from '../../src/contracts/v2/locate-result-v2.js';
+import { agentViewMatchesResultV2 } from '../../src/mcp/locate-agent-view-v2.js';
 import {
   GoldenCaseSchema,
   GoldenObservationSchema,
@@ -28,6 +29,7 @@ export interface GoldenEvaluationIssue {
 function evaluateTransportParity(
   observation: GoldenObservation,
   expectedMcpIsError: boolean,
+  request?: unknown,
 ): GoldenEvaluationIssue[] {
   const issues: GoldenEvaluationIssue[] = [];
   if (observation.mcpIsError !== expectedMcpIsError) {
@@ -39,14 +41,28 @@ function evaluateTransportParity(
     textResult = JSON.parse(observation.textContent) as unknown;
   } catch {
     issues.push({ path: 'textContent', message: 'Text content is not JSON.' });
+    return issues;
   }
-  if (
-    !isDeepStrictEqual(observation.structuredContent, observation.result) ||
-    !isDeepStrictEqual(textResult, observation.result)
-  ) {
+  if (!isDeepStrictEqual(observation.structuredContent, observation.result)) {
     issues.push({
       path: 'structuredTextParity',
-      message: 'Structured content and text fallback differ from the result.',
+      message: 'Structured content differs from the result.',
+    });
+  }
+  const textMatchesFullResult = isDeepStrictEqual(
+    textResult,
+    observation.result,
+  );
+  const textMatchesAgentView = agentViewMatchesResultV2(
+    textResult,
+    observation.result,
+    request,
+  );
+  if (!textMatchesFullResult && !textMatchesAgentView) {
+    issues.push({
+      path: 'structuredTextParity',
+      message:
+        'Text content is neither the full result nor the MCP agent-view projection.',
     });
   }
   return issues;
@@ -136,6 +152,7 @@ function evaluateSuccess(
   const issues: GoldenEvaluationIssue[] = evaluateTransportParity(
     observation,
     false,
+    goldenCase.request,
   );
   if (result.evidence.status !== goldenCase.expected.status) {
     issues.push({ path: 'result.evidence.status', message: 'Status differs.' });
@@ -237,7 +254,11 @@ function evaluateError(
   }
   if (goldenCase.expected.structuredTextParity) {
     issues.push(
-      ...evaluateTransportParity(observation, goldenCase.expected.mcpIsError),
+      ...evaluateTransportParity(
+        observation,
+        goldenCase.expected.mcpIsError,
+        goldenCase.requestJson,
+      ),
     );
   }
 

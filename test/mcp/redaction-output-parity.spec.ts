@@ -31,15 +31,16 @@ describe.runIf(
   it('keeps forbidden values out of structured, text, stdout protocol, and stderr', async () => {
     const session = await connectMcpStdioFixture();
     try {
+      const request = {
+        repoPath: 'D:/fixture/repository',
+        question: 'redaction-output-parity',
+        terms: ['api_key'],
+      };
       const callResult = await session.client.callTool({
         name: 'repo_nav_locate',
-        arguments: {
-          repoPath: 'D:/fixture/repository',
-          question: 'redaction-output-parity',
-          terms: ['api_key'],
-        },
+        arguments: request,
       });
-      const parity = parseLocateToolResultParity(callResult);
+      const parity = parseLocateToolResultParity(callResult, request);
       expect(parity.isError).toBe(false);
       expect(parity.output.ok).toBe(true);
       if (!parity.output.ok) {

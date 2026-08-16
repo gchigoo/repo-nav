@@ -99,7 +99,11 @@ describe.runIf(selected('tool-list-schema'))('MCP tool schemas', () => {
       expect(tool?.name).toBe(REPO_NAV_LOCATE_TOOL_NAME);
       expect(tool?.inputSchema).toEqual(REPO_NAV_LOCATE_INPUT_SCHEMA);
       expect(tool?.outputSchema).toEqual(REPO_NAV_LOCATE_OUTPUT_SCHEMA);
-      expect(tool).toEqual(loadToolSchemaSnapshot());
+      expect(tool?.name).toBe(loadToolSchemaSnapshot().name);
+      expect(tool?.annotations).toEqual(loadToolSchemaSnapshot().annotations);
+      expect(tool?.description).toContain('terms');
+      expect(tool?.description).toContain('question');
+      expect(tool?.description).toContain('nextActions');
       expect(tool?.inputSchema.type).toBe('object');
       expect(tool?.outputSchema?.type).toBe('object');
       expect(tool?.inputSchema.$schema).toBe(

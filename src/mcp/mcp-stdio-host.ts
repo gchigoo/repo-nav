@@ -121,7 +121,10 @@ export class NodeMcpStdioHost implements McpStdioHost, OnModuleDestroy {
     sdkSignal: AbortSignal,
   ): Promise<CallToolResult> {
     if (this.state === 'closing' || this.state === 'closed') {
-      return serializeLocateTransportView(internalErrorTransportView());
+      return serializeLocateTransportView(
+        internalErrorTransportView(),
+        argumentsValue,
+      );
     }
     return await this.executeTrackedLocate(argumentsValue, sdkSignal);
   }
@@ -149,7 +152,7 @@ export class NodeMcpStdioHost implements McpStdioHost, OnModuleDestroy {
       const view = await this.locateApplication.execute(rawRequest, {
         callerSignal: tracked.controller.signal,
       });
-      return serializeLocateTransportView(view);
+      return serializeLocateTransportView(view, rawRequest);
     } catch {
       // Unexpected transport failure — protocol-level, not a trusted public result.
       throw new McpError(ErrorCode.InternalError, 'Locate transport failed.');

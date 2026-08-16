@@ -122,8 +122,11 @@ describe.runIf(paritySelected)('v2 synthetic projection parity', () => {
     const projection = projectSyntheticLocateResultV2(transport.value);
     expect(projection.service).toEqual(transport.value);
     expect(projection.structuredContent).toEqual(transport.value);
-    expect(projection.text).toBe(transport.compactJson);
     expect(JSON.parse(projection.debugLocateStdout)).toEqual(transport.value);
+    expect(JSON.parse(projection.text)).toMatchObject({
+      ok: true,
+      schemaVersion: '2.0-agent',
+    });
     expect(projection.isError).toBe(false);
     expect(JSON.stringify(projection)).not.toContain(rawSecret);
   });
@@ -136,8 +139,11 @@ describe.runIf(paritySelected)('v2 synthetic projection parity', () => {
     const projection = projectSyntheticLocateResultV2(transport.value);
     expect(projection.service).toEqual(transport.value);
     expect(projection.structuredContent).toEqual(transport.value);
-    expect(projection.text).toBe(transport.compactJson);
     expect(JSON.parse(projection.debugLocateStdout)).toEqual(transport.value);
+    expect(JSON.parse(projection.text)).toMatchObject({
+      ok: false,
+      schemaVersion: '2.0-agent',
+    });
     expect(projection.isError).toBe(true);
   });
 });

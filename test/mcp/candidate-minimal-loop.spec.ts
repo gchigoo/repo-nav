@@ -12,16 +12,17 @@ describe.runIf(
   it('returns confirmed and bounded candidates with transport parity', async () => {
     const session = await connectMcpStdioFixture();
     try {
+      const request = {
+        repoPath: 'D:/fixture/repository',
+        question: 'candidate-minimal-loop',
+        terms: ['hcpId', 'row.hcp_id'],
+        limits: { maxCandidates: 8 },
+      };
       const result = await session.client.callTool({
         name: 'repo_nav_locate',
-        arguments: {
-          repoPath: 'D:/fixture/repository',
-          question: 'candidate-minimal-loop',
-          terms: ['hcpId', 'row.hcp_id'],
-          limits: { maxCandidates: 8 },
-        },
+        arguments: request,
       });
-      const parsed = parseLocateToolResultParity(result);
+      const parsed = parseLocateToolResultParity(result, request);
       expect(parsed.isError).toBe(false);
       expect(parsed.output.ok).toBe(true);
       if (!parsed.output.ok) {

@@ -73,7 +73,10 @@ describe.runIf(selected('invalid-input'))('MCP invalid input mapping', () => {
           name: 'repo_nav_locate',
           arguments: invalid.argumentsValue,
         });
-        const parsed = parseLocateToolResultParity(result);
+        const parsed = parseLocateToolResultParity(
+          result,
+          invalid.argumentsValue,
+        );
         expectSafeError(parsed, 'INVALID_INPUT');
         if (!parsed.output.ok) {
           expect(parsed.output.error.recoverable).toBe(true);
@@ -97,11 +100,12 @@ async function verifyServiceError(
 ): Promise<void> {
   const session = await connectMcpStdioFixture();
   try {
+    const request = { ...baseArguments, question };
     const result = await session.client.callTool({
       name: 'repo_nav_locate',
-      arguments: { ...baseArguments, question },
+      arguments: request,
     });
-    const parsed = parseLocateToolResultParity(result);
+    const parsed = parseLocateToolResultParity(result, request);
     expectSafeError(parsed, code);
     if (!parsed.output.ok) {
       expect(parsed.output.error.recoverable).toBe(recoverable);
@@ -153,11 +157,12 @@ describe.runIf(selected('internal-error-parity'))(
           'throw:INTERNAL_ERROR',
           'error:INTERNAL_ERROR',
         ] as const) {
+          const request = { ...baseArguments, question };
           const result = await session.client.callTool({
             name: 'repo_nav_locate',
-            arguments: { ...baseArguments, question },
+            arguments: request,
           });
-          const parsed = parseLocateToolResultParity(result);
+          const parsed = parseLocateToolResultParity(result, request);
           expectSafeError(parsed, 'INTERNAL_ERROR');
           if (!parsed.output.ok) {
             expect(parsed.output.error.recoverable).toBe(false);

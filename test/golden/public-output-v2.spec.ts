@@ -109,7 +109,9 @@ describe.runIf(projectionSelected)(
       const projection = projectSyntheticLocateResultV2(parsed);
       expect(projection.service).toEqual(parsed);
       expect(projection.structuredContent).toEqual(parsed);
-      expect(JSON.parse(projection.text)).toEqual(parsed);
+      expect(JSON.parse(projection.text)).toMatchObject({
+        schemaVersion: '2.0-agent',
+      });
       expect(JSON.parse(projection.debugLocateStdout)).toEqual(parsed);
       expect(JSON.stringify(projection)).not.toContain(forbidden);
     });
@@ -199,7 +201,9 @@ describe.runIf(projectionSelected)(
       }
       expect(projection.service).toEqual(parsed);
       expect(projection.structuredContent).toEqual(parsed);
-      expect(JSON.parse(projection.text)).toEqual(parsed);
+      expect(JSON.parse(projection.text)).toMatchObject({
+        schemaVersion: '2.0-agent',
+      });
       expect(JSON.parse(projection.debugLocateStdout)).toEqual(parsed);
     });
   },

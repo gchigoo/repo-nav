@@ -647,6 +647,15 @@ export const RUNNER_IDENTITY_REGISTRY = defineRunnerIdentityRegistry([
     ownerFiles: ['test/mcp/tool-surface.spec.ts'],
   },
   {
+    surface: 'unit',
+    identity: {
+      group: 'mcp-surface',
+      caseId: 'locate-agent-view',
+    },
+    ownerFiles: ['test/unit/locate-agent-view-v2.spec.ts'],
+    platformOwnerFiles: ['test/unit/locate-agent-view-v2.spec.ts'],
+  },
+  {
     surface: 'mcp',
     identity: {
       group: 'runner-smoke',

@@ -62,20 +62,29 @@ function addLocateRuntimeConstraintAnnotations(
       'Runtime Zod validation additionally enforces a serialized input UTF-8 byte budget and cross-field refinements.',
     properties: {
       ...properties,
-      repoPath: describeRuntimeString(
-        properties.repoPath,
-        'repoPath',
-        4096,
-        'filesystem',
-      ),
+      repoPath: {
+        ...describeRuntimeString(
+          properties.repoPath,
+          'repoPath',
+          4096,
+          'filesystem',
+        ),
+        description:
+          'Target repository root as a raw filesystem string preserved without NFKC/trim; ' +
+          'runtime validation rejects NUL and values over 4096 UTF-8 bytes.',
+      },
       question: {
         ...describeRuntimeString(properties.question, 'question', 4096),
         description:
-          'Optional display-only question; when present must remain non-empty after NFKC/trim ' +
-          '(max 4096 UTF-8 bytes). Omitted question does not affect search plan.',
+          'Optional display-only note. It does not change the search plan. ' +
+          'Put identifiers in terms. When present must remain non-empty after NFKC/trim ' +
+          '(max 4096 UTF-8 bytes).',
       },
       terms: {
         ...terms,
+        description:
+          'Required search strings. These are the only positive query inputs. ' +
+          'Extract concrete identifiers, symbol names, or exact literals from the user question.',
         $comment:
           'Runtime validation limits all normalized positive terms to 1024 UTF-8 bytes in total.',
         items: describeRuntimeString(terms.items, 'search term', 128),
@@ -92,6 +101,9 @@ function addLocateRuntimeConstraintAnnotations(
       },
       anchors: {
         ...anchors,
+        description:
+          'Optional locate hints. Use symbol when you know a definition name, ' +
+          'file for a repository-relative POSIX path, or table/route/term for those exact values.',
         items: {
           ...anchorItems,
           $comment:
@@ -200,7 +212,13 @@ export const REPO_NAV_LOCATE_TOOL: Tool = Object.freeze({
   name: REPO_NAV_LOCATE_TOOL_NAME,
   title: 'Locate repository evidence',
   description:
-    'Locate current, filesystem-verified source-of-truth evidence in a repository.',
+    'Locate filesystem-verified evidence in a local repository. ' +
+    'Search is driven only by required `terms` plus optional `anchors`, `layers`, `negativeTerms`, and `termCase`. ' +
+    '`question` is display-only and does not change the search plan. ' +
+    'Put concrete identifiers in `terms`; add a symbol or file anchor when you already know that name or path. ' +
+    '`ok: true` with status `no_result` is a completed search, not a tool error. ' +
+    'Read `nextActions` on retry: ADD_TERM, ADD_SYMBOL_ANCHOR, CONFIRM_CANDIDATE, INITIALIZE_CODEGRAPH, or RETRY_WITH_HIGHER_LIMIT. ' +
+    'MCP text content is a compact agent view; structuredContent is the full schema 2.0 result.',
   inputSchema: REPO_NAV_LOCATE_INPUT_SCHEMA,
   outputSchema: REPO_NAV_LOCATE_OUTPUT_SCHEMA,
   annotations: Object.freeze({

@@ -30,6 +30,8 @@ npm i -g repo-nav@2.0.0
 
 服务只发布只读工具 `repo_nav_locate`。宿主连接后先执行 `tools/list`，然后可发送以下调用。
 
+检索只由 `terms` 和可选的 `anchors` / `layers` / `negativeTerms` / `termCase` 决定。`question` 只是展示备注，不会改变搜索计划。把标识符放进 `terms`；已经知道符号名或相对路径时再加 `symbol` / `file` anchor。`ok: true` 且 `status: no_result` 是完成的搜索，不是工具错误。MCP `content` 文本是精简 agent view（含 `nextActions` 建议值）；`structuredContent` 仍是完整 schema `2.0` 结果。
+
 ## 程序化 API
 
 当前 `2.0.0` package export map：
@@ -84,4 +86,4 @@ npm i -g repo-nav@2.0.0
 }
 ```
 
-三类调用都同时返回 `structuredContent` 与等价的 JSON text content；只有 `ok=false` 时 `isError=true`。
+三类调用都同时返回完整 `structuredContent` 与精简 agent-view JSON text；只有 `ok=false` 时 `isError=true`。

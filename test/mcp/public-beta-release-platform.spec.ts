@@ -310,12 +310,13 @@ describe.runIf(selected)('F9-PACK-001 platform assertion owner', () => {
       const observation = requireObservation();
       expect(observation.mcpToolNames).toContain('repo_nav_locate');
       expect(observation.mcpStderr).toBe('');
-      expect(observation.mcpStructuredContent).toEqual(
-        observation.mcpTextContent,
-      );
       expect(observation.mcpStructuredContent).toMatchObject({
         ok: true,
         evidence: { schemaVersion: '2.0' },
+      });
+      expect(observation.mcpTextContent).toMatchObject({
+        ok: true,
+        schemaVersion: '2.0-agent',
       });
     },
     120_000,

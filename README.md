@@ -36,7 +36,9 @@ After install, register the stdio MCP server (`repo-nav-mcp`):
 }
 ```
 
-The server publishes one read-only MCP tool:
+The server publishes one read-only MCP tool. `terms` drive the search;
+`question` is display-only and does not change the plan. MCP text content is a
+compact agent view; `structuredContent` stays the full schema `2.0` result.
 
 ```text
 repo_nav_locate

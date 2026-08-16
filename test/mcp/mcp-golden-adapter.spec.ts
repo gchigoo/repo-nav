@@ -40,15 +40,16 @@ describe.runIf(isSelected(identity))('MCP Golden observation adapter', () => {
   it('feeds both success and error transport observations to the shared evaluator', async () => {
     const session = await connectMcpStdioFixture();
     try {
+      const successArguments = {
+        repoPath: 'D:/fixture/repository',
+        question: 'source-field-mapping',
+        terms: ['hcp_id', 'hcpId'],
+      };
       const successRaw = await session.client.callTool({
         name: 'repo_nav_locate',
-        arguments: {
-          repoPath: 'D:/fixture/repository',
-          question: 'source-field-mapping',
-          terms: ['hcp_id', 'hcpId'],
-        },
+        arguments: successArguments,
       });
-      const success = parseLocateToolResultParity(successRaw);
+      const success = parseLocateToolResultParity(successRaw, successArguments);
       expect(() =>
         assertGoldenCase(loadCase('mcp-source-field-mapping.yaml'), {
           result: success.output,
@@ -58,15 +59,16 @@ describe.runIf(isSelected(identity))('MCP Golden observation adapter', () => {
         }),
       ).not.toThrow();
 
+      const errorArguments = {
+        repoPath: 'D:/fixture/repository',
+        question: 'missing terms',
+        terms: [],
+      };
       const errorRaw = await session.client.callTool({
         name: 'repo_nav_locate',
-        arguments: {
-          repoPath: 'D:/fixture/repository',
-          question: 'missing terms',
-          terms: [],
-        },
+        arguments: errorArguments,
       });
-      const error = parseLocateToolResultParity(errorRaw);
+      const error = parseLocateToolResultParity(errorRaw, errorArguments);
       expect(() =>
         assertGoldenCase(loadCase('manifest-schema-error.yaml'), {
           result: error.output,

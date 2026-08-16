@@ -22,14 +22,15 @@ describe.runIf(selected('source-field-mapping'))(
     it('returns one confirmed mapping through real stdio', async () => {
       const session = await connectMcpStdioFixture();
       try {
+        const request = {
+          ...baseArguments,
+          question: 'source-field-mapping',
+        };
         const result = await session.client.callTool({
           name: 'repo_nav_locate',
-          arguments: {
-            ...baseArguments,
-            question: 'source-field-mapping',
-          },
+          arguments: request,
         });
-        const parsed = parseLocateToolResultParity(result);
+        const parsed = parseLocateToolResultParity(result, request);
         const output = parsed.output;
         expect(parsed.isError).toBe(false);
         expect(output.ok).toBe(true);
@@ -59,14 +60,15 @@ describe.runIf(selected('recoverable-status-parity'))(
       ];
       try {
         for (const status of statuses) {
+          const request = {
+            ...baseArguments,
+            question: `status:${status}`,
+          };
           const result = await session.client.callTool({
             name: 'repo_nav_locate',
-            arguments: {
-              ...baseArguments,
-              question: `status:${status}`,
-            },
+            arguments: request,
           });
-          const parsed = parseLocateToolResultParity(result);
+          const parsed = parseLocateToolResultParity(result, request);
           const output = parsed.output;
           expect(parsed.isError).toBe(false);
           expect(output.ok).toBe(true);

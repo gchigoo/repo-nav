@@ -98,10 +98,6 @@ jobs:
         name: Runtime probe
         run: node --import tsx tools/ci/run-platform-contracts.mjs --runtime-probe --cell ${{ matrix.cellId }}
 
-      - id: build
-        name: Build
-        run: npm run build
-
       - id: typecheck
         name: Typecheck
         run: npm run typecheck
@@ -109,6 +105,10 @@ jobs:
       - id: unit
         name: Unit tests
         run: npm test
+
+      - id: build
+        name: Build
+        run: npm run build
 
       - id: golden
         name: Golden tests

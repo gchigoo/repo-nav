@@ -30,10 +30,7 @@ import {
   type PrivatePlatformRunnerResultV1,
   validatePlatformBatchResult,
 } from '../../testkit/testing/platform-contract.js';
-import {
-  isExplicitlySelected,
-  isSelected,
-} from '../../testkit/testing/selection.js';
+import { isSelected } from '../../testkit/testing/selection.js';
 
 const repositoryRoot = resolve(import.meta.dirname, '..', '..');
 const SELECTED_CONTRACTS = [
@@ -47,10 +44,6 @@ const PLATFORM_PROCESS_BUDGET_IDENTITY = {
   group: 'cross-platform-ci-contract',
   caseId: 'platform-process-budget',
 } as const;
-const runPlainUnitProbe =
-  process.env['REPO_NAV_PLAIN_UNIT_PROBE_ACTIVE'] !== '1' &&
-  !isExplicitlySelected(PLATFORM_PROCESS_BUDGET_IDENTITY);
-
 interface PlatformCommandInvocation {
   readonly executable: string;
   readonly args: readonly string[];
@@ -276,20 +269,13 @@ function checkoutFetchDepth(job: Record<string, unknown> | undefined): unknown {
     : undefined;
 }
 
-function createFreshBuildBudgetFixture(
-  options: {
-    readonly includeGit?: boolean;
-  } = {},
-): {
+function createFreshBuildBudgetFixture(): {
   readonly parent: string;
   readonly root: string;
 } {
   const parent = mkdtempSync(join(tmpdir(), 'repo-nav-build-budget-'));
   const fixtureRoot = join(parent, 'repo');
-  const excluded = new Set(['dist', 'node_modules', 'test-artifacts']);
-  if (options.includeGit !== true) {
-    excluded.add('.git');
-  }
+  const excluded = new Set(['.git', 'dist', 'node_modules', 'test-artifacts']);
   cpSync(repositoryRoot, fixtureRoot, {
     recursive: true,
     filter(source) {
@@ -642,48 +628,6 @@ syncBuiltinESMExports();
       },
     );
 
-    it.runIf(runPlainUnitProbe)(
-      'runs plain unit tests from a clean checkout without dist, candidates, or builds',
-      { timeout: 360_000 },
-      () => {
-        const fixture = createFreshBuildBudgetFixture({ includeGit: true });
-        try {
-          const npmCli = resolve(
-            repositoryRoot,
-            'node_modules/npm/bin/npm-cli.js',
-          );
-          const environment: NodeJS.ProcessEnv = {
-            ...process.env,
-            REPO_NAV_PLAIN_UNIT_PROBE_ACTIVE: '1',
-          };
-          for (const key of [
-            'REPO_NAV_TEST_GROUPS',
-            'REPO_NAV_TEST_CASES',
-            'REPO_NAV_TEST_IDENTITIES',
-            'REPO_NAV_PLATFORM_RESULT_CAPTURE_PATH',
-            'REPO_NAV_PLATFORM_RESULT_PATH',
-            'REPO_NAV_REPOSITORY_ROOT',
-          ]) {
-            delete environment[key];
-          }
-          const unit = spawnSync(process.execPath, [npmCli, 'test'], {
-            cwd: fixture.root,
-            encoding: 'utf8',
-            shell: false,
-            env: environment,
-            timeout: 340_000,
-          });
-          expect(unit.status, unit.stderr || unit.stdout).toBe(0);
-          expect(existsSync(join(fixture.root, 'dist'))).toBe(false);
-          expect(
-            existsSync(join(fixture.root, 'test-artifacts/release-candidate')),
-          ).toBe(false);
-        } finally {
-          rmSync(fixture.parent, { recursive: true, force: true });
-        }
-      },
-    );
-
     it('fails closed when validator summaries do not match the selected surface group', async () => {
       const selectedBindings = bindingsForContracts(['F4-PATH-001']);
       const commandRunner = async (
@@ -744,8 +688,12 @@ syncBuiltinESMExports();
 
       expect(checkoutFetchDepth(matrixJob)).toBe(0);
       expect(checkoutFetchDepth(jobs['macos-arm-unit'])).toBe(0);
+      expect(matrixRuns).toContain('npm test');
       expect(matrixRuns.filter((run) => run === 'npm run build')).toHaveLength(
         1,
+      );
+      expect(matrixRuns.indexOf('npm test')).toBeLessThan(
+        matrixRuns.indexOf('npm run build'),
       );
       expect(
         matrixRuns.filter((run) => run.includes('npm run build')),

@@ -108,7 +108,7 @@ Push, tag, publish, owner actions, and other remote writes remain separate expli
 - A separate macOS ARM Node 22 job runs typechecking and unit tests.
 - A dedicated Ubuntu Node 22 job installs CodeGraph `1.1.6` and runs the live integration test; ordinary unit jobs do not install CodeGraph.
 - `package-release-ci` runs lint, formatting, build, package smoke, installed closure, security audit, SBOM verification, fixture benchmarks, and the authoritative snapshot candidate benchmark.
-- The nightly benchmark is a non-blocking fixture-scenario placeholder, not yet a multi-sample real-repository suite.
+- The nightly benchmark runs fixture scenarios and the quality gate (latency plus timeout/no-result rates). Extra local repositories can be supplied with `REPO_NAV_REAL_REPOS`; remotes are not cloned.
 - The release-tag workflow validates an existing tag, package version, tarball, installed closure, benchmark, and CLI/MCP build. Publishing remains an explicit owner action.
 
 ## Documentation authority

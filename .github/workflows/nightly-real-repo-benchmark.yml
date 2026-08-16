@@ -50,3 +50,6 @@ jobs:
 
       - name: Fixture-scenario smoke
         run: npm run benchmark:fixture-scenarios
+
+      - name: Quality gate
+        run: npm run benchmark:quality-gate

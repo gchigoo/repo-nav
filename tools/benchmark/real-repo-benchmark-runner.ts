@@ -32,6 +32,8 @@ const LanguageFamilySchema = z.enum([
   'ts',
   'js',
   'sql',
+  'python',
+  'go',
   'mixed',
   'unsupported',
 ]);

@@ -1593,13 +1593,13 @@ export const RUNNER_IDENTITY_REGISTRY = defineRunnerIdentityRegistry([
     ownerFiles: ['test/unit/public-beta-release-package-api.spec.ts'],
   },
   {
-    surface: 'unit',
+    surface: 'mcp',
     identity: {
       group: 'public-beta-release',
       caseId: 'package-install-and-bin-smoke',
     },
-    ownerFiles: ['test/unit/public-beta-release-platform.spec.ts'],
-    platformOwnerFiles: ['test/unit/public-beta-release-platform.spec.ts'],
+    ownerFiles: ['test/mcp/public-beta-release-platform.spec.ts'],
+    platformOwnerFiles: ['test/mcp/public-beta-release-platform.spec.ts'],
   },
   {
     surface: 'unit',

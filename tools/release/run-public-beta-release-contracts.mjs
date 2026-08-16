@@ -67,12 +67,14 @@ const SURFACE_RUNNERS = Object.freeze({
   unit: 'testkit/runners/unit-runner.ts',
   docs: 'testkit/runners/unit-runner.ts',
   golden: 'testkit/runners/golden-runner.ts',
+  mcp: 'testkit/runners/mcp-runner.ts',
 });
 
 const SURFACE_COMMAND = Object.freeze({
   unit: 'CMD-F9-UNIT',
   docs: 'CMD-DOCS',
   golden: 'CMD-LARGE',
+  mcp: 'CMD-MCP-ALL',
 });
 
 /**

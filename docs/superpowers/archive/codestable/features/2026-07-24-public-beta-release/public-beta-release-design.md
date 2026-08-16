@@ -337,20 +337,20 @@ F9只形成`0.2.0-beta.1` release candidate。license必须由owner在实现前�
     readiness要求confirmation≤evidence≤24小时且二者same candidate。schema拒绝owner、path、branch、
     HEAD、request hash、文件/hash分量、stdout/stderr或raw output字段。
 24. **F4 package binding是child-owned extension**：F9同revision向F4 closed union/registry加入
-    `{contractId:'F9-PACK-001',surface:'unit',group:'public-beta-release',
+    `{contractId:'F9-PACK-001',surface:'mcp',group:'public-beta-release',
     executableCaseId:'package-install-and-bin-smoke',
     applicableOs:['linux','win32','darwin'],
     requiredAssertionIds:['tarball-allowlist-exact','package-bins-executable',
     'node-engine-range-declared','mcp-v2-installed-parity','package-runtime-closure'],
     requiredEvidenceHashIds:['candidate-id','semantic-manifest','production-closure'],
     fixture:'testkit/fixtures/release-v2/package-install-v2.ts',
-    assertionOwner:'test/unit/public-beta-release-platform.spec.ts'}`。五marker在Node22/24三OS六格
+    assertionOwner:'test/mcp/public-beta-release-platform.spec.ts'}`。五marker在Node22/24三OS六格
     非零；`node-engine-range-declared`只证明manifest exact range及semver边界
     `21=false,22=true,23=false,24=true,25=false`，不声称npm install hard fail。漏
     union/binding/fixture/assertion owner/evidence owner、wrong path、zero marker/evidence、
     invalid/duplicate/unknown evidence、错tuple或缩小OS均失败。三个
     `PlatformEvidenceHashOwnerV1`都固定由
-    `test/unit/public-beta-release-platform.spec.ts`拥有；case只在actual tgz完成clean install、
+    `test/mcp/public-beta-release-platform.spec.ts`拥有；case只在actual tgz完成clean install、
     semantic manifest和full production closure验证后各调用一次
     `recordPlatformContractEvidenceHash`，分别写入candidate ID、semantic manifest与production
     closure的64位小写hex，不能从环境变量或expected fixture伪回填。
@@ -1163,7 +1163,7 @@ platform/package/security/real-consumer commands；任一ID零次、重复、ali
 | `F9-PACKAGE-API-001` / `public-beta-release/package-api` | `testkit/fixtures/release-v2/package-api-snapshot-v2.ts` | `test/unit/public-beta-release-package-api.spec.ts` | `testkit/runners/runner-registry.ts`; `testkit/manifests/coverage/fixture-ownership.yaml` | `src/index.ts`; `package.json` |
 | `F9-METADATA-001` / `public-beta-release/package-metadata` | `testkit/fixtures/release-v2/package-metadata-v2.ts` | `test/unit/public-beta-release-metadata.spec.ts` | `testkit/runners/runner-registry.ts`; `testkit/manifests/coverage/fixture-ownership.yaml` | `package.json`; `tools/release/check-package-metadata.mjs` |
 | `F9-QUALITY-001` / `public-beta-release/quality-gates` | `testkit/fixtures/release-v2/quality-config-v2.ts` | `test/unit/public-beta-release-quality.spec.ts` | `testkit/runners/runner-registry.ts`; `testkit/manifests/coverage/fixture-ownership.yaml` | `eslint.config.mjs`; `.prettierrc.json` |
-| `F9-PACK-001` / `public-beta-release/package-install-and-bin-smoke` | `testkit/fixtures/release-v2/package-allowlist-v2.ts`; `testkit/fixtures/release-v2/package-install-v2.ts` | `test/unit/public-beta-release-package.spec.ts`; `test/unit/public-beta-release-platform.spec.ts` | `testkit/runners/runner-registry.ts`; `testkit/contracts/platform-contract.ts`; `testkit/contracts/platform-evidence-report.ts`; `tools/ci/run-platform-contracts.mjs`; `tools/ci/assert-public-beta-package-evidence.mjs`; `testkit/manifests/coverage/fixture-ownership.yaml` | `tools/release/pack-candidate.mjs`; `testkit/contracts/platform-contract.ts`; `testkit/contracts/platform-evidence-report.ts`; `tools/ci/assert-public-beta-package-evidence.mjs` |
+| `F9-PACK-001` / `public-beta-release/package-install-and-bin-smoke` | `testkit/fixtures/release-v2/package-allowlist-v2.ts`; `testkit/fixtures/release-v2/package-install-v2.ts` | `test/unit/public-beta-release-package.spec.ts`; `test/mcp/public-beta-release-platform.spec.ts` | `testkit/runners/runner-registry.ts`; `testkit/contracts/platform-contract.ts`; `testkit/contracts/platform-evidence-report.ts`; `tools/ci/run-platform-contracts.mjs`; `tools/ci/assert-public-beta-package-evidence.mjs`; `testkit/manifests/coverage/fixture-ownership.yaml` | `tools/release/pack-candidate.mjs`; `testkit/contracts/platform-contract.ts`; `testkit/contracts/platform-evidence-report.ts`; `tools/ci/assert-public-beta-package-evidence.mjs` |
 | `F9-PACK-REPRO-001` / `public-beta-release/package-reproducibility` | `testkit/fixtures/release-v2/reproducibility-v2.ts` | `test/unit/public-beta-release-package.spec.ts` | `testkit/runners/runner-registry.ts`; `testkit/manifests/coverage/fixture-ownership.yaml` | `tools/release/build-package-candidate.mjs`; `testkit/manifests/release-v2/release-candidate-source-paths-v1.json`; `.gitattributes`; `tsconfig.build.json` |
 | `F9-INSTALL-001` / `public-beta-release/installed-closure` | `testkit/fixtures/release-v2/package-install-v2.ts` | `test/unit/public-beta-release-install.spec.ts` | `testkit/runners/runner-registry.ts`; `testkit/manifests/coverage/fixture-ownership.yaml` | `tools/release/verify-installed-closure.mjs` |
 | `F9-AUDIT-001` / `public-beta-release/installed-audit` | `testkit/fixtures/release-v2/dependency-closure-v2.ts` | `test/unit/public-beta-release-security.spec.ts` | `testkit/runners/runner-registry.ts`; `testkit/manifests/coverage/fixture-ownership.yaml` | `tools/release/audit-installed-closure.mjs` |

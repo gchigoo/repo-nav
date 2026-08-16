@@ -201,15 +201,15 @@
       "id": "F9-PACK-001",
       "group": "public-beta-release",
       "case": "package-install-and-bin-smoke",
-      "surface": "unit",
-      "commandId": "CMD-F9-UNIT",
+      "surface": "mcp",
+      "commandId": "CMD-MCP-ALL",
       "fixture": [
         "testkit/fixtures/release-v2/package-allowlist-v2.ts",
         "testkit/fixtures/release-v2/package-install-v2.ts"
       ],
       "assertion": [
         "test/unit/public-beta-release-package.spec.ts",
-        "test/unit/public-beta-release-platform.spec.ts"
+        "test/mcp/public-beta-release-platform.spec.ts"
       ],
       "runner": [
         "testkit/runners/runner-registry.ts",

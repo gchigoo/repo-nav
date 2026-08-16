@@ -566,7 +566,7 @@ const BASE_BINDINGS: readonly PlatformCaseBindingV1<PlatformContractIdV1>[] =
     }),
     Object.freeze({
       contractId: 'F9-PACK-001',
-      surface: 'unit',
+      surface: 'mcp',
       group: 'public-beta-release',
       executableCaseId: 'package-install-and-bin-smoke',
       applicableOs: ALL_OS,
@@ -583,12 +583,12 @@ const BASE_BINDINGS: readonly PlatformCaseBindingV1<PlatformContractIdV1>[] =
         'production-closure',
       ]),
       fixture: 'testkit/fixtures/release-v2/package-install-v2.ts',
-      assertionOwner: 'test/unit/public-beta-release-platform.spec.ts',
+      assertionOwner: 'test/mcp/public-beta-release-platform.spec.ts',
     }),
   ]);
 
 const F9_PACK_EVIDENCE_OWNER =
-  'test/unit/public-beta-release-platform.spec.ts' as const;
+  'test/mcp/public-beta-release-platform.spec.ts' as const;
 
 const BASE_MARKER_OWNERS: readonly PlatformAssertionMarkerOwnerV1<PlatformContractIdV1>[] =
   Object.freeze(

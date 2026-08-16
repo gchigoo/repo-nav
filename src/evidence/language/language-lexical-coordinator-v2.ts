@@ -9,13 +9,14 @@ import { createOpaqueTokenV2 } from '../request-snapshot/opaque-token-v2.js';
 import {
   consumeVerifiedLanguageContextV2,
   issueVerifiedLanguagePreparationCarrierV2,
-  type RegisteredVerifiedLanguageConsumerV2,
   type VerifiedLanguageContextConsumptionProofV2,
   type VerifiedLanguageContextRefV2,
   type VerifiedLanguagePreparationCarrierV2,
 } from '../request-snapshot/verified-language-consumer-v2.js';
 import { balancedStructureV2 } from './identifier-structure-kernel-v2.js';
 import { maskNonCode } from './ecmascript-lexical-kernel-v2.js';
+import { maskGoNonCode } from './go-lexical-kernel-v2.js';
+import { maskPythonNonCode } from './python-lexical-kernel-v2.js';
 import { maskSqlNonCode } from './sql-lexical-kernel-v2.js';
 import type {
   LanguageAdapterKindV2,
@@ -175,7 +176,13 @@ function runKernel(
   sourceText: string,
 ): LexicalFactsPayloadV2 {
   const masked =
-    mode === 'sql' ? maskSqlNonCode(sourceText) : maskNonCode(sourceText);
+    mode === 'sql'
+      ? maskSqlNonCode(sourceText)
+      : mode === 'python'
+        ? maskPythonNonCode(sourceText)
+        : mode === 'go'
+          ? maskGoNonCode(sourceText)
+          : maskNonCode(sourceText);
   const structure = balancedStructureV2(masked);
   return Object.freeze({
     sourceText,
@@ -368,6 +375,3 @@ export function readLexicalFactsBucketProbeV2(
     kernelInvocations: bucket.kernelInvocations,
   });
 }
-
-// silence unused import when adapters not yet wired in this module
-void (null as unknown as RegisteredVerifiedLanguageConsumerV2);

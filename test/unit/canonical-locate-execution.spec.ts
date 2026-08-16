@@ -421,6 +421,8 @@ describe.runIf(realEnvelopeSelected)(
         'typescript',
         'javascript',
         'sql',
+        'python',
+        'go',
       ]);
 
       const failingReader: RepositoryReader = {

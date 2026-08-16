@@ -129,7 +129,13 @@ const BASELINE_LOCATE_RESULT_V2 = LocateResultV2Schema.parse({
       },
       capabilities: {
         textSearch: 'supported-text-files',
-        semanticClassification: ['typescript', 'javascript', 'sql'],
+        semanticClassification: [
+          'typescript',
+          'javascript',
+          'sql',
+          'python',
+          'go',
+        ],
         unsupportedLanguageHits: 0,
       },
     },

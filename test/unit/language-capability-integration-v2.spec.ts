@@ -161,7 +161,7 @@ describe.runIf(
         Object.freeze({
           eligibleRef,
           discoveryKey: 'p',
-          canonicalFileKey: 'src/a.py' as never,
+          canonicalFileKey: 'src/a.rs' as never,
           fileBucketRef: bucket,
           classificationDefined: true,
         }),
@@ -174,7 +174,7 @@ describe.runIf(
         {
           eligibleRef,
           fileBucketRef: bucket,
-          posixPath: 'src/a.py',
+          posixPath: 'src/a.rs',
           sourceText: 'x = 1',
         },
       ],
@@ -288,7 +288,7 @@ describe.runIf(
         Object.freeze({
           eligibleRef,
           discoveryKey: 'py',
-          canonicalFileKey: 'src/a.py' as never,
+          canonicalFileKey: 'src/a.rs' as never,
           fileBucketRef: bucket,
           classificationDefined: true,
         }),
@@ -301,7 +301,7 @@ describe.runIf(
         {
           eligibleRef,
           fileBucketRef: bucket,
-          posixPath: 'src/a.py',
+          posixPath: 'src/a.rs',
           sourceText: 'x = 1',
         },
       ],
@@ -594,6 +594,8 @@ describe.runIf(
       'typescript',
       'javascript',
       'sql',
+      'python',
+      'go',
     ]);
   });
 

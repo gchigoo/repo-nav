@@ -197,6 +197,8 @@ describe.runIf(
         'typescript',
         'javascript',
         'sql',
+        'python',
+        'go',
       ]);
       expect(Object.keys(executed.input.facts).sort()).toEqual(
         [...LOCATE_EXECUTION_FACT_FAMILIES_V2].sort(),

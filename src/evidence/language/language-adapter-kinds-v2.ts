@@ -3,10 +3,10 @@
  */
 
 export type LanguageAdapterKindV2 =
-  'typescript' | 'javascript' | 'sql' | 'fallback';
+  'typescript' | 'javascript' | 'sql' | 'python' | 'go' | 'fallback';
 
 export type EcmaLexicalModeV2 = 'ts' | 'tsx' | 'js' | 'jsx';
-export type LanguageLexicalModeV2 = EcmaLexicalModeV2 | 'sql';
+export type LanguageLexicalModeV2 = EcmaLexicalModeV2 | 'sql' | 'python' | 'go';
 
 export type LexicalRegistryStateV2 =
   'pending' | 'fulfilled' | 'failed' | 'disposed';
@@ -25,6 +25,8 @@ export const SEMANTIC_CLASSIFICATION_ORDER_V2 = Object.freeze([
   'typescript',
   'javascript',
   'sql',
+  'python',
+  'go',
 ] as const);
 
 export type SemanticClassificationV2 =

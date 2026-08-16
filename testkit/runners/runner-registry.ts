@@ -1354,7 +1354,25 @@ export const RUNNER_IDENTITY_REGISTRY = defineRunnerIdentityRegistry([
     surface: 'unit',
     identity: {
       group: 'language-capability-boundary',
+      caseId: 'go-adapter',
+    },
+    ownerFiles: ['test/unit/language-evidence-adapters-v2.spec.ts'],
+    platformOwnerFiles: ['test/unit/language-evidence-adapters-v2.spec.ts'],
+  },
+  {
+    surface: 'unit',
+    identity: {
+      group: 'language-capability-boundary',
       caseId: 'javascript-adapter',
+    },
+    ownerFiles: ['test/unit/language-evidence-adapters-v2.spec.ts'],
+    platformOwnerFiles: ['test/unit/language-evidence-adapters-v2.spec.ts'],
+  },
+  {
+    surface: 'unit',
+    identity: {
+      group: 'language-capability-boundary',
+      caseId: 'python-adapter',
     },
     ownerFiles: ['test/unit/language-evidence-adapters-v2.spec.ts'],
     platformOwnerFiles: ['test/unit/language-evidence-adapters-v2.spec.ts'],

@@ -28,7 +28,13 @@ const DEFAULT_SCOPE = Object.freeze({
 
 const DEFAULT_CAPABILITIES = Object.freeze({
   textSearch: 'supported-text-files' as const,
-  semanticClassification: ['typescript', 'javascript', 'sql'] as const,
+  semanticClassification: [
+    'typescript',
+    'javascript',
+    'sql',
+    'python',
+    'go',
+  ] as const,
   unsupportedLanguageHits: 0,
 });
 

@@ -73,7 +73,7 @@ export interface CapabilityPreBudgetCountViewV2 {
 }
 
 export interface CapabilityCoverageFactsViewV2 {
-  readonly semanticClassification: readonly ['typescript', 'javascript', 'sql'];
+  readonly semanticClassification: typeof SEMANTIC_CLASSIFICATION_ORDER_V2;
   readonly unsupportedLanguageHits: number;
   readonly fragment: Readonly<{
     owner: 'capability';
@@ -346,9 +346,12 @@ export function requireCapabilityCoverageFactsV2(
     throw new TypeError('invalid-facts');
   }
   if (
-    record.fragment.semanticClassification[0] !== 'typescript' ||
-    record.fragment.semanticClassification[1] !== 'javascript' ||
-    record.fragment.semanticClassification[2] !== 'sql'
+    record.fragment.semanticClassification.length !==
+      SEMANTIC_CLASSIFICATION_ORDER_V2.length ||
+    SEMANTIC_CLASSIFICATION_ORDER_V2.some(
+      (language, index) =>
+        record.fragment.semanticClassification[index] !== language,
+    )
   ) {
     throw new TypeError('invalid-facts');
   }

@@ -57,7 +57,7 @@ export const LOCATE_EXECUTION_GOLDEN_CHARACTERIZATION_ROWS_V2 = Object.freeze([
     caseId: 'codegraph-symbol-complete-no-fallback',
     ownerFile: 'test/golden/codegraph-fallback.spec.ts',
     semanticSha256:
-      'e6f5779796de027d5827de1bd579ffe0847b862f246932f59e3e6e58405681e7',
+      '3d274783db4c7739622ea4e3bbfdcfc0ae5d16fcbefdebf2a1276e5b07f0f012',
   }),
   Object.freeze({
     family: 'complete-no-hit',
@@ -65,7 +65,7 @@ export const LOCATE_EXECUTION_GOLDEN_CHARACTERIZATION_ROWS_V2 = Object.freeze([
     caseId: 'codegraph-no-result',
     ownerFile: 'test/golden/codegraph-fallback.spec.ts',
     semanticSha256:
-      'f59732a204b9519fa841592e675dcc713bcb91b6e2ef0cb37d5f07b99f73e9ce',
+      '6d31b3e2fefb73cd5a58aa69f5bee34b346aca1a8e747f0bb257923646026b88',
   }),
   Object.freeze({
     family: 'codegraph-unavailable-fallback',
@@ -73,7 +73,7 @@ export const LOCATE_EXECUTION_GOLDEN_CHARACTERIZATION_ROWS_V2 = Object.freeze([
     caseId: 'codegraph-missing',
     ownerFile: 'test/golden/codegraph-fallback.spec.ts',
     semanticSha256:
-      '52f2e80467c9eff5cec70b5121f32e82f8ed704a51df0c831d1f12d9af3c3783',
+      '091e68efa995c6ee204ea38cf2440b3787f10cb5ffddba460431f7b38fa6e8b4',
   }),
   Object.freeze({
     family: 'codegraph-incomplete-fallback',
@@ -81,7 +81,7 @@ export const LOCATE_EXECUTION_GOLDEN_CHARACTERIZATION_ROWS_V2 = Object.freeze([
     caseId: 'codegraph-incomplete',
     ownerFile: 'test/golden/codegraph-fallback.spec.ts',
     semanticSha256:
-      '84b384fc2d2e6e6f73a2236710af0c1765fa9d8be146b3fcaca6274964941958',
+      '0220c3de1d1abab8609538657784d08e46e3dcc1e2d1a7c1597e2319127ddf30',
   }),
   Object.freeze({
     family: 'verified-primary-skip',
@@ -89,7 +89,7 @@ export const LOCATE_EXECUTION_GOLDEN_CHARACTERIZATION_ROWS_V2 = Object.freeze([
     caseId: 'codegraph-symbol-complete-no-fallback',
     ownerFile: 'test/golden/codegraph-fallback.spec.ts',
     semanticSha256:
-      'e6f5779796de027d5827de1bd579ffe0847b862f246932f59e3e6e58405681e7',
+      '3d274783db4c7739622ea4e3bbfdcfc0ae5d16fcbefdebf2a1276e5b07f0f012',
   }),
   Object.freeze({
     family: 'both-backends-unavailable',
@@ -97,7 +97,7 @@ export const LOCATE_EXECUTION_GOLDEN_CHARACTERIZATION_ROWS_V2 = Object.freeze([
     caseId: 'backend-unavailable',
     ownerFile: 'test/golden/codegraph-fallback.spec.ts',
     semanticSha256:
-      '9da746a55f6458f94e1cf111056c135eafc4c15b567848be0624eb30018d15af',
+      '911b3261ce977463c04d358ab79ee3cc99b0fd9ba3f69f55c8a2b57afceaa015',
   }),
   Object.freeze({
     family: 'caller-abort',
@@ -105,7 +105,7 @@ export const LOCATE_EXECUTION_GOLDEN_CHARACTERIZATION_ROWS_V2 = Object.freeze([
     caseId: 'codegraph-global-abort-no-fallback',
     ownerFile: 'test/golden/codegraph-fallback.spec.ts',
     semanticSha256:
-      '20eacf637ac4a6118c1b4aec14ebfcfd85201ae5742389c7a887247b6084e396',
+      'ff8494fd89a2238b34e8b8e9abb8882c22ec5b797cd51e7da3588d7bac9dc017',
   }),
   Object.freeze({
     family: 'unsupported-language',
@@ -113,7 +113,7 @@ export const LOCATE_EXECUTION_GOLDEN_CHARACTERIZATION_ROWS_V2 = Object.freeze([
     caseId: 'ripgrep-incomplete',
     ownerFile: 'test/golden/text-evidence-engine.spec.ts',
     semanticSha256:
-      '5c6a675a4529d5eeb1017ad325a5817a6b082e5cc93bb73709ae1619b1aefbdc',
+      '7d1f1f5f8fb9a44786618d665e9bcd555bde36d6642b5969ff3ad96e3e83385d',
   }),
   Object.freeze({
     family: 'evidence-ids',
@@ -121,7 +121,7 @@ export const LOCATE_EXECUTION_GOLDEN_CHARACTERIZATION_ROWS_V2 = Object.freeze([
     caseId: 'codegraph-secondary-provenance-table',
     ownerFile: 'test/golden/codegraph-fallback.spec.ts',
     semanticSha256:
-      'd6784baabf607fc628ec088d74eef6ad5ea8568218765dfc262b897ea70d6703',
+      'b03de1577870ecbc6d02b888980c5ede6c0be66f7ff41c9804a2463f8cb8f1f7',
   }),
   Object.freeze({
     family: 'backend-order',
@@ -129,7 +129,7 @@ export const LOCATE_EXECUTION_GOLDEN_CHARACTERIZATION_ROWS_V2 = Object.freeze([
     caseId: 'codegraph-incomplete',
     ownerFile: 'test/golden/codegraph-fallback.spec.ts',
     semanticSha256:
-      '84b384fc2d2e6e6f73a2236710af0c1765fa9d8be146b3fcaca6274964941958',
+      '0220c3de1d1abab8609538657784d08e46e3dcc1e2d1a7c1597e2319127ddf30',
   }),
 ] as const satisfies readonly GoldenCompanionCharacterizationRowV2[]);
 
@@ -164,13 +164,13 @@ export function compareGoldenCompanionCharacterizationV2(
 
 export const LOCATE_EXECUTION_INLINE_SEMANTIC_SHA256_V2 = Object.freeze({
   outputLimit:
-    'a19da6e1572f53c88d27721c4af03fc80e9f2dd8cc03146a82848746b54667d9',
+    'f2a1adade78d7c9d03bc8d33bd6eb6b77249191b5eb46569bfc09f99b3c7d679',
   deadlineAbort:
-    '2843b1f9bd48cbacc7aefcd9ce1255b7c8ac0488360ec386d698fab73ef4ebce',
+    '842d3837e2383f385c8dc33d581000601d4a707d1484f8e1d8460d79f0652b2f',
   locationRedaction:
-    '9352dd81037d845aab84c2365032a516facddc6d0484584197cc71a8add5056d',
+    'b874aebf939eebb009b969a30bb3f964430491034a228d9a9ff3c9af3d3f51f2',
   upstreamExpandedHit:
-    'b2c64aa8bc4e4a76ccb3317c464efc86ddfc8c58e70697bb34317e129077e049',
+    '1d722b2f3bc1dbe83b6923ea6846f4affd8e711082279a5d5b5d02500f1bb0f8',
   safeErrors: Object.freeze({
     'invalid-input':
       '41ff7ef3127df04e61cc8e1990f67a70eee26d5c8272d44910972d2e03608446',
@@ -182,7 +182,7 @@ export const LOCATE_EXECUTION_INLINE_SEMANTIC_SHA256_V2 = Object.freeze({
       '01e433b7c491ac574de8acb68232dfd59a06f54bd46185f4508af54ed645a3d9',
   }),
   snapshotMutation:
-    '091bd3a6fae6b6b85150ee57f02c590d4fbf84bbe655313529ebbe04e47fa03c',
+    '1f2863f7bdb4fc482d9df12668773f4419bad008424c3e2f5c2da6afaba7c436',
 });
 
 export const SNAPSHOT_MUTATION_CHARACTERIZATION_RESULT_V2 = Object.freeze({
@@ -260,6 +260,8 @@ export const SNAPSHOT_MUTATION_CHARACTERIZATION_RESULT_V2 = Object.freeze({
           'typescript',
           'javascript',
           'sql',
+          'python',
+          'go',
         ] as const),
         unsupportedLanguageHits: 0,
       }),

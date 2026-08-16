@@ -157,9 +157,12 @@ describe.runIf(
       'typescript',
       'javascript',
       'sql',
+      'python',
+      'go',
     ]);
     expect(registry.resolveAdapter('.ts')).toBe('typescript');
-    expect(registry.resolveAdapter('.py')).toBe('fallback');
+    expect(registry.resolveAdapter('.py')).toBe('python');
+    expect(registry.resolveAdapter('.rs')).toBe('fallback');
   });
 });
 

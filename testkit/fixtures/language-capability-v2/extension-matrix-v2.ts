@@ -51,9 +51,18 @@ export const sqlExtensionCasesV2 = Object.freeze([
   Object.freeze({ basename: 'A.SQL', extension: '.sql', adapter: 'sql' }),
 ]);
 
+export const pythonExtensionCasesV2 = Object.freeze([
+  Object.freeze({ basename: 'a.py', extension: '.py', adapter: 'python' }),
+  Object.freeze({ basename: 'a.pyi', extension: '.pyi', adapter: 'python' }),
+  Object.freeze({ basename: 'A.PY', extension: '.py', adapter: 'python' }),
+]);
+
+export const goExtensionCasesV2 = Object.freeze([
+  Object.freeze({ basename: 'a.go', extension: '.go', adapter: 'go' }),
+  Object.freeze({ basename: 'A.GO', extension: '.go', adapter: 'go' }),
+]);
+
 export const fallbackCandidateCasesV2 = Object.freeze([
-  Object.freeze({ basename: 'a.py', extension: '.py', adapter: 'fallback' }),
-  Object.freeze({ basename: 'a.go', extension: '.go', adapter: 'fallback' }),
   Object.freeze({
     basename: 'README.md',
     extension: '.md',

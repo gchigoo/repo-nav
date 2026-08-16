@@ -117,6 +117,8 @@ describe.runIf(
               'typescript',
               'javascript',
               'sql',
+              'python',
+              'go',
             ]),
             unsupportedLanguageHits: 0,
           },

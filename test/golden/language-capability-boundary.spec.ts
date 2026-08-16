@@ -18,6 +18,8 @@ describe.runIf(
       'typescript',
       'javascript',
       'sql',
+      'python',
+      'go',
     ]);
 
     const result = finalizeLocateResultV2(

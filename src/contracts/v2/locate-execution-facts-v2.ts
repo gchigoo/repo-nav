@@ -180,7 +180,13 @@ export interface LocateExecutionScopeFactsV2 {
 }
 
 export interface LocateExecutionCapabilityFactsV2 {
-  readonly semanticLanguages: readonly ['typescript', 'javascript', 'sql'];
+  readonly semanticLanguages: readonly [
+    'typescript',
+    'javascript',
+    'sql',
+    'python',
+    'go',
+  ];
   readonly unsupportedLanguageHits: number;
 }
 

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { decodeCompleteEmbeddedSqlLiteralV2 } from '../../src/evidence/language/embedded-sql-literal-decoder-v2.js';
+import { createGoLanguageAdapterV2 } from '../../src/evidence/language/go-language-adapter-v2.js';
 import { createJavascriptLanguageAdapterV2 } from '../../src/evidence/language/javascript-language-adapter-v2.js';
+import { createPythonLanguageAdapterV2 } from '../../src/evidence/language/python-language-adapter-v2.js';
 import { createSqlLanguageAdapterV2 } from '../../src/evidence/language/sql-language-adapter-v2.js';
 import { createTypescriptLanguageAdapterV2 } from '../../src/evidence/language/typescript-language-adapter-v2.js';
 import { createFallbackLanguagePolicyV2 } from '../../src/evidence/language/fallback-language-policy-v2.js';
@@ -214,19 +216,75 @@ describe.runIf(
 describe.runIf(
   isSelected({
     group: 'language-capability-boundary',
+    caseId: 'python-adapter',
+  }),
+)('python-adapter', () => {
+  it('classifies Python assignment and definition', async () => {
+    expect(createPythonLanguageAdapterV2().kind).toBe('python');
+    const mapping = await classifyFixture({
+      posixPath: 'src/a.py',
+      sourceText: 'target_field = row.source_field',
+      terms: ['target_field', 'row.source_field'],
+    });
+    expect(mapping.result.kind).toBe('supported-source');
+    if (mapping.result.kind === 'supported-source') {
+      expect(['direct-term', 'direct-anchored', 'verified-literal']).toContain(
+        mapping.result.producerKind,
+      );
+    }
+    const definition = await classifyFixture({
+      posixPath: 'src/a.py',
+      sourceText: 'def resolve_mapping(value):\n    return value\n',
+      terms: ['resolve_mapping'],
+    });
+    expect(definition.result.kind).toBe('supported-source');
+  });
+});
+
+describe.runIf(
+  isSelected({
+    group: 'language-capability-boundary',
+    caseId: 'go-adapter',
+  }),
+)('go-adapter', () => {
+  it('classifies Go assignment and function definition', async () => {
+    expect(createGoLanguageAdapterV2().kind).toBe('go');
+    const mapping = await classifyFixture({
+      posixPath: 'src/a.go',
+      sourceText: 'targetField := row.SourceField',
+      terms: ['targetField', 'row.SourceField'],
+    });
+    expect(mapping.result.kind).toBe('supported-source');
+    if (mapping.result.kind === 'supported-source') {
+      expect(['direct-term', 'direct-anchored', 'verified-literal']).toContain(
+        mapping.result.producerKind,
+      );
+    }
+    const definition = await classifyFixture({
+      posixPath: 'src/a.go',
+      sourceText: 'func ResolveMapping(value string) string { return value }',
+      terms: ['ResolveMapping'],
+    });
+    expect(definition.result.kind).toBe('supported-source');
+  });
+});
+
+describe.runIf(
+  isSelected({
+    group: 'language-capability-boundary',
     caseId: 'fallback-literal',
   }),
 )('F8-FALLBACK-001 fallback-literal', () => {
   it('emits fallback-literal with exact reason/promotion for unsupported extension', async () => {
     expect(createFallbackLanguagePolicyV2().kind).toBe('fallback');
     const withTerm = await classifyFixture({
-      posixPath: 'src/a.py',
+      posixPath: 'src/a.rs',
       sourceText: 'x = 1',
       terms: ['x'],
     });
     expect(withTerm.result.kind).toBe('fallback-literal');
     const noTerm = await classifyFixture({
-      posixPath: 'src/a.py',
+      posixPath: 'src/a.rs',
       sourceText: 'x = 1',
       terms: [],
     });

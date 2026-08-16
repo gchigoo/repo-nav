@@ -7,7 +7,9 @@ import {
 } from '../../src/evidence/language/language-adapter-registry-v2.js';
 import {
   fallbackCandidateCasesV2,
+  goExtensionCasesV2,
   javascriptExtensionCasesV2,
+  pythonExtensionCasesV2,
   sqlExtensionCasesV2,
   typescriptExtensionCasesV2,
 } from '../../testkit/fixtures/language-capability-v2/extension-matrix-v2.js';
@@ -25,6 +27,8 @@ describe.runIf(
       'typescript',
       'javascript',
       'sql',
+      'python',
+      'go',
     ]);
 
     for (const row of typescriptExtensionCasesV2) {
@@ -42,6 +46,16 @@ describe.runIf(
       expect(extension).toBe(row.extension);
       expect(registry.resolveAdapter(extension)).toBe(row.adapter);
     }
+    for (const row of pythonExtensionCasesV2) {
+      const extension = verifiedLastExtensionFromBasenameV2(row.basename);
+      expect(extension).toBe(row.extension);
+      expect(registry.resolveAdapter(extension)).toBe(row.adapter);
+    }
+    for (const row of goExtensionCasesV2) {
+      const extension = verifiedLastExtensionFromBasenameV2(row.basename);
+      expect(extension).toBe(row.extension);
+      expect(registry.resolveAdapter(extension)).toBe(row.adapter);
+    }
     for (const row of fallbackCandidateCasesV2) {
       const extension = verifiedLastExtensionFromBasenameV2(row.basename);
       expect(extension).toBe(row.extension);
@@ -53,6 +67,8 @@ describe.runIf(
         { adapter: 'typescript', extensions: ['.ts', '.ts'] },
         { adapter: 'javascript', extensions: ['.js'] },
         { adapter: 'sql', extensions: ['.sql'] },
+        { adapter: 'python', extensions: ['.py'] },
+        { adapter: 'go', extensions: ['.go'] },
       ]),
     ).toThrow(/duplicate/i);
 
@@ -61,6 +77,8 @@ describe.runIf(
         { adapter: 'typescript', extensions: ['.ts'] },
         { adapter: 'javascript', extensions: ['.ts'] },
         { adapter: 'sql', extensions: ['.sql'] },
+        { adapter: 'python', extensions: ['.py'] },
+        { adapter: 'go', extensions: ['.go'] },
       ]),
     ).toThrow(/duplicate/i);
 
@@ -69,6 +87,8 @@ describe.runIf(
         { adapter: 'typescript', extensions: ['.TS'] },
         { adapter: 'javascript', extensions: ['.js'] },
         { adapter: 'sql', extensions: ['.sql'] },
+        { adapter: 'python', extensions: ['.py'] },
+        { adapter: 'go', extensions: ['.go'] },
       ]),
     ).not.toThrow();
   });

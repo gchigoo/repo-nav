@@ -24,6 +24,14 @@ const DEFAULT_ENTRIES: readonly LanguageAdapterExtensionEntryV2[] =
       adapter: 'sql' as const,
       extensions: Object.freeze(['.sql']),
     }),
+    Object.freeze({
+      adapter: 'python' as const,
+      extensions: Object.freeze(['.py', '.pyi']),
+    }),
+    Object.freeze({
+      adapter: 'go' as const,
+      extensions: Object.freeze(['.go']),
+    }),
   ]);
 
 function asciiFoldExtension(extension: string): string {
@@ -59,11 +67,11 @@ function assertValidExtension(extension: string): string {
 }
 
 export interface LanguageEvidenceAdapterRegistryV2 {
-  readonly semanticClassification: readonly ['typescript', 'javascript', 'sql'];
+  readonly semanticClassification: typeof SEMANTIC_CLASSIFICATION_ORDER_V2;
   resolveAdapter(lastExtension: string | undefined): LanguageAdapterKindV2;
   modeForExtension(
     lastExtension: string | undefined,
-  ): 'ts' | 'tsx' | 'js' | 'jsx' | 'sql' | undefined;
+  ): 'ts' | 'tsx' | 'js' | 'jsx' | 'sql' | 'python' | 'go' | undefined;
 }
 
 /**
@@ -102,7 +110,10 @@ export function createLanguageEvidenceAdapterRegistryV2(
     }
   }
 
-  const modeByExtension = new Map<string, 'ts' | 'tsx' | 'js' | 'jsx' | 'sql'>([
+  const modeByExtension = new Map<
+    string,
+    'ts' | 'tsx' | 'js' | 'jsx' | 'sql' | 'python' | 'go'
+  >([
     ['.ts', 'ts'],
     ['.mts', 'ts'],
     ['.cts', 'ts'],
@@ -112,6 +123,9 @@ export function createLanguageEvidenceAdapterRegistryV2(
     ['.cjs', 'js'],
     ['.jsx', 'jsx'],
     ['.sql', 'sql'],
+    ['.py', 'python'],
+    ['.pyi', 'python'],
+    ['.go', 'go'],
   ]);
 
   return Object.freeze({

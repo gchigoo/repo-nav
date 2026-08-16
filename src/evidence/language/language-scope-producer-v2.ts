@@ -20,7 +20,9 @@ import {
   type ScopeBoundProducerSourceReceiptV2,
 } from '../scope/scope-bound-producer-registrar-v2.js';
 import { materializeScopeBoundEvidenceV2 } from '../scope/scope-bound-evidence-materializer-v2.js';
+import { createGoLanguageAdapterV2 } from './go-language-adapter-v2.js';
 import { createJavascriptLanguageAdapterV2 } from './javascript-language-adapter-v2.js';
+import { createPythonLanguageAdapterV2 } from './python-language-adapter-v2.js';
 import { createSqlLanguageAdapterV2 } from './sql-language-adapter-v2.js';
 import { createTypescriptLanguageAdapterV2 } from './typescript-language-adapter-v2.js';
 import {
@@ -174,6 +176,22 @@ export async function dispatchLanguageEvidenceV2(
     return Object.freeze({
       kind: 'supported-source',
       ...createSqlLanguageAdapterV2().classifySemantic(
+        input as VerifiedSemanticLanguageClassificationInputV2,
+      ),
+    });
+  }
+  if (decision.adapter === 'python') {
+    return Object.freeze({
+      kind: 'supported-source',
+      ...createPythonLanguageAdapterV2().classifySemantic(
+        input as VerifiedSemanticLanguageClassificationInputV2,
+      ),
+    });
+  }
+  if (decision.adapter === 'go') {
+    return Object.freeze({
+      kind: 'supported-source',
+      ...createGoLanguageAdapterV2().classifySemantic(
         input as VerifiedSemanticLanguageClassificationInputV2,
       ),
     });

@@ -340,7 +340,7 @@ describe.runIf(selected)('C1 locate execution characterization', () => {
     expect(LOCATE_EXECUTION_COMPANION_SEMANTIC_SHA256_V2).toEqual(
       expect.objectContaining({
         'codegraph-incomplete':
-          '84b384fc2d2e6e6f73a2236710af0c1765fa9d8be146b3fcaca6274964941958',
+          '0220c3de1d1abab8609538657784d08e46e3dcc1e2d1a7c1597e2319127ddf30',
       }),
     );
 

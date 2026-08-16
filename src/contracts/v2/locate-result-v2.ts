@@ -661,6 +661,8 @@ const CapabilityCoverageV2Schema = z
         z.literal('typescript'),
         z.literal('javascript'),
         z.literal('sql'),
+        z.literal('python'),
+        z.literal('go'),
       ])
       .readonly(),
     unsupportedLanguageHits: z.int().nonnegative(),

@@ -126,7 +126,13 @@ export function createMaximumUnsafeSourceV2(): FinalizedUnsafeLocateResultV2 {
         },
         capabilities: {
           textSearch: 'supported-text-files',
-          semanticClassification: ['typescript', 'javascript', 'sql'],
+          semanticClassification: [
+            'typescript',
+            'javascript',
+            'sql',
+            'python',
+            'go',
+          ],
           unsupportedLanguageHits: 0,
         },
       },

@@ -124,10 +124,19 @@ node tools/release/check-legacy-subpath-absence.mjs --workspace .
 ```
 
 `npm run test:integration:codegraph` is a separate live integration surface and
-requires CodeGraph `1.1.6` on `PATH`. Package and release-oriented checks are
+requires CodeGraph `1.5.0` on `PATH`. Package and release-oriented checks are
 listed in [`docs/acceptance/mvp.md`](docs/acceptance/mvp.md). The current CI
 matrix and remaining hardening work are summarized in
 [`docs/project-status.md`](docs/project-status.md).
+
+`npm run benchmark:codegraph-differential` compares the pinned CodeGraph CLI's
+exact-symbol top-K directly with repo-nav's CodeGraph-first composition. Every
+standalone location must remain in the same prefix position, stay confirmed,
+and retain CodeGraph provenance; fallback noise, demotion, loss, redacted
+locators, a version mismatch, or an unexecuted case fails the command. The
+broader local quality gate may skip unindexed fixtures, while CI prepares both
+indexes and sets `REPO_NAV_REQUIRE_CODEGRAPH_DIFFERENTIAL=1` so it also fails
+closed.
 
 ## Design principles
 

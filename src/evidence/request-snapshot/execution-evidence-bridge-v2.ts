@@ -70,6 +70,9 @@ export function buildPreRankingPoolInputsV2(input: {
           kind: 'direct' as const,
           focusLines: record.focusLines,
           focusExcerpt: record.focusExcerpt,
+          ...(record.backendRank === undefined
+            ? {}
+            : { backendRank: record.backendRank }),
         }),
         classificationDefined: draft !== undefined,
       }),

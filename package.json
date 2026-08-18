@@ -85,6 +85,7 @@
     "benchmark:fixture-scenarios": "tsx tools/benchmark/real-repo-benchmark-runner.ts",
     "benchmark:real-repos": "npm run benchmark:fixture-scenarios",
     "benchmark:quality-gate": "tsx tools/benchmark/real-repo-quality-gate.ts",
+    "benchmark:codegraph-differential": "tsx tools/benchmark/codegraph-differential-quality-gate.ts",
     "benchmark:snapshot-revalidation": "tsx tools/benchmark/snapshot-revalidation-benchmark.ts",
     "benchmark:snapshot-revalidation:clean-branch": "tsx tools/benchmark/snapshot-revalidation-clean-branch-probe.ts",
     "benchmark:snapshot-revalidation:import": "tsx tools/benchmark/import-snapshot-revalidation-candidate.ts",

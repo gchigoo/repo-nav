@@ -61,6 +61,8 @@ function compareHits(left: BackendHit, right: BackendHit): number {
   const text = (first: string, second: string): number =>
     first === second ? 0 : first < second ? -1 : 1;
   return (
+    (left.backendRank ?? Number.MAX_SAFE_INTEGER) -
+      (right.backendRank ?? Number.MAX_SAFE_INTEGER) ||
     text(left.file, right.file) ||
     (left.lines?.[0] ?? 0) - (right.lines?.[0] ?? 0) ||
     (left.lines?.[1] ?? 0) - (right.lines?.[1] ?? 0) ||
@@ -266,6 +268,7 @@ export class CodeGraphBackend
     let complete = plan.unsupportedDimensions.length === 0;
     let executedEntries = 0;
     let remainingBudget = request.maxHits;
+    let nextBackendRank = 0;
 
     for (const entry of plan.entries) {
       if (remainingBudget <= 0) {
@@ -309,8 +312,15 @@ export class CodeGraphBackend
       }
       executedEntries += 1;
       const invocationLimit = remainingBudget;
-      hits.push(...parsed.hits.slice(0, invocationLimit));
-      remainingBudget -= Math.min(parsed.rawResultCount, invocationLimit);
+      const retained = parsed.hits
+        .slice(0, invocationLimit)
+        .map((hit) =>
+          Object.freeze({ ...hit, backendRank: nextBackendRank++ }),
+        );
+      hits.push(...retained);
+      // CodeGraph query output is fuzzy; only exact retained hits consume the
+      // cross-entry budget so a broad early term cannot starve later terms.
+      remainingBudget -= retained.length;
       if (parsed.rawResultCount >= invocationLimit) {
         complete = false;
       }
@@ -606,6 +616,7 @@ export class CodeGraphBackend
     let complete = plan.unsupportedDimensions.length === 0;
     let executedEntries = 0;
     let remainingBudget = sharedMaxHits;
+    let nextBackendRank = 0;
     const querySettled: {
       settled: BackendPhysicalAttemptResultV2<SafeProcessResult>;
       laneMask: BackendPhysicalAttemptLaneMaskV2;
@@ -700,8 +711,15 @@ export class CodeGraphBackend
       }
       executedEntries += 1;
       const invocationLimit = remainingBudget;
-      hits.push(...parsed.hits.slice(0, invocationLimit));
-      remainingBudget -= Math.min(parsed.rawResultCount, invocationLimit);
+      const retained = parsed.hits
+        .slice(0, invocationLimit)
+        .map((hit) =>
+          Object.freeze({ ...hit, backendRank: nextBackendRank++ }),
+        );
+      hits.push(...retained);
+      // Keep the multi-view path identical to legacy search(): fuzzy decoys
+      // affect completeness, not the retained-hit budget.
+      remainingBudget -= retained.length;
       if (parsed.rawResultCount >= invocationLimit) {
         complete = false;
       }

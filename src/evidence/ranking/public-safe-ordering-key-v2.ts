@@ -15,6 +15,7 @@ const CLASS_ORDER = Object.freeze({
  */
 export interface PublicSafeEvidenceOrderingKeyV2 {
   readonly priority: MatchPriorityV2;
+  readonly backendRank: number;
   readonly file: string;
   readonly lineStart: number;
   readonly lineEnd: number;
@@ -82,6 +83,10 @@ export function buildPublicSafeOrderingKeyV2(
   const sources = draft.provenance.discoveredBy ?? [];
   const orderingKey: PublicSafeEvidenceOrderingKeyV2 = Object.freeze({
     priority,
+    backendRank:
+      record.rankingSignals.kind === 'direct'
+        ? (record.rankingSignals.backendRank ?? Number.MAX_SAFE_INTEGER)
+        : Number.MAX_SAFE_INTEGER,
     file: safeKey.file,
     lineStart: draft.location.lines[0],
     lineEnd: draft.location.lines[1],
@@ -116,6 +121,7 @@ export function comparePublicSafeOrderingKeyV2(
     return right.priority - left.priority;
   }
   const scalar =
+    left.backendRank - right.backendRank ||
     left.file.localeCompare(right.file) ||
     left.lineStart - right.lineStart ||
     left.lineEnd - right.lineEnd ||

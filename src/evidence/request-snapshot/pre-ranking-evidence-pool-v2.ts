@@ -26,6 +26,7 @@ export type EvidenceRankingSignalsV2 =
       kind: 'direct';
       focusLines: readonly [number, number];
       focusExcerpt: string;
+      backendRank?: number;
     }>
   | Readonly<{
       kind: 'derived';

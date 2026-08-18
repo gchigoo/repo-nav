@@ -40,6 +40,8 @@ export interface DiscoveryRecord {
   readonly focusLines: readonly [number, number];
   readonly focusExcerpt: string;
   readonly canonicalSymbols: readonly string[];
+  /** Best backend-local relevance order among merged observations. */
+  readonly backendRank?: number;
 }
 
 export interface DiscoveryVerificationFailure {
@@ -159,6 +161,7 @@ function createRecord(
     canonicalSymbols: Object.freeze(
       hit.symbol === undefined ? [] : [hit.symbol],
     ),
+    ...(hit.backendRank === undefined ? {} : { backendRank: hit.backendRank }),
   });
 }
 
@@ -221,6 +224,14 @@ function mergeRecord(
       [...current.canonicalSymbols, ...incoming.canonicalSymbols],
       compareCanonicalText,
     ),
+    ...(current.backendRank === undefined && incoming.backendRank === undefined
+      ? {}
+      : {
+          backendRank: Math.min(
+            current.backendRank ?? Number.MAX_SAFE_INTEGER,
+            incoming.backendRank ?? Number.MAX_SAFE_INTEGER,
+          ),
+        }),
   });
 }
 
@@ -250,6 +261,53 @@ async function computeVerifiedDiscoveryObservationV2(
     if (focusStart !== focusEnd) {
       return { location: focusLocation, aborted: false };
     }
+
+    // CodeGraph locations point at the declaration start. Multiline function
+    // signatures therefore need following lines (especially the opening
+    // brace) for definition classification. The legacy backward-only window
+    // is still appropriate for text hits, whose useful mapping context often
+    // precedes the matched line.
+    if (
+      hit.source === 'codegraph' &&
+      hit.symbol !== undefined &&
+      !focusLocation.excerpt.includes('{')
+    ) {
+      try {
+        const location = await input.reader.readWindow(
+          input.repositoryRoot,
+          focusLocation.file,
+          focusLocation.lines,
+          input.limits,
+          input.signal,
+        );
+        const relativeStart = focusStart - location.lines[0];
+        const focusLines = location.excerpt
+          .split('\n')
+          .slice(relativeStart, relativeStart + 1);
+        return normalizeEvidenceExcerpt(focusLines.join('\n')) ===
+          normalizeEvidenceExcerpt(focusLocation.excerpt)
+          ? { location, aborted: false }
+          : { location: focusLocation, aborted: false };
+      } catch (error: unknown) {
+        if (!(error instanceof RepositoryAccessError)) {
+          throw error;
+        }
+        if (isFatalRepositoryAccessError(error)) {
+          throw error;
+        }
+        if (error.code === 'ABORTED') {
+          return { location: focusLocation, aborted: true };
+        }
+        return {
+          location: focusLocation,
+          aborted: false,
+          ...(error.code === 'MAX_EXCERPT_BYTES_REACHED'
+            ? { failure: error.code }
+            : {}),
+        };
+      }
+    }
+
     const windowStart = Math.max(
       1,
       focusStart - input.limits.maxExcerptLines + 1,

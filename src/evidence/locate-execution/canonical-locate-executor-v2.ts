@@ -759,7 +759,6 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
         }
         if (
           codegraphResult.health.state === 'available' &&
-          codegraphResult.complete &&
           codegraphResult.canSkipFallbackIfVerified === true &&
           codegraphResult.hits.length > 0
         ) {
@@ -870,7 +869,9 @@ export class CanonicalRepositoryLocateExecutorV2 implements CanonicalLocateExecu
             primaryMerged.failures.length === 0 &&
             primaryClassified.confirmed.some(
               (evidence) =>
-                evidence.reasonCodes.includes('EXACT_SYMBOL_ANCHOR') &&
+                (evidence.reasonCodes.includes('EXACT_SYMBOL_ANCHOR') ||
+                  (evidence.reasonCodes.includes('EXACT_TERM_MATCH') &&
+                    evidence.provenance.discoveredBy.includes('codegraph'))) &&
                 (evidence.role === 'definition' ||
                   evidence.role === 'execution-site'),
             );

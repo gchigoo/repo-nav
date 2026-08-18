@@ -13,6 +13,8 @@ function compareText(left: string, right: string): number {
 
 function compareBackendHit(left: BackendHit, right: BackendHit): number {
   return (
+    (left.backendRank ?? Number.MAX_SAFE_INTEGER) -
+      (right.backendRank ?? Number.MAX_SAFE_INTEGER) ||
     compareText(left.file, right.file) ||
     (left.lines?.[0] ?? Number.MAX_SAFE_INTEGER) -
       (right.lines?.[0] ?? Number.MAX_SAFE_INTEGER) ||

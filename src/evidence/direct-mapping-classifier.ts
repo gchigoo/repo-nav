@@ -16,6 +16,8 @@ import {
   resolveRepositoryScopeV1,
 } from './scope/index.js';
 import { maskNonCode } from './language/ecmascript-lexical-kernel-v2.js';
+import { maskGoNonCode } from './language/go-lexical-kernel-v2.js';
+import { maskPythonNonCode } from './language/python-lexical-kernel-v2.js';
 import { maskSqlNonCode } from './language/sql-lexical-kernel-v2.js';
 
 export { maskNonCode } from './language/ecmascript-lexical-kernel-v2.js';
@@ -258,11 +260,78 @@ function anchoredSymbolsFor(
   );
 }
 
+function exactCodeGraphTermSymbolsFor(
+  record: DiscoveryRecord,
+): readonly string[] {
+  if (!record.discoveredBy.includes('codegraph')) {
+    return Object.freeze([]);
+  }
+  return Object.freeze(
+    record.canonicalSymbols.filter((symbol) =>
+      record.matchedTerms.some((term) =>
+        exactValueMatches(symbol, term.value, term.caseSensitive),
+      ),
+    ),
+  );
+}
+
+function symbolDefinitionCode(record: DiscoveryRecord): string {
+  const maskForFile = (value: string): string => {
+    const file = record.location.file.toLowerCase();
+    if (file.endsWith('.py') || file.endsWith('.pyi')) {
+      return maskPythonNonCode(value);
+    }
+    if (file.endsWith('.go')) {
+      return maskGoNonCode(value);
+    }
+    return maskNonCode(value);
+  };
+  if (!record.discoveredBy.includes('codegraph')) {
+    return maskForFile(record.focusExcerpt);
+  }
+  const focusOffset = Math.max(
+    0,
+    record.focusLines[0] - record.location.lines[0],
+  );
+  return maskForFile(
+    record.location.excerpt.split('\n').slice(focusOffset).join('\n'),
+  );
+}
+
 function symbolDefinitionRole(
-  code: string,
+  record: DiscoveryRecord,
   symbol: string,
 ): ConfirmedEvidence['role'] | undefined {
+  const code = symbolDefinitionCode(record);
   const token = tokenPattern(symbol);
+  const file = record.location.file.toLowerCase();
+  if (file.endsWith('.py') || file.endsWith('.pyi')) {
+    if (
+      new RegExp(
+        `^[ \\t]*(?:async[ \\t]+)?def[ \\t]+${token}[ \\t]*\\(`,
+        'mu',
+      ).test(code)
+    ) {
+      return 'execution-site';
+    }
+    if (new RegExp(`^[ \\t]*class[ \\t]+${token}\\b`, 'mu').test(code)) {
+      return 'definition';
+    }
+    return undefined;
+  }
+  if (file.endsWith('.go')) {
+    if (
+      new RegExp(`\\bfunc\\s+(?:\\([^)]*\\)\\s+)?${token}\\s*\\(`, 'u').test(
+        code,
+      )
+    ) {
+      return 'execution-site';
+    }
+    if (new RegExp(`\\b(?:type|var|const)\\s+${token}\\b`, 'u').test(code)) {
+      return 'definition';
+    }
+    return undefined;
+  }
   if (
     new RegExp(`\\b(?:class|interface|enum)\\s+${token}[^{};]*\\{`, 'u').test(
       code,
@@ -320,10 +389,7 @@ function classifyRecord(
   if (anchoredSymbols.length > 0) {
     const definitions = anchoredSymbols
       .flatMap((symbol) => {
-        const role = symbolDefinitionRole(
-          maskNonCode(record.focusExcerpt),
-          symbol,
-        );
+        const role = symbolDefinitionRole(record, symbol);
         return role === undefined ? [] : [{ symbol, role }];
       })
       .sort(
@@ -358,6 +424,38 @@ function classifyRecord(
         ? {}
         : { canonicalSymbol: primarySymbol }),
     };
+  }
+
+  // CodeGraph is a symbol search backend. An exact symbol-name result whose
+  // declaration syntax is independently verified from the current file is
+  // stronger than an ordinary literal hit even when callers omit an explicit
+  // symbol anchor. This is the common terms-only MCP/CLI path.
+  const exactTermSymbols = exactCodeGraphTermSymbolsFor(record);
+  if (exactTermSymbols.length > 0) {
+    const definitions = exactTermSymbols
+      .flatMap((symbol) => {
+        const role = symbolDefinitionRole(record, symbol);
+        return role === undefined ? [] : [{ symbol, role }];
+      })
+      .sort(
+        (left, right) =>
+          (left.role === 'execution-site' ? 0 : 1) -
+            (right.role === 'execution-site' ? 0 : 1) ||
+          (left.symbol === right.symbol
+            ? 0
+            : left.symbol < right.symbol
+              ? -1
+              : 1),
+      );
+    const primaryDefinition = definitions[0];
+    if (primaryDefinition !== undefined && !forceCandidate) {
+      return {
+        evidenceClass: 'confirmed',
+        role: primaryDefinition.role,
+        reasonCodes: ['EXACT_TERM_MATCH'],
+        canonicalSymbol: primaryDefinition.symbol,
+      };
+    }
   }
 
   if (record.matchedTerms.length > 0) {

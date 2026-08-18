@@ -1,0 +1,25 @@
+{
+  "initialized": true,
+  "version": "1.5.0",
+  "projectPath": "C:\\fixture",
+  "indexPath": "C:\\fixture\\.codegraph",
+  "lastIndexed": "2026-08-18T00:00:00.000Z",
+  "fileCount": 1,
+  "nodeCount": 2,
+  "edgeCount": 1,
+  "dbSizeBytes": 159744,
+  "backend": "node-sqlite",
+  "journalMode": "wal",
+  "nodesByKind": { "file": 1, "function": 1 },
+  "languages": ["typescript"],
+  "pendingChanges": { "added": 0, "modified": 0, "removed": 0 },
+  "worktreeMismatch": null,
+  "index": {
+    "builtWithVersion": "1.5.0",
+    "builtWithExtractionVersion": 24,
+    "currentExtractionVersion": 24,
+    "reindexRecommended": false,
+    "state": "complete",
+    "pendingRefs": 0
+  }
+}

@@ -16,6 +16,10 @@ import {
   runRealRepoBenchmark,
   type RealRepoBenchmarkSummary,
 } from './real-repo-benchmark-runner.js';
+import {
+  runCodeGraphDifferentialQualityGate,
+  type CodeGraphDifferentialSummary,
+} from './codegraph-differential-quality-gate.js';
 
 const moduleDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(moduleDirectory, '..', '..');
@@ -34,6 +38,7 @@ export interface RealRepoQualityMetrics {
 export interface RealRepoQualityGateSummary {
   readonly ok: boolean;
   readonly fixture: RealRepoBenchmarkSummary;
+  readonly codegraphDifferential: CodeGraphDifferentialSummary;
   readonly extraRepoCount: number;
   readonly extraFailures: readonly string[];
   readonly metrics: RealRepoQualityMetrics;
@@ -71,6 +76,7 @@ export async function runRealRepoQualityGate(
   root: string = repositoryRoot,
 ): Promise<RealRepoQualityGateSummary> {
   const fixture = await runRealRepoBenchmark(root);
+  const codegraphDifferential = await runCodeGraphDifferentialQualityGate(root);
   const extraFailures: string[] = [];
   const extraRepos = extraRepoPaths();
   const languageFixtures = Object.freeze([
@@ -177,10 +183,14 @@ export async function runRealRepoQualityGate(
     p90ElapsedMs: percentile(elapsed, 0.9),
   });
   const ok =
-    fixture.ok && extraFailures.length === 0 && metrics.timeoutRate === 0;
+    fixture.ok &&
+    codegraphDifferential.ok &&
+    extraFailures.length === 0 &&
+    metrics.timeoutRate === 0;
   return Object.freeze({
     ok,
     fixture,
+    codegraphDifferential,
     extraRepoCount: extraRepos.length,
     extraFailures: Object.freeze(extraFailures),
     metrics,

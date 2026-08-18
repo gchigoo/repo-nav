@@ -224,18 +224,37 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Install pinned CodeGraph
+      - name: Install pinned CodeGraph and ripgrep
         shell: bash
+        env:
+          # @vscode/ripgrep postinstall hits GitHub API; unauthenticated runners get 403.
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           TOOLS="${RUNNER_TEMP}/repo-nav-codegraph-tools"
           mkdir -p "$TOOLS"
           npm install --prefix "$TOOLS" --no-save --no-package-lock --no-fund --no-audit \
-            @colbymchenry/codegraph@1.1.6
+            @colbymchenry/codegraph@1.5.0 @vscode/ripgrep@1.15.9
+          RG_BIN="$TOOLS/node_modules/@vscode/ripgrep/bin"
           echo "$TOOLS/node_modules/.bin" >> "$GITHUB_PATH"
+          echo "$RG_BIN" >> "$GITHUB_PATH"
+
+      - name: Prepare CodeGraph non-regression fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          codegraph init testkit/fixtures/codegraph-differential/typescript
+          codegraph init testkit/fixtures/codegraph-differential/javascript
+          codegraph init testkit/fixtures/codegraph-differential/python
+          codegraph init testkit/fixtures/codegraph-differential/go
 
       - name: Run live CodeGraph integration
         run: npm run test:integration:codegraph
+
+      - name: Enforce CodeGraph non-regression contract
+        env:
+          REPO_NAV_REQUIRE_CODEGRAPH_DIFFERENTIAL: '1'
+        run: npm run benchmark:codegraph-differential
 
   cross-platform-required:
     name: cross-platform-required

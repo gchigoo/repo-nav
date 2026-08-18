@@ -118,6 +118,9 @@ export function projectAndScopeFoldExpandedHitsV2(input: {
         lineStart,
         lineEnd,
         source: hit.source,
+        ...(hit.backendRank === undefined
+          ? {}
+          : { backendRank: hit.backendRank }),
         matchedAnchorKeys: Object.freeze([...matchedAnchorKeys]),
       }),
     );

@@ -246,6 +246,105 @@ describe.runIf(isSelected(classifierIdentity))(
       );
     });
 
+    it('confirms an exact CodeGraph term definition without requiring a duplicate symbol anchor', () => {
+      const symbolTerm = [{ value: 'mapRow', caseSensitive: true }] as const;
+      const codegraphDefinition: DiscoveryRecord = {
+        ...record(
+          'server/map.ts',
+          'export function mapRow(\n  row: Row,\n): Row {\n  return row;\n}',
+          symbolTerm,
+          'mapRow',
+        ),
+        discoveredBy: ['codegraph'],
+        operations: ['CODEGRAPH_QUERY', 'FILESYSTEM_READ_RANGE'],
+        discoveryReasonCodes: ['LITERAL_TERM_HIT'],
+        focusLines: [1, 1],
+        focusExcerpt: 'export function mapRow(',
+      };
+
+      const exact = classifyDiscoveryRecords(
+        [codegraphDefinition],
+        emptyContext,
+      );
+      expect(exact).toMatchObject({
+        confirmed: [
+          {
+            role: 'execution-site',
+            location: { symbol: 'mapRow' },
+            reasonCodes: ['EXACT_TERM_MATCH'],
+          },
+        ],
+        candidates: [],
+      });
+
+      const textOnly = classifyDiscoveryRecords(
+        [{ ...codegraphDefinition, discoveredBy: ['ripgrep'] }],
+        emptyContext,
+      );
+      expect(textOnly.confirmed).toEqual([]);
+      expect(textOnly.candidates[0]?.reasonCodes).toEqual([
+        'EXACT_TERM_WITHOUT_DIRECT_MAPPING',
+      ]);
+    });
+
+    it.each([
+      [
+        'Python',
+        'src/policy.py',
+        'load_password_policy',
+        'def load_password_policy(policy_name: str) -> str:\n    return policy_name',
+      ],
+      [
+        'Go',
+        'primary/token.go',
+        'ResolveAuthToken',
+        'func ResolveAuthToken(sourceToken string) string {\n\treturn sourceToken\n}',
+      ],
+    ] as const)(
+      'confirms exact CodeGraph %s definitions for anchor and terms-only requests',
+      (_language, file, symbol, excerpt) => {
+        const symbolTerm = [{ value: symbol, caseSensitive: true }] as const;
+        const codegraphDefinition: DiscoveryRecord = {
+          ...record(file, excerpt, symbolTerm, symbol),
+          discoveredBy: ['codegraph'],
+          operations: ['CODEGRAPH_QUERY', 'FILESYSTEM_READ_RANGE'],
+          discoveryReasonCodes: ['SYMBOL_SEARCH_HIT'],
+          focusLines: [1, 1],
+          focusExcerpt: excerpt.split('\n')[0]!,
+        };
+
+        const anchored = classifyDiscoveryRecords([codegraphDefinition], {
+          ...emptyContext,
+          anchors: [{ kind: 'symbol', value: symbol, caseSensitive: true }],
+        });
+        expect(anchored).toMatchObject({
+          confirmed: [
+            {
+              role: 'execution-site',
+              location: { symbol },
+              reasonCodes: ['EXACT_SYMBOL_ANCHOR'],
+            },
+          ],
+          candidates: [],
+        });
+
+        const termsOnly = classifyDiscoveryRecords(
+          [codegraphDefinition],
+          emptyContext,
+        );
+        expect(termsOnly).toMatchObject({
+          confirmed: [
+            {
+              role: 'execution-site',
+              location: { symbol },
+              reasonCodes: ['EXACT_TERM_MATCH'],
+            },
+          ],
+          candidates: [],
+        });
+      },
+    );
+
     it('selects the highest-priority definition from all canonical symbol facts', () => {
       const excerpt = 'function Zeta(){ Alpha(); }';
       const base = record('server/symbols.ts', excerpt, [], undefined);

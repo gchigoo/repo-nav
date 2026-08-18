@@ -93,8 +93,16 @@ function assertAdditionalJobs(
   expect(ripgrepInstall).toContain('--version');
 
   const codegraphRuns = stepRuns(jobs['codegraph-integration']);
-  expect(codegraphRuns.join('\n')).toContain('@colbymchenry/codegraph@1.1.6');
+  const codegraphRunsJoined = codegraphRuns.join('\n');
+  expect(codegraphRunsJoined).toContain('@colbymchenry/codegraph@1.5.0');
+  expect(codegraphRunsJoined).toContain('@vscode/ripgrep@1.15.9');
+  for (const language of ['typescript', 'javascript', 'python', 'go']) {
+    expect(codegraphRunsJoined).toContain(
+      `codegraph init testkit/fixtures/codegraph-differential/${language}`,
+    );
+  }
   expect(codegraphRuns).toContain('npm run test:integration:codegraph');
+  expect(codegraphRuns).toContain('npm run benchmark:codegraph-differential');
 
   const aggregate = jobs[PLATFORM_AGGREGATE_JOB_ID_V1];
   expect(
@@ -299,10 +307,24 @@ describe.runIf(
         withoutRunContaining(
           jobs,
           'codegraph-integration',
-          '@colbymchenry/codegraph@1.1.6',
+          '@colbymchenry/codegraph@1.5.0',
         ),
       ),
     ).toThrow();
+    for (const needle of [
+      '@vscode/ripgrep@1.15.9',
+      'codegraph init testkit/fixtures/codegraph-differential/typescript',
+      'codegraph init testkit/fixtures/codegraph-differential/javascript',
+      'codegraph init testkit/fixtures/codegraph-differential/python',
+      'codegraph init testkit/fixtures/codegraph-differential/go',
+      'npm run benchmark:codegraph-differential',
+    ]) {
+      expect(() =>
+        assertAdditionalJobs(
+          withoutRunContaining(jobs, 'codegraph-integration', needle),
+        ),
+      ).toThrow();
+    }
     expect(() =>
       assertAdditionalJobs(
         withoutRunContaining(

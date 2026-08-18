@@ -406,7 +406,7 @@ describe.runIf(selected)('C1 locate execution characterization', () => {
     );
     const redactedSuccess = requireSuccess(redaction);
     expect(redactedSuccess.evidence.normalizedTerms[0]).toEqual({
-      value: '[REDACTED]=[REDACTED]',
+      value: 'password=[REDACTED]',
       caseSensitive: true,
     });
     expect(redactedSuccess.evidence.candidates[0]?.location).toMatchObject({

@@ -145,7 +145,9 @@ describe.runIf(statusSelected)('pure locate finalizer derived status', () => {
   it('keeps timeout precedence above location degradation', () => {
     const raw = mutableUnsafeSourceV2();
     if (!raw.ok) throw new Error('Fixture must be a success.');
-    raw.evidence.confirmed[0]!.location.file = 'src/api_key/config.ts';
+    const rawSecret = 'timeout-location-do-not-publish';
+    raw.evidence.normalizedTerms[0]!.value = `password=${rawSecret}`;
+    raw.evidence.confirmed[0]!.location.file = `src/${rawSecret}/config.ts`;
     raw.evidence.coverage.abortSource = 'deadline';
     raw.evidence.coverage.backends = [
       {

@@ -111,8 +111,8 @@ describe.runIf(fieldRedactionSelected)('v2 field redaction policy', () => {
     expect(term.value).not.toContain(rawSecret);
     expect(term.reasonCodes).toEqual(['SECRET_LIKE_VALUE']);
     expect(symbol).toEqual({
-      value: 'database[REDACTED]',
-      reasonCodes: ['SECRET_LIKE_VALUE'],
+      value: 'databasePassword',
+      reasonCodes: [],
     });
     expect(excerpt.value).not.toContain(rawSecret);
     expect(excerpt.reasonCodes).toEqual(['SECRET_LIKE_VALUE']);
@@ -193,7 +193,7 @@ describe.runIf(fieldRedactionSelected)('v2 field redaction policy', () => {
     });
   });
 
-  it('covers uppercase, hyphen, camel, Pascal, quoted assignments and bare ESC', () => {
+  it('preserves code identifiers while redacting assigned values and controls', () => {
     for (const identifier of [
       'MY_API_KEY',
       'SERVICE-AUTH-TOKEN',
@@ -207,21 +207,32 @@ describe.runIf(fieldRedactionSelected)('v2 field redaction policy', () => {
           field,
           EMPTY_SENSITIVE_CORPUS_V2,
         );
-        expect(result.value, `${field}:${identifier}`).not.toContain(
-          identifier,
-        );
-        expect(result.reasonCodes, `${field}:${identifier}`).toContain(
-          'SECRET_LIKE_VALUE',
-        );
+        expect(result, `${field}:${identifier}`).toEqual({
+          value: identifier,
+          reasonCodes: [],
+        });
       }
       const file = redactPublicFieldV2(
         `src/${identifier}/config.ts`,
         'file',
         EMPTY_SENSITIVE_CORPUS_V2,
       );
-      expect(file.value, identifier).toBe('[REDACTED_PATH]');
-      expect(file.reasonCodes, identifier).toContain('SECRET_LIKE_VALUE');
+      expect(file, identifier).toEqual({
+        value: `src/${identifier}/config.ts`,
+        reasonCodes: [],
+      });
     }
+
+    expect(
+      redactPublicFieldV2(
+        'password=identifier-test-secret',
+        'term',
+        EMPTY_SENSITIVE_CORPUS_V2,
+      ),
+    ).toEqual({
+      value: 'password=[REDACTED]',
+      reasonCodes: ['SECRET_LIKE_VALUE'],
+    });
 
     for (const excerpt of [
       '{"password":"json-do-not-publish"}',
@@ -323,12 +334,18 @@ describe.runIf(locationRedactionSelected)(
       expect(isValidRawLocatorV2('src/new\nline.ts')).toBe(true);
     });
 
-    it('hides the complete path for sensitive segments, inherited tokens and display threats', () => {
+    it('preserves identifier paths but hides actual secret segments and display threats', () => {
       const rawSecret = 'customer-do-not-publish';
       const corpus = collectSensitiveCorpusV2(`password=${rawSecret}`);
 
+      expect(
+        redactPublicFieldV2('src/api_key/config.ts', 'file', corpus),
+      ).toEqual({
+        value: 'src/api_key/config.ts',
+        reasonCodes: [],
+      });
+
       for (const file of [
-        'src/api_key/config.ts',
         `src/${rawSecret}/config.ts`,
         'src/new\nline.ts',
         `src/${'x'.repeat(2_049)}/config.ts`,
@@ -641,7 +658,7 @@ describe.runIf(rankingKeySelected)('F1A public-safe ranking key', () => {
       symbol: 'databasePassword',
     });
     expect(sensitive).toEqual({
-      file: PATH_PLACEHOLDER_V2,
+      file: 'src/api_key/a.ts',
       symbol: TOKEN_PLACEHOLDER_V2,
     });
     const first = projectPublicSafeRankingKeyV2({

@@ -96,14 +96,18 @@ export function createCodeGraphQueryPlan(
   const termsMatchAnchors = request.terms.every((term) =>
     symbolAnchors.some((anchor) => exactEquivalent(term, anchor)),
   );
+  const singleExactIdentifierTerm =
+    request.anchors.length === 0 &&
+    request.terms.length === 1 &&
+    entries.length === 1 &&
+    entries[0]?.source === 'term';
 
   return Object.freeze({
     entries: Object.freeze(entries),
     unsupportedDimensions: unsupported,
     canSkipFallbackIfVerified:
-      symbolAnchors.length === 1 &&
-      onlySymbolAnchors &&
-      termsMatchAnchors &&
-      unsupported.length === 0,
+      unsupported.length === 0 &&
+      ((symbolAnchors.length === 1 && onlySymbolAnchors && termsMatchAnchors) ||
+        singleExactIdentifierTerm),
   });
 }

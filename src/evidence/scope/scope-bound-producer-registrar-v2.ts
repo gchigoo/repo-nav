@@ -30,6 +30,7 @@ export interface ScopeBoundProducerPortFactsViewV2 {
   readonly producerKind: ScopeBoundProducerKindV2;
   readonly producerBasis: VerifiedProducerBasisReceiptsV2;
   readonly definitionRole?: 'definition' | 'execution-site';
+  readonly definitionReasonCode?: 'EXACT_SYMBOL_ANCHOR' | 'EXACT_TERM_MATCH';
   readonly derivedReasonCodes?: readonly (
     | 'ALIAS_SOURCE_NEIGHBOR'
     | 'SAME_ENTITY_SIBLING'

@@ -68,6 +68,7 @@ function fakeRecord(
     readonly reasonCodes?: readonly string[];
     readonly focusExcerpt?: string;
     readonly discoveredBy?: readonly ('filesystem' | 'ripgrep' | 'codegraph')[];
+    readonly backendRank?: number;
   } = {},
 ): TrustedStableRecordViewV2 {
   const brand = createOpaqueTokenV2<TrustedStableRecordViewV2>();
@@ -109,6 +110,9 @@ function fakeRecord(
       kind: 'direct' as const,
       focusLines: lines,
       focusExcerpt: extras.focusExcerpt ?? 'const Sym = 1',
+      ...(extras.backendRank === undefined
+        ? {}
+        : { backendRank: extras.backendRank }),
     }),
   }) as TrustedStableRecordViewV2;
 }
@@ -175,6 +179,89 @@ describe.runIf(
     ]);
     expect(MATCH_PRIORITY_V2.FILE_ANCHOR).toBe(100);
     expect(MATCH_PRIORITY_V2.SECONDARY_BACKEND).toBe(40);
+  });
+});
+
+describe('CodeGraph relevance ordering', () => {
+  it('uses backend rank before path for equal semantic priority', () => {
+    const best = fakeRecord(
+      'z-best.ts',
+      [10, 10],
+      'confirmed',
+      'definition',
+      undefined,
+      {
+        symbol: 'Sym',
+        discoveredBy: ['codegraph'],
+        backendRank: 0,
+      },
+    );
+    const second = fakeRecord(
+      'a-second.ts',
+      [1, 1],
+      'confirmed',
+      'definition',
+      undefined,
+      {
+        symbol: 'Sym',
+        discoveredBy: ['codegraph'],
+        backendRank: 1,
+      },
+    );
+    const bestKey = buildPublicSafeOrderingKeyV2(
+      best,
+      MATCH_PRIORITY_V2.SYMBOL_DEFINITION,
+    ).orderingKey;
+    const secondKey = buildPublicSafeOrderingKeyV2(
+      second,
+      MATCH_PRIORITY_V2.SYMBOL_DEFINITION,
+    ).orderingKey;
+
+    expect(comparePublicSafeOrderingKeyV2(bestKey, secondKey)).toBeLessThan(0);
+    expect([secondKey, bestKey].sort(comparePublicSafeOrderingKeyV2)).toEqual([
+      bestKey,
+      secondKey,
+    ]);
+  });
+
+  it('uses backend rank for maxFiles selection before verification', () => {
+    const execution = executionToken();
+    const folded = projectAndScopeFoldExpandedHitsV2({
+      expandedResults: [
+        {
+          health: { state: 'available' },
+          complete: true,
+          hits: [
+            {
+              file: 'z-best.ts',
+              symbol: 'Sym',
+              lines: [10, 10],
+              source: 'codegraph',
+              reasonCodes: ['SYMBOL_SEARCH_HIT'],
+              backendRank: 0,
+            },
+            {
+              file: 'a-second.ts',
+              symbol: 'Sym',
+              lines: [1, 1],
+              source: 'codegraph',
+              reasonCodes: ['SYMBOL_SEARCH_HIT'],
+              backendRank: 1,
+            },
+          ],
+        },
+      ],
+      execution,
+      layerHint: 'unknown',
+    });
+    const selector = new DiscoveryHitSelectorV2();
+    const selection = selector.select(folded.foldedView, [], 1, execution);
+    const best = folded.facts.candidates.find(
+      (candidate) => candidate.safeKey.file === 'z-best.ts',
+    );
+
+    expect(best).toBeDefined();
+    expect(selection.draft.selectedLocatorRefs).toEqual([best!.locatorRef]);
   });
 });
 

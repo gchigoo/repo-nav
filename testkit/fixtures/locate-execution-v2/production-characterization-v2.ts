@@ -427,7 +427,7 @@ export const LOCATION_REDACTION_CHARACTERIZATION_RESULT_V2 = Object.freeze({
     repositoryRef: 'local-repository' as const,
     normalizedTerms: Object.freeze([
       Object.freeze({
-        value: '[REDACTED]=[REDACTED]',
+        value: 'password=[REDACTED]',
         caseSensitive: true,
       }),
     ]),

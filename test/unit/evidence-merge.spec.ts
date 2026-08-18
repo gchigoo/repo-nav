@@ -70,6 +70,7 @@ function hit(
   source: BackendHit['source'],
   reasonCodes: BackendHit['reasonCodes'],
   symbol?: string,
+  backendRank?: number,
 ): BackendHit {
   return {
     file: 'src/mapping.ts',
@@ -78,6 +79,7 @@ function hit(
     source,
     reasonCodes,
     ...(symbol === undefined ? {} : { symbol }),
+    ...(backendRank === undefined ? {} : { backendRank }),
   };
 }
 
@@ -207,7 +209,7 @@ describe.runIf(isSelected(identity))('evidence discovery merge', () => {
   it('merges permuted duplicate hits before classification or public ID creation', async () => {
     const hits = [
       hit('ripgrep', ['SYMBOL_SEARCH_HIT'], 'MapAlias'),
-      hit('codegraph', ['LITERAL_TERM_HIT']),
+      hit('codegraph', ['LITERAL_TERM_HIT'], undefined, 2),
     ] as const;
     const forward = await merge(hits);
     const reversed = await merge([...hits].reverse());
@@ -231,6 +233,7 @@ describe.runIf(isSelected(identity))('evidence discovery merge', () => {
       focusLines: currentLocation.lines,
       focusExcerpt: currentLocation.excerpt,
       canonicalSymbols: ['MapAlias'],
+      backendRank: 2,
     });
     expect(forward.records[0]).not.toHaveProperty('id');
     expect(forward.records[0]).not.toHaveProperty('evidenceClass');

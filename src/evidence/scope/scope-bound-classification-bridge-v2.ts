@@ -81,6 +81,13 @@ function producerKindFromLegacyClassificationV2(
   if (reasonCodes.includes('EXACT_SYMBOL_ANCHOR')) {
     return 'anchored-definition';
   }
+  if (
+    evidenceClass === 'confirmed' &&
+    hasSymbol &&
+    reasonCodes.includes('EXACT_TERM_MATCH')
+  ) {
+    return 'anchored-definition';
+  }
   if (reasonCodes.includes('SYMBOL_REFERENCE_ONLY')) {
     return 'anchored-reference';
   }
@@ -180,6 +187,11 @@ function materializeLegacyItemThroughScopeBoundV2(input: {
                   input.legacyItem.role === 'execution-site'
                     ? ('execution-site' as const)
                     : ('definition' as const),
+                definitionReasonCode: input.legacyItem.reasonCodes.some(
+                  (reasonCode) => reasonCode === 'EXACT_SYMBOL_ANCHOR',
+                )
+                  ? ('EXACT_SYMBOL_ANCHOR' as const)
+                  : ('EXACT_TERM_MATCH' as const),
               }
             : {}),
           ...(input.legacyItem.location.symbol !== undefined

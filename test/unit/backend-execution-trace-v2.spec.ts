@@ -28,6 +28,7 @@ import type {
   AvailabilityProbeExecutionResultV2,
   BackendPhysicalAttemptResultV2,
 } from '../../src/process/backend-physical-attempt-executor-v2.js';
+import { createCodeGraphProcessInvocation } from '../../src/repository/codegraph-command.js';
 import { NodeSafeProcessRunner } from '../../src/repository/node-safe-process-runner.js';
 import { RipgrepBackend } from '../../src/repository/ripgrep-backend.js';
 import { CODEGRAPH_TERMINAL_KINDS_V2 } from '../../testkit/fixtures/backend-execution-v2/codegraph-terminal-v2.js';
@@ -328,9 +329,13 @@ describe.runIf(
         'codegraph',
         execution,
       );
+      const invocation = createCodeGraphProcessInvocation([
+        'status',
+        '--json',
+        repository,
+      ]);
       const request = {
-        executable: 'codegraph',
-        argv: ['status', '--json', repository],
+        ...invocation,
         cwd: repository,
         timeoutMs: 5_000,
         maxStdoutBytes: 64 * 1024,

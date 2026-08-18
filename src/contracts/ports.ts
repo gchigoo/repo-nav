@@ -59,6 +59,8 @@ export const BackendHitSchema = z
       .readonly()
       .optional(),
     matchedText: z.string().optional(),
+    /** Backend-local stable relevance order; zero is the strongest hit. */
+    backendRank: z.int().nonnegative().optional(),
     source: SearchBackendIdSchema,
     reasonCodes: z
       .array(z.union([DiscoveryReasonCodeSchema, BackendReasonCodeSchema]))

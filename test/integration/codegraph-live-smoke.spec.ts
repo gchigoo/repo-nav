@@ -86,7 +86,7 @@ describe('CodeGraph real indexed temp repository', () => {
         indexFound: true,
         possibleStaleIndex: false,
       });
-      expect(health.version).toMatch(/^1\.1\.6$/u);
+      expect(health.version).toMatch(/^1\.5\.0$/u);
 
       const signal = new AbortController().signal;
       const execution = createProcessOpaqueTokenV2<LocateExecutionTokenV2>();
@@ -144,6 +144,7 @@ describe('CodeGraph real indexed temp repository', () => {
             file: 'sample.ts',
             symbol: 'AlphaMapping',
             lines: [1, 1],
+            backendRank: 0,
             source: 'codegraph',
             reasonCodes: ['SYMBOL_SEARCH_HIT'],
           },

@@ -78,7 +78,8 @@ Fresh checks against the current working-tree implementation on 2026-08-15, foll
 - Golden: 19 files passed; 85 tests passed, 1 skipped;
 - MCP: 11 files and 42 tests passed;
 - docs smoke, platform self-test, and all 20 local platform contracts passed;
-- a temporary external-prefix installation of pinned CodeGraph `1.1.6` passed the live init, probe, query, and cleanup integration test without changing project dependencies;
+- a temporary external-prefix installation of pinned CodeGraph `1.1.6` passed the 2026-08-16 live integration; the project pin was upgraded on 2026-08-18 to CodeGraph `1.5.0`, with live init, probe, query, cleanup, and fail-closed non-regression checks rerun without changing project dependencies;
+- the CodeGraph differential contract now compares the pinned CLI directly against repo-nav across TypeScript, JavaScript, Python, and Go, for both symbol-anchor and terms-only requests; it requires exact top-K prefix order, 100% confirmed retention, 100% CodeGraph provenance retention, no fallback, and no redacted code locators;
 - typecheck, lint, full format check, and `git diff --check` passed;
 - package metadata, lock, declaration emit, dry-run, smoke, installed closure, isolated installed-production audit, SBOM, legacy-subpath absence, and the 21-contract aggregate passed;
 - the installed audit reported zero info, low, moderate, high, or critical vulnerabilities; installed closure contained 112 nodes and 183 edges; the verified SBOM contained 111 components and 183 edges;
@@ -106,7 +107,7 @@ Push, tag, publish, owner actions, and other remote writes remain separate expli
 
 - `cross-platform-ci` runs Linux, Windows, and macOS Intel on Node 22 and 24.
 - A separate macOS ARM Node 22 job runs typechecking and unit tests.
-- A dedicated Ubuntu Node 22 job installs CodeGraph `1.1.6` and runs the live integration test; ordinary unit jobs do not install CodeGraph.
+- A dedicated, blocking Ubuntu Node 22 job installs CodeGraph `1.5.0` plus pinned ripgrep, runs the live integration test, indexes the TypeScript/JavaScript/Python/Go differential fixtures, and enforces the fail-closed CodeGraph non-regression contract; ordinary unit jobs do not install CodeGraph.
 - `package-release-ci` runs lint, formatting, build, package smoke, installed closure, security audit, SBOM verification, fixture benchmarks, and the authoritative snapshot candidate benchmark.
 - The nightly benchmark runs fixture scenarios and the quality gate (latency plus timeout/no-result rates). Extra local repositories can be supplied with `REPO_NAV_REAL_REPOS`; remotes are not cloned.
 - The release-tag workflow validates an existing tag, package version, tarball, installed closure, benchmark, and CLI/MCP build. Publishing remains an explicit owner action.

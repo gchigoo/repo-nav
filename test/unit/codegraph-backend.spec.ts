@@ -162,26 +162,35 @@ function request(): BackendSearchRequest {
 describe.runIf(
   isSelected({ group: 'codegraph-probe', caseId: 'codegraph-probe' }),
 )('CodeGraph probe', () => {
-  it('maps 1.1.6 missing, clean, and stale status payloads', () => {
-    expect(parseCodeGraphStatus(fixture('status-v1.1.6-missing.json'))).toEqual(
+  it('maps 1.5.0 missing, clean, and stale status payloads', () => {
+    expect(parseCodeGraphStatus(fixture('status-v1.5.0-missing.json'))).toEqual(
       {
         state: 'missing',
-        version: '1.1.6',
+        version: '1.5.0',
         indexFound: false,
         reasonCode: 'CODEGRAPH_INDEX_MISSING',
       },
     );
+    expect(parseCodeGraphStatus(fixture('status-v1.5.0-clean.json'))).toEqual({
+      state: 'available',
+      version: '1.5.0',
+      indexFound: true,
+      possibleStaleIndex: false,
+    });
+    expect(parseCodeGraphStatus(fixture('status-v1.5.0-stale.json'))).toEqual({
+      state: 'available',
+      version: '1.5.0',
+      indexFound: true,
+      possibleStaleIndex: true,
+    });
+  });
+
+  it('keeps the previous 1.1.6 status contract backward-compatible', () => {
     expect(parseCodeGraphStatus(fixture('status-v1.1.6-clean.json'))).toEqual({
       state: 'available',
       version: '1.1.6',
       indexFound: true,
       possibleStaleIndex: false,
-    });
-    expect(parseCodeGraphStatus(fixture('status-v1.1.6-stale.json'))).toEqual({
-      state: 'available',
-      version: '1.1.6',
-      indexFound: true,
-      possibleStaleIndex: true,
     });
   });
 
@@ -206,7 +215,7 @@ describe.runIf(
       {
         ok: true,
         exitCode: 0,
-        stdout: fixture('status-v1.1.6-clean.json'),
+        stdout: fixture('status-v1.5.0-clean.json'),
         stderr: bytes('ignored diagnostics'),
       },
     ]);
@@ -215,7 +224,7 @@ describe.runIf(
         'C:/repository',
         new AbortController().signal,
       ),
-    ).resolves.toMatchObject({ state: 'available', version: '1.1.6' });
+    ).resolves.toMatchObject({ state: 'available', version: '1.5.0' });
     expect(runner.requests[0]?.cwd).toBe('C:/repository');
     expect(runner.requests[0]?.executable.length).toBeGreaterThan(0);
     expect(runner.requests[0]?.argv.slice(-3)).toEqual([
@@ -249,7 +258,7 @@ describe.runIf(
   isSelected({ group: 'codegraph-parser', caseId: 'codegraph-parser' }),
 )('CodeGraph query JSON parser', () => {
   it('parses exact current-file candidates and ignores fuzzy decoys', () => {
-    const parsed = parseCodeGraphQuery(fixture('query-v1.1.6.json'), {
+    const parsed = parseCodeGraphQuery(fixture('query-v1.5.0.json'), {
       value: 'AlphaMapping',
       caseSensitive: true,
       source: 'symbol-anchor',
@@ -268,8 +277,29 @@ describe.runIf(
     });
   });
 
+  it('keeps the previous 1.1.6 query contract backward-compatible', () => {
+    expect(
+      parseCodeGraphQuery(fixture('query-v1.1.6.json'), {
+        value: 'AlphaMapping',
+        caseSensitive: true,
+        source: 'symbol-anchor',
+      }),
+    ).toEqual({
+      rawResultCount: 2,
+      hits: [
+        {
+          file: 'src/alpha.ts',
+          symbol: 'AlphaMapping',
+          lines: [2, 2],
+          source: 'codegraph',
+          reasonCodes: ['SYMBOL_SEARCH_HIT'],
+        },
+      ],
+    });
+  });
+
   it('accepts insensitive actual spelling but rejects malformed required hit fields', () => {
-    const parsed = parseCodeGraphQuery(fixture('query-v1.1.6.json'), {
+    const parsed = parseCodeGraphQuery(fixture('query-v1.5.0.json'), {
       value: 'alphamapping',
       caseSensitive: false,
       source: 'term',
@@ -295,13 +325,13 @@ describe.runIf(
       {
         ok: true,
         exitCode: 0,
-        stdout: fixture('status-v1.1.6-clean.json'),
+        stdout: fixture('status-v1.5.0-clean.json'),
         stderr: bytes(''),
       },
       {
         ok: true,
         exitCode: 0,
-        stdout: fixture('query-v1.1.6.json'),
+        stdout: fixture('query-v1.5.0.json'),
         stderr: bytes('\u001b[31mhuman diagnostics\u001b[0m'),
       },
     ]);
@@ -319,10 +349,58 @@ describe.runIf(
       'AlphaMapping',
     ]);
     expect(result).toMatchObject({
-      health: { state: 'available', version: '1.1.6' },
+      health: { state: 'available', version: '1.5.0' },
       canSkipFallbackIfVerified: true,
     });
     expect(result.hits).toHaveLength(1);
+  });
+
+  it('preserves CodeGraph relevance order instead of re-sorting by path', async () => {
+    const query = bytes(
+      JSON.stringify([
+        {
+          node: {
+            name: 'AlphaMapping',
+            qualifiedName: 'AlphaMapping',
+            filePath: 'src/z-best.ts',
+            startLine: 10,
+            endLine: 12,
+          },
+          score: 99,
+        },
+        {
+          node: {
+            name: 'AlphaMapping',
+            qualifiedName: 'AlphaMapping',
+            filePath: 'src/a-second.ts',
+            startLine: 1,
+            endLine: 2,
+          },
+          score: 80,
+        },
+      ]),
+    );
+    const runner = new RecordingProcessRunner([
+      {
+        ok: true,
+        exitCode: 0,
+        stdout: fixture('status-v1.5.0-clean.json'),
+        stderr: bytes(''),
+      },
+      { ok: true, exitCode: 0, stdout: query, stderr: bytes('') },
+    ]);
+
+    const result = await new CodeGraphBackend(runner).search(
+      request(),
+      new AbortController().signal,
+    );
+
+    expect(
+      result.hits.map(({ file, backendRank }) => [file, backendRank]),
+    ).toEqual([
+      ['src/z-best.ts', 0],
+      ['src/a-second.ts', 1],
+    ]);
   });
 
   it.each([
@@ -335,7 +413,7 @@ describe.runIf(
         {
           ok: true,
           exitCode: 0,
-          stdout: fixture('status-v1.1.6-clean.json'),
+          stdout: fixture('status-v1.5.0-clean.json'),
           stderr: bytes(''),
         },
         {
@@ -450,13 +528,13 @@ describe.runIf(
         {
           ok: true,
           exitCode: 0,
-          stdout: fixture('status-v1.1.6-clean.json'),
+          stdout: fixture('status-v1.5.0-clean.json'),
           stderr: bytes(''),
         },
         {
           ok: true,
           exitCode: 0,
-          stdout: fixture('query-v1.1.6.json'),
+          stdout: fixture('query-v1.5.0.json'),
           stderr: bytes(''),
         },
       ]);
@@ -512,6 +590,104 @@ describe.runIf(
     }
   });
 
+  it('keeps later expanded-lane terms reachable after a saturated fuzzy query', async () => {
+    const repository = mkdtempSync(resolve(tmpdir(), 'repo-nav-cg-sv-'));
+    try {
+      writeFileSync(resolve(repository, 'a.ts'), 'const Foo = 1;\n', 'utf8');
+      const fuzzyResults = Array.from({ length: 800 }, (_, index) => ({
+        node: {
+          name: `AlphaHelper${index}`,
+          qualifiedName: `AlphaHelper${index}`,
+          filePath: 'a.ts',
+          startLine: 1,
+          endLine: 1,
+        },
+      }));
+      const exactBeta = [
+        {
+          node: {
+            name: 'Beta',
+            qualifiedName: 'Beta',
+            filePath: 'a.ts',
+            startLine: 1,
+            endLine: 1,
+          },
+        },
+      ];
+      const runner = new RecordingProcessRunner([
+        {
+          ok: true,
+          exitCode: 0,
+          stdout: fixture('status-v1.5.0-clean.json'),
+          stderr: bytes(''),
+        },
+        {
+          ok: true,
+          exitCode: 0,
+          stdout: bytes(JSON.stringify(fuzzyResults)),
+          stderr: bytes(''),
+        },
+        {
+          ok: true,
+          exitCode: 0,
+          stdout: bytes(JSON.stringify(exactBeta)),
+          stderr: bytes(''),
+        },
+      ]);
+      const signal = new AbortController().signal;
+      const execution = createProcessOpaqueTokenV2<LocateExecutionTokenV2>();
+      const context = createBackendExecutionContextV2(
+        runner,
+        undefined,
+        signal,
+        execution,
+      );
+      const request = createMultiViewBackendSearchRequestV2(
+        {
+          repositoryRoot: repository,
+          terms: [
+            { value: 'Alpha', caseSensitive: true },
+            { value: 'Beta', caseSensitive: true },
+          ],
+          anchors: [],
+          negativeTerms: [],
+          layers: [],
+        },
+        40,
+      );
+      const handoff = await new CodeGraphBackend(runner).searchViews(
+        request,
+        signal,
+        context,
+        execution,
+      );
+      const view = requireBackendDiscoveryHandoffForF3V2(
+        handoff,
+        'codegraph',
+        request,
+        context,
+        execution,
+      );
+      expect(runner.requests).toHaveLength(3);
+      expect(runner.requests[1]?.argv.at(-2)).toBe('800');
+      expect(runner.requests[2]?.argv.at(-2)).toBe('800');
+      expect(view.kind).toBe('started');
+      if (view.kind !== 'started') {
+        return;
+      }
+      expect(
+        requireBackendExecutionOutcomeV2(view.expandedOutcome, execution),
+      ).toMatchObject({
+        completion: 'incomplete',
+        termination: 'early-stop',
+        hitCount: 1,
+        retainedHits: [{ symbol: 'Beta' }],
+      });
+    } finally {
+      rmSync(repository, { recursive: true, force: true });
+    }
+  });
+
   it('binds complete no-result when the available query plan has zero entries', async () => {
     const repository = mkdtempSync(resolve(tmpdir(), 'repo-nav-cg-sv-'));
     try {
@@ -520,7 +696,7 @@ describe.runIf(
         {
           ok: true,
           exitCode: 0,
-          stdout: fixture('status-v1.1.6-clean.json'),
+          stdout: fixture('status-v1.5.0-clean.json'),
           stderr: bytes(''),
         },
       ]);

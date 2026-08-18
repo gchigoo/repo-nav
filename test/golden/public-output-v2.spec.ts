@@ -55,7 +55,7 @@ describe.runIf(projectionSelected)(
 
       expect(projection).toEqual({
         term: {
-          value: '[REDACTED]=[REDACTED]',
+          value: 'password=[REDACTED]',
           reasonCodes: ['SECRET_LIKE_VALUE'],
         },
         file: {
@@ -63,8 +63,8 @@ describe.runIf(projectionSelected)(
           reasonCodes: ['SECRET_LIKE_VALUE'],
         },
         symbol: {
-          value: 'database[REDACTED]',
-          reasonCodes: ['SECRET_LIKE_VALUE'],
+          value: 'databasePassword',
+          reasonCodes: [],
         },
         excerpt: {
           value:
@@ -116,14 +116,9 @@ describe.runIf(projectionSelected)(
       expect(JSON.stringify(projection)).not.toContain(forbidden);
     });
 
-    it('blocks uppercase, Pascal, quoted JSON secrets and bare ESC in all projections', () => {
-      const forbidden = [
-        'MY_API_KEY',
-        'SERVICE-AUTH-TOKEN',
-        'ApiKey',
-        'json-do-not-publish',
-        '\u001b',
-      ] as const;
+    it('preserves uppercase and Pascal locators while blocking secret values and bare ESC', () => {
+      const locators = ['MY_API_KEY', 'SERVICE-AUTH-TOKEN', 'ApiKey'] as const;
+      const forbidden = ['json-do-not-publish', '\u001b'] as const;
       const raw = structuredClone(createUnsafeLocateSuccessV2());
       if (!raw.ok) throw new Error('Fixture must be a success.');
       const mutable = raw as unknown as {
@@ -139,15 +134,18 @@ describe.runIf(projectionSelected)(
       if (term === undefined || evidence === undefined) {
         throw new Error('Fixture data missing.');
       }
-      term.value = forbidden[0];
-      evidence.location.file = `src/${forbidden[1]}/config.json`;
-      evidence.location.symbol = forbidden[2];
-      evidence.location.excerpt = `{"password":"${forbidden[3]}"}${forbidden[4]}`;
+      term.value = locators[0];
+      evidence.location.file = `src/${locators[1]}/config.json`;
+      evidence.location.symbol = locators[2];
+      evidence.location.excerpt = `{"password":"${forbidden[0]}"}${forbidden[1]}`;
 
       const projection = projectSyntheticLocateResultV2(
         finalizeUnsafeSourceV2(raw),
       );
       const serialized = JSON.stringify(projection);
+      for (const value of locators) {
+        expect(serialized).toContain(value);
+      }
       for (const value of forbidden) {
         expect(serialized).not.toContain(value);
       }

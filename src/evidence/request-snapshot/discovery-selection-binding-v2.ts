@@ -81,6 +81,24 @@ function safeSelectorKey(
   ].join('\u0001');
 }
 
+function compareSafeSelectorGroups(
+  left: readonly ScopeFoldedSelectorCandidateViewV2[],
+  right: readonly ScopeFoldedSelectorCandidateViewV2[],
+): number {
+  const bestRank = (
+    group: readonly ScopeFoldedSelectorCandidateViewV2[],
+  ): number =>
+    Math.min(
+      ...group.map(
+        (candidate) => candidate.backendRank ?? Number.MAX_SAFE_INTEGER,
+      ),
+    );
+  return (
+    bestRank(left) - bestRank(right) ||
+    safeSelectorKey(left[0]!).localeCompare(safeSelectorKey(right[0]!))
+  );
+}
+
 function groupBySafeKey(
   candidates: readonly ScopeFoldedSelectorCandidateViewV2[],
 ): Map<string, ScopeFoldedSelectorCandidateViewV2[]> {
@@ -189,8 +207,7 @@ export function createSafeDiscoverySelectionDraftV2(input: {
       continue;
     }
     const matchGroups = [...groupBySafeKey(matching).values()].sort(
-      (left, right) =>
-        safeSelectorKey(left[0]!).localeCompare(safeSelectorKey(right[0]!)),
+      compareSafeSelectorGroups,
     );
     let reserved = false;
     for (const group of matchGroups) {
@@ -227,9 +244,7 @@ export function createSafeDiscoverySelectionDraftV2(input: {
     );
   }
 
-  const orderedGroups = [...groups.values()].sort((left, right) =>
-    safeSelectorKey(left[0]!).localeCompare(safeSelectorKey(right[0]!)),
-  );
+  const orderedGroups = [...groups.values()].sort(compareSafeSelectorGroups);
   for (const group of orderedGroups) {
     if (group.every((candidate) => selected.has(candidate.locatorRef))) {
       continue;

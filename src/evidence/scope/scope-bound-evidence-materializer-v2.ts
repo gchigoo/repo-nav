@@ -28,6 +28,7 @@ function materializeFactsRowV2(
   locationLines: readonly [number, number],
   options: {
     readonly definitionRole?: 'definition' | 'execution-site';
+    readonly definitionReasonCode?: 'EXACT_SYMBOL_ANCHOR' | 'EXACT_TERM_MATCH';
     readonly derivedReasonCodes?: readonly (
       | 'ALIAS_SOURCE_NEIGHBOR'
       | 'SAME_ENTITY_SIBLING'
@@ -131,7 +132,9 @@ function materializeFactsRowV2(
         role: options.definitionRole ?? 'definition',
         location,
         provenance,
-        reasonCodes: Object.freeze(['EXACT_SYMBOL_ANCHOR' as const]),
+        reasonCodes: Object.freeze([
+          options.definitionReasonCode ?? 'EXACT_SYMBOL_ANCHOR',
+        ]),
       });
     case 'anchored-reference':
       return Object.freeze({
@@ -233,6 +236,9 @@ export function materializeScopeBoundEvidenceV2(
     {
       ...(privateRecord.facts.definitionRole !== undefined
         ? { definitionRole: privateRecord.facts.definitionRole }
+        : {}),
+      ...(privateRecord.facts.definitionReasonCode !== undefined
+        ? { definitionReasonCode: privateRecord.facts.definitionReasonCode }
         : {}),
       ...(privateRecord.facts.derivedReasonCodes !== undefined
         ? { derivedReasonCodes: privateRecord.facts.derivedReasonCodes }

@@ -47,6 +47,7 @@ export interface ScopeFoldedSelectorCandidateViewV2 {
   readonly lineStart: number;
   readonly lineEnd: number;
   readonly source: SearchBackendId;
+  readonly backendRank?: number;
   readonly querySeedKeys: readonly string[];
   readonly matchedAnchorKeys: readonly string[];
 }
@@ -198,6 +199,9 @@ function foldWithDecisionsV2(
           lineStart: candidate.lineStart,
           lineEnd: candidate.lineEnd,
           source: candidate.source,
+          ...(candidate.backendRank === undefined
+            ? {}
+            : { backendRank: candidate.backendRank }),
           querySeedKeys: candidate.querySeedKeys,
           matchedAnchorKeys: candidate.matchedAnchorKeys,
         }),

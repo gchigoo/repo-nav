@@ -1,0 +1,46 @@
+[
+  {
+    "node": {
+      "id": "function:fixture",
+      "kind": "function",
+      "name": "AlphaMapping",
+      "qualifiedName": "AlphaMapping",
+      "filePath": "src/alpha.ts",
+      "language": "typescript",
+      "startLine": 2,
+      "endLine": 4,
+      "startColumn": 7,
+      "endColumn": 1,
+      "signature": "(sourceId: string): string",
+      "visibility": null,
+      "isExported": true,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1787041669399
+    },
+    "score": 90.00000209923664
+  },
+  {
+    "node": {
+      "id": "function:decoy",
+      "kind": "function",
+      "name": "AlphaMappingHelper",
+      "qualifiedName": "AlphaMappingHelper",
+      "filePath": "src/helper.ts",
+      "language": "typescript",
+      "startLine": 8,
+      "endLine": 10,
+      "startColumn": 7,
+      "endColumn": 1,
+      "signature": "(): void",
+      "visibility": null,
+      "isExported": true,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1787041669400
+    },
+    "score": 80.00000190734863
+  }
+]

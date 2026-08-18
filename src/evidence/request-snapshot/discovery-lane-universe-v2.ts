@@ -46,6 +46,7 @@ interface HitPrivateRecordV2 {
   readonly lineStart: number;
   readonly lineEnd: number;
   readonly source: SearchBackendId;
+  readonly backendRank?: number;
   readonly querySeedKeys: readonly string[];
   readonly matchedAnchorKeys: readonly string[];
   readonly execution: LocateExecutionTokenV2;
@@ -63,6 +64,7 @@ export interface PublicSafeExpandedCandidateV2 {
   readonly lineStart: number;
   readonly lineEnd: number;
   readonly source: SearchBackendId;
+  readonly backendRank?: number;
   readonly querySeedKeys: readonly string[];
   readonly matchedAnchorKeys: readonly string[];
 }
@@ -199,6 +201,7 @@ export interface ExpandedSafeCandidateInputV2 {
   readonly lineStart: number;
   readonly lineEnd: number;
   readonly source: SearchBackendId;
+  readonly backendRank?: number;
   readonly querySeedKeys?: readonly string[];
   readonly matchedAnchorKeys?: readonly string[];
 }
@@ -237,6 +240,9 @@ export function projectExpandedSafePreCapPoolV2(
         lineStart: input.lineStart,
         lineEnd: input.lineEnd,
         source: input.source,
+        ...(input.backendRank === undefined
+          ? {}
+          : { backendRank: input.backendRank }),
         querySeedKeys: Object.freeze(
           (input.querySeedKeys ?? []).slice().sort(),
         ),
@@ -254,6 +260,9 @@ export function projectExpandedSafePreCapPoolV2(
         lineStart: input.lineStart,
         lineEnd: input.lineEnd,
         source: input.source,
+        ...(input.backendRank === undefined
+          ? {}
+          : { backendRank: input.backendRank }),
         querySeedKeys: hitRecords.get(hitRef)!.querySeedKeys,
         matchedAnchorKeys: hitRecords.get(hitRef)!.matchedAnchorKeys,
       }),

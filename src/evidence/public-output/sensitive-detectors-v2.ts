@@ -423,7 +423,10 @@ export function detectLocalTextSpansV2(
     ...detectConnectionSpansV2(value),
     ...detectEmailSpansV2(value),
     ...detectPhoneSpansV2(value),
-    ...(field === 'excerpt' ? [] : detectIdentifierSpansV2(value)),
+    // A code locator such as verifyAccessToken or databasePassword names a
+    // program element; it is not itself a credential. Actual assigned values,
+    // fixed credentials, connection secrets, PII, and response-level corpus
+    // matches remain redacted above/by the materializer.
     ...detectControlSpansV2(value, field),
   ];
 }
@@ -437,7 +440,9 @@ export function detectLocalFileSpansV2(
     ...detectConnectionSpansV2(value),
     ...detectEmailSpansV2(value),
     ...detectPhoneSpansV2(value),
-    ...detectIdentifierSpansV2(value),
+    // Preserve repository-relative locator segments such as auth-token/. A
+    // complete segment matching an actual collected secret is still hidden by
+    // matchPathSegmentCorpusHitV2 in the field materializer.
     ...detectControlSpansV2(value, 'file'),
   ];
 }

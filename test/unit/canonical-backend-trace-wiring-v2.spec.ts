@@ -1,12 +1,13 @@
 /**
  * A3 production-wiring regression: real CodeGraphBackend + RipgrepBackend run
- * through the canonical executor WITHOUT fixture wrapping. CodeGraph ENOENT is
- * injected only by the process runner (the optional `codegraph` binary is
- * absent in hermetic environments), and ripgrep runs as the real fallback.
+ * through the canonical executor WITHOUT fixture wrapping. The optional
+ * `codegraph` binary can be absent or installed without an index, and ripgrep
+ * runs as the real fallback in either case.
  *
  * Expected production result (post-A3): `no_result`, codegraph `unavailable`
- * with `CODEGRAPH_UNAVAILABLE`, ripgrep `used/complete` with `RIPGREP_NO_RESULT`,
- * fallback checked, strategy complete, and index state `unavailable`.
+ * with an unavailable-or-missing-index reason, ripgrep `used/complete` with
+ * `RIPGREP_NO_RESULT`, fallback checked, strategy complete, and the matching
+ * `unavailable` or `missing` index state.
  */
 
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -109,23 +110,26 @@ describe.runIf(selected)('A3 canonical backend trace wiring', () => {
         return;
       }
       expect(result.evidence.status).toBe('no_result');
-      expect(result.evidence.coverage.backends).toEqual([
-        expect.objectContaining({
-          backend: 'codegraph',
-          status: 'unavailable',
-          reasonCode: 'CODEGRAPH_UNAVAILABLE',
-        }),
-        expect.objectContaining({
-          backend: 'ripgrep',
-          status: 'used',
-          completion: 'complete',
-          reasonCode: 'RIPGREP_NO_RESULT',
-          hitCount: 0,
-        }),
-      ]);
+      expect(result.evidence.coverage.backends).toHaveLength(2);
+      expect(result.evidence.coverage.backends[0]).toMatchObject({
+        backend: 'codegraph',
+        status: 'unavailable',
+      });
+      expect(['CODEGRAPH_UNAVAILABLE', 'CODEGRAPH_INDEX_MISSING']).toContain(
+        result.evidence.coverage.backends[0]?.reasonCode,
+      );
+      expect(result.evidence.coverage.backends[1]).toMatchObject({
+        backend: 'ripgrep',
+        status: 'used',
+        completion: 'complete',
+        reasonCode: 'RIPGREP_NO_RESULT',
+        hitCount: 0,
+      });
       expect(result.evidence.coverage.fallbackChecked).toBe(true);
       expect(result.evidence.coverage.strategyComplete).toBe(true);
-      expect(result.evidence.coverage.indexState).toBe('unavailable');
+      expect(['unavailable', 'missing']).toContain(
+        result.evidence.coverage.indexState,
+      );
     } finally {
       rmSync(repository, { recursive: true, force: true });
     }

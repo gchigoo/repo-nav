@@ -44,12 +44,24 @@ jobs:
           TOOLS="${RUNNER_TEMP}/repo-nav-host-tools"
           mkdir -p "$TOOLS"
           npm install --prefix "$TOOLS" --no-save --no-package-lock --no-fund --no-audit \
-            @vscode/ripgrep@1.15.9
+            @vscode/ripgrep@1.15.9 @colbymchenry/codegraph@1.5.0
           RG_BIN="$TOOLS/node_modules/@vscode/ripgrep/bin"
           echo "$RG_BIN" >> "$GITHUB_PATH"
+          echo "$TOOLS/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Prepare CodeGraph differential fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          codegraph init testkit/fixtures/codegraph-differential/typescript
+          codegraph init testkit/fixtures/codegraph-differential/javascript
+          codegraph init testkit/fixtures/codegraph-differential/python
+          codegraph init testkit/fixtures/codegraph-differential/go
 
       - name: Fixture-scenario smoke
         run: npm run benchmark:fixture-scenarios
 
       - name: Quality gate
+        env:
+          REPO_NAV_REQUIRE_CODEGRAPH_DIFFERENTIAL: '1'
         run: npm run benchmark:quality-gate
